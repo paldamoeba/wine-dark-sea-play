@@ -1,8 +1,8 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=d0f730c';
+import {hash} from './world.js?v=8e33298';
 
 const T = window.THREE;
-import {mat} from './ships.js?v=d0f730c';
+import {mat} from './ships.js?v=8e33298';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
 export function jitter(geo, amt, seed){

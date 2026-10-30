@@ -1,20 +1,20 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=d0f730c';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=d0f730c';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=d0f730c';
-import {applyQuality} from './scene.js?v=d0f730c';
-import {swapBoat, refreshAllTrees} from './entities.js?v=d0f730c';
-import {setZoom} from './input.js?v=d0f730c';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=d0f730c';
-import {tutHTML} from './tutorial.js?v=d0f730c';
-import {founded, blessing, seats, candidates} from './crew.js?v=d0f730c';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=d0f730c';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=d0f730c';
-import {effectText, buy} from './upgrades.js?v=d0f730c';
-import {harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=d0f730c';
-import {GOODS, WAR} from './config.js?v=d0f730c';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=d0f730c';
-import {W, KINDS} from './weather.js?v=d0f730c';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=8e33298';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=8e33298';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=8e33298';
+import {applyQuality, setSeaLook} from './scene.js?v=8e33298';
+import {swapBoat, refreshAllTrees} from './entities.js?v=8e33298';
+import {setZoom} from './input.js?v=8e33298';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=8e33298';
+import {tutHTML} from './tutorial.js?v=8e33298';
+import {founded, blessing, seats, candidates} from './crew.js?v=8e33298';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=8e33298';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=8e33298';
+import {effectText, buy} from './upgrades.js?v=8e33298';
+import {harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=8e33298';
+import {GOODS, WAR} from './config.js?v=8e33298';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=8e33298';
+import {W, KINDS} from './weather.js?v=8e33298';
 
 const $ = id => document.getElementById(id);
 
@@ -102,9 +102,10 @@ function settingsHTML(){
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
   const game = card('Your voyage', `<div class="stats big">${IC.ship} ${ship().name} · ${mins} min at sea</div>${row('How to play', 'The two pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}`)
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 25</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 26</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
+      ${row('Bright sea', 'Clear blue water with drifting white foam lines, like a cartoon sea. Off = the darker teal sea.', tog('bright', s.bright !== false, 'Bright sea'))}
       ${row('Tiny world look', 'Soft blur at the top and bottom of the screen and warmer colors, so the sea looks like a little model. Turn off if the game feels slow.', tog('tiny', s.tiny !== false, 'Tiny world look'))}
       ${row('Cel-shaded look (test)', 'Hard light and dark bands with ink outlines on ships and fortresses, like a cartoon. Try it and tell me.', tog('cel', !!s.cel, 'Cel-shaded look'))}
       ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}`);
@@ -191,6 +192,7 @@ sheetEl.addEventListener('click', e => {
     saveSettings(); save(); location.reload(); return;
   }
   if (a === 'builder'){ G.settings.builder = !G.settings.builder; saveSettings(); swapBoat(); document.dispatchEvent(new Event('fleet')); }
+  if (a === 'bright'){ G.settings.bright = G.settings.bright === false; saveSettings(); setSeaLook(G.settings.bright); }
   if (a === 'tiny'){ G.settings.tiny = G.settings.tiny === false; saveSettings(); }
   if (a === 'cel'){ G.settings.cel = !G.settings.cel; saveSettings(); setCel(G.settings.cel); document.dispatchEvent(new Event('crew')); swapBoat(); }
   if (a === 'fps'){ G.settings.showFps = !G.settings.showFps; saveSettings(); }

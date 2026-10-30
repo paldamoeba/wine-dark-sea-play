@@ -1,8 +1,8 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=d0f730c';
-import {seaInfo, waveH, sstep, landDist} from './world.js?v=d0f730c';
-import {G} from './state.js?v=d0f730c';
-import {mat} from './ships.js?v=d0f730c';
+import {QUALITY} from './config.js?v=8e33298';
+import {seaInfo, waveH, sstep, landDist} from './world.js?v=8e33298';
+import {G} from './state.js?v=8e33298';
+import {mat} from './ships.js?v=8e33298';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -37,11 +37,34 @@ function buildWater(seg){
   wgeo = new T.PlaneGeometry(waterSize, waterSize, WN, WN); wgeo.rotateX(-Math.PI/2);
   wbase = wgeo.attributes.position.array.slice();
   wgeo.setAttribute('color', new T.BufferAttribute(new Float32Array(wgeo.attributes.position.count*3), 3));
-  water = new T.Mesh(wgeo, mat('#ffffff', {vertexColors:true}));
+  water = new T.Mesh(wgeo, waterMat);
   water.receiveShadow = true; scene.add(water);
 }
-const CSH = new T.Color('#2b8e8f'), CSEA = new T.Color('#175c7c'), CST = new T.Color('#1b4a63'), CLAG = new T.Color('#5cc2b2'), tmpC = new T.Color();
+// Two looks for the sea. Classic: deep teal. Bright (a setting, on by default): clear blue with white foam lines that drift
+// and wobble, like a cartoon sea. The foam is drawn in the water's shader from a cell pattern on the world position.
+const LOOKS = {classic:['#2b8e8f', '#175c7c', '#1b4a63', '#5cc2b2'], bright:['#35a6d8', '#1d72cc', '#1a5fb4', '#7fd3e2']};
+const CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
+const waterMat = mat('#ffffff', {vertexColors:true}).clone(); waterMat.gradientMap = mat('#ffffff').gradientMap;
+const foamU = {uTime:{value:0}, uFoam:{value:0}};
+waterMat.onBeforeCompile = sh => {
+  Object.assign(sh.uniforms, foamU);
+  sh.vertexShader = 'varying vec3 vWorld;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorld = (modelMatrix*vec4(transformed, 1.0)).xyz;');
+  sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uFoam;
+    vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
+    float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
+      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(i + g);
+        o = .5 + .42*sin(uTime*.35 + 6.2831*o); float d = length(g + o - f); if (d < d1){ d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
+      return d2 - d1; }
+    ` + sh.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>
+      vec2 q = vWorld.xz/125.; q += .32*vec2(sin(q.y*1.3 + uTime*.4), cos(q.x*1.1 - uTime*.3)); q += .1*vec2(sin(q.y*4.7 - uTime*.6), cos(q.x*4.3 + uTime*.5));
+      float e = cells(q), line = 1. - smoothstep(.02, .055, e);
+      float fade = smoothstep(2600., 900., length(vWorld.xz - cameraPosition.xz));
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(.92, .98, 1.), line*uFoam*.85*fade);`);
+};
+export function setSeaLook(bright){ const L = LOOKS[bright ? 'bright' : 'classic']; CSH.set(L[0]); CSEA.set(L[1]); CST.set(L[2]); CLAG.set(L[3]); foamU.uFoam.value = bright ? 1 : 0; SKY.set(bright ? '#b8def0' : '#a9c9cf'); }
+setSeaLook(!G.settings || G.settings.bright !== false);
 export function updateWater(){
+  foamU.uTime.value = G.t;
   const step = waterSize/WN, ox = Math.round(G.cam.x/step)*step, oz = Math.round(G.cam.y/step)*step;
   water.position.set(ox, 0, oz);
   const p = wgeo.attributes.position.array, c = wgeo.attributes.color.array;

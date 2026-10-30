@@ -1,7 +1,7 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides. Uses the game's own builders,
 // so what you see here is exactly what sails in the game.
-import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=d0f730c';
-import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=d0f730c';
+import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=8e33298';
+import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=8e33298';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
