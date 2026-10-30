@@ -1,8 +1,8 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=77dd129';
-import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=77dd129';
-import {G} from './state.js?v=77dd129';
-import {mat} from './ships.js?v=77dd129';
+import {QUALITY} from './config.js?v=d4d0ac7';
+import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=d4d0ac7';
+import {G} from './state.js?v=d4d0ac7';
+import {mat} from './ships.js?v=d4d0ac7';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -130,6 +130,7 @@ export function applyQuality(name){
 }
 
 // ---- camera + weather ----
+export const CAM_ANGLES = {high:{up:2.3, d:1.04, label:'High'}, mid:{up:1.6, d:1, label:'Medium'}, low:{up:.95, d:.94, label:'Low'}};
 const V = new T.Vector3();
 let camK = 1; // 1 at sea, closer while tied up at the pier
 export function updateCamera(){
@@ -137,7 +138,9 @@ export function updateCamera(){
   const dk = DEPTH_ZOOM[Math.max(0, G.curZone)] || 1;
   if (Math.abs(dk - depthK) > .002){ depthK += (dk - depthK)*.012; if (zoomBucket(viewZoom()) !== zoomBucket(lastZoom)) applyZoom(); }
   const dist = (view.H > view.W ? 740 : 600) * viewZoom() * camK;
-  V.set(1, 1.6, 1).normalize().multiplyScalar(dist);
+  // camera angle (a setting): high looks down more, low sees further toward the horizon
+  const ang = CAM_ANGLES[G.settings.angle] || CAM_ANGLES.mid;
+  V.set(1, ang.up, 1).normalize().multiplyScalar(dist*ang.d);
   // a short jolt when you're hit or fire a volley
   G.shake = Math.max(0, (G.shake || 0) - 1/60*2.2); const j = G.shake*G.shake*dist*.012, jx = Math.sin(G.t*71)*j, jz = Math.cos(G.t*57)*j;
   camera.position.set(G.cam.x + V.x + jx, V.y, G.cam.y + V.z + jz); camera.lookAt(G.cam.x + jx, 0, G.cam.y + jz);

@@ -1,41 +1,15 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that jump beside the boat.
-import {WILDLIFE} from './config.js?v=77dd129';
-import {WORLD, landDist, waveAt} from './world.js?v=77dd129';
-import {G, save} from './state.js?v=77dd129';
-import {scene} from './scene.js?v=77dd129';
-import {mesh} from './models.js?v=77dd129';
-import {toast} from './ui.js?v=77dd129';
-import {combatState} from './combat.js?v=77dd129';
+import {WILDLIFE} from './config.js?v=d4d0ac7';
+import {WORLD, landDist, waveAt} from './world.js?v=d4d0ac7';
+import {G, save} from './state.js?v=d4d0ac7';
+import {scene} from './scene.js?v=d4d0ac7';
+import {whaleModel, dolphinModel} from './models.js?v=d4d0ac7';
+import {toast} from './ui.js?v=d4d0ac7';
+import {combatState} from './combat.js?v=d4d0ac7';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
 const openSea = (x, y, gap) => x > 200 && y > 200 && x < WORLD - 200 && y < WORLD - 200 && landDist(x, y) > gap;
-
-// ---- models: soft rounded shapes, nose along +x ----
-function whaleModel(){
-  const g = new T.Group(), body = new T.Group(); g.add(body);
-  const b = mesh(new T.SphereGeometry(1, 14, 10), '#4d6d86'); b.scale.set(62, 17, 20); body.add(b);
-  const belly = mesh(new T.SphereGeometry(1, 12, 8), '#c9d3d6'); belly.scale.set(50, 9, 15); belly.position.set(6, -8, 0); body.add(belly);
-  const head = mesh(new T.SphereGeometry(1, 12, 8), '#4d6d86'); head.scale.set(26, 15, 18); head.position.set(40, 1, 0); body.add(head);
-  for (const s of [-1, 1]){ const fin = mesh(new T.SphereGeometry(1, 8, 6), '#3d5a72'); fin.scale.set(13, 2.5, 6); fin.position.set(18, -8, s*20); fin.rotation.y = s*.5; body.add(fin);
-    const eye = mesh(new T.SphereGeometry(1.6, 6, 4), '#1d2633'); eye.position.set(46, 3, s*15.5); body.add(eye); }
-  const tail = new T.Group(); tail.position.set(-58, 2, 0); body.add(tail);
-  const stock = mesh(new T.SphereGeometry(1, 10, 6), '#4d6d86'); stock.scale.set(20, 8, 9); stock.position.x = -8; tail.add(stock);
-  for (const s of [-1, 1]){ const fluke = mesh(new T.SphereGeometry(1, 10, 6), '#3d5a72'); fluke.scale.set(10, 2.2, 18); fluke.position.set(-24, 0, s*14); fluke.rotation.y = s*.45; tail.add(fluke); }
-  // the spout: a few white puffs that rise and fade
-  const spout = []; for (let k=0;k<7;k++){ const p = mesh(new T.SphereGeometry(5, 6, 4), '#f4fbff', {transparent:true, opacity:.8}, false); p.material = p.material.clone(); p.visible = false; g.add(p); spout.push(p); }
-  g.userData = {body, tail, spout};
-  return g;
-}
-function dolphinModel(){
-  const g = new T.Group();
-  const b = mesh(new T.SphereGeometry(1, 10, 8), '#7f94a6'); b.scale.set(14, 4.5, 4.5); g.add(b);
-  const belly = mesh(new T.SphereGeometry(1, 8, 6), '#e3e8ea'); belly.scale.set(11, 2.6, 3.6); belly.position.y = -2; g.add(belly);
-  const nose = mesh(new T.SphereGeometry(1, 6, 4), '#7f94a6'); nose.scale.set(5, 1.6, 1.6); nose.position.x = 15; g.add(nose);
-  const fin = mesh(new T.ConeGeometry(2.6, 7, 4), '#6b8194'); fin.position.set(-1, 5, 0); fin.rotation.z = .5; g.add(fin);
-  const tail = mesh(new T.SphereGeometry(1, 6, 4), '#6b8194'); tail.scale.set(2.5, 1, 6); tail.position.x = -15; g.add(tail);
-  return g;
-}
 
 // ---- the whale ----
 // state: 'gone' (waiting), 'rise' (coming up), 'swim' (at the surface, spouting), 'dive' (tail up, going down)

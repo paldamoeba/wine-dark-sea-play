@@ -1,16 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=77dd129';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=77dd129';
-import {G, ship, lvl} from './state.js?v=77dd129';
-import {scene} from './scene.js?v=77dd129';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=77dd129';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=77dd129';
-import {addTown, figure} from './town.js?v=77dd129';
-import {buildStatue} from './monuments.js?v=77dd129';
-import {makeFire, updateFire, burn} from './fire.js?v=77dd129';
-import {sinkPose} from './sinking.js?v=77dd129';
-import {moored} from './fleet.js?v=77dd129';
-import {placeOnWaves} from './combat.js?v=77dd129';
+import {SHIPS} from './config.js?v=d4d0ac7';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=d4d0ac7';
+import {G, ship, lvl} from './state.js?v=d4d0ac7';
+import {scene} from './scene.js?v=d4d0ac7';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel} from './models.js?v=d4d0ac7';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=d4d0ac7';
+import {addTown, figure} from './town.js?v=d4d0ac7';
+import {buildStatue} from './monuments.js?v=d4d0ac7';
+import {makeFire, updateFire, burn} from './fire.js?v=d4d0ac7';
+import {sinkPose} from './sinking.js?v=d4d0ac7';
+import {moored} from './fleet.js?v=d4d0ac7';
+import {placeOnWaves} from './combat.js?v=d4d0ac7';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -143,15 +143,11 @@ SPOTS.forEach((s, i) => {
 
 // ---- icebergs in the cold north: white and pale blue, bobbing slowly; ships can't sail through them ----
 export const ICEBERGS = [];
-{ const R = rng(4242), ice = ['#f4f9fb', '#dbeef5', '#c4e2ee'];
+{ const R = rng(4242);
   for (let k=0, tries=0; k<26 && tries<600; tries++){ const x = R()*WORLD_N, y = R()*WORLD_N*.27;
     if (landDist(x, y) < 180 || ICEBERGS.some(b => Math.hypot(b.x - x, b.y - y) < 260)) continue;
     // a big flat-topped slab of ice with a taller peak, a pale-blue skirt under the water line
-    const g = new T.Group(), r = 45 + R()*55, sides = 6 + Math.floor(R()*3);
-    const skirt = mesh(new T.CylinderGeometry(r*1.15, r*1.3, 10, sides), '#9fd3e6'); skirt.position.y = -4; g.add(skirt);
-    const slab = mesh(new T.CylinderGeometry(r*.9, r*1.05, r*.35, sides), ice[0]); slab.position.y = r*.15; slab.rotation.y = R()*3; g.add(slab);
-    const peak = mesh(new T.CylinderGeometry(r*.25, r*.55, r*.7, sides - 1), ice[1]); peak.position.set((R() - .5)*r*.4, r*.6, (R() - .5)*r*.4); peak.rotation.y = R()*3; g.add(peak);
-    const tip = mesh(new T.ConeGeometry(r*.25, r*.35, sides - 1), ice[0]); tip.position.set(peak.position.x, r*1.12, peak.position.z); g.add(tip);
+    const r = 45 + R()*55, g = icebergModel(r, R);
     g.position.set(x, 0, y); scene.add(g); ICEBERGS.push({x, y, r:r*1.05, g, ph:R()*6}); k++; } }
 
 // ---- wrecks + gulls ----

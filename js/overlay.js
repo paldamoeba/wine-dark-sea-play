@@ -1,15 +1,15 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=77dd129';
-import {G, isExplored} from './state.js?v=77dd129';
-import {fogLayer, islandPath} from './map.js?v=77dd129';
-import {view, project} from './scene.js?v=77dd129';
-import {JOY_RADIUS} from './input.js?v=77dd129';
-import {enemies, combatState, capture} from './combat.js?v=77dd129';
-import {drawFish} from './fishing.js?v=77dd129';
-import {whale} from './wildlife.js?v=77dd129';
-import {SHORE_FISH} from './config.js?v=77dd129';
-import {bottle} from './quests.js?v=77dd129';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=77dd129';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=d4d0ac7';
+import {G, isExplored} from './state.js?v=d4d0ac7';
+import {fogLayer, islandPath} from './map.js?v=d4d0ac7';
+import {view, project} from './scene.js?v=d4d0ac7';
+import {JOY_RADIUS} from './input.js?v=d4d0ac7';
+import {enemies, combatState, capture} from './combat.js?v=d4d0ac7';
+import {drawFish} from './fishing.js?v=d4d0ac7';
+import {whale} from './wildlife.js?v=d4d0ac7';
+import {SHORE_FISH} from './config.js?v=d4d0ac7';
+import {bottle} from './quests.js?v=d4d0ac7';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=d4d0ac7';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -62,12 +62,28 @@ function courseArrow(dx, dy, dz, W, H, M){
   c.textBaseline = 'alphabetic'; c.restore();
 }
 
+// Rain splashes: little rings that spread on the water where drops land, with two droplets jumping up. Smaller further up
+// the screen (further away). Each splash has its own start time so they don't all land at once; more in heavier rain.
+const SPL = Array.from({length:110}, (_, k) => ({k, t0:-k*.01, x:0, y:0}));
+const SPLASH_LIFE = .5;
+function drawSplashes(W, H, t){
+  const n = Math.round(SPL.length*Math.min(1, G.stormK*1.15));
+  c.lineWidth = 1.7;
+  for (let i=0;i<n;i++){ const s = SPL[i]; let a = (t - s.t0)/SPLASH_LIFE;
+    if (a >= 1 || a < 0){ s.t0 = t + Math.random()*.3; s.x = Math.random()*W; s.y = H*.12 + Math.random()*H*.88; continue; }
+    const far = .5 + .6*s.y/H, r = (3 + a*13)*far, al = (1 - a)*.85*Math.min(1, G.stormK*1.8);
+    c.strokeStyle = `rgba(230,242,250,${al})`; c.beginPath(); c.ellipse(s.x, s.y, r, r*.42, 0, 0, Math.PI*2); c.stroke();
+    if (a < .55){ const h = Math.sin(a/.55*Math.PI)*10*far; c.fillStyle = `rgba(240,248,255,${al})`;
+      c.beginPath(); c.arc(s.x - 2.5*far - a*4*far, s.y - h, 1.8*far, 0, Math.PI*2); c.arc(s.x + 2.5*far + a*4*far, s.y - h*.8, 1.5*far, 0, Math.PI*2); c.fill(); }
+  }
+}
 export function drawOverlay(fps){
   const {W, H, DPR} = view, S = G.S, t = G.t;
   c.setTransform(DPR,0,0,DPR,0,0); c.clearRect(0,0,W,H);
   if (G.stormK > .05){
     c.strokeStyle = `rgba(215,228,240,${.35*G.stormK})`; c.lineWidth = 1.2;
     for (let k=0;k<90;k++){ const rx = (hash(k,1)*W*1.2 + t*160) % (W*1.2) - W*.1, ry = (hash(k,2)*H + t*760) % H; c.beginPath(); c.moveTo(rx, ry); c.lineTo(rx-7, ry+20); c.stroke(); }
+    drawSplashes(W, H, t);
   }
   if (G.flash){ c.fillStyle = `rgba(240,245,255,${G.flash*.4})`; c.fillRect(0,0,W,H); }
 

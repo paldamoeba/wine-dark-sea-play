@@ -1,0 +1,45 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wine-Dark Showroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f1e3c4;--clay:#c8693a;--ochre:#d48a2a;--display:"Marcellus",Georgia,serif;--body:"Nunito",system-ui,sans-serif;color-scheme:light}
+html,body{height:100%;margin:0;overflow:hidden;background:#c9e3e8;font-family:var(--body)}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.tag{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:16px;right:16px;pointer-events:none;color:#26242c}
+.tag h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,6vw,36px);margin:0}
+.tag p{margin:2px 0 0;font-weight:700;font-size:13px;color:#5c5446}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));box-sizing:border-box;
+  background:linear-gradient(#3b2d25,#2b211c);border:2px solid #6b4f3d;border-radius:18px;padding:10px 12px;color:var(--ink);display:grid;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.row2{display:flex;gap:6px}
+.bar.folded{display:none}
+.show{position:fixed;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));flex:none;padding:10px 16px}
+select{min-width:0;width:100%}
+@media (max-width:420px){select{font-size:14px;padding:7px 4px}}
+.tab{flex:1;font:inherit;font-weight:800;font-size:14px;border:2px solid #6b4f3d;background:#47362c;color:#c9b48f;border-radius:11px;padding:8px 4px;cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--ochre);border-color:var(--ochre);color:#2a1d17}
+label{display:grid;gap:3px;font-size:12px;font-weight:700;color:#c9b48f}
+select{font:inherit;font-weight:700;font-size:15px;background:#2b211c;color:var(--ink);border:2px solid #6b4f3d;border-radius:10px;padding:8px}
+p.d{margin:0;font-size:13.5px;line-height:1.4}
+button:focus-visible,select:focus-visible{outline:3px solid #f4fbff;outline-offset:2px}
+.err{position:fixed;inset:0;display:grid;place-items:center;font-weight:700;padding-inline:16px;text-align:center}
+</style>
+<canvas id="stage" aria-label="3D models"></canvas>
+<div class="tag" id="tagline"><h1>Wine-Dark Showroom</h1><p>Every model from the game · drag to turn, pinch or scroll to zoom</p></div>
+<div class="bar" id="bar">
+  <div class="row">
+    <label>Show<select id="group"></select></label>
+    <label>Look at<select id="pick"></select></label>
+    <label>Light<select id="light"></select></label>
+  </div>
+  <div class="row2"><button class="tab" id="cel" aria-pressed="false">Cel-shaded look</button><button class="tab" id="spin" aria-pressed="false">Turn slowly</button><button class="tab" id="fold" aria-expanded="true">Hide</button></div>
+  <p class="d" id="desc"></p>
+</div>
+<button class="tab show" id="unfold" hidden>Show panel</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the page.</div>');</script>
+<script type="module" src="js/showroom.js"></script>

@@ -1,8 +1,8 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=77dd129';
+import {hash} from './world.js?v=d4d0ac7';
 
 const T = window.THREE;
-import {mat} from './ships.js?v=77dd129';
+import {mat} from './ships.js?v=d4d0ac7';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -68,13 +68,50 @@ export function makeHull(L, B, H, dark, light){
 }
 // ---- wreck props ----
 export const amphoraGeo = new T.LatheGeometry([[0,0],[3,1],[5,4],[5.5,8],[4,12],[2,14],[2,17],[3.2,18]].map(([x,y]) => new T.Vector2(x,y)), 14);
+// A round, soft gull: a fat body, a round head, a little orange beak, wings with dark tips that flap.
 export function gull(){ const g = new T.Group();
-  g.add(mesh(new T.BoxGeometry(7, 2.2, 2.4), '#f6f6f2', {}, false));
-  const head = mesh(new T.BoxGeometry(2, 2, 2), '#f6f6f2', {}, false); head.position.x = 4; g.add(head);
-  const beak = mesh(new T.ConeGeometry(.6, 2, 4), '#e0a030', {}, false); beak.rotation.z = -Math.PI/2; beak.position.x = 5.8; g.add(beak);
-  const wings = [1, -1].map(s => { const p = new T.Group(); const w = mesh(new T.BoxGeometry(4, .5, 10), '#ecebe6', {}, false); w.position.z = s*5; p.add(w);
-    const tip = mesh(new T.BoxGeometry(3, .6, 3), '#3a3a3a', {}, false); tip.position.z = s*10; p.add(tip); g.add(p); return {p, s}; });
+  const body = mesh(ballGeo, '#f6f6f2', {flatShading:false}, false); body.scale.set(4.2, 2, 2.2); g.add(body);
+  const head = mesh(ballGeo, '#f6f6f2', {flatShading:false}, false); head.scale.setScalar(1.7); head.position.set(3.8, 1.1, 0); g.add(head);
+  const beak = mesh(new T.ConeGeometry(.55, 2, 6), '#e0a030', {}, false); beak.rotation.z = -Math.PI/2; beak.position.set(6, .9, 0); g.add(beak);
+  const tail = mesh(new T.ConeGeometry(1.4, 3, 4), '#ecebe6', {}, false); tail.rotation.z = Math.PI/2; tail.scale.z = .4; tail.position.x = -5; g.add(tail);
+  const wings = [1, -1].map(s => { const p = new T.Group(); const w = mesh(ballGeo, '#ecebe6', {flatShading:false}, false); w.scale.set(2.4, .4, 5.4); w.position.z = s*5; p.add(w);
+    const tip = mesh(ballGeo, '#3a3a3a', {flatShading:false}, false); tip.scale.set(1.5, .42, 2.2); tip.position.set(-.4, 0, s*10); p.add(tip); g.add(p); return {p, s}; });
   g.userData.wings = wings; return g; }
+// ---- models: soft rounded shapes, nose along +x ----
+export function whaleModel(){
+  const g = new T.Group(), body = new T.Group(); g.add(body);
+  const b = mesh(new T.SphereGeometry(1, 14, 10), '#4d6d86'); b.scale.set(62, 17, 20); body.add(b);
+  const belly = mesh(new T.SphereGeometry(1, 12, 8), '#c9d3d6'); belly.scale.set(50, 9, 15); belly.position.set(6, -8, 0); body.add(belly);
+  const head = mesh(new T.SphereGeometry(1, 12, 8), '#4d6d86'); head.scale.set(26, 15, 18); head.position.set(40, 1, 0); body.add(head);
+  for (const s of [-1, 1]){ const fin = mesh(new T.SphereGeometry(1, 8, 6), '#3d5a72'); fin.scale.set(13, 2.5, 6); fin.position.set(18, -8, s*20); fin.rotation.y = s*.5; body.add(fin);
+    const eye = mesh(new T.SphereGeometry(1.6, 6, 4), '#1d2633'); eye.position.set(46, 3, s*15.5); body.add(eye); }
+  const tail = new T.Group(); tail.position.set(-58, 2, 0); body.add(tail);
+  const stock = mesh(new T.SphereGeometry(1, 10, 6), '#4d6d86'); stock.scale.set(20, 8, 9); stock.position.x = -8; tail.add(stock);
+  for (const s of [-1, 1]){ const fluke = mesh(new T.SphereGeometry(1, 10, 6), '#3d5a72'); fluke.scale.set(10, 2.2, 18); fluke.position.set(-24, 0, s*14); fluke.rotation.y = s*.45; tail.add(fluke); }
+  // the spout: a few white puffs that rise and fade
+  const spout = []; for (let k=0;k<7;k++){ const p = mesh(new T.SphereGeometry(5, 6, 4), '#f4fbff', {transparent:true, opacity:.8}, false); p.material = p.material.clone(); p.visible = false; g.add(p); spout.push(p); }
+  g.userData = {body, tail, spout};
+  return g;
+}
+export function dolphinModel(){
+  const g = new T.Group();
+  const b = mesh(new T.SphereGeometry(1, 10, 8), '#7f94a6'); b.scale.set(14, 4.5, 4.5); g.add(b);
+  const belly = mesh(new T.SphereGeometry(1, 8, 6), '#e3e8ea'); belly.scale.set(11, 2.6, 3.6); belly.position.y = -2; g.add(belly);
+  const nose = mesh(new T.SphereGeometry(1, 6, 4), '#7f94a6'); nose.scale.set(5, 1.6, 1.6); nose.position.x = 15; g.add(nose);
+  const fin = mesh(new T.ConeGeometry(2.6, 7, 4), '#6b8194'); fin.position.set(-1, 5, 0); fin.rotation.z = .5; g.add(fin);
+  const tail = mesh(new T.SphereGeometry(1, 6, 4), '#6b8194'); tail.scale.set(2.5, 1, 6); tail.position.x = -15; g.add(tail);
+  return g;
+}
+
+// An iceberg: a big flat-topped slab of ice with a taller peak, a pale-blue skirt under the water line. R = a random source.
+export function icebergModel(r, R = Math.random){
+  const g = new T.Group(), sides = 6 + Math.floor(R()*3), ice = ['#f4f9fb', '#dbeef5'];
+  const skirt = mesh(new T.CylinderGeometry(r*1.15, r*1.3, 10, sides), '#9fd3e6'); skirt.position.y = -4; g.add(skirt);
+  const slab = mesh(new T.CylinderGeometry(r*.9, r*1.05, r*.35, sides), ice[0]); slab.position.y = r*.15; slab.rotation.y = R()*3; g.add(slab);
+  const peak = mesh(new T.CylinderGeometry(r*.25, r*.55, r*.7, sides - 1), ice[1]); peak.position.set((R() - .5)*r*.4, r*.6, (R() - .5)*r*.4); peak.rotation.y = R()*3; g.add(peak);
+  const tip = mesh(new T.ConeGeometry(r*.25, r*.35, sides - 1), ice[0]); tip.position.set(peak.position.x, r*1.12, peak.position.z); g.add(tip);
+  return g;
+}
 export function wreckModel(){
   const g = new T.Group();
   const hull = makeHull(80, 26, 14, '#4f3a28', '#6d5640'); hull.rotation.set(.45, 0, .22); hull.position.y = -6; g.add(hull);

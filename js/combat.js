@@ -1,19 +1,19 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=77dd129';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=77dd129';
-import {G, ship, holdUsed, save, gain} from './state.js?v=77dd129';
-import {scene} from './scene.js?v=77dd129';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=77dd129';
-import {makeFire, updateFire, burn} from './fire.js?v=77dd129';
-import {blessing, fighters} from './crew.js?v=77dd129';
-import {progress} from './quests.js?v=77dd129';
-import {arrowK, ramDmg} from './upgrades.js?v=77dd129';
-import {toast} from './ui.js?v=77dd129';
-import {sink} from './player.js?v=77dd129';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=77dd129';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=77dd129';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=d4d0ac7';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=d4d0ac7';
+import {G, ship, holdUsed, save, gain} from './state.js?v=d4d0ac7';
+import {scene} from './scene.js?v=d4d0ac7';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=d4d0ac7';
+import {makeFire, updateFire, burn} from './fire.js?v=d4d0ac7';
+import {blessing, fighters} from './crew.js?v=d4d0ac7';
+import {progress} from './quests.js?v=d4d0ac7';
+import {arrowK, ramDmg} from './upgrades.js?v=d4d0ac7';
+import {toast} from './ui.js?v=d4d0ac7';
+import {sink} from './player.js?v=d4d0ac7';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=d4d0ac7';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=d4d0ac7';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -32,7 +32,8 @@ export function placeOnWaves(obj, x, y, a, len, t, sinkY = 0, roll0 = 0, pitch0 
 function makeEnemy(r0){
   const r = r0.kind === 'navy' ? {...r0, kind:r0.isle.city} : r0; // a navy patrol belongs to whoever holds its island
   const e = {...r, city:r.kind === 'merchant' ? r.isle.city : ENEMIES[r.kind].city || null, spec:ENEMIES[r.kind], x:r.home.x, y:r.home.y, a:Math.random()*6.28, v:0, hull:ENEMIES[r.kind].hull, cool:Math.random()*2,
-    mode:'patrol', pa:Math.random()*6.28, dead:false, sinkY:0, respawn:0, obj:null, leg:1, wait:0, angry:false, attacked:false, foe:null, lost:0, calm:0};
+    mode:'patrol', pa:Math.random()*6.28, dead:false, sinkY:0, respawn:0, obj:null, leg:1, wait:0, angry:false, attacked:false, foe:null, lost:0, calm:0,
+    lane:(Math.random()*2 - 1)*120, spd:.88 + Math.random()*.24, orbit:Math.random() < .5 ? 1 : -1, ring:170 + Math.random()*130, tacT:0};
   if (r.route && r.kind === 'merchant'){ const k = Math.random(), [p, q] = r.route; e.x = p.x + (q.x - p.x)*k; e.y = p.y + (q.y - p.y)*k; pushOut(e, 100); }
   if (side(e) === 'navy' && !e.guard) e.isle.patrol = e;
   return e;
@@ -63,7 +64,7 @@ for (const is of ISLANDS){
     mode:'patrol', dead:false, sinkY:0, respawn:0, obj:null, angry:false, attacked:false, lost:0, calm:0, quiet:0, guards:[]};
   enemies.push(f); is.fort = f;
   for (let g=0; g<FORTS.guards; g++){ const p = {x:site.sea.x + Math.cos(site.a + (g ? 1.3 : -1.3))*260, y:site.sea.y + Math.sin(site.a + (g ? 1.3 : -1.3))*260}; pushOut(p, 180);
-    const route = [0, 1, 2, 3].map(k => { const q = {x:site.sea.x + Math.cos(site.a + k*Math.PI/2 + g*Math.PI/4)*300, y:site.sea.y + Math.sin(site.a + k*Math.PI/2 + g*Math.PI/4)*300}; pushOut(q, 180); return q; });
+    const rr = 230 + g*150, route = [0, 1, 2, 3, 4].map(k => { const a = site.a + (g ? -1 : 1)*k*Math.PI*2/5 + g*.6, q = {x:site.sea.x + Math.cos(a)*rr, y:site.sea.y + Math.sin(a)*rr}; pushOut(q, 180); return q; });
     const e = makeEnemy({kind:owner === 'pirate' ? 'skiff' : owner, home:p, guard:true, isle:is, route}); enemies.push(e); f.guards.push(e); }
 }
 function buildFort(e){
@@ -144,8 +145,10 @@ function steer(e, tx, ty, speed, dt){
   }
   if (!moved) e.v *= .9;
   // Keep raiders from piling onto the same spot.
-  for (const o of enemies){ if (o === e || o.dead) continue; const dx = e.x - o.x, dy = e.y - o.y, d = Math.hypot(dx, dy) || 1, min = (e.spec.beam + o.spec.beam)*1.6;
-    if (d < min){ e.x += dx/d*(min - d)*.5; e.y += dy/d*(min - d)*.5; } }
+  for (const o of enemies){ if (o === e || o.dead || o.fort) continue; const dx = e.x - o.x, dy = e.y - o.y; if (Math.abs(dx) > 400 || Math.abs(dy) > 400) continue;
+    const d = Math.hypot(dx, dy) || 1, min = (e.spec.beam + o.spec.beam)*1.6;
+    if (d < min){ e.x += dx/d*(min - d)*.5; e.y += dy/d*(min - d)*.5; }
+    else if (d < min*2.6){ const k = (min*2.6 - d)/(min*1.6)*45*dt; e.x += dx/d*k; e.y += dy/d*k; } }
   if (pushOut(e, e.spec.beam)) e.v *= .6;
   e.x = Math.max(60, Math.min(WORLD-60, e.x)); e.y = Math.max(60, Math.min(WORLD-60, e.y));
 }
@@ -153,22 +156,41 @@ function steer(e, tx, ty, speed, dt){
 const playerSafe = () => zoneAt(G.S.x, G.S.y) === 0 || G.sheetOpen || !!G.dock || !G.settings.dev.raiders;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
-// Close in on a target (a ship, or the player when tgt is null), then circle it at bow-shot range and shoot.
+// Fighting: close in from the side, then keep moving. Every few seconds a ship picks a new move:
+//  circle  - sail round the target at its own distance, broadside on, either way round
+//  pass    - a fast run past the target's side and out the other end, then come about
+//  wide    - pull back to a longer range (always, once badly hurt)
+// so a fight is ships weaving around each other rather than two ships parked side by side.
 function fight(e, tgt, dt){
   const o = tgt || G.S, d = dist(e, o);
   e.spotT += dt; const sp = e.spec.speed*(e.spotT < COMBAT.windup ? .5 : 1); // a slow start after spotting you, so there's time to react
-  if (d > 230) steer(e, o.x, o.y, sp, dt);
-  else { const s = Math.atan2(e.y - o.y, e.x - o.x) + .9; steer(e, o.x + Math.cos(s)*220, o.y + Math.sin(s)*220, sp*.75, dt); }
+  e.tacT -= dt;
+  if (e.tacT <= 0){
+    const r = Math.random();
+    e.tac = r < .45 ? 'circle' : r < .8 ? 'pass' : 'wide';
+    if (Math.random() < .35) e.orbit = -e.orbit;
+    e.ring = 170 + Math.random()*130; e.tacT = 4 + Math.random()*5;
+    if (e.tac === 'pass'){ const a = Math.atan2(o.y - e.y, o.x - e.x) + e.orbit*.45; e.passTo = {x:o.x + Math.cos(a)*380, y:o.y + Math.sin(a)*380}; }
+  }
+  if (e.hull < e.spec.hull*.3) e.tac = 'wide';
+  if (d > 520){ const a = Math.atan2(e.y - o.y, e.x - o.x) + e.orbit*.5; steer(e, o.x + Math.cos(a)*e.ring, o.y + Math.sin(a)*e.ring, sp, dt); } // closing in, aimed beside the target
+  else if (e.tac === 'pass'){ steer(e, e.passTo.x, e.passTo.y, sp, dt); if (dist(e, e.passTo) < 100) e.tacT = 0; }
+  else { const R = e.tac === 'wide' ? e.ring + 160 : e.ring, s = Math.atan2(e.y - o.y, e.x - o.x) + e.orbit*.75;
+    steer(e, o.x + Math.cos(s)*R, o.y + Math.sin(s)*R, sp*.9, dt); }
   e.cool -= dt;
   if (d < COMBAT.range && e.cool <= 0 && broadside(e, o)){ e.cool = COMBAT.enemyShotEvery*(.75 + Math.random()*.5); salvo(e, tgt, e.spec.fighters, e.spec.dmg, 140); }
 }
 function startFight(e){ if (e.mode !== 'chase'){ e.mode = 'chase'; e.cool = COMBAT.firstShot; e.spotT = 0; } }
 // Follow a route of points; wait a moment at each end (merchants unloading).
+// Each ship keeps its own lane a little to one side of the route line, so ships on one route don't sail nose to tail.
 function sail(e, dt, speed, pause){
-  const p = e.route[e.leg % e.route.length];
-  if (e.wait > 0){ e.wait -= dt; steer(e, p.x, p.y, 0, dt); return; }
-  steer(e, p.x, p.y, speed, dt);
-  if (dist(e, p) < 110){ e.leg++; e.wait = pause; }
+  const n = e.route.length, p = e.route[e.leg % n], q = e.route[(e.leg + n - 1) % n];
+  const dx = p.x - q.x, dy = p.y - q.y, l = Math.hypot(dx, dy) || 1;
+  let tx = p.x - dy/l*e.lane, ty = p.y + dx/l*e.lane;
+  if (landDist(tx, ty) < 140){ tx = p.x; ty = p.y; }
+  if (e.wait > 0){ e.wait -= dt; steer(e, tx, ty, 0, dt); return; }
+  steer(e, tx, ty, speed*e.spd, dt);
+  if (Math.hypot(e.x - tx, e.y - ty) < 110){ e.leg++; e.wait = pause*(.5 + Math.random()); }
 }
 
 function pirate(e, dt){
@@ -194,7 +216,7 @@ function pirate(e, dt){
   } else {
     const m = enemies.find(o => !o.dead && side(o) === 'merchant' && dist(o, e) < e.spec.sight && zoneAt(o.x, o.y) !== 0);
     if (m && fromHome < e.spec.leash*.7){ e.prey = m; e.mode = 'hunt'; e.cool = COMBAT.firstShot; e.spotT = 0; return; }
-    e.pa += dt*.12; steer(e, e.home.x + Math.cos(e.pa)*260, e.home.y + Math.sin(e.pa)*260, e.spec.speed*.4, dt);
+    e.pa += dt*.12*e.orbit; steer(e, e.home.x + Math.cos(e.pa)*(e.ring + 100), e.home.y + Math.sin(e.pa)*(e.ring + 100), e.spec.speed*.4*e.spd, dt);
   }
 }
 
@@ -231,7 +253,7 @@ function navy(e, dt){
   const g = e.goal;
   if (g){
     if (g.city === e.city || e.hull < e.spec.hull*.4 || e.stay > ISLES.raidStay){ e.goal = null; e.raidT = ISLES.raidEvery[0] + Math.random()*(ISLES.raidEvery[1] - ISLES.raidEvery[0]); return; }
-    const a = Math.atan2(e.y - g.y, e.x - g.x) + .25, R = g.r + 520; // circle the island offshore, with room to fight
+    const a = Math.atan2(e.y - g.y, e.x - g.x) + .25*e.orbit, R = g.r + 380 + e.ring; // circle the island offshore, with room to fight
     steer(e, g.x + Math.cos(a)*R, g.y + Math.sin(a)*R, e.spec.speed*.8, dt); e.mode = 'raid';
     if (dist(e, g) < R + 250) e.stay += dt;
     return;

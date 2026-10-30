@@ -48,10 +48,10 @@ export const SPECS = {
   penteconter:{L:150, B:22, H:13, rise:18, oarRows:1, oarCount:11, mast:true, sailW:44, sailH:38, ram:true, eyes:true, fans:true, crew:[['stand', 1]], look:{paint:'black', sail:'bwr', flag:'apollo'}},
   bireme:     {L:160, B:30, H:18, rise:26, oarRows:1, oarCount:14, mast:true, sailW:62, sailH:52, ram:true, fans:true, eyes:true, crew:[['stand', 1], ['archer', 4]], look:{paint:'gold', sail:'bwr', flag:'poseidon'}},
   trireme:    {L:190, B:34, H:21, rise:32, oarRows:3, oarCount:11, mast:true, sailW:74, sailH:60, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, outrigger:true, canopy:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
-  raider:     {L:135, B:28, H:16, rise:22, oarRows:1, oarCount:9, mast:true, sailW:56, sailH:46, ram:true, fans:true, shields:true, raider:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'raider', sail:'blood', flag:'none'}},
+  raider:     {L:135, B:28, H:16, rise:22, oarRows:1, oarCount:9, mast:true, sailW:56, sailH:46, ram:true, fans:true, eyes:true, raider:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'raider', sail:'blood', flag:'none'}},
   trader:     {L:84, B:36, H:18, rise:12, mast:true, sailW:50, sailH:42, cargo:true, crew:[['stand', 2]], crewAt:[[-.4, 0], [.33, 0]], look:{paint:'oak', sail:'ochre', flag:'hermes'}}, // a small round trading ship
   dinghy:     {L:44, B:17, H:9, rise:6, oarRows:1, oarCount:2, mast:true, sailW:20, sailH:18, raider:true, crew:[['archer', 1]], look:{paint:'raider', sail:'blood', flag:'none'}},
-  skiff:      {L:72, B:22, H:12, rise:12, oarRows:1, oarCount:3, mast:true, sailW:34, sailH:28, fans:true, shields:true, shieldCount:5, raider:true, crew:[['archer', 3]], look:{paint:'raider', sail:'blood', flag:'none'}},
+  skiff:      {L:72, B:22, H:12, rise:12, oarRows:1, oarCount:3, mast:true, sailW:34, sailH:28, fans:true, ram:true, raider:true, crew:[['archer', 3]], look:{paint:'raider', sail:'blood', flag:'none'}},
 };
 
 // ---------- materials ----------
@@ -81,10 +81,12 @@ export function mat(color, o = {}){
   return mats[key] = new T.MeshToonMaterial({color:c, gradientMap:GRAD, flatShading:true, ...opts});
 }
 export function mesh(geo, color, o){ const m = new T.Mesh(geo, mat(color, o)); m.castShadow = m.receiveShadow = true; return m; }
-function tube(points, radius, color, radial = 5){
-  const curve = new T.CatmullRomCurve3(points.map(p => new T.Vector3(...p)));
-  return mesh(new T.TubeGeometry(curve, Math.max(8, points.length*2), radius, radial, false), color);
+function tube(points, radius, color, radial = 5, closed = false){
+  const curve = new T.CatmullRomCurve3(points.map(p => new T.Vector3(...p)), closed, 'centripetal');
+  return mesh(new T.TubeGeometry(curve, Math.max(8, points.length*(closed ? 4 : 2)), radius, radial, closed), color);
 }
+// one closed ring around the whole hull: down the left side bow to stern, back up the right, so the two sides meet at the ends with no seam
+const loop = (st, f) => [...st.map(p => f(p, -1)), ...st.slice(1, -1).reverse().map(p => f(p, 1))];
 
 // ---------- emblems ----------
 function drawSign(c, sign, x, y, s, fg, bg){
@@ -171,12 +173,10 @@ function hull(s, paint){
   }
   const g = new T.Group();
   const m = new T.Mesh(buildGeo(tris), mat('#ffffff', {vertexColors:true, side:T.DoubleSide})); m.castShadow = m.receiveShadow = true; g.add(m);
-  const railR = Math.max(.9, B*.045), waleR = Math.max(.7, B*.035), inner = st.slice(1, -1);
-  for (const sg of [1, -1]){
-    g.add(tube(st.map(p => [p.x, p.dy + railR*.3, sg*p.w]), railR, C.wale));
-    g.add(tube(inner.map(p => { const r = p.ring[sg < 0 ? 2 : M-3]; return [r[0], r[1], r[2]*1.04]; }), waleR, C.wale));
-    if (H > 11) g.add(tube(inner.map(p => { const r = p.ring[sg < 0 ? 3 : M-4]; return [r[0], r[1] - .5, r[2]*1.05]; }), waleR*.8, C.wale));
-  }
+  const railR = Math.max(.9, B*.045), waleR = Math.max(.7, B*.035);
+  g.add(tube(loop(st, (p, sg) => [p.x, p.dy + railR*.3, sg*p.w]), railR, C.wale, 7, true));
+  g.add(tube(loop(st, (p, sg) => { const r = p.ring[sg < 0 ? 2 : M-3]; return [r[0], r[1], r[2]*1.04]; }), waleR, C.wale, 6, true));
+  if (H > 11) g.add(tube(loop(st, (p, sg) => { const r = p.ring[sg < 0 ? 3 : M-4]; return [r[0], r[1] - .5, r[2]*1.05]; }), waleR*.8, C.wale, 6, true));
   g.add(tube(st.map(p => p.ring[5]).map(([x, y]) => [x, y - .6, 0]), Math.max(1, B*.04), C.bottom));
   for (let k=-2;k<=2;k++){ const p = mesh(new T.BoxGeometry(L*.6, .35, .5), C.inner); p.position.set(0, deckLevel + .2, k*B*.12); g.add(p); }
   for (let k=0;k<6;k++){ const x = (-.3 + k*.12)*L, w = W(Math.abs(x/(L/2)))*1.7; const bm = mesh(new T.BoxGeometry(1.6, 1.2, w), C.wale); bm.position.set(x, deckLevel + .6, 0); g.add(bm); }
@@ -191,12 +191,30 @@ function hull(s, paint){
 const beans = {};
 export function beanGeo(h = 7.4){ return beans[h] || (beans[h] = new T.LatheGeometry([[0, 0], [2.1, .25], [3, 1.3], [3.3, 2.9], [3.1, 4.5], [2.5, 5.9], [1.5, 6.9], [0, 7.3]].map(([r, y]) => new T.Vector2(r, y*h/7.3)), 10)); }
 const headGeo = new T.SphereGeometry(3, 12, 9);
-const capGeo = new T.SphereGeometry(3.15, 12, 6, 0, Math.PI*2, 0, Math.PI/2.1), helmGeo = new T.SphereGeometry(3.3, 12, 6, 0, Math.PI*2, 0, Math.PI/1.9);
-// a big round head (no eyes, by choice), hair or a helmet; y = the head's center
+const capGeo = new T.SphereGeometry(3.15, 12, 6, 0, Math.PI*2, 0, Math.PI/2.1), helmGeo = new T.SphereGeometry(3.35, 14, 7, 0, Math.PI*2, 0, Math.PI/1.75);
+const cheekGeo = new T.SphereGeometry(1.5, 8, 6), standGeo = new T.CylinderGeometry(.5, .7, 1.2, 6);
+const crestGeo = new T.CylinderGeometry(3.4, 3.4, 1.3, 16, 1, false, Math.PI/2, Math.PI); crestGeo.rotateX(Math.PI/2); // a solid half disc, like a horsehair crest
+const pilosGeo = new T.LatheGeometry([[3.45, 0], [3.35, 1.4], [2.8, 3], [1.8, 4.4], [.7, 5.4], [0, 5.7]].map(([r, y]) => new T.Vector2(r, y)), 16), bandGeo = new T.TorusGeometry(3.35, .5, 5, 16);
+// Helmets (no face under them, by choice):
+//  'hoplite' a round bronze helmet with cheek guards and a front-to-back horsehair crest (archers, marines)
+//  'captain' the same helmet with a tall crest running side to side, like Spartan officers wore (captains, generals)
+//  'pirate'  a dark pointed felt cap with a red band
+function helmetOn(parent, y, kind){
+  if (kind === 'pirate'){ const cap = mesh(pilosGeo, '#2e2522'); cap.position.y = y - .3; parent.add(cap);
+    const band = mesh(bandGeo, '#9b2c26'); band.rotation.x = Math.PI/2; band.position.y = y + .2; parent.add(band); return; }
+  const hm = mesh(helmGeo, 'bronze'); hm.position.y = y + .25; parent.add(hm);
+  for (const sg of [1, -1]){ const ch = mesh(cheekGeo, 'bronze'); ch.scale.set(.9, 1.25, .45); ch.position.set(1.1, y - 1.2, sg*2.75); parent.add(ch); }
+  const neck = mesh(cheekGeo, 'bronze'); neck.scale.set(.5, .9, 1.6); neck.position.set(-2.6, y - .9, 0); parent.add(neck);
+  const capt = kind === 'captain';
+  const st = mesh(standGeo, 'bronze'); st.position.y = y + 3.6; parent.add(st);
+  const cr = mesh(crestGeo, capt ? '#f1e6c8' : 'plume'); cr.scale.set(capt ? 1.2 : 1.05, capt ? 1.45 : 1, capt ? 1 : .9); cr.position.y = y + 2.6;
+  if (capt){ cr.rotation.y = Math.PI/2; const rim = mesh(crestGeo, 'plume'); rim.scale.set(1.32, 1.58, .55); rim.rotation.y = Math.PI/2; rim.position.set(.1, y + 2.5, 0); parent.add(rim); }
+  parent.add(cr);
+}
+// a big round head (no eyes, by choice), hair or a helmet; y = the head's center. helmet: false, true (hoplite) or a kind above.
 export function cuteHead(parent, y, hairColor = 'hair', helmet = false){
   const head = mesh(headGeo, 'skin'); head.position.y = y; parent.add(head);
-  if (helmet){ const hm = mesh(helmGeo, 'bronze'); hm.position.y = y + .35; hm.rotation.z = .12; parent.add(hm);
-    const crest = mesh(new T.BoxGeometry(6, 2, .9), 'plume'); crest.position.y = y + 3.6; parent.add(crest); }
+  if (helmet) helmetOn(parent, y, helmet === true ? 'hoplite' : helmet);
   else { const hair = mesh(capGeo, hairColor); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
 }
 // A crew member: a round peg figure like the townspeople, a body and a head with no arms or legs. About 13 units tall. Faces +x.
@@ -251,6 +269,20 @@ function ram(s, color = 'bronze', k = 1){
   for (const dy of [-.28, 0, .28]){ const fin = mesh(new T.BoxGeometry(len*.8, h*.12, s.B*.3), color); fin.position.set(len*.55, dy*h, 0); g.add(fin); }
   g.position.set(s.L*.38, keelAt(s, .76) + h*.45, 0); return g;
 }
+// The pirate ram: a bronze boar's head, like the "samaina" ships of Polycrates, the pirate king of Samos.
+function boarRam(s){
+  const g = new T.Group(), k = Math.max(.55, s.H/16), c = '#6d4a2a';
+  const neck = mesh(new T.CylinderGeometry(2.6*k, 3.8*k, 16*k, 8), c); neck.rotation.z = -Math.PI/2; neck.position.x = 0; g.add(neck);
+  const head = mesh(new T.SphereGeometry(4*k, 10, 8), c); head.scale.set(1.35, .95, .9); head.position.x = 9*k; g.add(head);
+  const snout = mesh(new T.CylinderGeometry(2.2*k, 3*k, 6*k, 8), c); snout.rotation.z = -Math.PI/2; snout.position.set(14*k, -.6*k, 0); g.add(snout);
+  const nose = mesh(new T.CylinderGeometry(2.3*k, 2.3*k, .8*k, 10), '#3e2a1a'); nose.rotation.z = -Math.PI/2; nose.position.set(17.2*k, -.6*k, 0); g.add(nose);
+  for (const sg of [1, -1]){
+    const tusk = mesh(new T.ConeGeometry(.7*k, 4.6*k, 5), '#efe4c8'); tusk.position.set(14.5*k, .6*k, sg*2.6*k); tusk.rotation.set(sg*.5, 0, -.5); g.add(tusk);
+    const ear = mesh(new T.ConeGeometry(1.4*k, 3.4*k, 4), c); ear.position.set(7*k, 3.8*k, sg*2.2*k); ear.rotation.set(sg*.5, 0, .5); g.add(ear);
+    const eye = mesh(new T.SphereGeometry(.8*k, 6, 5), '#c8402f'); eye.position.set(11*k, 1.6*k, sg*2.9*k); g.add(eye);
+  }
+  g.position.set(s.L*.46 - 4*k, keelAt(s, .8) + s.H*.38, 0); return g;
+}
 function flagOn(god, x, y){
   const geo = new T.PlaneGeometry(16, 10, 8, 2); geo.translate(-8, 0, 0);
   const m = new T.Mesh(geo, mat('#ffffff', {map:flagTex(god), side:T.DoubleSide, transparent:true, alphaTest:.5})); m.castShadow = true;
@@ -265,11 +297,9 @@ export function buildShip(key, look = {}, crew = true){
   const pc = PAINTS[lk.paint] || PAINTS.gold;
   root.userData = {oars:[], flags:[], spec:s, body};
   if (s.oarRows){ const o = oars(s, info, s.raider ? 'rOar' : 'oar'); body.add(o); root.userData.oars = o.userData.list; }
-  body.add(steeringOars(s, info));
+  if (s.oarCount !== 1) body.add(steeringOars(s, info)); // the rowboat steers with its oars
   if (s.outrigger) for (const sg of [1, -1]){ const box = mesh(new T.BoxGeometry(s.L*.62, s.H*.2, 5), pc.top); box.position.set(-s.L*.02, info.deckLevel + s.H*.2, sg*(info.W(.3) + 2.5)); body.add(box);
     const lip = mesh(new T.BoxGeometry(s.L*.63, 1.2, 6), pc.wale); lip.position.set(-s.L*.02, info.deckLevel + s.H*.31, sg*(info.W(.3) + 2.5)); body.add(lip); }
-  if (s.shields){ const sn = s.shieldCount || 11; for (let i=0;i<sn;i++) for (const sg of [1, -1]){ const x = (-.32 + i*.64/(sn-1))*s.L, w = info.W(Math.abs(x/(s.L/2)));
-    const sh = mesh(new T.CylinderGeometry(3.4, 3.4, 1, 10), i % 2 ? '#7a2426' : '#c4b08a'); sh.rotation.x = Math.PI/2; sh.position.set(x, info.deckLevel + s.H*.38, sg*(w + .8)); body.add(sh); } }
   if (s.mast){
     const top = info.deckLevel + s.sailH + 16;
     const mast = mesh(new T.CylinderGeometry(1.6, 2.4, top - info.deckLevel + 6, 7), 'mast'); mast.position.set(0, (top + info.deckLevel)/2 + 3, 0); body.add(mast);
@@ -295,6 +325,7 @@ export function buildShip(key, look = {}, crew = true){
   }
   // The player's ship shows its upgrades: the ram it has bought (not the built-in one) and extra planking along the sides.
   if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/10)), sub = lk.ram - m*10; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.03 + m*.1)); } }
+  else if (s.raider && s.ram) body.add(boarRam(s));
   else if (s.ram) body.add(ram(s));
   if (lk.plate > 0){ const c = lk.plate >= 10 ? '#e3b341' : lk.plate >= 5 ? '#b07f3c' : '#7a5230', n = 6;
     for (let i=0;i<n;i++) for (const sg of [1, -1]){ const f = -.34 + i*.68/(n - 1), x = f*s.L, w = info.W(Math.abs(f*2));
@@ -305,7 +336,7 @@ export function buildShip(key, look = {}, crew = true){
   if (s.eyes) for (const sg of [1, -1]){
     const x = s.L*.36, w = info.W(.72);
     const e = mesh(new T.CircleGeometry(2.8, 14), 'white', {side:T.DoubleSide}); e.position.set(x, s.H*.15 + s.rise*.12, sg*(w + .6)); e.rotation.y = sg > 0 ? .45 : Math.PI - .45; body.add(e);
-    const pu = mesh(new T.CircleGeometry(1.4, 10), '#1c1c22', {side:T.DoubleSide}); pu.position.copy(e.position); pu.position.z += sg*.2; pu.position.x += .6; pu.rotation.y = e.rotation.y; body.add(pu);
+    const pu = mesh(new T.CircleGeometry(1.4, 10), s.raider ? '#b8322a' : '#1c1c22', {side:T.DoubleSide}); pu.position.copy(e.position); pu.position.z += sg*.2; pu.position.x += .6; pu.rotation.y = e.rotation.y; body.add(pu);
   }
   if (s.nets){ const n = mesh(new T.DodecahedronGeometry(6, 0), 'net'); n.scale.set(1.3, .5, 1); n.position.set(-s.L*.3, info.deckLevel + 2, 0); body.add(n); }
   if (s.cargo){ for (let i=0;i<8;i++){ const a = mesh(amphora, '#b06a3d', {flatShading:false}); a.position.set(-8 + (i % 4)*8, info.deckLevel, -7 + Math.floor(i/4)*12); body.add(a); }
@@ -328,13 +359,13 @@ export function buildShip(key, look = {}, crew = true){
       if (kind === 'archer') for (let i=0;i<n;i++){
         // Archers stand along the rails, half on each side, facing outboard.
         const sg = i % 2 ? 1 : -1, x = (-.2 + .45*Math.floor(i/2)/Math.max(1, Math.ceil(n/2) - 1))*s.L;
-        const p = person(tunics[(i+1) % 3], 'archer', true); p.rotation.y = -sg*Math.PI/2;
+        const p = person(tunics[(i+1) % 3], 'archer', s.raider ? 'pirate' : 'hoplite'); p.rotation.y = -sg*Math.PI/2;
         add(p, x, info.deckLevel + s.H*.12, sg*info.W(Math.abs(x/(s.L/2)))*.62);
       } else for (let i=0;i<n;i++){
         // First standing crew takes the helm at the stern; the rest work the deck.
         // crewAt (fractions of length and width) keeps them clear of cargo and cabins on ships that carry them
         const helm = i === 0, at = s.crewAt && s.crewAt[i], x = at ? at[0]*s.L : helm ? -s.L*.36 : [s.L*.18, -s.L*.05][(i-1) % 2];
-        const p = person(tunics[(i+1) % 3], helm ? 'helm' : 'stand'); if (i === 2) p.rotation.y = 1.2;
+        const p = person(tunics[(i+1) % 3], helm ? 'helm' : 'stand', helm && (s.ram || s.raider) ? (s.raider ? 'pirate' : 'captain') : false); if (i === 2) p.rotation.y = 1.2;
         add(p, x, info.deckLevel + (helm ? 1 : 0), at ? at[1]*s.B : i === 2 ? 4 : 0);
       }
     }
