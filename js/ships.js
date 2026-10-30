@@ -366,6 +366,8 @@ function squareSail(w, h, tex){
 const flameGeo = new T.ConeGeometry(2, 6, 7), coreGeo = new T.ConeGeometry(1.1, 3.6, 6), bowlGeo = new T.CylinderGeometry(2.4, 1.2, 2.2, 8);
 const flameMat = new T.MeshBasicMaterial({color:'#ff9a3c'}), coreMat = new T.MeshBasicMaterial({color:'#fff2b8'});
 let torchN = 0;
+// Everything with torches or fire bowls, so the day and night cycle can light them (daynight.js).
+export const TORCH_ROOTS = new Set();
 function torch(){
   const g = new T.Group();
   const pole = mesh(new T.CylinderGeometry(.5, .6, 12, 5), 'mast'); pole.position.y = 6; g.add(pole);
@@ -495,6 +497,7 @@ export function buildShip(key, look = {}, crew = true){
     }
   }
   if (CEL.on) inkify(root);
+  if (root.userData.torches.length) TORCH_ROOTS.add(root);
   return root;
 }
 
@@ -614,5 +617,6 @@ export function statue(god, stone = 'painted'){
   // fire bowls at the four corners, lit at night (setTorches)
   g.userData.torches = [];
   for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]){ const b = brazier(); b.g.position.set(x*20.5, 5, z*20.5); g.add(b.g); g.userData.torches.push(b.flame); }
+  TORCH_ROOTS.add(g);
   return g;
 }

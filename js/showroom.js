@@ -1,10 +1,10 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=b855190';
-import {makePost} from './glow.js?v=b855190';
-import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=b855190';
-import {buildColossus, buildFortress} from './monuments.js?v=b855190';
-import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=b855190';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=bdf91e0';
+import {makePost} from './glow.js?v=bdf91e0';
+import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=bdf91e0';
+import {buildColossus, buildFortress} from './monuments.js?v=bdf91e0';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=bdf91e0';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -72,7 +72,7 @@ function setLight(k){
   lightKey = k; const L = LIGHTS[k]; scene.background = new T.Color(L.sky); scene.fog.color.set(L.sky);
   scene.fog.near = k === 'storm' ? 900 : 2200; scene.fog.far = k === 'storm' ? 3200 : 5200;
   waveMat.color.set(L.sea); waveU.uSky.value.set(L.sky); waveU.uStorm.value = k === 'storm' ? 1 : 0; waveU.uGlint.value = k === 'storm' ? .2 : k === 'night' ? .35 : 1;
-  rain.visible = k === 'storm'; lightTorches();
+  rain.visible = k === 'storm'; lightTorches(); WIN_MAT.color.set(k === 'night' ? '#ffc865' : k === 'storm' ? '#8a7a5a' : '#33414f'); // lamplit windows at night
   hemi.color.set(L.hemi[0]); hemi.groundColor.set(L.hemi[1]); hemi.intensity = L.hemi[2];
   sun.color.set(L.sun[0]); sun.intensity = L.sun[1]; sunDir.set(...L.sun[2]); sun.position.copy(focus).add(sunDir); fill.intensity = L.fill; seaMat.color.set(L.sea);
   document.body.style.background = L.sky; $('tagline').style.color = k === 'night' || k === 'storm' ? '#e9eef7' : ''; document.body.classList.toggle('dark', k === 'night' || k === 'storm');

@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=b855190';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=b855190';
-import {G, ship, holdUsed, lvl} from './state.js?v=b855190';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=b855190';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=b855190';
-import {board, active, canDeliver, goal} from './quests.js?v=b855190';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=b855190';
-import {shipPortrait} from './portrait.js?v=b855190';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=b855190';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=bdf91e0';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=bdf91e0';
+import {G, ship, holdUsed, lvl} from './state.js?v=bdf91e0';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=bdf91e0';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=bdf91e0';
+import {board, active, canDeliver, goal} from './quests.js?v=bdf91e0';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=bdf91e0';
+import {shipPortrait} from './portrait.js?v=bdf91e0';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=bdf91e0';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -71,6 +71,7 @@ export const WX_IC = {
   windy: svg(`<path d="M3 8 H14 a2.5 2.5 0 1 0 -2.5 -2.5 M3 12.5 H18 a3 3 0 1 1 -3 3 M3 17 H10" stroke="#3f8fb0" stroke-width="2.2" fill="none" stroke-linecap="round"/>`),
   storm: svg(`${cloud(5, 13, '#8c97a0')}<path d="M12 13 L9.5 17.5 H12.5 L10.5 22" stroke="#f6c443" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`),
   mist: svg(`${cloud(5, 11)}<path d="M4 15.5 H20 M6 19 H18" stroke="#c9d4da" stroke-width="2" stroke-linecap="round"/>`),
+  night: svg(`<path d="M15.5 3.5 A8.5 8.5 0 1 0 20.5 15 A7 7 0 0 1 15.5 3.5Z" fill="#f3e7b4" ${OL}/><circle cx="5" cy="5" r="1" fill="#f3e7b4"/><circle cx="9" cy="2.8" r=".7" fill="#f3e7b4"/>`),
 };
 // trade goods: an amphora (wine, oil), a painted pot, a shard of black obsidian
 export const GOOD_IC = k => k === 'obsidian' ? svg(`<path d="M6 19 L9 6 L15 3 L19 11 L14 21Z" fill="#2c2a33"/><path d="M9 6 L15 3 L13 12Z" fill="#4c4a58"/>`)

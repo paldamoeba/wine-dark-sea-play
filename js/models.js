@@ -1,8 +1,8 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=b855190';
+import {hash} from './world.js?v=bdf91e0';
 
 const T = window.THREE;
-import {mat} from './ships.js?v=b855190';
+import {mat} from './ships.js?v=bdf91e0';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -53,11 +53,22 @@ export function roundTree(tint = ROUND_TINTS[0], seed = 0){ const g = new T.Grou
   g.userData = {live, stump}; return g; }
 // Houses: kind 0 white with a flat roof, 1 with a blue dome, 2 cream with a red tile roof, 3 two floors with a terrace.
 // Doors and shutters in blue or green; a little window either side of the door.
+// Window panes: dark glass by day, warm lamplight at night (daynight.js changes this one shared material).
+export const WIN_MAT = new T.MeshBasicMaterial({color:'#33414f'});
+// All of a house's windows are one mesh (front, back and sides), so a town full of houses stays cheap to draw.
+const paneGeos = {};
+function panes(kind){ if (paneGeos[kind]) return paneGeos[kind];
+  const P = [], win = (x, y, z, ry, s = 1) => P.push([boxGeo, '#fff', at(x, y, z, .2, 2.6*s, 2.2*s, ry)]);
+  for (const z of [-6.5, 6.5]){ win(11.55, 10, z, 0); win(-11.1, 10, z, 0); }
+  for (const sg of [1, -1]){ win(-3, 10, sg*10.1, Math.PI/2); win(4, 10, sg*10.1, Math.PI/2); }
+  if (kind === 3){ win(2.55, 22, 0, 0, 1.15); for (const sg of [1, -1]) win(-4, 22, sg*7.1, Math.PI/2, 1.15); }
+  return paneGeos[kind] = mergeParts(P); }
 export function house(kind = 0){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
   const wall = kind === 2 ? '#efe2c4' : '#f4f1e8', trim = kind === 2 ? '#3f7a52' : '#2c5fa8';
   const b = mesh(new T.BoxGeometry(22, 16, 20), wall); b.position.y = 8; g.add(b);
   const door = mesh(new T.BoxGeometry(.6, 8, 5), trim, {}, false); door.position.set(11.2, 4, 0); g.add(door);
   for (const z of [-6.5, 6.5]){ const w = mesh(new T.BoxGeometry(.6, 3.6, 3.2), trim, {}, false); w.position.set(11.2, 10, z); g.add(w); }
+  g.add(new T.Mesh(panes(kind), WIN_MAT));
   if (kind === 1){ const d = mesh(new T.SphereGeometry(8, 10, 5, 0, Math.PI*2, 0, Math.PI/2), '#2c5fa8'); d.position.y = 16; g.add(d); }
   if (kind === 2){ const r = mesh(new T.CylinderGeometry(.01, 15.5, 7, 4, 1), '#c4643a'); r.rotation.y = Math.PI/4; r.scale.set(1, 1, .9); r.position.y = 19.5; g.add(r); }
   if (kind === 3){ const up = mesh(new T.BoxGeometry(12, 10, 14), wall); up.position.set(-4, 21, 0); g.add(up);

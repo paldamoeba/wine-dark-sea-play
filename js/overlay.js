@@ -1,15 +1,15 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=b855190';
-import {G, isExplored} from './state.js?v=b855190';
-import {fogLayer, islandPath} from './map.js?v=b855190';
-import {view, project} from './scene.js?v=b855190';
-import {JOY_RADIUS} from './input.js?v=b855190';
-import {enemies, combatState, capture} from './combat.js?v=b855190';
-import {drawFish} from './fishing.js?v=b855190';
-import {whale} from './wildlife.js?v=b855190';
-import {SHORE_FISH} from './config.js?v=b855190';
-import {bottle} from './quests.js?v=b855190';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=b855190';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=bdf91e0';
+import {G, isExplored} from './state.js?v=bdf91e0';
+import {fogLayer, islandPath} from './map.js?v=bdf91e0';
+import {view, project} from './scene.js?v=bdf91e0';
+import {JOY_RADIUS} from './input.js?v=bdf91e0';
+import {enemies, combatState, capture} from './combat.js?v=bdf91e0';
+import {drawFish} from './fishing.js?v=bdf91e0';
+import {whale} from './wildlife.js?v=bdf91e0';
+import {SHORE_FISH} from './config.js?v=bdf91e0';
+import {bottle} from './quests.js?v=bdf91e0';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=bdf91e0';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -119,7 +119,7 @@ export function drawOverlay(fps){
     if (Math.abs(s.x - S.x) > 1100 || Math.abs(s.y - S.y) > 1100 || !shoalOn(s, t, SHORE_FISH.period[1], SHORE_FISH.on)) continue;
     for (let k=0;k<7;k++){ const ph = (t*.9 + hash(s.x, k)) % 1; if (ph > .4 || ph < 0) continue;
       const gx = s.x + (hash(k, s.y) - .5)*90, gy = s.y + (hash(s.y, k) - .5)*90, [px, py, pz] = project(gx, 2, gy); if (pz > 1) continue;
-      const a = Math.sin(ph/.4*Math.PI); c.fillStyle = `rgba(244,251,255,${.75*a})`; c.beginPath(); c.ellipse(px, py, 5*a + 1.5, 2.2*a + .6, 0, 0, Math.PI*2); c.fill(); }
+      const a = Math.sin(ph/.4*Math.PI), nt = G.night || 0; c.fillStyle = `rgba(${244 - nt*110|0},${251},${255 - nt*30|0},${.75*a})`; /* at night the schools glow blue-green */ c.beginPath(); c.ellipse(px, py, 5*a + 1.5, 2.2*a + .6, 0, 0, Math.PI*2); c.fill(); }
   }
   // small "+1" pops over the boat (sardines)
   if (G.pops) G.pops = G.pops.filter(p => { if (p.ic){ return drawGain(c, p, t, S); } const k = (t - p.t)/1.1; if (k > 1) return false; const [bx, by] = project(p.x ?? S.x, 60, p.y ?? S.y);

@@ -1,6 +1,6 @@
 // The two "how to play" pages shown on a new game (and from Settings). Pictures are real renders of the game's boat with
 // drawn hints on top (a finger, arrows); if 3D can't draw, the old drawings are used.
-import {tutShot} from './portrait.js?v=b855190';
+import {tutShot} from './portrait.js?v=bdf91e0';
 const C = {sea:'#2f7f9a', shallow:'#6cc3bd', sand:'#e6d29c', grass:'#76883c', hill:'#8a8a74', wood:'#a3754a', deck:'#d2a873',
   foam:'#f4fbff', ink:'#22283a', ochre:'#d48a2a', skin:'#e3b591', green:'#5f9c3a', ring:'#d9cba8', parch:'#f7eed6'};
 
@@ -44,8 +44,8 @@ const PICS = {
     <path d="M206 70 L228 52" stroke="${C.ink}" stroke-width="3.5" stroke-linecap="round"/><circle cx="206" cy="70" r="4" fill="${C.ink}"/>`, boat(96, 74, 12, 1.15)); },
 };
 
-import {shipPortrait} from './portrait.js?v=b855190';
-import {IC} from './menus.js?v=b855190';
+import {shipPortrait} from './portrait.js?v=bdf91e0';
+import {IC} from './menus.js?v=bdf91e0';
 const STEPS = [[IC.fish(), 'Fish and cut wood', 'on glinting water and by the trees'], [IC.coin, 'Sell at the harbors', 'and take jobs from the boards'],
   [IC.ship, 'Build bigger ships', 'more speed, hold and archers'], [IC.swords, 'Fight pirates, loot, get rich', 'take forts and islands, rule the Aegean']];
 const ladder = () => [['rowboat', 'Rowboat'], ['fishing', 'Fishing boat'], ['bireme', 'Warship']].map(([m, n], i) => { const u = shipPortrait(m, {});
