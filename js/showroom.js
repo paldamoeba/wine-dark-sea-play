@@ -1,8 +1,8 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides. Uses the game's own builders,
 // so what you see here is exactly what sails in the game.
-import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=34a2ac7';
-import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=34a2ac7';
-import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS} from './models.js?v=34a2ac7';
+import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=8eb3922';
+import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=8eb3922';
+import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS} from './models.js?v=8eb3922';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -66,7 +66,8 @@ cv.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p
 const up = e => pts.delete(e.pointerId); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
 cv.addEventListener('wheel', e => { e.preventDefault(); dist *= Math.exp(e.deltaY*.001); }, {passive:false});
 
-function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); }
+// the model sits in the upper part of the screen, clear of the panel at the bottom
+function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight; camera.setViewOffset(innerWidth, innerHeight, 0, innerHeight*.17, innerWidth, innerHeight); camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 const q = new URLSearchParams(location.search); if (q.get('g')) group = q.get('g');
 document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-pressed', x.dataset.g === group)); fillPick();

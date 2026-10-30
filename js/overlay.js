@@ -1,15 +1,15 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=34a2ac7';
-import {G, isExplored} from './state.js?v=34a2ac7';
-import {fogLayer, islandPath} from './map.js?v=34a2ac7';
-import {view, project} from './scene.js?v=34a2ac7';
-import {JOY_RADIUS} from './input.js?v=34a2ac7';
-import {enemies, combatState, capture} from './combat.js?v=34a2ac7';
-import {drawFish} from './fishing.js?v=34a2ac7';
-import {whale} from './wildlife.js?v=34a2ac7';
-import {SHORE_FISH} from './config.js?v=34a2ac7';
-import {bottle} from './quests.js?v=34a2ac7';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=34a2ac7';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=8eb3922';
+import {G, isExplored} from './state.js?v=8eb3922';
+import {fogLayer, islandPath} from './map.js?v=8eb3922';
+import {view, project} from './scene.js?v=8eb3922';
+import {JOY_RADIUS} from './input.js?v=8eb3922';
+import {enemies, combatState, capture} from './combat.js?v=8eb3922';
+import {drawFish} from './fishing.js?v=8eb3922';
+import {whale} from './wildlife.js?v=8eb3922';
+import {SHORE_FISH} from './config.js?v=8eb3922';
+import {bottle} from './quests.js?v=8eb3922';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=8eb3922';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -131,7 +131,22 @@ export function drawOverlay(fps){
 
   // round minimap, turned to match the camera, showing the sea around the ship (MINI_RANGE world units to the edge)
   if (!mini) buildMini();
-  const ms = 112, cx = W - ms/2 - 12, cy = 10 + ms/2 + topInset(), k = ms/2/MINI_RANGE;
+  const ms = 112, cx = W - ms/2 - 12, cy = 10 + ms/2 + topInset();
+  // the minimap is drawn into its own small canvas only every third frame, then copied: it's one of the slower things to draw
+  if (!miniCv){ miniCv = document.createElement('canvas'); miniCv.width = miniCv.height = ms*2; }
+  if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
+  c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
+  c.strokeStyle = 'rgba(247,238,214,.75)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.stroke();
+
+  if (G.settings.showFps){
+    c.font = '800 12px Nunito, system-ui, sans-serif'; c.textAlign = 'left'; c.fillStyle = fps >= 50 ? '#cfe8c0' : fps >= 35 ? '#f2d58a' : '#f2a093';
+    c.fillText(`${Math.round(fps)} fps`, 80, H - 14);
+  }
+}
+
+let miniCv = null, miniTick = 0;
+function drawMini(c, cx, cy, ms, S){
+  const k = ms/2/MINI_RANGE;
   c.save(); c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.clip();
   c.fillStyle = '#1c2a36'; c.fillRect(cx - ms/2, cy - ms/2, ms, ms);
   c.translate(cx, cy); c.rotate(Math.PI/4); c.translate(-S.x*k, -S.y*k);
@@ -148,10 +163,4 @@ export function drawOverlay(fps){
   if (S.treasure){ const tx = S.treasure.x*k, ty = S.treasure.y*k; c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.moveTo(tx - 4, ty - 4); c.lineTo(tx + 4, ty + 4); c.moveTo(tx + 4, ty - 4); c.lineTo(tx - 4, ty + 4); c.stroke(); }
   c.fillStyle = '#fff'; c.beginPath(); c.arc(S.x*k, S.y*k, 3.5, 0, Math.PI*2); c.fill();
   c.restore();
-  c.strokeStyle = 'rgba(247,238,214,.75)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.stroke();
-
-  if (G.settings.showFps){
-    c.font = '800 12px Nunito, system-ui, sans-serif'; c.textAlign = 'left'; c.fillStyle = fps >= 50 ? '#cfe8c0' : fps >= 35 ? '#f2d58a' : '#f2a093';
-    c.fillText(`${Math.round(fps)} fps`, 80, H - 14);
-  }
 }

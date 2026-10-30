@@ -1,16 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=34a2ac7';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=34a2ac7';
-import {G, ship, lvl} from './state.js?v=34a2ac7';
-import {scene} from './scene.js?v=34a2ac7';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=34a2ac7';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=34a2ac7';
-import {addTown, figure} from './town.js?v=34a2ac7';
-import {buildStatue} from './monuments.js?v=34a2ac7';
-import {makeFire, updateFire, burn} from './fire.js?v=34a2ac7';
-import {sinkPose} from './sinking.js?v=34a2ac7';
-import {moored} from './fleet.js?v=34a2ac7';
-import {placeOnWaves} from './combat.js?v=34a2ac7';
+import {SHIPS} from './config.js?v=8eb3922';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=8eb3922';
+import {G, ship, lvl} from './state.js?v=8eb3922';
+import {scene} from './scene.js?v=8eb3922';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=8eb3922';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=8eb3922';
+import {addTown, figure} from './town.js?v=8eb3922';
+import {buildStatue} from './monuments.js?v=8eb3922';
+import {makeFire, updateFire, burn} from './fire.js?v=8eb3922';
+import {sinkPose} from './sinking.js?v=8eb3922';
+import {moored} from './fleet.js?v=8eb3922';
+import {placeOnWaves} from './combat.js?v=8eb3922';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -86,15 +86,34 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   // the town sits on the widest ground near the pier
   let cx = px - PIER.dx*60, cz = pz - PIER.dy*60, best = 0;
   for (let k=0;k<300;k++){ const p = spotIn(R, ground, 1, px, pz, 260); if (!p) continue; const d = depthIn(ground, p[0], p[1]); if (d > best){ best = d; cx = p[0]; cz = p[1]; } }
-  const houses = [];
-  for (let k=0;k<90 && houses.length<(is.port ? 7 : 5);k++){ const p = spotIn(R, ground, 14, cx, cz, 120); if (flat(p, 14) && houses.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 30)) houses.push(p); }
-  houses.forEach(([x, z], k) => { const h = house(k % 2); h.position.set(x, top, z); h.rotation.y = -ang + (R()-.5)*.4; g.add(h); popIn(h); });
-  const keep = [...houses];
-  // the temple on the highest, widest ground a little away from the houses; the statue by the pier
-  let tp = null; for (let k=0;k<80 && !tp;k++){ const p = spotIn(R, ground, 24, cx, cz, 230); if (flat(p, 24) && houses.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 46)) tp = p; }
-  if (tp){ const t = temple(); t.position.set(tp[0], top, tp[1]); t.scale.setScalar(.8); t.rotation.y = -ang; g.add(t); keep.push(tp, [tp[0] + 18, tp[1]], [tp[0] - 18, tp[1]]);
-    // the city's god in front of its temple: Athena for Athens, Apollo for Sparta
-    if (!is.port){ const gd = buildStatue(is.city === 'sparta' ? 'apollo' : 'athena'), sx = tp[0] + PIER.dx*34, sz = tp[1] + PIER.dy*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.55); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); } }
+  // ---- streets: a main street runs inland from the pier, with side streets across it. Houses line both sides, facing the
+  // street; trees fill the gaps; the temple and the city's god stand on a little square at the top of the main street ----
+  const ux = -PIER.dx, uz = -PIER.dy, vx = -uz, vz = ux, x0 = px + ux*24, z0 = pz + uz*24, stone = '#e2d3ae', houses = [], keep = [];
+  let len = 0; while (len < 300 && flat([x0 + ux*(len + 20), z0 + uz*(len + 20)], 10)) len += 20;
+  const road = (x, z, l, w, a2) => { const r = mesh(new T.BoxGeometry(l, 1, w), stone, {}, false); r.position.set(x, top + .4, z); r.rotation.y = -a2; r.receiveShadow = true; g.add(r); };
+  if (len > 40){ road(x0 + ux*len/2, z0 + uz*len/2, len, 16, Math.atan2(uz, ux));
+    for (let d = 50; d < len - 20; d += 75) for (const sg of [1, -1]){ let l = 0; const sx = x0 + ux*d, sz = z0 + uz*d;
+      while (l < 140 && flat([sx + vx*sg*(l + 20), sz + vz*sg*(l + 20)], 10)) l += 20;
+      if (l > 30){ road(sx + vx*sg*l/2, sz + vz*sg*l/2, l, 12, Math.atan2(vz*sg, vx*sg)); for (let e = 30; e < l; e += 30) for (const side of [1, -1]) houses.push({x:sx + vx*sg*e + ux*side*22, z:sz + vz*sg*e + uz*side*22, face:Math.atan2(-uz*side, -ux*side)}); } }
+    for (let d = 30; d < len - 10; d += 30) for (const side of [1, -1]) houses.push({x:x0 + ux*d + vx*side*24, z:z0 + uz*d + vz*side*24, face:Math.atan2(-vz*side, -vx*side)}); }
+  const placed = [];
+  for (const h of houses){ if (!flat([h.x, h.z], 12) || placed.some(([hx, hz]) => Math.hypot(hx - h.x, hz - h.z) < 26) || Math.hypot(h.x - px, h.z - pz) < 40) continue;
+    if (placed.length >= (is.port ? 22 : 16)) break;
+    const k = placed.length, o = house([0, 1, 0, 2, 3, 0, 1, 2][Math.floor(R()*8)]); o.position.set(h.x, top, h.z); o.rotation.y = -h.face; o.scale.set(1, .9 + R()*.25, 1); g.add(o); popIn(o); placed.push([h.x, h.z]); }
+  keep.push(...placed);
+  // the square, temple and god at the top of the main street
+  const tp0 = [x0 + ux*(len + 30), z0 + uz*(len + 30)];
+  let tp = flat(tp0, 24) && placed.every(([hx, hz]) => Math.hypot(hx - tp0[0], hz - tp0[1]) > 40) ? tp0 : null;
+  for (let k=0;k<80 && !tp;k++){ const p = spotIn(R, ground, 24, cx, cz, 230); if (flat(p, 24) && placed.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 46)) tp = p; }
+  if (tp){ const sq = mesh(new T.CylinderGeometry(40, 40, 1, 20), stone, {}, false); sq.position.set(tp[0], top + .5, tp[1]); g.add(sq);
+    const t = temple(); t.position.set(tp[0], top, tp[1]); t.scale.setScalar(.8); t.rotation.y = -ang; g.add(t); keep.push(tp, [tp[0] + 18, tp[1]], [tp[0] - 18, tp[1]]);
+    // the city's god in front of its temple: Athena for Athens, Apollo for Sparta, Poseidon at Kallisto
+    const gd = buildStatue(is.port ? 'poseidon' : is.city === 'sparta' ? 'apollo' : 'athena'), sx = tp[0] - ux*34, sz = tp[1] - uz*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.6); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); }
+  // trees in the gaps between houses and along the edge of town
+  const tree = () => R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
+  for (let k=0, n=0;k<120 && n<(is.port ? 14 : 10);k++){ const p = spotIn(R, ground, 10, cx, cz, 200);
+    if (!flat(p, 10) || keep.some(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) < 20) || Math.abs((p[0] - x0)*vx + (p[1] - z0)*vz) < 12) continue;
+    const c = tree(); c.position.set(p[0], top, p[1]); c.scale.setScalar(.7 + R()*.3); g.add(c); popIn(c); keep.push(p); n++; }
   let sp = null; for (let k=0;k<60 && !sp;k++){ const p = spotIn(R, ground, 8, px - PIER.dx*30, pz - PIER.dy*30, 60); if (p && keep.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 24)) sp = p; }
   if (!is.port && sp){ // a flagpole by the pier with the owner's colors
     const pole = mesh(new T.CylinderGeometry(1, 1.2, 46, 5), '#6e4a26'); pole.position.set(sp[0], top + 23, sp[1]); g.add(pole);
@@ -132,7 +151,7 @@ WRECKS.forEach((w, i) => {
 const wakeGeo = new T.CircleGeometry(1, 8); wakeGeo.rotateX(-Math.PI/2);
 const WAKE = Array.from({length:40}, () => { const m = new T.Mesh(wakeGeo, new T.MeshBasicMaterial({color:0xf4fbff, transparent:true, opacity:0, depthWrite:false})); m.visible = false; scene.add(m); return {m, life:0}; });
 let wakeI = 0, wakeLast = {x:0, y:0};
-export function spawnWake(){
+export function spawnWake(){ return; // wakes.js draws the wakes now
   const S = G.S, sh = ship();
   if (G.v < 25 || Math.hypot(wakeLast.x-S.x, wakeLast.y-S.y) < 10) return;
   const w = WAKE[wakeI++ % WAKE.length]; w.life = 1; w.m.visible = true;

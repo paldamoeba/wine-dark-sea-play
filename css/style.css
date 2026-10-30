@@ -387,3 +387,21 @@ button.goal .more{color:var(--ochre);font-weight:800}
 .raid{border-radius:999px;font-size:16px;padding:9px 18px}
 .toast.near{bottom:auto;transform:translate(-50%,-100%)}
 .raid.near{right:auto}
+/* the zone name shows below the HUD and the map, not on top of them */
+.zone{top:calc(196px + env(safe-area-inset-top,0px))}
+/* ---- more color: every tab, tool and resource has its own colored tile ---- */
+.sheet.menu .tab[data-t=market] svg{background:#f6d2c4}.sheet.menu .tab[data-t=jobs] svg{background:#f3e0b0}
+.sheet.menu .tab[data-t=yard] svg{background:#cfe6ee}.sheet.menu .tab[data-t=crew] svg{background:#dfe8c4}
+.sheet.menu .tab[data-t=dock] svg{background:#cfe0f0}.sheet.menu .tab[data-t=hold] svg{background:#f3e0b0}
+.sheet.menu .tab[data-t=ship] svg{background:#cfe6ee}.sheet.menu .tab[data-t=world] svg{background:#d6ecd8}
+.sheet.menu .tab[data-t=game] svg{background:#cfe6ee}.sheet.menu .tab[data-t=gfx] svg{background:#f3e0b0}.sheet.menu .tab[data-t=dev] svg{background:#e3dcef}
+#bagBtn .ic{background:#f3e0b0}#chartBtn .ic{background:#cfe6ee}#gearBtn .ic{background:#e3dcef}
+#goldChip .ic{background:#dfe6ec}#holdChip .ic{background:#f3e0b0}.lifebar .ic{background:#f6d2c4}
+.tool{background:linear-gradient(#4a372c,#2b211c)}
+.tool span{color:#f6e7c6}
+.sheet.menu .card h3{color:#e98a52}
+.sheet.menu .mhead h1{color:#fff1d2}
+.sheet.menu .btn.gold{background:linear-gradient(#f3ad4a,#d48a2a)}
+.sheet.menu .tab.on span{color:#ffd28a}
+.hi.wx span svg{width:20px;height:20px}
+#wxChip span{background:#e9f2f5}

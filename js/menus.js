@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=34a2ac7';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=34a2ac7';
-import {G, ship, holdUsed, lvl} from './state.js?v=34a2ac7';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=34a2ac7';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=34a2ac7';
-import {board, active, canDeliver, goal} from './quests.js?v=34a2ac7';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=34a2ac7';
-import {shipPortrait} from './portrait.js?v=34a2ac7';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=34a2ac7';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=8eb3922';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=8eb3922';
+import {G, ship, holdUsed, lvl} from './state.js?v=8eb3922';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=8eb3922';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=8eb3922';
+import {board, active, canDeliver, goal} from './quests.js?v=8eb3922';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=8eb3922';
+import {shipPortrait} from './portrait.js?v=8eb3922';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=8eb3922';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -42,6 +42,33 @@ export const IC = {
   sail: svg(`<path d="M11 2 V21" stroke="#6e3d1e" stroke-width="1.8"/><path d="M5 4 H19" stroke="#6e3d1e" stroke-width="1.6"/><path d="M5.5 4.5 Q12 9 5.5 17 H18.5 Q12 9 18.5 4.5Z" fill="#efe4c8" stroke="${WOOD}" stroke-width="1"/><path d="M8.5 10 h7" stroke="#c64a3c" stroke-width="2"/>`),
   helm: svg(`<circle cx="12" cy="12" r="6.5" fill="none" stroke="${WOOD}" stroke-width="2.4"/><circle cx="12" cy="12" r="2" fill="${WOOD}"/><path d="M12 2 V22 M2 12 H22 M5 5 L19 19 M19 5 L5 19" stroke="${WOOD}" stroke-width="2" stroke-linecap="round"/>`),
   map: svg(`<path d="M3 6 L9 4 L15 6 L21 4 V18 L15 20 L9 18 L3 20Z" fill="#efe4c8" stroke="${WOOD}" stroke-width="1.2"/><path d="M14 10 l3 3 m0-3 l-3 3" stroke="#c64a3c" stroke-width="1.8"/>`),
+};
+// ---- the main icons, redrawn as chunky game icons: dark outlines, bright fills, a highlight ----
+const OL = 'stroke="#2a1d17" stroke-width="1.3" stroke-linejoin="round"';
+const teeth = Array.from({length:8}, (_, i) => `<rect x="10.4" y="1.6" width="3.2" height="5" rx="1" fill="#8fa3b5" ${OL} transform="rotate(${i*45} 12 12)"/>`).join('');
+Object.assign(IC, {
+  hold: svg(`<path d="M3.5 10 h17 v9.5 a1.5 1.5 0 0 1 -1.5 1.5 h-14 a1.5 1.5 0 0 1 -1.5 -1.5Z" fill="#b5793f" ${OL}/><path d="M3.5 10 Q3.5 4 12 4 Q20.5 4 20.5 10Z" fill="#d49a58" ${OL}/><path d="M7 4.8 V21 M17 4.8 V21" stroke="#e3b341" stroke-width="2"/><rect x="10" y="8.5" width="4" height="5" rx="1" fill="#e3b341" ${OL}/><path d="M5.5 6.5 Q8 5.2 11 5" stroke="#f3cf95" stroke-width="1.2" fill="none"/>`),
+  hull: svg(`<path d="M12 2.5 L20.5 5.5 V12 Q20.5 18.5 12 21.5 Q3.5 18.5 3.5 12 V5.5Z" fill="#c98a4b" ${OL}/><path d="M4 9.5h16M4 14h16M6 18h12" stroke="#8a5a30" stroke-width="1.3"/><path d="M12 2.8 V21.2" stroke="#8a5a30" stroke-width="1.2"/><path d="M6 6.6 L11 4.8" stroke="#f0c48a" stroke-width="1.4" stroke-linecap="round"/>`),
+  map: svg(`<path d="M3 5.5 L8.5 3.5 L15.5 5.5 L21 3.5 V18.5 L15.5 20.5 L8.5 18.5 L3 20.5Z" fill="#f3e3b8" ${OL}/><path d="M8.5 3.8V18.5M15.5 5.5V20.2" stroke="#c9ad74" stroke-width="1"/><path d="M5.5 15.5 Q9 9 12.5 12 T16.5 8.5" stroke="#3f6c94" stroke-width="1.5" stroke-dasharray="1.6 1.5" fill="none"/><path d="M15.8 6.2 l3.2 3.2 m0 -3.2 l-3.2 3.2" stroke="#c64a3c" stroke-width="2.2" stroke-linecap="round"/>`),
+  gear: svg(`${teeth}<circle cx="12" cy="12" r="7" fill="#8fa3b5" ${OL}/><circle cx="12" cy="12" r="3" fill="#e9d9b4" ${OL}/><path d="M7.8 9.5 A5 5 0 0 1 10.5 7.2" stroke="#d7e2ea" stroke-width="1.4" fill="none" stroke-linecap="round"/>`),
+  market: svg(`<rect x="4.5" y="10" width="15" height="10.5" fill="#efd9a6" ${OL}/><path d="M3 10 L5 4 H19 L21 10Z" fill="#d6503f" ${OL}/><path d="M7.8 4.4 L7.2 10 M11.6 4.4 V10 M15.3 4.4 L15.9 10" stroke="#fbf3df" stroke-width="2.2"/><path d="M3 10 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0" fill="#d6503f" ${OL}/><rect x="9.5" y="14" width="5" height="6.5" fill="#8a5a30" ${OL}/>`),
+  jobs: svg(`<path d="M6 21.5 L7 17 M18 21.5 L17 17" stroke="#2a1d17" stroke-width="1.8" stroke-linecap="round"/><rect x="3" y="3.5" width="18" height="14" rx="1.5" fill="#a86f3c" ${OL}/><rect x="5.3" y="5.8" width="6.2" height="8" fill="#fbf3df" ${OL} transform="rotate(-6 8.4 9.8)"/><rect x="12.6" y="6.2" width="6" height="6.5" fill="#f3d27a" ${OL} transform="rotate(6 15.6 9.4)"/><circle cx="8.4" cy="6.2" r="1.1" fill="#d6503f"/><circle cx="15.6" cy="6.6" r="1.1" fill="#3f6c94"/><path d="M6.5 9.5h3.6M6.7 11.5h3" stroke="#8a7a60" stroke-width=".9"/>`),
+  yard: svg(`<path d="M3 15 Q12 21.5 21 15 L19.6 12.5 H4.4Z" fill="#b5793f" ${OL}/><path d="M12 3 V12.5" stroke="#6e3d1e" stroke-width="1.8"/><path d="M12.6 4 L18.5 11 H12.6Z" fill="#fbf3df" ${OL}/><path d="M12.6 7.5 L15.5 11" stroke="#d6503f" stroke-width="1.6"/><path d="M4 21 L7 17.5 M20 21 L17 17.5" stroke="#6e4a2a" stroke-width="2" stroke-linecap="round"/><rect x="1.5" y="20" width="21" height="2" rx="1" fill="#3f8fb0" ${OL}/>`),
+  crew: svg(`<path d="M3.6 21.5 Q3.2 13 8 13 Q12.8 13 12.4 21.5Z" fill="#3f6c94" ${OL}/><circle cx="8" cy="9" r="3.6" fill="#e9b88f" ${OL}/><path d="M4.6 8 Q8 2.5 11.4 8Z" fill="#c9922e" ${OL}/><path d="M11.6 21.5 Q11.2 14 16 14 Q20.8 14 20.4 21.5Z" fill="#d6503f" ${OL}/><circle cx="16" cy="10.2" r="3.4" fill="#e9b88f" ${OL}/><path d="M12.8 9.6 Q16 6 19.2 9.6 Q16 8 12.8 9.6Z" fill="#4a3022"/>`),
+  dock: svg(`<circle cx="12" cy="4.8" r="2.3" fill="none" stroke="#2a1d17" stroke-width="3.4"/><circle cx="12" cy="4.8" r="2.3" fill="none" stroke="#e3b341" stroke-width="1.8"/><path d="M12 7v13.5 M7 10.5h10 M4.5 14.5 Q5.5 20.5 12 20.5 Q18.5 20.5 19.5 14.5" fill="none" stroke="#2a1d17" stroke-width="3.6" stroke-linecap="round"/><path d="M12 7v13.5 M7 10.5h10 M4.5 14.5 Q5.5 20.5 12 20.5 Q18.5 20.5 19.5 14.5" fill="none" stroke="#e3b341" stroke-width="2" stroke-linecap="round"/>`),
+  ship: svg(`<path d="M2.5 14 Q12 21.5 21.5 14 L20.3 12 H3.7Z" fill="#b5793f" ${OL}/><path d="M11 2.5 V12" stroke="#6e3d1e" stroke-width="1.8"/><path d="M11.6 3.5 Q18 7.5 11.6 11.5Z" fill="#fbf3df" ${OL}/><path d="M12 5.4 Q15 7.4 12 9.6" stroke="#3f6c94" stroke-width="1.6" fill="none"/><path d="M3 18.5 Q7 17 12 18.5 T21 18.5" stroke="#3f8fb0" stroke-width="1.6" fill="none"/>`),
+  world: svg(`<circle cx="12" cy="12" r="9.2" fill="#3f8fb0" ${OL}/><path d="M6.5 8.5 Q9 5 12.5 7.5 Q12 10.5 8.5 11Z M13 14 Q16.5 11.5 17.5 15 Q15.5 18.5 13 16.5Z M8 15.5 q1.5 -1 2 1 q-1 1.5 -2 -1Z" fill="#8fb34a" ${OL}/><path d="M6.5 6 A8 8 0 0 1 11 3.6" stroke="#bfe3f0" stroke-width="1.4" fill="none" stroke-linecap="round"/>`),
+  swords: svg(`<path d="M4.5 3.5 L17 16 M19.5 3.5 L7 16" stroke="#2a1d17" stroke-width="3.6" stroke-linecap="round"/><path d="M4.5 3.5 L17 16 M19.5 3.5 L7 16" stroke="#d7e2ea" stroke-width="2" stroke-linecap="round"/><path d="M14.5 19.5 L19.5 14.5 M4.5 14.5 L9.5 19.5" stroke="#2a1d17" stroke-width="3.6" stroke-linecap="round"/><path d="M14.5 19.5 L19.5 14.5 M4.5 14.5 L9.5 19.5" stroke="#e3b341" stroke-width="2" stroke-linecap="round"/>`),
+  wood: svg(`<rect x="2.5" y="7.5" width="16" height="9" rx="4.5" fill="#a3683a" ${OL}/><ellipse cx="18.5" cy="12" rx="3.2" ry="4.5" fill="#e6c48f" ${OL}/><ellipse cx="18.5" cy="12" rx="1.4" ry="2" fill="none" stroke="#a3683a" stroke-width="1"/><path d="M5 10h8M6 13.5h7" stroke="#7a4a25" stroke-width="1"/>`),
+});
+// weather icons for the badge beside the map
+const cloud = (x, y, c = '#f4f6f8') => `<path d="M${x} ${y} h11 a3.2 3.2 0 0 0 0 -6.4 a4.6 4.6 0 0 0 -8.8 -1 a3.6 3.6 0 0 0 -2.2 7.4Z" fill="${c}" ${OL}/>`;
+export const WX_IC = {
+  fair: svg(`<circle cx="12" cy="12" r="5" fill="#f6c443" ${OL}/>${Array.from({length:8}, (_, i) => `<path d="M12 2.2 V5" stroke="#e9a52a" stroke-width="2" stroke-linecap="round" transform="rotate(${i*45} 12 12)"/>`).join('')}`),
+  calm: svg(`<circle cx="9" cy="9" r="4.2" fill="#f6c443" ${OL}/><path d="M3 16 Q6 14.5 9 16 T15 16 T21 16 M5 19.5 Q8 18 11 19.5 T17 19.5" stroke="#3f8fb0" stroke-width="1.8" fill="none" stroke-linecap="round"/>`),
+  windy: svg(`<path d="M3 8 H14 a2.5 2.5 0 1 0 -2.5 -2.5 M3 12.5 H18 a3 3 0 1 1 -3 3 M3 17 H10" stroke="#3f8fb0" stroke-width="2.2" fill="none" stroke-linecap="round"/>`),
+  storm: svg(`${cloud(5, 13, '#8c97a0')}<path d="M12 13 L9.5 17.5 H12.5 L10.5 22" stroke="#f6c443" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`),
+  mist: svg(`${cloud(5, 11)}<path d="M4 15.5 H20 M6 19 H18" stroke="#c9d4da" stroke-width="2" stroke-linecap="round"/>`),
 };
 // trade goods: an amphora (wine, oil), a painted pot, a shard of black obsidian
 export const GOOD_IC = k => k === 'obsidian' ? svg(`<path d="M6 19 L9 6 L15 3 L19 11 L14 21Z" fill="#2c2a33"/><path d="M9 6 L15 3 L13 12Z" fill="#4c4a58"/>`)

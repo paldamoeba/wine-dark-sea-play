@@ -2,14 +2,14 @@
 // The landward side of the ring runs up onto the island; the gate faces the open sea, and the Colossus stands astride it,
 // facing out. You sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round won.
 // The crowd on the walls cheers. The Colossus turns see-through while you're inside so he never blocks the fight.
-import {ISLANDS, landDist} from './world.js?v=34a2ac7';
-import {G, save} from './state.js?v=34a2ac7';
-import {scene} from './scene.js?v=34a2ac7';
-import {mat} from './ships.js?v=34a2ac7';
-import {figure} from './town.js?v=34a2ac7';
-import {buildColossus} from './monuments.js?v=34a2ac7';
-import {spawnArena, clearArena, enemies} from './combat.js?v=34a2ac7';
-import {toast} from './ui.js?v=34a2ac7';
+import {ISLANDS, landDist} from './world.js?v=8eb3922';
+import {G, save} from './state.js?v=8eb3922';
+import {scene} from './scene.js?v=8eb3922';
+import {mat} from './ships.js?v=8eb3922';
+import {figure} from './town.js?v=8eb3922';
+import {buildColossus} from './monuments.js?v=8eb3922';
+import {spawnArena, clearArena, enemies} from './combat.js?v=8eb3922';
+import {toast} from './ui.js?v=8eb3922';
 
 const T = window.THREE;
 const R = 780, WALL_H = 58, WALL_T = 26, N = 72, GATE = .17; // radius, wall height and thickness, wall pieces, half the gate's opening (radians)
@@ -45,16 +45,40 @@ if (ARENA){
     const wx = ARENA.x + Math.cos(a)*R, wy = ARENA.y + Math.sin(a)*R; if (landDist(wx, wy) < -40) continue;
     solid[i] = true;
     const p = new T.Group(); p.position.set(Math.cos(a)*R, 0, Math.sin(a)*R); p.rotation.y = -a + Math.PI/2; g.add(p);
-    const w = new T.Mesh(new T.BoxGeometry(seg, WALL_H + 14, WALL_T), stone); w.position.y = WALL_H/2 - 13; w.castShadow = w.receiveShadow = true; p.add(w);
-    const top = new T.Mesh(new T.BoxGeometry(seg + 1, 5, WALL_T + 8), ledge); top.position.y = WALL_H - 4; p.add(top);
-    for (const sg of [1, -1]) for (const k of [-.25, .25]){ // two rows of arches on both faces, like a colosseum
-      const arch = new T.Mesh(new T.BoxGeometry(seg*.28, WALL_H*.32, 1), dark); arch.position.set(k*seg, WALL_H*.22, sg*(WALL_T/2 + .3)); p.add(arch);
-      const up = new T.Mesh(new T.BoxGeometry(seg*.22, WALL_H*.2, 1), dark); up.position.set(k*seg, WALL_H*.62, sg*(WALL_T/2 + .3)); p.add(up); }
-    if (i % 6 === 0){ const flag = new T.Mesh(new T.BoxGeometry(1, 16, 24), mat(['#c64a3c', '#3f6c94', '#d48a2a'][i/6 % 3])); flag.position.set(0, WALL_H + 22, 0); p.add(flag);
-      const pole = new T.Mesh(new T.CylinderGeometry(.8, .8, 34, 5), mat('#6e3d1e')); pole.position.set(0, WALL_H + 13, -12); p.add(pole); flag.position.z = 0; }
-    for (let k=0;k<3;k++){ const f = figure(['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f'][(i + k) % 5]); f.scale.setScalar(1.1); f.visible = true;
-      f.position.set((k - 1)*seg*.3, WALL_H - 1.5, (k % 2 ? 4 : -4)); f.userData.ph = Math.random()*6; p.add(f); crowd.push(f); }
+    // the wall rises and falls: some pieces taller, some crumbled, a square tower every few pieces
+    const rnd = Math.abs(Math.sin(i*12.9898)*43758.5453) % 1, towerHere = i % 8 === 4, broken = !towerHere && rnd < .14;
+    const h = towerHere ? WALL_H + 34 : Math.round(WALL_H*(.82 + .36*Math.abs(Math.sin(i*.9) + Math.sin(i*.37))/2));
+    const B = (w, hh, d, m, x, y, z) => { const o = new T.Mesh(new T.BoxGeometry(w, hh, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; p.add(o); return o; };
+    if (broken){ B(seg*.55, h*.7 + 14, WALL_T, stone, -seg*.22, h*.35 - 13, 0); B(seg*.5, h*.45 + 14, WALL_T, stone, seg*.25, h*.22 - 13, 0); // a crumbled gap
+      B(10, 8, 10, dark, seg*.1, h*.45 - 8, WALL_T*.7).rotation.y = rnd*3; }
+    else {
+      B(seg, h + 14, WALL_T, stone, 0, h/2 - 13, 0);
+      B(seg + 1, 5, WALL_T + 8, ledge, 0, h - 4, 0); B(seg + 1, 3, WALL_T + 5, ledge, 0, h*.44, 0); // cornice and a middle ledge
+      for (const sg of [1, -1]){ // two rows of arches between pilasters, like a colosseum
+        for (const k of [-.25, .25]){ B(seg*.28, h*.3, 1, dark, k*seg, h*.2, sg*(WALL_T/2 + .3)); B(seg*.22, h*.22, 1, dark, k*seg, h*.66, sg*(WALL_T/2 + .3)); }
+        for (const k of [-.5, 0, .5]) B(3.5, h*.9, 2.5, ledge, k*seg, h*.45 - 4, sg*(WALL_T/2 + 1)); }
+      if (towerHere){ B(seg*.8, 6, WALL_T + 14, ledge, 0, h + 1, 0); // a square tower with merlons and a flag
+        for (let k=0;k<4;k++) for (const sg of [1, -1]) B(6, 7, 6, stone, (k - 1.5)*seg*.22, h + 7, sg*(WALL_T/2 + 4));
+        const flag = new T.Mesh(new T.BoxGeometry(1, 18, 28), mat(['#c64a3c', '#3f6c94', '#d48a2a'][(i/8 | 0) % 3])); flag.position.set(0, h + 34, 14); p.add(flag);
+        const pole = new T.Mesh(new T.CylinderGeometry(.9, .9, 40, 5), mat('#6e3d1e')); pole.position.set(0, h + 24, 0); p.add(pole); }
+      else for (let k=0;k<3;k++){ const f = figure(['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f'][(i + k) % 5]); f.scale.setScalar(1.1); f.visible = true;
+        f.position.set((k - 1)*seg*.3, h - 1.5, (k % 2 ? 4 : -4)); f.userData.ph = Math.random()*6; f.userData.h = h; p.add(f); crowd.push(f); }
+    }
   }
+  // ruins inside the ring: standing columns of different heights, a fallen one and an old arch, close to the walls
+  const marble = mat('#eee6d6'), col = new T.CylinderGeometry(6, 7, 1, 10);
+  for (let k=0;k<14;k++){ const a = ARENA.gate + .6 + k/14*(Math.PI*2 - 1.2), r = R - 70 - (k % 3)*26, x = Math.cos(a)*r, z = Math.sin(a)*r;
+    if (landDist(ARENA.x + x, ARENA.y + z) < 30) continue;
+    const hh = k % 4 === 0 ? 8 : 24 + (k*37 % 40);
+    const c = new T.Mesh(col, marble); c.scale.y = hh + 10; c.position.set(x, hh/2 - 5, z); c.castShadow = true; g.add(c);
+    if (hh > 40){ const cap = new T.Mesh(new T.BoxGeometry(16, 4, 16), marble); cap.position.set(x, hh - 3, z); g.add(cap); }
+    if (k % 5 === 2){ const fallen = new T.Mesh(col, marble); fallen.scale.y = 44; fallen.rotation.z = Math.PI/2; fallen.rotation.y = a; fallen.position.set(x + Math.cos(a + 1.6)*30, 2, z + Math.sin(a + 1.6)*30); g.add(fallen); }
+  }
+  { const a = ARENA.gate + Math.PI*.75, r = R - 120, x = Math.cos(a)*r, z = Math.sin(a)*r; // an old arch standing in the water
+    if (landDist(ARENA.x + x, ARENA.y + z) > 40){ const arch = new T.Group(); arch.position.set(x, 0, z); arch.rotation.y = -a; g.add(arch);
+      for (const s2 of [-1, 1]){ const c = new T.Mesh(col, marble); c.scale.y = 70; c.position.set(0, 30, s2*26); c.castShadow = true; arch.add(c); }
+      const lin = new T.Mesh(new T.BoxGeometry(16, 10, 70), marble); lin.position.y = 68; lin.castShadow = true; arch.add(lin);
+      const ped = new T.Mesh(new T.CylinderGeometry(.01, 14, 70, 3), marble); ped.rotation.x = Math.PI/2; ped.rotation.y = Math.PI/2; ped.scale.set(1, 1, .5); ped.position.y = 80; arch.add(ped); } }
   // end towers where the ring runs up onto Rhodes
   for (let i=0;i<N;i++) if (solid[i] && !solid[(i + 1) % N] && !inGate((i + 1)/N*Math.PI*2 + .001)) tower((i + 1)/N*Math.PI*2, WALL_H + 18, 24);
   for (let i=0;i<N;i++) if (solid[i] && !solid[(i + N - 1) % N] && !inGate(i/N*Math.PI*2 - .001)) tower(i/N*Math.PI*2, WALL_H + 18, 24);
@@ -99,7 +123,7 @@ export function updateArena(dt){
   // the Colossus fades while you're inside, so the fight is never behind his legs
   const k = inside ? .2 : 1; for (const m of colossus ? colossus.userData.mats : []){ m.opacity += (k - m.opacity)*Math.min(1, dt*3); m.depthWrite = m.opacity > .9; }
   if (colossus) colossus.userData.flame.scale.set(1 + Math.sin(G.t*9)*.08, 1 + Math.sin(G.t*13)*.15, 1);
-  if (near) for (const f of crowd){ f.position.y = WALL_H - 1.5 + (A.on ? Math.abs(Math.sin(G.t*6 + f.userData.ph))*6 : 0); }
+  if (near) for (const f of crowd){ f.position.y = (f.userData.h || WALL_H) - 1.5 + (A.on ? Math.abs(Math.sin(G.t*6 + f.userData.ph))*6 : 0); }
   if (A.on){
     if (G.sinking){ endGames('Defeated in the arena. Your boat is fished out and towed home.'); return; }
     if (!inArena(S, -60)){ endGames('You fled the arena. The crowd boos.'); return; }

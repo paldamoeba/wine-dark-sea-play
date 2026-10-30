@@ -1,7 +1,7 @@
 // Clouds: soft white puffs drifting between the camera and the sea. A few on fair days, many in mist (instead of one white
 // fog over everything), grey in storms. They wrap around the camera so there are always some nearby.
-import {G} from './state.js?v=34a2ac7';
-import {scene, camera} from './scene.js?v=34a2ac7';
+import {G} from './state.js?v=8eb3922';
+import {scene, camera} from './scene.js?v=8eb3922';
 
 const T = window.THREE;
 const N = 22, R = 1100;
@@ -24,8 +24,10 @@ export function updateClouds(dt, kind){
     // wrap around the camera
     if (u.x - cx > R) u.x -= 2*R; if (u.x - cx < -R) u.x += 2*R; if (u.z - cz > R) u.z -= 2*R; if (u.z - cz < -R) u.z += 2*R;
     // at a fraction of the camera's height, slide toward the camera so the cloud sits over the sea you're looking at
-    c.position.set(u.x + (camera.position.x - cx)*u.y, camera.position.y*u.y, u.z + (camera.position.z - cz)*u.y); c.scale.setScalar(camera.position.y/700); // always partway between the camera and the sea
-    const target = u.rank < want ? (kind === 'mist' ? .5 : .62) : 0;
+    c.position.set(u.x + (camera.position.x - cx)*u.y, camera.position.y*u.y, u.z + (camera.position.z - cz)*u.y); c.scale.setScalar(camera.position.y/950); // always partway between the camera and the sea
+    // clouds thin out right over your boat so they never hide it
+    const clear = Math.min(1, Math.max(0, (Math.hypot(u.x - cx, u.z - cz) - 260)/320));
+    const target = u.rank < want ? (kind === 'mist' ? .42 : .55)*clear : 0;
     u.m.opacity += (target - u.m.opacity)*Math.min(1, dt*.4);
     u.m.color.copy(WHITE).lerp(GREY, G.stormK || 0);
     c.visible = u.m.opacity > .01;

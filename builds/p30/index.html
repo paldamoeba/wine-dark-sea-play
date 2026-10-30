@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script>(()=>{const P="wds-p30:",g=Storage.prototype.getItem,s=Storage.prototype.setItem,r=Storage.prototype.removeItem;Storage.prototype.getItem=function(k){return g.call(this,P+k)};Storage.prototype.setItem=function(k,v){return s.call(this,P+k,v)};Storage.prototype.removeItem=function(k){return r.call(this,P+k)};Storage.prototype.clear=function(){};})();</script>
+<title>Wine-Dark Sea</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+
+<canvas id="cv" aria-label="The sea"></canvas>
+<canvas id="ov"></canvas>
+<div class="hud" aria-live="polite">
+  <div class="hudbar">
+    <div class="hi" id="goldChip" title="Drachmae"><i class="ic" data-ic="coin"></i><b id="gold">0</b></div>
+    <div class="hi" id="holdChip" title="Hold"><i class="ic" data-ic="hold"></i><b id="hold">0/10</b></div>
+    <div class="hi bless" id="blessChip" hidden title="Poseidon's blessing"><i class="ic" data-ic="bless"></i><b id="blessT">2:00</b></div>
+  </div>
+  <div class="lifebar" title="Hull"><i class="ic" data-ic="hull"></i><div class="bar"><i id="hullbar"></i></div></div>
+</div>
+<div class="hi wx" id="wxChip" title="Weather"><span id="wxIcon">☀</span><b id="wxName">Fair</b></div>
+<div class="goalwrap">
+  <button class="goal" id="goalPill" hidden aria-label="Your goal and jobs"><span class="lbl" id="goalLbl">Goal</span><span id="goalText"></span><span class="more" aria-hidden="true">›</span></button>
+</div>
+<nav class="toolbar" aria-label="Menus">
+  <button class="tool" id="bagBtn" aria-label="Your things"><i class="ic" data-ic="hold"></i><span>Things</span></button>
+  <button class="tool" id="chartBtn" aria-label="Chart"><i class="ic" data-ic="map"></i><span>Chart</span></button>
+  <button class="tool" id="gearBtn" aria-label="Settings"><i class="ic" data-ic="gear"></i><span>Settings</span></button>
+</nav>
+<button class="mapbtn" id="mapBtn" aria-label="Open the chart"></button>
+<div class="mapview" id="mapView" hidden>
+  <canvas id="mapCv" aria-label="Chart of the Aegean"></canvas>
+  <header class="maphead">
+    <h2>Chart of the Aegean</h2>
+    <button class="btn" id="mapClose">Close</button>
+  </header>
+  <footer class="mapfoot">
+    <ul class="legend">
+      <li><i class="lg-you"></i>You</li>
+      <li><i class="lg-port"></i>Harbor</li>
+      <li><i class="lg-fish"></i>Fish</li>
+      <li><i class="lg-wreck">×</i>Wreck</li>
+      <li><i class="lg-course">×</i>Course</li>
+    </ul>
+    <div class="mapbtns">
+      <button class="btn ghostdark" id="mapCenter">Find my ship</button>
+      <button class="btn ghostdark" id="mapClear" hidden>Clear course</button>
+    </div>
+    <p>Tap the chart to set a course. Drag to look around, pinch to zoom.</p>
+  </footer>
+</div>
+<div class="zone" id="zone"><h2 id="zoneName">The Shallows</h2><p id="zoneSub">Calm water around Kallisto</p></div>
+<div class="toast" id="toast" hidden></div>
+<div class="hint" id="hint" hidden>Double tap the sea to sail there, or press and drag to steer.<br>Stop on glinting water near islands and your crew fishes. Bubbling water holds big fish.</div>
+<button class="raid" id="raidBtn" hidden>Raid</button>
+<button class="raid arena" id="arenaBtn" hidden>Start the games</button>
+<button class="raid arena council" id="councilBtn" hidden>War council</button>
+<button class="volley" id="volleyBtn" hidden aria-label="Volley: every archer fires at once"><span>Volley</span></button>
+<div class="dockbar"><button class="dock alt" id="harborBtn" hidden>Harbor</button><button class="dock" id="dockBtn" hidden>Enter Kallisto harbor</button></div>
+<div class="sheet" id="sheet" hidden></div>
+<noscript><div class="err">This game needs JavaScript turned on.</div></noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
+</script>
+<script type="module" src="js/main.js"></script>

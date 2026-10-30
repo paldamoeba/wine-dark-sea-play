@@ -1,20 +1,20 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=34a2ac7';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=34a2ac7';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=34a2ac7';
-import {applyQuality, setSeaLook, project, view} from './scene.js?v=34a2ac7';
-import {swapBoat, refreshAllTrees} from './entities.js?v=34a2ac7';
-import {setZoom} from './input.js?v=34a2ac7';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=34a2ac7';
-import {tutHTML} from './tutorial.js?v=34a2ac7';
-import {founded, blessing, seats, candidates} from './crew.js?v=34a2ac7';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=34a2ac7';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=34a2ac7';
-import {effectText, buy} from './upgrades.js?v=34a2ac7';
-import {harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=34a2ac7';
-import {GOODS, WAR} from './config.js?v=34a2ac7';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=34a2ac7';
-import {W, KINDS} from './weather.js?v=34a2ac7';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=8eb3922';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=8eb3922';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=8eb3922';
+import {applyQuality, setSeaLook, project, view} from './scene.js?v=8eb3922';
+import {swapBoat, refreshAllTrees} from './entities.js?v=8eb3922';
+import {setZoom} from './input.js?v=8eb3922';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=8eb3922';
+import {tutHTML} from './tutorial.js?v=8eb3922';
+import {founded, blessing, seats, candidates} from './crew.js?v=8eb3922';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=8eb3922';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=8eb3922';
+import {effectText, buy} from './upgrades.js?v=8eb3922';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=8eb3922';
+import {GOODS, WAR} from './config.js?v=8eb3922';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=8eb3922';
+import {W, KINDS} from './weather.js?v=8eb3922';
 
 const $ = id => document.getElementById(id);
 
@@ -48,7 +48,7 @@ export function updateUI(dt, nearDock){
   $('hint').hidden = !G.S.hint || G.sheetOpen;
   const pill = pillText(); $('goalPill').hidden = !pill || G.sheetOpen;
   if (pill && $('goalText').textContent !== pill){ $('goalText').textContent = pill; $('goalLbl').textContent = goal() ? 'Goal' : 'Job'; }
-  const wk = KINDS[W.kind]; if ($('wxName').textContent !== wk.label){ $('wxName').textContent = wk.label; $('wxIcon').textContent = wk.icon; $('wxChip').className = 'hi wx ' + W.kind; }
+  const wk = KINDS[W.kind]; if ($('wxName').textContent !== wk.label){ $('wxName').textContent = wk.label; $('wxIcon').innerHTML = WX_IC[W.kind] || wk.icon; $('wxChip').className = 'hi wx ' + W.kind; }
   const bl = G.S.bless || 0; $('blessChip').hidden = !bl;
   if (bl) $('blessT').textContent = `${Math.floor(bl/60)}:${String(Math.floor(bl % 60)).padStart(2, '0')}`;
   if (toastT > 0){ toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
@@ -111,8 +111,10 @@ function settingsHTML(){
   const list = [['game', 'Game', IC.ship], ['gfx', 'Graphics', IC.star], ...(s.builder || s.showBuilder ? [['dev', 'Builder', IC.gear]] : [])];
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
   const game = card('Your voyage', `<div class="stats big">${IC.ship} ${ship().name} · ${mins} min at sea</div>${row('How to play', 'The two pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}`)
+    + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
+      + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 29</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 30</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Bright sea', 'Clear blue water with drifting white foam lines, like a cartoon sea. Off = the darker teal sea.', tog('bright', s.bright !== false, 'Bright sea'))}

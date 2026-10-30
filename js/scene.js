@@ -1,8 +1,8 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=34a2ac7';
-import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES} from './world.js?v=34a2ac7';
-import {G} from './state.js?v=34a2ac7';
-import {mat} from './ships.js?v=34a2ac7';
+import {QUALITY} from './config.js?v=8eb3922';
+import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES} from './world.js?v=8eb3922';
+import {G} from './state.js?v=8eb3922';
+import {mat} from './ships.js?v=8eb3922';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -45,11 +45,11 @@ function buildWater(seg){
 const LOOKS = {classic:['#2b8e8f', '#175c7c', '#1b4a63', '#5cc2b2'], bright:['#35a6d8', '#1d72cc', '#1a5fb4', '#7fd3e2']};
 const CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
 const waterMat = mat('#ffffff', {vertexColors:true}).clone(); waterMat.gradientMap = mat('#ffffff').gradientMap;
-const foamU = {uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}};
+const foamU = {uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
 waterMat.onBeforeCompile = sh => {
   Object.assign(sh.uniforms, foamU);
   sh.vertexShader = 'varying vec3 vWorld;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorld = (modelMatrix*vec4(transformed, 1.0)).xyz;');
-  sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uFoam, uGlint, uStorm; uniform vec3 uSun, uSky;
+  sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uFoam, uGlint, uStorm, uWave; uniform vec3 uSun, uSky;
     vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
     float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
       for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(i + g);
@@ -65,6 +65,12 @@ waterMat.onBeforeCompile = sh => {
       // big waves: a white line along each crest, so a rough sea shows separate rolling waves instead of a flat pool
       float cy = vWorld.y, crest = smoothstep(6.0, 6.5, cy)*(1. - smoothstep(6.7, 7.6, cy));
       gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, crest*.5*smoothstep(2600., 700., dist));
+      // rolling swells: long broken crest lines drifting across the sea, more of them when the wind is up
+      vec2 sw = vWorld.xz; float along = dot(sw, vec2(.8, .6)), across = dot(sw, vec2(-.6, .8));
+      float band = sin(along*.016 - uTime*.9 + sin(across*.004)*2.5 + sin(across*.021 + uTime*.3)*.9);
+      float seg = smoothstep(.15, .6, sin(across*.011 + floor(along*.016/6.2831)*1.7) + .3*sin(across*.031));
+      float swell = smoothstep(.962, .992, band)*seg*clamp(uWave - .45, 0., 1.)*fade;
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, swell*.7*uFoam);
       // a little of the sky reflects off the water further away
       vec3 Vv = normalize(cameraPosition - vWorld); float fres = pow(1. - max(Vv.y, 0.), 3.);
       gl_FragColor.rgb = mix(gl_FragColor.rgb, uSky, fres*.35);
@@ -72,7 +78,7 @@ waterMat.onBeforeCompile = sh => {
       vec2 w = vWorld.xz;
       vec3 nrm = normalize(vec3(sin(w.x*.045 + uTime*1.7)*.16 + sin((w.x + w.y)*.11 - uTime*2.3)*.08, 1., cos(w.y*.05 - uTime*1.4)*.16 + sin((w.x - w.y)*.09 + uTime*2.1)*.08));
       vec3 V = normalize(cameraPosition - vWorld), Rf = reflect(-uSun, nrm);
-      float sp = max(dot(Rf, V), 0.), sheen = pow(sp, 24.)*.22, twinkle = pow(sp, 260.)*1.6;
+      float sp = max(dot(Rf, V), 0.), sheen = pow(sp, 24.)*.1, twinkle = pow(sp, 260.)*.75;
       gl_FragColor.rgb += vec3(1., .96, .86)*(sheen + twinkle)*uGlint;`);
 };
 export function setSeaLook(bright){ const L = LOOKS[bright ? 'bright' : 'classic']; CSH.set(L[0]); CSEA.set(L[1]); CST.set(L[2]); CLAG.set(L[3]); foamU.uFoam.value = bright ? 1 : 0; SKY.set(bright ? '#b8def0' : '#a9c9cf'); }
@@ -143,7 +149,7 @@ export function updateWeather(){
   const z = viewZoom();
   scene.fog.near = (1000 - k*550 - m*420)*z; scene.fog.far = (2300 - k*1000 - m*750)*z;
   sun.intensity = .64 - k*.42 + m*.08 + G.flash*.8; hemi.intensity = .62 - k*.22 + m*.1 + G.flash*.6;
-  foamU.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); foamU.uGlint.value = 1 - k*.8 - m*.5; foamU.uStorm.value = Math.min(1, k + m*.4); foamU.uSky.value.copy(scene.fog.color);
+  foamU.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); foamU.uGlint.value = 1 - k*.8 - m*.5; foamU.uStorm.value = Math.min(1, k + m*.4); foamU.uWave.value = WEATHER_WAVES.k; foamU.uSky.value.copy(scene.fog.color);
 }
 
 // World point -> screen pixels (for labels drawn on the 2D overlay).

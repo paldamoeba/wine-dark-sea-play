@@ -71,7 +71,7 @@ export function inkify(obj){
   return obj;
 }
 const GREY = new T.Color('#a39d90');
-const KEEP = ['side', 'map', 'transparent', 'alphaTest', 'vertexColors', 'opacity', 'depthWrite'];
+const KEEP = ['side', 'map', 'transparent', 'alphaTest', 'vertexColors', 'opacity', 'depthWrite', 'flatShading'];
 const mats = {};
 export function mat(color, o = {}){
   const opts = {}; for (const k of KEEP) if (k in o) opts[k] = o[k];
@@ -256,7 +256,7 @@ function flagOn(god, x, y){
   const m = new T.Mesh(geo, mat('#ffffff', {map:flagTex(god), side:T.DoubleSide, transparent:true, alphaTest:.5})); m.castShadow = true;
   m.position.set(x, y, 0); m.userData.flagBase = geo.attributes.position.array.slice(); return m;
 }
-const amphora = new T.LatheGeometry([[0,0],[2.5,.8],[4,3.5],[4.4,7],[3.2,10.5],[1.6,12],[1.6,14.5],[2.6,15.3]].map(([x, y]) => new T.Vector2(x, y)), 8);
+const amphora = new T.LatheGeometry([[0,0],[2.5,.8],[4,3.5],[4.4,7],[3.2,10.5],[1.6,12],[1.6,14.5],[2.6,15.3]].map(([x, y]) => new T.Vector2(x, y)), 14);
 
 // Build a ship. look = {paint, sail, flag}; crew = show the crew.
 export function buildShip(key, look = {}, crew = true){
@@ -308,7 +308,7 @@ export function buildShip(key, look = {}, crew = true){
     const pu = mesh(new T.CircleGeometry(1.4, 10), '#1c1c22', {side:T.DoubleSide}); pu.position.copy(e.position); pu.position.z += sg*.2; pu.position.x += .6; pu.rotation.y = e.rotation.y; body.add(pu);
   }
   if (s.nets){ const n = mesh(new T.DodecahedronGeometry(6, 0), 'net'); n.scale.set(1.3, .5, 1); n.position.set(-s.L*.3, info.deckLevel + 2, 0); body.add(n); }
-  if (s.cargo){ for (let i=0;i<8;i++){ const a = mesh(amphora, '#b06a3d'); a.position.set(-8 + (i % 4)*8, info.deckLevel, -7 + Math.floor(i/4)*12); body.add(a); }
+  if (s.cargo){ for (let i=0;i<8;i++){ const a = mesh(amphora, '#b06a3d', {flatShading:false}); a.position.set(-8 + (i % 4)*8, info.deckLevel, -7 + Math.floor(i/4)*12); body.add(a); }
     const crate = mesh(new T.BoxGeometry(14, 9, 12), '#9b6b3a'); crate.position.set(24, info.deckLevel + 4.5, 0); body.add(crate); }
   if (s.cabin){ const cab = mesh(new T.BoxGeometry(18, 11, s.B*.5), pc.inner); cab.position.set(-s.L*.3, info.deckLevel + 5.5, 0); body.add(cab);
     const roof = mesh(new T.BoxGeometry(20, 1.5, s.B*.56), pc.panel); roof.position.set(-s.L*.3, info.deckLevel + 11.5, 0); body.add(roof); }

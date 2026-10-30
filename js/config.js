@@ -141,7 +141,7 @@ export const TUNING = {
 // Graphics presets. "auto" starts on high and drops to low if the phone struggles.
 export const QUALITY = {
   low:  {dpr:1,    shadows:false, waterSeg:36, label:'Low'},
-  high: {dpr:1.75, shadows:true,  waterSeg:56, label:'High'},
+  high: {dpr:1.5, shadows:true,  waterSeg:56, label:'High'},
 };
 export const AUTO_QUALITY = {sampleSeconds:4, minFps:42};
 

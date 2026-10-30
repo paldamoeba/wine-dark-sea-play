@@ -1,0 +1,132 @@
+// Game balance and settings. Change numbers here to tune the game.
+
+export const SAVE_VERSION = 3;
+export const SAVE_KEY = 'wine-dark-sea';
+export const OLD_SAVE_KEYS = ['wine-dark-sea-v2'];
+export const SETTINGS_KEY = 'wine-dark-sea-settings';
+
+// fighters = crew members who shoot in a fight. More crew, more arrows.
+// turn = how fast the ship can turn (radians per second). Small boats turn quickly, big ships slowly.
+export const SHIPS = [
+  {name:'Rowboat',      model:'rowboat', speed:105, hull:40,  hold:10, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:1, turn:3},
+  {name:'Fishing Boat', model:'fishing', speed:195, hull:80,  hold:20, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:2, turn:2.4, cost:{wood:25, gold:80},
+    desc:'A sail, more speed, a second crew member, steadier in big waves'},
+  {name:'Bireme',       model:'bireme',  speed:235, hull:170, hold:16, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, turn:1.3, cost:{wood:60, gold:250},
+    desc:'A warship. Four archers, a hull that shrugs off big waves, but a small hold'},
+  {name:'Trireme', locked:true, cost:{wood:120, gold:600}, desc:'Three rows of oars and a bronze ram. Coming in a later build.'},
+];
+
+// spin = needle speed (radians per second), green = size of the green part (degrees). Bigger fish: faster, smaller.
+export const FISH = {
+  sardine: {price:3, label:'Sardine', spin:3.4, green:80},
+  tuna:    {price:8, label:'Tuna',    spin:5.2, green:46},
+  swordfish:{price:16, label:'Swordfish', spin:6.4, green:34},
+};
+// Sardines are caught by the crew in the light water near any shore (no minigame). Bubbling spots hold the big fish.
+// Schools of sardines glint in the light water near shores. Each comes and goes; stop on one and the crew fishes.
+export const SHORE_FISH = {kind:'sardine', timeK:1.8, range:110, settle:1.2, period:[60, 120], on:.45};
+// The whale: sail close to it for Poseidon's blessing.
+export const WILDLIFE = {whaleFirst:[50, 100], whaleEvery:[160, 300], whaleNear:280, blessSeconds:120, blessSpeed:1.2, blessWork:.7,
+  dolphinEvery:[180, 360]}; // dolphins are a rare treat, and they leave when a fight starts
+
+// Founding your crew (needs your second ship), the gods' blessings, and sailors to hire.
+export const CREW = {
+  foundCost:60, hireCost:30,
+  seats:[0, 3, 5],  // sailors you can hire, per ship (rowboat, fishing boat, bireme)
+  jobs:{
+    archer:{label:'Archer', desc:'One more bow in every fight'},
+    rower: {label:'Rower',  desc:'Your ship sails 5% faster', boost:.05},
+    fisher:{label:'Fisher', desc:'Catches come 15% quicker, and the green part grows', boost:.15},
+  },
+  names:['Nikias', 'Theron', 'Phaedra', 'Lykon', 'Doris', 'Kleon', 'Ianthe', 'Myron', 'Thalia', 'Dion', 'Eudora', 'Philon', 'Melita', 'Ariston', 'Kallias', 'Xanthe', 'Timon', 'Agape', 'Stavros', 'Chloe'],
+};
+export const GOD_BLESSINGS = {
+  poseidon:{desc:'Big waves do half the damage', wave:.5},
+  zeus:    {desc:'Your arrows hit 25% harder', dmg:1.25},
+  athena:  {desc:'Your crew aims better: more arrows hit', hit:.1},
+  apollo:  {desc:'Volley recharges 30% faster', volley:.7},
+  artemis: {desc:'Fishing: the green part is 25% bigger', green:1.25},
+  hermes:  {desc:'Fish sell for 15% more', price:1.15},
+};
+
+// First voyages: shown one at a time under the top bar. t = what counts, n = how many, gold = reward.
+export const GOALS = [
+  {t:'catch', kind:'sardine', n:3, gold:5, text:'Catch 3 sardines on glinting water'},
+  {t:'sell', n:1, gold:5, text:'Sell your catch at Kallisto harbor'},
+  {t:'wood', n:3, gold:6, text:'Cut 3 wood beside the cypress trees'},
+  {t:'salvage', n:2, gold:8, text:'Salvage 2 timbers from a wreck'},
+  {t:'catch', kind:'tuna', n:1, gold:8, text:'Catch a tuna in bubbling water'},
+  {t:'board', n:1, gold:6, text:'Take a job from the request board in a harbor'},
+  {t:'build', n:1, gold:25, text:'Build the fishing boat at Kallisto (25 wood, 80 gold)'},
+];
+// The request board in every harbor.
+export const REQUESTS = {offers:3, max:2,
+  who:['Old Pelagia, for her taverna', 'The temple priest', 'A worried mother', 'Kleon the net maker', 'The harbor master', 'Two hungry fishermen', 'A traveling poet', 'The potter\'s daughter']};
+// Messages in bottles. coins / map = chance of each (the rest are notes).
+export const BOTTLES = {first:40, every:[90, 170], life:100, dist:[260, 420], coins:.45, map:.3,
+  notes:['To whoever finds this: the tuna run thick east of Paros. Signed, an old fisher.',
+    'Help! Stranded on a rock with a goat. The goat is fine. I am bored.',
+    'Poseidon, I promise to stop complaining about the waves. Please stop the waves.',
+    'Never accept dinner from a Spartan. The black broth is real.',
+    'Athena\'s owl was seen over Naxos. Good luck to all who sail there.',
+    'Dear Kallisto, your harbor smells of fish. We love it. The merchants of Chios.',
+    'I buried nothing. Stop looking. Signed, definitely not a pirate.',
+    'Three dolphins in one day means a fair wind tomorrow.']};
+
+export const TUNING = {
+  spotStock: 3,          // fish per fishing spot
+  spotRegen: 14,         // seconds to regrow one fish
+  treeRegen: 25,         // seconds to regrow one tree
+  wreckStock: 6,         // salvage pulls per wreck
+  wreckRespawn: 90,      // seconds until a new wreck washes in
+  wreckGoldChance: .35,  // chance a salvage pull also finds coins
+  wreckGoldMin: 4, wreckGoldMax: 9,
+  repairPerGold: 3,      // hull points per gold
+  slowSpeed: 30,         // below this speed the boat can fish / gather
+  fishRange: 70, wreckRange: 95, treeRange: 50, dockRange: 140,
+  stormDrift: 22,
+  autosaveSeconds: 5,
+};
+
+// Graphics presets. "auto" starts on high and drops to low if the phone struggles.
+export const QUALITY = {
+  low:  {dpr:1,    shadows:false, waterSeg:36, label:'Low'},
+  high: {dpr:1.75, shadows:true,  waterSeg:56, label:'High'},
+};
+export const AUTO_QUALITY = {sampleSeconds:4, minFps:42};
+
+// Fighting. Your crew and raider crews shoot by themselves when in range.
+export const COMBAT = {
+  range: 300,           // how far arrows fly
+  shotEvery: 3,         // seconds between shots for one of your fighters
+  enemyShotEvery: 4.2,  // the same for one raider fighter
+  firstShot: 2.5,       // seconds a raider waits after spotting you before it shoots
+  windup: 1.2,          // raiders sail at half speed for this long after spotting you
+  arrowDmg: 3,          // damage per arrow from your crew
+  hitChance: .85,
+  arrowSpeed: 300,
+  volleyCooldown: 14,   // the special button
+  volleyArrows: 3,      // arrows per fighter in a volley
+  sideArc: .5,          // archers shoot over the sides: no shots within about 30° of dead ahead or dead astern
+  respawn: 120,         // seconds until a sunk raider is replaced
+  lootLife: 75,         // seconds floating loot stays before it sinks
+  lootRange: 70,
+};
+export const ENEMIES = {
+  dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:90,  turn:2.2, fighters:1, dmg:1.5, sight:420, leash:800, gold:[5, 10], wood:2, len:44, beam:17},
+  skiff:  {name:'Raider skiff',  model:'skiff',  hull:36,  speed:95,  turn:1.5, fighters:2, dmg:2, sight:500, leash:900,  gold:[12, 24], wood:3, len:72,  beam:22},
+  galley: {name:'Raider galley', model:'raider', hull:150, speed:150, turn:.6,  fighters:5, dmg:3, sight:600, leash:1100, gold:[60, 90], wood:8, len:135, beam:28},
+  // side: pirate (always hostile), merchant (peaceful, flees), navy (hunts pirates; hunts you only if one of them saw you raid)
+  merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:80, turn:.7, fighters:0, dmg:0, sight:450, gold:[45, 75], wood:6, len:110, beam:44},
+  // navies: one kind per city. A patrol switches city when its island changes hands.
+  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:150, speed:165, turn:.75, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:6, len:190, beam:34},
+  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:150, speed:165, turn:.8, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:6, len:160, beam:30},
+};
+for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
+export const WITNESS = {
+  crimeSeconds: 6,  // after you shoot a merchant or navy ship, any navy ship that sees you or the victim in this time joins in
+  forget: 8,        // seconds out of sight (or in the Shallows) before an angry navy ship gives up
+  calm: 12,         // seconds a merchant keeps fleeing once you are far away
+};
+// Taking islands: when an island's navy guard is sunk, the island is open. Stay near it to raise the other city's flag.
+export const ISLES = {raidEvery:[120, 260], raidStay:45, takeSeconds:8, takeRange:380, aiSeconds:12, aiRange:900, reward:100, bounty:40, guardBack:25};
