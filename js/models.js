@@ -1,8 +1,8 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=6731910';
+import {hash} from './world.js?v=fc5d4f8';
 
 const T = window.THREE;
-import {mat} from './ships.js?v=6731910';
+import {mat} from './ships.js?v=fc5d4f8';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -183,6 +183,27 @@ export function whaleModel(){
   const spout = []; for (let k=0;k<7;k++){ const p = mesh(new T.SphereGeometry(5, 10, 8), '#f4fbff', {transparent:true, opacity:.8, flatShading:false}, false); p.material = p.material.clone(); p.visible = false; g.add(p); spout.push(p); }
   g.userData = {body, tail, spout};
   return g;
+}
+// The kraken: a huge plum-colored sea monster. Only its round head, two big eyes and six curling tentacles show above the water.
+// userData.tents = [{piv, ph}] so they can sway; the group's y is how far it has risen out of the sea.
+function tentacleGeo(len, r0){
+  const pts = []; for (let i=0;i<=10;i++){ const u = i/10; pts.push(new T.Vector3(len*.32*Math.sin(u*Math.PI*1.15), len*.9*Math.sin(u*Math.PI*.5), 0)); } // up and curling over at the tip
+  const curve = new T.CatmullRomCurve3(pts), segs = 28, rad = 10, geo = new T.TubeGeometry(curve, segs, r0, rad, false), p = geo.attributes.position, v = new T.Vector3();
+  for (let i=0;i<=segs;i++){ const c = curve.getPointAt(i/segs), k = 1 - .86*Math.pow(i/segs, .9); // thick at the base, thin at the tip
+    for (let j=0;j<=rad;j++){ const n = i*(rad + 1) + j; v.fromBufferAttribute(p, n).sub(c).multiplyScalar(k).add(c); p.setXYZ(n, v.x, v.y, v.z); } }
+  geo.computeVertexNormals(); return geo;
+}
+export function krakenModel(){
+  const g = new T.Group(), body = new T.Group(); g.add(body);
+  const head = soft(new T.SphereGeometry(26, 28, 20), '#7d3157'); head.scale.set(1, 1.2, 1); head.position.y = 4; body.add(head);
+  for (const [x, y, z, r] of [[-8, 26, 12, 4], [6, 30, -10, 3.2], [-14, 16, -16, 3.6], [12, 18, 15, 2.8]]){ const sp = soft(new T.SphereGeometry(r, 12, 8), '#a5527c'); sp.scale.y = .5; sp.position.set(x, y, z); sp.lookAt(0, 4, 0); body.add(sp); } // pale spots
+  for (const sd of [-1, 1]){ const eye = soft(new T.SphereGeometry(6.5, 16, 12), '#f3d36a'); eye.position.set(21, 12, sd*11); body.add(eye);
+    const pupil = soft(new T.SphereGeometry(3.4, 12, 10), '#1d1420'); pupil.position.set(26.5, 12, sd*11.5); body.add(pupil); }
+  g.userData.tents = [];
+  for (let i=0;i<6;i++){ const a = i/6*Math.PI*2 + .3, piv = new T.Group(), len = 70 + (i % 3)*14;
+    piv.position.set(Math.cos(a)*34, -6, Math.sin(a)*34); piv.rotation.y = -a; body.add(piv);
+    const t = soft(tentacleGeo(len, 7.5), '#8e3a63'); piv.add(t); g.userData.tents.push({piv, ph:i*1.7}); }
+  g.userData.body = body; return g;
 }
 // A dolphin: a slim smooth body with a short beak, a curved fin on its back, flippers and flukes.
 export function dolphinModel(){

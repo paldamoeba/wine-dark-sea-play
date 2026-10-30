@@ -28,7 +28,8 @@ export const FISH = {
 export const SHORE_FISH = {kind:'sardine', timeK:1.8, range:110, settle:1.2, period:[60, 120], on:.45};
 // The whale: sail close to it for Poseidon's blessing.
 export const WILDLIFE = {whaleFirst:[50, 100], whaleEvery:[160, 300], whaleNear:280, blessSeconds:120, blessSpeed:1.2, blessWork:.7,
-  dolphinEvery:[180, 360]}; // dolphins are a rare treat, and they leave when a fight starts
+  dolphinEvery:[180, 360],
+  krakenFirst:[100, 200], krakenEvery:[360, 600], krakenNear:250, krakenStay:40, krakenGold:30}; // the kraken: only in the Open Sea, and it dives when you come close // dolphins are a rare treat, and they leave when a fight starts
 
 // Founding your crew (needs your second ship), the gods' blessings, and sailors to hire.
 export const CREW = {

@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=6731910';
-import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=6731910';
-import {G} from './state.js?v=6731910';
-import {mat} from './ships.js?v=6731910';
-import {TOD, updateDayNight} from './daynight.js?v=6731910';
+import {QUALITY} from './config.js?v=fc5d4f8';
+import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=fc5d4f8';
+import {G} from './state.js?v=fc5d4f8';
+import {mat} from './ships.js?v=fc5d4f8';
+import {TOD, updateDayNight} from './daynight.js?v=fc5d4f8';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -53,7 +53,7 @@ waterMat.onBeforeCompile = sh => {
   sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uFoam, uGlint, uStorm, uWave, uNight; uniform vec3 uSun, uSky;
     vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
     float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
-      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(i + g);
+      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(mod(i + g, 256.)); // wrapped so the hash never gets numbers too big for phone GPUs (that turned the far south black)
         o = .5 + .42*sin(uTime*.35 + 6.2831*o); float d = length(g + o - f); if (d < d1){ d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
       return d2 - d1; }
     ` + sh.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>
@@ -92,7 +92,7 @@ export function updateWater(){
   foamU.uTime.value = G.t;
   const step = waterSize/WN, ox = Math.round(G.cam.x/step)*step, oz = Math.round(G.cam.y/step)*step;
   water.position.set(ox, 0, oz);
-  const p = wgeo.attributes.position.array, c = wgeo.attributes.color.array, n = p.length/3, key = ox + ',' + oz + ',' + CSEA.getHex() + ',' + n;
+  const p = wgeo.attributes.position.array, c = wgeo.attributes.color.array, n = p.length/3, key = ox + ',' + oz + ',' + CSEA.getHex() + ',' + wgeo.uuid; // a rebuilt water tile (zoom, graphics) always gets its colors again
   if (key !== wKey){ wKey = key; if (!wAmp || wAmp.length !== n) wAmp = new Float32Array(n);
     for (let i=0, v=0;i<p.length;i+=3, v++){
       const x = wbase[i] + ox, z = wbase[i+2] + oz, s = seaInfo(x, z);

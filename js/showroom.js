@@ -1,10 +1,10 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=6731910';
-import {makePost} from './glow.js?v=6731910';
-import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=6731910';
-import {buildColossus, buildFortress} from './monuments.js?v=6731910';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=6731910';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=fc5d4f8';
+import {makePost} from './glow.js?v=fc5d4f8';
+import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=fc5d4f8';
+import {buildColossus, buildFortress} from './monuments.js?v=fc5d4f8';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=fc5d4f8';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -35,7 +35,7 @@ waveMat.onBeforeCompile = sh => {
   sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uStorm, uGlint, uAmp; uniform vec3 uSun, uSky;
     vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
     float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
-      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(i + g);
+      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(mod(i + g, 256.));
         o = .5 + .42*sin(uTime*.35 + 6.2831*o); float d = length(g + o - f); if (d < d1){ d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
       return d2 - d1; }
     ` + sh.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>
@@ -192,7 +192,7 @@ const SOUND_INFO = {
   catapult:'A fortress catapult throws a stone.', bigsplash:'The stone lands in the sea.', ram:'Your ram hits a ship head-on.', bump:'Two ships bump.', crash:'A ship breaks apart and sinks.',
   sink:'Your own ship goes down.', bubbles:'Bubbles from a sinking ship.', bell:'The harbor bell as you come in to dock.', horn:'A war horn when you raid a ship, or a navy ship sees a crime.',
   chime:'A goal or a job is done.', fanfare:'Your new ship is ready, or an island raises your flag.', hammer:'The shipwright fits an upgrade or repairs your hull.', buy:'You buy something.',
-  blessing:'Poseidon blesses you after you sail close to a whale.', whale:'A whale surfaces.', spout:'The whale breathes out.', splash:'Dolphins splash beside your boat.', gull:'Gulls over islands, wrecks and harbors.',
+  blessing:'Poseidon blesses you after you sail close to a whale.', whale:'A whale surfaces.', kraken:'The kraken rises, and again when it dives.', spout:'The whale breathes out.', splash:'Dolphins splash beside your boat.', gull:'Gulls over islands, wrecks and harbors.',
   thunder:'After each lightning flash in a storm.', creak:'Your hull creaks as it rolls on the waves.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
   bottle:'You open a message in a bottle.', treasure:'You dig up a treasure.', crowd:'The crowd at the Rhodes arena.', zone:'You sail into new waters.', warn:'Distant rumbling when a storm is coming.', dock:'Mooring ropes pull tight at the pier.'};
 const SOUND_MODEL = {
@@ -202,6 +202,7 @@ const SOUND_MODEL = {
   catapult:() => buildFortress('pirate', '#231d1d'), bigsplash:() => buildFortress('pirate', '#231d1d'), ram:() => buildShip('bireme', {ram:1}), bump:() => buildShip('trader'),
   crash:() => wreckModel('large'), sink:() => wreckModel('small'), bubbles:() => wreckModel('medium'), bell:() => harborTown('poseidon'), horn:() => buildShip('raider'),
   chime:() => temple(), fanfare:() => buildShip('trireme'), hammer:() => buildShip('bireme'), buy:() => harborTown('athena'), blessing:() => statue('poseidon', 'painted'),
+  kraken:() => { const k = krakenModel(); k.position.y = -2; k.userData.anim = 'kraken'; return k; },
   whale:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; }, spout:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; },
   splash:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const d = dolphinModel(); d.position.set(i*30 - 30, 6, (i % 2)*24 - 12); d.userData.ph = i*1.2; g.add(d); }); g.userData.anim = 'dolphins'; return g; },
   gull:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const b = gull(); b.position.set(i*22 - 22, 30 + (i % 2)*10, (i - 1)*14); b.scale.setScalar(1.6); g.add(b); }); g.userData.anim = 'gulls'; return g; },
@@ -273,6 +274,7 @@ const GROUPS = {
   animals:{name:'Animals', items:[
     {name:'Whale, whole body', desc:'The same whale lifted out of the sea, so you can see its whole shape: flippers, flukes and the low fin on its back.', make:() => { const w = whaleModel(); w.position.y = 24; w.userData.anim = 'whale'; return w; }},
     {name:'Whale', desc:'Surfaces now and then out at sea. Sail close for Poseidon\'s blessing.', make:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; }},
+    {name:'Kraken', desc:'Far out in the Open Sea, now and then, its tentacles rise from the water ahead of you. Sail close and it slips back into the deep, and the story earns you a few drachmae.', make:() => { const k = krakenModel(); k.position.y = -2; k.userData.anim = 'kraken'; return k; }},
     {name:'Dolphins', desc:'A pod that jumps beside your boat when you sail fast in open water.', make:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const d = dolphinModel(); d.position.set(i*30 - 30, 6, (i % 2)*24 - 12); d.userData.ph = i*1.2; g.add(d); }); g.userData.anim = 'dolphins'; return g; }},
     {name:'Gulls', desc:'They glide above the islands and wrecks on long bent wings, flapping slowly now and then.', make:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const b = gull(); b.position.set(i*22 - 22, 30 + (i % 2)*10, (i - 1)*14); b.scale.setScalar(1.6); g.add(b); }); g.userData.anim = 'gulls'; return g; }},
     {name:'Fish', desc:'Sardines (caught near shores), tuna and swordfish (in bubbling water). Smooth bodies, dark backs and silver bellies.', make:() => { const g = new T.Group();
@@ -378,6 +380,7 @@ function animate(t){
   const a = obj.userData.anim;
   for (const r of fires) flicker(r, t);
   if (a === 'whale'){ obj.userData.tail.rotation.z = Math.sin(t*1.4)*.25; obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
+  if (a === 'kraken'){ obj.userData.tents.forEach(tn => { tn.piv.rotation.z = Math.sin(t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(t*.9 + tn.ph*2)*.15; }); obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
   if (a === 'dolphins') obj.children.forEach(d => { const p = (t*.9 + d.userData.ph) % (Math.PI*2); d.position.y = 6 + Math.max(0, Math.sin(p))*26 - 8; d.rotation.z = Math.cos(p)*.7; });
   if (a === 'gulls') obj.children.forEach((b, i) => { b.userData.wings.forEach(w => w.p.rotation.x = w.s*(Math.sin(t*2.4 + i)*.16 + .04)); b.position.y = 34 + Math.sin(t*1.5 + i)*4; });
   if (a === 'wiggle') obj.children.forEach(f => { f.rotation.y = Math.sin(t*3 + f.userData.ph)*.18; f.position.y = 10 + Math.sin(t*1.4 + f.userData.ph)*1.5; });

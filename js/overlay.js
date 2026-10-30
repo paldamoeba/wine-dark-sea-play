@@ -1,15 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=6731910';
-import {G, isExplored} from './state.js?v=6731910';
-import {fogLayer, islandPath} from './map.js?v=6731910';
-import {view, project} from './scene.js?v=6731910';
-import {JOY_RADIUS} from './input.js?v=6731910';
-import {enemies, combatState, capture} from './combat.js?v=6731910';
-import {drawFish} from './fishing.js?v=6731910';
-import {whale} from './wildlife.js?v=6731910';
-import {SHORE_FISH} from './config.js?v=6731910';
-import {bottle} from './quests.js?v=6731910';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=6731910';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=fc5d4f8';
+import {G, isExplored} from './state.js?v=fc5d4f8';
+import {fogLayer, islandPath} from './map.js?v=fc5d4f8';
+import {view, project} from './scene.js?v=fc5d4f8';
+import {JOY_RADIUS} from './input.js?v=fc5d4f8';
+import {enemies, combatState, capture} from './combat.js?v=fc5d4f8';
+import {drawFish} from './fishing.js?v=fc5d4f8';
+import {whale} from './wildlife.js?v=fc5d4f8';
+import {SHORE_FISH} from './config.js?v=fc5d4f8';
+import {W as WIND} from './weather.js?v=fc5d4f8';
+import {bottle} from './quests.js?v=fc5d4f8';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=fc5d4f8';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -77,9 +78,26 @@ function drawSplashes(W, H, t){
       c.beginPath(); c.arc(s.x - 2.5*far - a*4*far, s.y - h, 1.8*far, 0, Math.PI*2); c.arc(s.x + 2.5*far + a*4*far, s.y - h*.8, 1.5*far, 0, Math.PI*2); c.fill(); }
   }
 }
+// Wind: a few soft white streaks drifting over the sea the way the wind blows, more when it is strong (like a cartoon).
+const STREAKS = Array.from({length:14}, (_, i) => ({life:i/14, x:0, y:0, len:0, ph:0}));
+function drawWind(t, dt){
+  const k = WIND.windK; if (k < .3 || G.mapOpen) return;
+  const n = Math.round(STREAKS.length*Math.min(1, (k - .2)*1.3)), ca = Math.cos(WIND.windA), sa = Math.sin(WIND.windA), sp = 70 + 150*k;
+  c.lineWidth = 2.8; c.lineCap = 'round';
+  for (let i=0;i<n;i++){ const s = STREAKS[i]; s.life += dt/(2.6 + (i % 3)*.6);
+    if (s.life >= 1 || !s.len){ s.life = s.len ? 0 : Math.random(); const r = 200 + Math.random()*500, a = Math.random()*6.28; s.x = G.cam.x + Math.cos(a)*r - ca*200; s.y = G.cam.y + Math.sin(a)*r - sa*200; s.len = 70 + Math.random()*80; s.ph = Math.random()*6.28; }
+    s.x += ca*sp*dt; s.y += sa*sp*dt;
+    const al = Math.sin(s.life*Math.PI)*.6*k*(1 - .5*(G.night || 0)); if (al < .02) continue;
+    c.strokeStyle = `rgba(250,253,255,${al})`; c.beginPath();
+    for (let j=0;j<=8;j++){ const u = j/8 - .5, w = Math.sin(u*6 + s.ph + t*3)*6, wx = s.x + ca*u*s.len - sa*w, wy = s.y + sa*u*s.len + ca*w, [px, py, pz] = project(wx, 26, wy);
+      if (pz > 1){ c.beginPath(); break; } j ? c.lineTo(px, py) : c.moveTo(px, py); }
+    c.stroke(); }
+}
+let lastT = 0;
 export function drawOverlay(fps){
   const {W, H, DPR} = view, S = G.S, t = G.t;
   c.setTransform(DPR,0,0,DPR,0,0); c.clearRect(0,0,W,H);
+  drawWind(t, Math.min(.05, Math.max(0, t - lastT))); lastT = t;
   if (G.stormK > .05){
     c.strokeStyle = `rgba(215,228,240,${.35*G.stormK})`; c.lineWidth = 1.2;
     for (let k=0;k<90;k++){ const rx = (hash(k,1)*W*1.2 + t*160) % (W*1.2) - W*.1, ry = (hash(k,2)*H + t*760) % H; c.beginPath(); c.moveTo(rx, ry); c.lineTo(rx-7, ry+20); c.stroke(); }
@@ -153,6 +171,11 @@ export function drawOverlay(fps){
   if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
   c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
   c.strokeStyle = 'rgba(247,238,214,.75)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.stroke();
+  // which way the wind blows: a white arrow across the little map, stronger wind = more solid
+  if (WIND.windK > .2){ const a = WIND.windA + Math.PI/4, al = Math.min(.85, WIND.windK);
+    c.save(); c.translate(cx, cy); c.rotate(a); c.globalAlpha = al; c.strokeStyle = '#f4fbff'; c.fillStyle = '#f4fbff'; c.lineWidth = 2.2; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(-ms*.36, 0); c.lineTo(ms*.3, 0); c.stroke(); c.beginPath(); c.moveTo(ms*.38, 0); c.lineTo(ms*.27, -5); c.lineTo(ms*.27, 5); c.closePath(); c.fill();
+    for (const f of [-.36, -.29]){ c.beginPath(); c.moveTo(ms*f, 0); c.lineTo(ms*(f - .06), -5); c.moveTo(ms*f, 0); c.lineTo(ms*(f - .06), 5); c.stroke(); } c.restore(); }
   // the nearest chapter goal off the little map: a red arrow on its rim pointing the way
   let gm = null, gd = Infinity; for (const m of G.goalMarks || []){ const d = Math.hypot(m.x - S.x, m.y - S.y); if (d < gd){ gd = d; gm = m; } }
   if (gm && gd > MINI_RANGE*.9){ const a = Math.atan2(gm.y - S.y, gm.x - S.x) + Math.PI/4, r = ms/2 - 2, px = cx + Math.cos(a)*r, py = cy + Math.sin(a)*r, pulse = 1 + Math.sin(G.t*5)*.12;

@@ -1,22 +1,22 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=6731910';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=6731910';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=6731910';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=6731910';
-import {swapBoat, refreshAllTrees} from './entities.js?v=6731910';
-import {setZoom} from './input.js?v=6731910';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=6731910';
-import {tutHTML} from './tutorial.js?v=6731910';
-import {founded, blessing, seats, candidates} from './crew.js?v=6731910';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=6731910';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=6731910';
-import {effectText, buy} from './upgrades.js?v=6731910';
-import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=6731910';
-import {GOODS, WAR} from './config.js?v=6731910';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=6731910';
-import {W, KINDS} from './weather.js?v=6731910';
-import {sfx, SND, applyVolumes} from './audio.js?v=6731910';
-import {setTimeOfDay} from './daynight.js?v=6731910';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=fc5d4f8';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=fc5d4f8';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=fc5d4f8';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=fc5d4f8';
+import {swapBoat, refreshAllTrees} from './entities.js?v=fc5d4f8';
+import {setZoom} from './input.js?v=fc5d4f8';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=fc5d4f8';
+import {tutHTML} from './tutorial.js?v=fc5d4f8';
+import {founded, blessing, seats, candidates} from './crew.js?v=fc5d4f8';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=fc5d4f8';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=fc5d4f8';
+import {effectText, buy} from './upgrades.js?v=fc5d4f8';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=fc5d4f8';
+import {GOODS, WAR} from './config.js?v=fc5d4f8';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=fc5d4f8';
+import {W, KINDS} from './weather.js?v=fc5d4f8';
+import {sfx, SND, applyVolumes} from './audio.js?v=fc5d4f8';
+import {setTimeOfDay} from './daynight.js?v=fc5d4f8';
 
 const $ = id => document.getElementById(id);
 
@@ -134,7 +134,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 40</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 41</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -160,6 +160,7 @@ function settingsHTML(){
       ${row('Weather now', '', `<div class="btns">${['calm', 'fair', 'windy', 'storm', 'mist'].map(k => `<button class="btn small" data-act="wx" data-v="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>`)}
       ${row('Time of day now', 'Jumps the clock (with Day and night on).', `<div class="btns">${[['morning', 'Morning'], ['noon', 'Noon'], ['golden', 'Golden'], ['sunset', 'Sunset'], ['night', 'Night']].map(([k, n]) => `<button class="btn small" data-act="tod" data-v="${k}">${n}</button>`).join('')}</div>`)}
       ${row('Bring up a whale', 'Surfaces ahead of you.', '<button class="btn" data-act="whale">Whale</button>')}
+      ${row('Bring up the kraken', 'Only works out in the Open Sea.', '<button class="btn" data-act="kraken">Kraken</button>')}
       ${row('Bring a raider skiff to me', 'To test a fight right away.', '<button class="btn" data-act="spawn">Spawn</button>')}
       ${row('Reveal the whole chart', '', '<button class="btn" data-act="revealall">Reveal</button>')}
       ${row('Add drachmae and materials', '100 drachmae, 200 wood, 20 bronze, 20 linen.', '<button class="btn" data-act="givestuff">Add</button>')}` : ''}
@@ -224,6 +225,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'treasure'){ document.dispatchEvent(new Event('treasure')); closeSheet(); return; }
   if (a === 'wx'){ document.dispatchEvent(new CustomEvent('weather', {detail:b.dataset.v})); closeSheet(); return; }
   if (a === 'tod'){ setTimeOfDay(b.dataset.v); G.settings.daynight = 'cycle'; saveSettings(); closeSheet(); return; }
+  if (a === 'kraken'){ document.dispatchEvent(new Event('kraken')); closeSheet(); return; }
   if (a === 'whale'){ document.dispatchEvent(new Event('whale')); closeSheet(); return; }
   if (a === 'givestuff'){ S.gold += 100; addMat('wood', 200); addMat('bronze', 20); addMat('linen', 20); toast('+100 drachmae, +200 wood, +20 bronze, +20 linen'); }
   if (a === 'applymap'){

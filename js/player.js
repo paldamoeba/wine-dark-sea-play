@@ -1,16 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=6731910';
-import {SPECS} from './ships.js?v=6731910';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=6731910';
-import {G, ship, holdUsed, save, gain, addMat} from './state.js?v=6731910';
-import {steering} from './input.js?v=6731910';
-import {toast, showZone} from './ui.js?v=6731910';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=6731910';
-import {startFish, stopFish} from './fishing.js?v=6731910';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=6731910';
-import {progress} from './quests.js?v=6731910';
-import {startSink} from './sinking.js?v=6731910';
-import {sfx} from './audio.js?v=6731910';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=fc5d4f8';
+import {SPECS} from './ships.js?v=fc5d4f8';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=fc5d4f8';
+import {G, ship, holdUsed, save, gain, addMat, lvl} from './state.js?v=fc5d4f8';
+import {W} from './weather.js?v=fc5d4f8';
+import {steering} from './input.js?v=fc5d4f8';
+import {toast, showZone} from './ui.js?v=fc5d4f8';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=fc5d4f8';
+import {startFish, stopFish} from './fishing.js?v=fc5d4f8';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=fc5d4f8';
+import {progress} from './quests.js?v=fc5d4f8';
+import {startSink} from './sinking.js?v=fc5d4f8';
+import {sfx} from './audio.js?v=fc5d4f8';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -26,6 +27,15 @@ function washUp(){
   toast(`Your ${name} broke apart. You were towed home to Kallisto without your cargo, the hull badly patched. Repair it at the shipyard.`, 4.5); save();
 }
 
+// The wind: a ship with a sail goes up to 20% faster with the wind behind it and a little slower sailing into it.
+// G.windFill (0 to 1) is how full the sail is, for the sail's shape and the tip.
+function windBoost(){
+  const S = G.S, sails = SPECS[ship().model].mast || lvl('sail') > 0;
+  if (!sails){ G.windFill = 0; return 1; }
+  const along = Math.cos(S.a - W.windA), k = W.windK; G.windFill = Math.max(0, along)*k;
+  if (!S.windTip && G.windFill > .45 && G.v > 40){ S.windTip = true; toast('The wind fills your sail! With the wind at your back you sail faster.', 4.5); }
+  return 1 + k*(along > 0 ? .2*along : .08*along);
+}
 function move(dt, sh){
   const S = G.S, [ix, iy] = steering(S), mag = Math.hypot(ix, iy);
   let target = 0; G.turnRate = 0;
@@ -34,7 +44,7 @@ function move(dt, sh){
     const turn = Math.max(-1, Math.min(1, diff)) * sh.turn; S.a += turn * dt; G.turnRate = turn;
     // a sharp turn slows the boat almost to a stop; it picks up speed again once it points the right way
     const ahead = Math.max(0, Math.cos(diff));
-    target = sh.speed * G.settings.dev.speed * mag * Math.max(.06, ahead*ahead) * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost();
+    target = sh.speed * G.settings.dev.speed * mag * Math.max(.06, ahead*ahead) * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost();
   }
   G.v += (target - G.v) * Math.min(1, dt*(.8 + sh.turn*.3)); // big ships are slower to get going
   let px = Math.cos(S.a)*G.v*dt, py = Math.sin(S.a)*G.v*dt;

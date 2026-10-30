@@ -510,7 +510,8 @@ export function animateShip(root, t, speed){
   for (const c of root.userData.crew || []){ const {inner, pose} = c.p.userData;
     if (pose === 'row') inner.rotation.z = Math.sin(t*2.6 + c.ph)*.25*row;                                  // rocking with the oar
     else if (pose === 'archer') inner.rotation.z = root.userData.firing ? -.18*(.5 + .5*Math.sin(t*5 + c.ph*9)) : 0; } // leaning in to shoot
-  (root.userData.sails || []).forEach((sl, i) => { sl.scale.x = 1 + Math.min(.9, speed/80) + Math.sin(t*1.3 + i)*.06; });
+  const fill = root.userData.windFill || 0; // the player's sail bellies out more with the wind behind it
+  (root.userData.sails || []).forEach((sl, i) => { sl.scale.x = 1 + Math.min(.9, speed/80) + fill*.7 + Math.sin(t*(1.3 + fill*2) + i)*(.06 + fill*.04); });
   flicker(root, t);
   root.userData.flags.forEach(f => { const p = f.geometry.attributes.position, b = f.userData.flagBase;
     for (let i=0;i<p.count;i++){ const x = b[i*3]; p.setZ(i, Math.sin(x*.5 + t*6)*(-x)*.06); } p.needsUpdate = true; });

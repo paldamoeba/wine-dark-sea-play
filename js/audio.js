@@ -158,6 +158,10 @@ export const SOUNDS = {
     g.gain.value = .0001; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.2, t + .5); g.gain.linearRampToValueAtTime(.14, t + 2); g.gain.exponentialRampToValueAtTime(.0001, t + 2.8);
     o.connect(f); f.connect(g); g.connect(w); o.start(t); lfo.start(t); o.stop(t + 3); lfo.stop(t + 3);
     noise(t + 2.4, 1.1, d, {f:900, f2:2500, q:.6, peak:.3, a:.15}); }},
+  kraken:{name:'The kraken groans', gap:2, sea:true, play:(t, d) => { const w = wet(d, 1.3), o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(62, t); o.frequency.linearRampToValueAtTime(48, t + 2.2); lfo.frequency.value = 7; lg.gain.value = 4; lfo.connect(lg); lg.connect(o.frequency); f.type = 'lowpass'; f.frequency.value = 320;
+    g.gain.value = .0001; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.4, t + .6); g.gain.exponentialRampToValueAtTime(.0001, t + 2.6);
+    o.connect(f); f.connect(g); g.connect(w); o.start(t); lfo.start(t); o.stop(t + 2.8); lfo.stop(t + 2.8); bubbles(t + .4, d, 14); }},
   spout:{name:'Whale blows', sea:true, play:(t, d) => noise(t, 1.2, d, {f:700, f2:2200, q:.5, peak:.35, a:.12})},
   splash:{name:'Splash', gap:.1, sea:true, play:(t, d) => noise(t, .35, d, {f:2200, f2:500, q:.8, peak:.5})},
   gull:{name:'Gull calls', gap:.4, sea:true, play:(t, d) => gullCry(t, d)},

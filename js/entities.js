@@ -1,15 +1,15 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=6731910';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=6731910';
-import {G, ship, lvl} from './state.js?v=6731910';
-import {scene} from './scene.js?v=6731910';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=6731910';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=6731910';
-import {addTown, figure} from './town.js?v=6731910';
-import {makeFire, updateFire, burn} from './fire.js?v=6731910';
-import {sinkPose} from './sinking.js?v=6731910';
-import {moored} from './fleet.js?v=6731910';
-import {placeOnWaves} from './combat.js?v=6731910';
+import {SHIPS} from './config.js?v=fc5d4f8';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=fc5d4f8';
+import {G, ship, lvl} from './state.js?v=fc5d4f8';
+import {scene} from './scene.js?v=fc5d4f8';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=fc5d4f8';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=fc5d4f8';
+import {addTown, figure} from './town.js?v=fc5d4f8';
+import {makeFire, updateFire, burn} from './fire.js?v=fc5d4f8';
+import {sinkPose} from './sinking.js?v=fc5d4f8';
+import {moored} from './fleet.js?v=fc5d4f8';
+import {placeOnWaves} from './combat.js?v=fc5d4f8';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -263,7 +263,7 @@ export function animateEntities(dt){
   boat.position.set(S.x, wh + sh.len*.05 - sp.depth, S.y);
   boat.rotation.order = 'YXZ'; boat.rotation.y = -S.a; boat.rotation.z = Math.atan(pitch) + sp.pitch; boat.rotation.x = Math.atan(roll)*.8 + sp.roll + Math.sin(G.kick*50)*G.kick + G.heel;
   boat.userData.firing = !!G.firing;
-  animateShip(boat, t, G.v);
+  boat.userData.windFill = G.windFill || 0; animateShip(boat, t, G.v);
   updateFire(boat.userData.fire, Math.max(burn(S.hull, ship().hull), G.burnT > 0 ? .6 : 0), t); // also while burning from a flaming volley
   for (const f of fleet) animateShip(f, t, 0);
   showHomeFleet();
