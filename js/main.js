@@ -7,7 +7,7 @@ load();
 loadSettings();
 
 // These modules build the scene and wire up the UI as they load, so they come after the save is in.
-const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather} = await import('./scene.js');
+const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame} = await import('./scene.js');
 const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js');
 const {updateUI, showZone, toast, openTutorial} = await import('./ui.js');
 const {updatePlayer} = await import('./player.js');
@@ -72,7 +72,7 @@ function frame(now){
   weatherTick(dt);
   animateEntities(dt);
   updateWater(); updateCamera(); updateWeather();
-  renderer.render(scene, camera);
+  renderFrame(G.settings.tiny !== false);
   drawOverlay(fps);
   updateUI(dt, nearDock);
   autoQuality(raw);

@@ -1,6 +1,6 @@
 // Portraits: real pictures of the 3D models for the menus. One small hidden renderer draws a model once and keeps the
 // picture, so the shipyard shows the same ships you sail, in their own paint, instead of drawings.
-import {buildShip, SPECS} from './ships.js';
+import {buildShip, SPECS, mat} from './ships.js';
 
 const T = window.THREE;
 const W = 480, H = 300;
@@ -48,3 +48,32 @@ export function portrait(key, make, yaw, pitch){
   cache.set(key, url); return url;
 }
 export const hasModel = m => !!SPECS[m];
+
+// ---- tutorial pictures: real renders of the game's boat on the sea, seen like in the game ----
+// The picture is 280 x 140 "screen units". Things are placed by screen position so the drawn hints (finger, arrows) line up.
+import {cypress} from './models.js';
+const TW = 560, TH = 280, K = .75, PITCH = 1.0; // world units per screen unit, camera tilt
+export function tutShot(kind, boats, isle){
+  const key = 'tut' + kind; if (cache.has(key)) return cache.get(key);
+  let url = '';
+  try {
+    if (!R) setup();
+    const sc = new T.Scene();
+    sc.add(new T.HemisphereLight(0xeaf3f5, 0x8c927c, .85));
+    const sun = new T.DirectionalLight(0xffeccc, .7); sun.position.set(-120, 260, 160); sc.add(sun);
+    const at = (sx, sy) => ({x:(sx - 140)*K, z:(sy - 70)*K/Math.sin(PITCH)});
+    // the sea is the clear color, so every picture has the same blue
+    if (isle){ const p = at(isle[0], isle[1]), r = isle[2]*K;
+      const sh = new T.Mesh(new T.CircleGeometry(r*1.6, 40), mat('#3f9c9e')); sh.rotation.x = -Math.PI/2; sh.position.set(p.x, .5, p.z); sh.scale.y = 1; sc.add(sh);
+      const sand = new T.Mesh(new T.CylinderGeometry(r, r*1.08, 4, 32), mat('#d8c48c')); sand.position.set(p.x, 1, p.z); sc.add(sand);
+      const grass = new T.Mesh(new T.CylinderGeometry(r*.72, r*.8, 7, 32), mat('#6d7d38')); grass.position.set(p.x, 3, p.z); sc.add(grass);
+      for (const [dx, dz] of [[-.25, -.1], [.15, -.25], [.2, .15]]){ const c = cypress(); c.scale.setScalar(.8); c.position.set(p.x + dx*r, 6, p.z + dz*r); sc.add(c); } }
+    for (const [model, sx, sy, rot] of boats){ const b = buildShip(model, {}, true), p = at(sx, sy); b.position.set(p.x, 0, p.z); b.rotation.y = -rot*Math.PI/180; sc.add(b); }
+    const cam = new T.OrthographicCamera(-140*K, 140*K, 70*K, -70*K, 1, 3000);
+    cam.position.set(0, Math.sin(PITCH)*800, Math.cos(PITCH)*800); cam.lookAt(0, 0, 0);
+    R.setSize(TW, TH, false); R.setClearColor(0x2f86a0, 1); R.render(sc, cam);
+    url = R.domElement.toDataURL('image/png');
+    R.setSize(W, H, false); R.setClearColor(0x000000, 0);
+  } catch (e) { url = ''; }
+  cache.set(key, url); return url;
+}

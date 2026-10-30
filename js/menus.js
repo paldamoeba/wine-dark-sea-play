@@ -77,7 +77,7 @@ export function shipPic(model, look = {}){
 // A real picture of the 3D model (falls back to the drawing if the picture can't be made).
 export function shipImg(model, look = {}){ const u = shipPortrait(model, look); return u ? `<img class="shippic photo" src="${u}" alt="">` : shipPic(model, look); }
 // a peg person (no arms or legs), like the ones in the game
-export const peg = (c, helmet) => svg(`<path d="M12 11.5 C17.5 11.5 18.5 16 18 19 C17.6 21.6 15.5 23 12 23 C8.5 23 6.4 21.6 6 19 C5.5 16 6.5 11.5 12 11.5Z" fill="${c}"/><circle cx="12" cy="8" r="5.6" fill="#e3b591"/><circle cx="10" cy="8.6" r=".85" fill="${INK}"/><circle cx="14" cy="8.6" r=".85" fill="${INK}"/><ellipse cx="8.6" cy="10.4" rx=".9" ry=".55" fill="#e9928a"/><ellipse cx="15.4" cy="10.4" rx=".9" ry=".55" fill="#e9928a"/>${helmet ? '<path d="M6.2 7 Q12 -1 17.8 7Z" fill="#b07f3c"/><rect x="8.5" y="1" width="7" height="1.8" rx=".9" fill="#b8402f"/>' : '<path d="M6.4 7 Q12 .5 17.6 7 Q12 4.2 6.4 7Z" fill="#3a2a20"/>'}`);
+export const peg = (c, helmet) => svg(`<path d="M12 11.5 C17.5 11.5 18.5 16 18 19 C17.6 21.6 15.5 23 12 23 C8.5 23 6.4 21.6 6 19 C5.5 16 6.5 11.5 12 11.5Z" fill="${c}"/><circle cx="12" cy="8" r="5.6" fill="#e3b591"/>${helmet ? '<path d="M6.2 7 Q12 -1 17.8 7Z" fill="#b07f3c"/><rect x="8.5" y="1" width="7" height="1.8" rx=".9" fill="#b8402f"/>' : '<path d="M6.4 7 Q12 .5 17.6 7 Q12 4.2 6.4 7Z" fill="#3a2a20"/>'}`);
 const JOB_COLOR = {archer:'#c64a3c', rower:'#3f6c94'};
 
 // ---- tabs ----

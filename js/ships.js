@@ -186,16 +186,14 @@ function hull(s, paint){
 // ---------- parts ----------
 // A crew member: a peg figure like the townspeople, a body and a head with no arms or legs. About 13 units tall. Faces +x.
 // pose: 'row' (seated lower, rocks with the stroke), 'stand', 'helm', 'archer' (a bow at their side, leans in to shoot).
-// Round, cute bodies: a bean shape (wide in the middle, rounded at the bottom), a big head with two dot eyes. Shared by crews and towns.
+// Round, cute bodies: a bean shape (wide in the middle, rounded at the bottom) and a big round head, no face. Shared by crews and towns.
 const beans = {};
 export function beanGeo(h = 7.4){ return beans[h] || (beans[h] = new T.LatheGeometry([[0, 0], [2.1, .25], [3, 1.3], [3.3, 2.9], [3.1, 4.5], [2.5, 5.9], [1.5, 6.9], [0, 7.3]].map(([r, y]) => new T.Vector2(r, y*h/7.3)), 10)); }
-const headGeo = new T.SphereGeometry(3, 12, 9), eyeGeo = new T.SphereGeometry(.42, 6, 5), cheekGeo = new T.SphereGeometry(.55, 6, 5);
+const headGeo = new T.SphereGeometry(3, 12, 9);
 const capGeo = new T.SphereGeometry(3.15, 12, 6, 0, Math.PI*2, 0, Math.PI/2.1), helmGeo = new T.SphereGeometry(3.3, 12, 6, 0, Math.PI*2, 0, Math.PI/1.9);
-// a big round head with dot eyes and rosy cheeks, looking along +x; y = the head's center
+// a big round head (no eyes, by choice), hair or a helmet; y = the head's center
 export function cuteHead(parent, y, hairColor = 'hair', helmet = false){
   const head = mesh(headGeo, 'skin'); head.position.y = y; parent.add(head);
-  for (const s of [-1, 1]){ const e = new T.Mesh(eyeGeo, mat('#22283a')); e.position.set(2.75, y + .25, s*1.05); parent.add(e);
-    const c = new T.Mesh(cheekGeo, mat('#e9928a')); c.position.set(2.55, y - .75, s*1.75); c.scale.set(.5, .7, 1); parent.add(c); }
   if (helmet){ const hm = mesh(helmGeo, 'bronze'); hm.position.y = y + .35; hm.rotation.z = .12; parent.add(hm);
     const crest = mesh(new T.BoxGeometry(6, 2, .9), 'plume'); crest.position.y = y + 3.6; parent.add(crest); }
   else { const hair = mesh(capGeo, hairColor); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
