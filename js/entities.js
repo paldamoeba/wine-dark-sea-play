@@ -1,16 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=8eb3922';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=8eb3922';
-import {G, ship, lvl} from './state.js?v=8eb3922';
-import {scene} from './scene.js?v=8eb3922';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=8eb3922';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=8eb3922';
-import {addTown, figure} from './town.js?v=8eb3922';
-import {buildStatue} from './monuments.js?v=8eb3922';
-import {makeFire, updateFire, burn} from './fire.js?v=8eb3922';
-import {sinkPose} from './sinking.js?v=8eb3922';
-import {moored} from './fleet.js?v=8eb3922';
-import {placeOnWaves} from './combat.js?v=8eb3922';
+import {SHIPS} from './config.js?v=9b0ba4f';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=9b0ba4f';
+import {G, ship, lvl} from './state.js?v=9b0ba4f';
+import {scene} from './scene.js?v=9b0ba4f';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=9b0ba4f';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=9b0ba4f';
+import {addTown, figure} from './town.js?v=9b0ba4f';
+import {buildStatue} from './monuments.js?v=9b0ba4f';
+import {makeFire, updateFire, burn} from './fire.js?v=9b0ba4f';
+import {sinkPose} from './sinking.js?v=9b0ba4f';
+import {moored} from './fleet.js?v=9b0ba4f';
+import {placeOnWaves} from './combat.js?v=9b0ba4f';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -56,11 +56,13 @@ const flags = []; // city harbor flags, recolored when an island changes hands
 ISLANDS.forEach((is, i) => {
   const R = rng(i*977+13), g = new T.Group(); g.position.set(is.x, 0, is.y);
   const [beach, grass, hill] = is.tiers, size = Math.sqrt(is.area);
+  // the far north is cold: snow on the islands, pale stone beaches, snowy cypresses
+  const cold = is.y < WORLD_N*.3; is.cold = cold;
   const ht = is.port ? 12 : Math.min(26, 9 + size*.02), top = 4 + ht, hillTop = top + Math.min(46, 12 + size*.03);
   is.ht = hill ? hillTop : top;
-  g.add(slab(beach, -14, 4, '#e6d29c'));
-  if (grass) g.add(slab(grass, 4, top, is.trees || is.port || is.harbor || is.frame ? '#76883c' : '#8a8a74'));
-  if (hill) g.add(slab(hill, top, hillTop, '#8a8a74'));
+  g.add(slab(beach, -14, 4, cold ? '#d8dfe3' : '#e6d29c'));
+  if (grass) g.add(slab(grass, 4, top, cold ? '#f2f6f8' : is.trees || is.port || is.harbor || is.frame ? '#76883c' : '#8a8a74'));
+  if (hill) g.add(slab(hill, top, hillTop, cold ? '#c7d2d9' : '#8a8a74'));
   // a few rocks along the shore
   for (let k=0;k<Math.min(8, 3 + size/300);k++){ const [x, z] = beach[Math.floor(R()*beach.length)], s = 7 + R()*10, rock = mesh(new T.DodecahedronGeometry(s, 0), '#9a9483');
     rock.position.set(x*1.02, 1, z*1.02); rock.rotation.set(R()*3, R()*3, 0); g.add(rock); }
@@ -68,7 +70,7 @@ ISLANDS.forEach((is, i) => {
   is.treeObjs = [];
   const ground = grass || beach, treeAt = ([x, z]) => hill && inPoly(hill, x, z) ? hillTop : top;
   // every island gets its own mix of tree colors: some cypresses, some round trees in blossom or autumn colors
-  const tree = () => R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
+  const tree = () => cold ? cypress(['#2f4d3a', '#f4f8fa']) : R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
   for (let k=0;k<is.trees;k++){ const p = spotIn(R, ground, 10, 0, 0, size*.45) || spotIn(R, ground, 4) || [0, 0], c = tree();
     c.position.set(p[0], treeAt(p), p[1]); c.scale.setScalar(.85 + R()*.35); g.add(c); is.treeObjs.push(c); popIn(c); }
   if (!is.trees && !is.port && !is.harbor && !is.frame){ const c = tree(); c.position.set(0, treeAt([0, 0]), 0); c.scale.setScalar(.7); g.add(c); popIn(c); }
@@ -138,6 +140,19 @@ SPOTS.forEach((s, i) => {
   s.fish = [0,1,2].map(k => { const f = mesh(fishGeo, s.kind === 'swordfish' ? '#5f86a8' : '#8fb0c4', {metalness:.3, roughness:.4}); f.userData.ph = hash(i,k); f.userData.ang = hash(k,i)*6.28; g.add(f); return f; });
   s.g = g; scene.add(g);
 });
+
+// ---- icebergs in the cold north: white and pale blue, bobbing slowly; ships can't sail through them ----
+export const ICEBERGS = [];
+{ const R = rng(4242), ice = ['#f4f9fb', '#dbeef5', '#c4e2ee'];
+  for (let k=0, tries=0; k<26 && tries<600; tries++){ const x = R()*WORLD_N, y = R()*WORLD_N*.27;
+    if (landDist(x, y) < 180 || ICEBERGS.some(b => Math.hypot(b.x - x, b.y - y) < 260)) continue;
+    // a big flat-topped slab of ice with a taller peak, a pale-blue skirt under the water line
+    const g = new T.Group(), r = 45 + R()*55, sides = 6 + Math.floor(R()*3);
+    const skirt = mesh(new T.CylinderGeometry(r*1.15, r*1.3, 10, sides), '#9fd3e6'); skirt.position.y = -4; g.add(skirt);
+    const slab = mesh(new T.CylinderGeometry(r*.9, r*1.05, r*.35, sides), ice[0]); slab.position.y = r*.15; slab.rotation.y = R()*3; g.add(slab);
+    const peak = mesh(new T.CylinderGeometry(r*.25, r*.55, r*.7, sides - 1), ice[1]); peak.position.set((R() - .5)*r*.4, r*.6, (R() - .5)*r*.4); peak.rotation.y = R()*3; g.add(peak);
+    const tip = mesh(new T.ConeGeometry(r*.25, r*.35, sides - 1), ice[0]); tip.position.set(peak.position.x, r*1.12, peak.position.z); g.add(tip);
+    g.position.set(x, 0, y); scene.add(g); ICEBERGS.push({x, y, r:r*1.05, g, ph:R()*6}); k++; } }
 
 // ---- wrecks + gulls ----
 WRECKS.forEach((w, i) => {
@@ -228,6 +243,7 @@ export function swapBoat(){ if (boat) scene.remove(boat); const sh = SHIPS[G.S.t
 
 export function animateEntities(dt){
   updatePops(dt);
+  for (const b of ICEBERGS){ if (Math.abs(b.x - G.cam.x) > 1800 || Math.abs(b.y - G.cam.y) > 1800) continue; b.g.position.y = Math.sin(G.t*.6 + b.ph)*1.5; b.g.rotation.y = Math.sin(G.t*.1 + b.ph)*.2; }
   const S = G.S, t = G.t, sh = SHIPS[S.tier];
   const wh = waveAt(S.x, S.y, t);
   const fx = Math.cos(S.a)*sh.len*.4, fz = Math.sin(S.a)*sh.len*.4;

@@ -1,15 +1,15 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT} from './config.js?v=8eb3922';
-import {SPECS} from './ships.js?v=8eb3922';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=8eb3922';
-import {G, ship, holdUsed, save, gain} from './state.js?v=8eb3922';
-import {steering} from './input.js?v=8eb3922';
-import {toast, showZone} from './ui.js?v=8eb3922';
-import {refreshTrees, spawnWake} from './entities.js?v=8eb3922';
-import {startFish, stopFish} from './fishing.js?v=8eb3922';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=8eb3922';
-import {progress} from './quests.js?v=8eb3922';
-import {startSink} from './sinking.js?v=8eb3922';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT} from './config.js?v=9b0ba4f';
+import {SPECS} from './ships.js?v=9b0ba4f';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=9b0ba4f';
+import {G, ship, holdUsed, save, gain} from './state.js?v=9b0ba4f';
+import {steering} from './input.js?v=9b0ba4f';
+import {toast, showZone} from './ui.js?v=9b0ba4f';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=9b0ba4f';
+import {startFish, stopFish} from './fishing.js?v=9b0ba4f';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=9b0ba4f';
+import {progress} from './quests.js?v=9b0ba4f';
+import {startSink} from './sinking.js?v=9b0ba4f';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -41,6 +41,7 @@ function move(dt, sh){
   S.x += px; S.y += py;
   if (pushOut(S, sh.beam*.9)) G.v *= .6;
   if (!G.dock && pierPush(S, sh.beam*.55)) G.v *= .6;
+  for (const b of ICEBERGS){ const dx = S.x - b.x, dy = S.y - b.y, d = Math.hypot(dx, dy) || 1, m = b.r + sh.beam*.6; if (d < m){ S.x = b.x + dx/d*m; S.y = b.y + dy/d*m; G.v *= .6; } } // icebergs are solid
   S.x = Math.max(60, Math.min(WORLD-60, S.x)); S.y = Math.max(60, Math.min(WORLD-60, S.y));
 }
 

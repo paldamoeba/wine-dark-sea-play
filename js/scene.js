@@ -1,8 +1,8 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=8eb3922';
-import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES} from './world.js?v=8eb3922';
-import {G} from './state.js?v=8eb3922';
-import {mat} from './ships.js?v=8eb3922';
+import {QUALITY} from './config.js?v=9b0ba4f';
+import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=9b0ba4f';
+import {G} from './state.js?v=9b0ba4f';
+import {mat} from './ships.js?v=9b0ba4f';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -43,7 +43,7 @@ function buildWater(seg){
 // Two looks for the sea. Classic: deep teal. Bright (a setting, on by default): clear blue with white foam lines that drift
 // and wobble, like a cartoon sea. The foam is drawn in the water's shader from a cell pattern on the world position.
 const LOOKS = {classic:['#2b8e8f', '#175c7c', '#1b4a63', '#5cc2b2'], bright:['#35a6d8', '#1d72cc', '#1a5fb4', '#7fd3e2']};
-const CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
+const CCOLD = new T.Color('#3d6f8f'), CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
 const waterMat = mat('#ffffff', {vertexColors:true}).clone(); waterMat.gradientMap = mat('#ffffff').gradientMap;
 const foamU = {uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
 waterMat.onBeforeCompile = sh => {
@@ -97,6 +97,7 @@ export function updateWater(){
       wAmp[v] = s.amp/(WEATHER_WAVES.k || 1);
       tmpC.copy(CSH).lerp(CSEA, s.k0).lerp(CST, s.k1);
       const ld = landDist(x, z); if (ld < 170) tmpC.lerp(CLAG, sstep(170, 0, ld)*.85); // light lagoon water near every shore: the crew fishes here
+      tmpC.lerp(CCOLD, sstep(WORLD*.36, WORLD*.2, z)*.6); // colder, greyer water in the far north
       c[i] = tmpC.r; c[i+1] = tmpC.g; c[i+2] = tmpC.b;
     }
     wgeo.attributes.color.needsUpdate = true; }

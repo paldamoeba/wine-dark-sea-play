@@ -1,19 +1,19 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=8eb3922';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=8eb3922';
-import {G, ship, holdUsed, save, gain} from './state.js?v=8eb3922';
-import {scene} from './scene.js?v=8eb3922';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=8eb3922';
-import {makeFire, updateFire, burn} from './fire.js?v=8eb3922';
-import {blessing, fighters} from './crew.js?v=8eb3922';
-import {progress} from './quests.js?v=8eb3922';
-import {arrowK, ramDmg} from './upgrades.js?v=8eb3922';
-import {toast} from './ui.js?v=8eb3922';
-import {sink} from './player.js?v=8eb3922';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=8eb3922';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=8eb3922';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=9b0ba4f';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=9b0ba4f';
+import {G, ship, holdUsed, save, gain} from './state.js?v=9b0ba4f';
+import {scene} from './scene.js?v=9b0ba4f';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=9b0ba4f';
+import {makeFire, updateFire, burn} from './fire.js?v=9b0ba4f';
+import {blessing, fighters} from './crew.js?v=9b0ba4f';
+import {progress} from './quests.js?v=9b0ba4f';
+import {arrowK, ramDmg} from './upgrades.js?v=9b0ba4f';
+import {toast} from './ui.js?v=9b0ba4f';
+import {sink} from './player.js?v=9b0ba4f';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=9b0ba4f';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=9b0ba4f';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
