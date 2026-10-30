@@ -1,7 +1,7 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM} from './config.js?v=bdf91e0';
-import {G, lvl, ship} from './state.js?v=bdf91e0';
-import {SPECS, sailSizes} from './ships.js?v=bdf91e0';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM} from './config.js?v=5b5d761';
+import {G, lvl, ship, pay} from './state.js?v=5b5d761';
+import {SPECS, sailSizes} from './ships.js?v=5b5d761';
 
 export const ramMax = () => UPGRADE_MAX*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
@@ -20,8 +20,11 @@ export const extraSeats = () => Math.floor(lvl('seats')/2);
 export function costOf(k){
   const l = lvl(k), u = UPGRADES[k]; if (l >= maxOf(k)) return null;
   const n = l + 1, sk = u.ship ? SHIP_K[G.S.tier] : 1;
-  const step = k === 'ram' ? ramMat(n).sub : n, mk = k === 'ram' ? ramMat(n).cost : 1;
-  return {wood:Math.round(u.cost.wood*step*sk*mk), gold:Math.round(u.cost.gold*step*sk*mk)};
+  const step = k === 'ram' ? ramMat(n).sub : n, mk = k === 'ram' ? ramMat(n).cost : 1, c = {};
+  for (const m in u.cost) c[m] = Math.round(u.cost[m]*step*sk*mk);
+  // the bronze ram is paid in bronze instead of wood (5 wood = 1 bronze); the golden ram in drachmae alone
+  const rp = k === 'ram' && ramMat(n).pay; if (rp === 'bronze'){ c.bronze = Math.round(c.wood/5/mk*1.5); delete c.wood; } else if (rp === 'gold'){ c.gold += c.wood; delete c.wood; }
+  return c;
 }
 // What the upgrade does now and after the next level, in plain words.
 export function effectText(k, l = lvl(k)){
@@ -31,11 +34,9 @@ export function effectText(k, l = lvl(k)){
   if (k === 'sail'){ const n = sailCount(l); return n ? `${n} sail${n > 1 ? 's' : ''}, +${Math.round(u.each*l*100)}% speed` : 'No sail'; }
   return `+${Math.round(u.each*l*100)}% ${u.unit}`;
 }
-// Spend warehouse wood and drachmae on the next level. Returns false if you can't afford it.
+// Spend warehouse materials and drachmae on the next level. Returns false if you can't afford it.
 export function buy(k){
-  const c = costOf(k), S = G.S; if (!c || S.ware < c.wood || S.gold < c.gold) return false;
-  const before = ship().hull;
-  S.ware -= c.wood; S.gold -= c.gold;
+  const c = costOf(k), S = G.S, before = ship().hull; if (!pay(c)) return false;
   if (UPGRADES[k].ship){ S.ups = S.ups || {}; S.ups[S.tier] = {...(S.ups[S.tier] || {}), [k]:lvl(k) + 1}; } else S[k] = lvl(k) + 1;
   if (k === 'hull') S.hull += ship().hull - before; // the new planks come sound
   return true;

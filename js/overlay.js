@@ -1,15 +1,15 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=bdf91e0';
-import {G, isExplored} from './state.js?v=bdf91e0';
-import {fogLayer, islandPath} from './map.js?v=bdf91e0';
-import {view, project} from './scene.js?v=bdf91e0';
-import {JOY_RADIUS} from './input.js?v=bdf91e0';
-import {enemies, combatState, capture} from './combat.js?v=bdf91e0';
-import {drawFish} from './fishing.js?v=bdf91e0';
-import {whale} from './wildlife.js?v=bdf91e0';
-import {SHORE_FISH} from './config.js?v=bdf91e0';
-import {bottle} from './quests.js?v=bdf91e0';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=bdf91e0';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=5b5d761';
+import {G, isExplored} from './state.js?v=5b5d761';
+import {fogLayer, islandPath} from './map.js?v=5b5d761';
+import {view, project} from './scene.js?v=5b5d761';
+import {JOY_RADIUS} from './input.js?v=5b5d761';
+import {enemies, combatState, capture} from './combat.js?v=5b5d761';
+import {drawFish} from './fishing.js?v=5b5d761';
+import {whale} from './wildlife.js?v=5b5d761';
+import {SHORE_FISH} from './config.js?v=5b5d761';
+import {bottle} from './quests.js?v=5b5d761';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=5b5d761';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -27,7 +27,7 @@ function drawGain(c, p, t, S){
 // pick-up icons, drawn from the menu icons once
 const icons = {};
 function iconImg(k){ if (icons[k]) return icons[k];
-  const svg = k === 'wood' ? IC.wood : k === 'coin' ? IC.coin : FISH_COLOR[k] ? IC.fish(FISH_COLOR[k]) : k === 'fish' ? IC.fish(FISH_COLOR.sardine) : GOOD_IC(k);
+  const svg = k === 'wood' || k === 'bronze' || k === 'linen' ? IC[k] : k === 'coin' ? IC.coin : FISH_COLOR[k] ? IC.fish(FISH_COLOR[k]) : k === 'fish' ? IC.fish(FISH_COLOR.sardine) : GOOD_IC(k);
   const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" ')); return icons[k] = im; }
 
 const MINI_RANGE = 2600, SIDE_COLOR = {pirate:'#e0614d', merchant:'#e8dcc0'};

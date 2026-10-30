@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=bdf91e0';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=bdf91e0';
-import {sfx} from './audio.js?v=bdf91e0';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=5b5d761';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=5b5d761';
+import {sfx} from './audio.js?v=5b5d761';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -47,11 +47,17 @@ export const ship = () => { const b = SHIPS[G.S.tier], key = `${G.S.tier}|${lvl(
   return shipC.v; };
 // Something picked up: a little icon and "+n" springs up from the boat, then drops back into it (drawn by overlay.js).
 // kind = 'fish' | 'tuna' | 'swordfish' | 'wood' | 'coin' | a trade good.
-export function gain(kind, n = 1, x, y){ sfx(kind === 'coin' ? 'coin' : kind === 'sardine' ? 'fish' : kind === 'tuna' || kind === 'swordfish' ? '' : 'wood'); const slot = (G.pops || []).filter(p => p.ic && G.t - p.t < .6).length; G.pops = [...(G.pops || []), {t:G.t + slot*.15, slot, ic:kind, txt:`+${n}`, x, y}]; }
+export function gain(kind, n = 1, x, y){ sfx(kind === 'coin' || kind === 'bronze' ? 'coin' : kind === 'sardine' ? 'fish' : kind === 'tuna' || kind === 'swordfish' ? '' : 'wood'); const slot = (G.pops || []).filter(p => p.ic && G.t - p.t < .6).length; G.pops = [...(G.pops || []), {t:G.t + slot*.15, slot, ic:kind, txt:`+${n}`, x, y}]; }
+// Building materials in the warehouse: wood (S.ware), bronze and linen. A cost is {wood, bronze, linen, gold}.
+const HAVE = {wood:'ware', bronze:'bronze', linen:'linen', gold:'gold'};
+export const have = k => G.S[HAVE[k]] || 0;
+export const canPay = c => !!c && Object.keys(HAVE).every(k => have(k) >= (c[k] || 0));
+export function pay(c){ if (!canPay(c)) return false; for (const k in HAVE) G.S[HAVE[k]] = have(k) - (c[k] || 0); return true; }
+export function addMat(k, n){ G.S[HAVE[k]] = have(k) + n; }
 export const holdUsed = () => Object.values(G.S.cargo).reduce((a, b) => a + (b || 0), 0);
 
 export function newSave(){
-  return {version:SAVE_VERSION, tier:0, gold:0, ware:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},
+  return {version:SAVE_VERSION, econ:2, tier:0, gold:0, ware:0, bronze:0, linen:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},
     x:START.x, y:START.y, a:START.a, map:MAP.key, hull:SHIPS[0].hull, hint:true, playSeconds:0, world:null, explored:null, look:{}};
 }
 
@@ -65,6 +71,8 @@ function migrate(o){
   if (o.version < 3){ o.playSeconds = 0; o.world = null; o.version = 3; }
   const base = newSave();
   if (o.crew) o.crew.forEach(c => { if (c.job === 'fisher') c.job = 'rower'; }); // fishers became rowers: everyone fishes now
+  // prototype 39: wood counts 5 times bigger and lives in the warehouse, never the hold
+  if (!o.econ){ o.ware = ((o.ware || 0) + ((o.cargo && o.cargo.wood) || 0))*5; o.cargo.wood = 0; o.econ = 2; }
   return {...base, ...o, cargo:{...base.cargo, ...o.cargo}, look:{...(o.look || {})}};
 }
 

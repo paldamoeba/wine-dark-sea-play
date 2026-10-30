@@ -1,20 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=bdf91e0';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=bdf91e0';
-import {G, ship, holdUsed, save, gain} from './state.js?v=bdf91e0';
-import {scene} from './scene.js?v=bdf91e0';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=bdf91e0';
-import {makeFire, updateFire, burn} from './fire.js?v=bdf91e0';
-import {blessing, fighters} from './crew.js?v=bdf91e0';
-import {progress} from './quests.js?v=bdf91e0';
-import {arrowK, ramDmg} from './upgrades.js?v=bdf91e0';
-import {toast} from './ui.js?v=bdf91e0';
-import {sink} from './player.js?v=bdf91e0';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=bdf91e0';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=bdf91e0';
-import {sfx} from './audio.js?v=bdf91e0';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING} from './config.js?v=5b5d761';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=5b5d761';
+import {G, ship, holdUsed, save, gain, addMat} from './state.js?v=5b5d761';
+import {scene} from './scene.js?v=5b5d761';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=5b5d761';
+import {makeFire, updateFire, burn} from './fire.js?v=5b5d761';
+import {blessing, fighters} from './crew.js?v=5b5d761';
+import {progress} from './quests.js?v=5b5d761';
+import {arrowK, ramDmg} from './upgrades.js?v=5b5d761';
+import {toast} from './ui.js?v=5b5d761';
+import {sink} from './player.js?v=5b5d761';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=5b5d761';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=5b5d761';
+import {sfx} from './audio.js?v=5b5d761';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -46,7 +46,7 @@ export const enemies = [...RAIDERS, ...TRAFFIC].map(makeEnemy);
 // You can only take an island once its fort has fallen and its guards are sunk (see "taking islands" below).
 const fortName = o => o === 'pirate' ? 'Pirate fortress' : `${o === 'athens' ? 'Athenian' : 'Spartan'} fortress`;
 const fortSpec = owner => ({name:fortName(owner), side:'fort', city:owner === 'pirate' ? null : owner, hull:FORTS.hull[owner === 'pirate' ? 'pirate' : 'city'], fighters:FORTS.fighters,
-  dmg:FORTS.dmg, sight:FORTS.range, gold:FORTS.gold, wood:FORTS.wood, len:200, beam:200, speed:0, turn:0});
+  dmg:FORTS.dmg, sight:FORTS.range, gold:FORTS.gold, wood:FORTS.wood, bronze:FORTS.bronze, len:200, beam:200, speed:0, turn:0});
 function fortSite(is){
   const base = Math.atan2(HOME.y - is.y, HOME.x - is.x);
   for (const off of [0, .4, -.4, .8, -.8, 1.2, -1.2, 1.6, -1.6, 2.1, -2.1, 2.6, -2.6, Math.PI]){ const a = base + off, dx = Math.cos(a), dy = Math.sin(a);
@@ -411,7 +411,7 @@ function sinkEnemy(e, byPlayer){
   if (e.fort) crate.scale.setScalar(1.8);
   // a merchant's cargo spills out with it: a few of its trade goods
   const goods = side(e) === 'merchant' ? {k:['wine', 'oil', 'pottery', 'obsidian'][Math.floor(Math.random()*4)], n:2 + Math.floor(Math.random()*4)} : null;
-  LOOT.push({x:at.x, y:at.y, gold, wood:e.spec.wood, goods, life:COMBAT.lootLife*(e.fort ? 2 : 1), obj:crate});
+  LOOT.push({x:at.x, y:at.y, gold, wood:e.spec.wood, bronze:e.spec.bronze || 0, goods, life:COMBAT.lootLife*(e.fort ? 2 : 1), obj:crate});
   if (e.fort){ toast(e.city ? `The ${e.spec.name.toLowerCase()} falls! Grab its treasury, sink the guard ships, then hold the bay to take ${e.isle.name}.` : `The ${e.spec.name.toLowerCase()} falls! Its treasury floats out in front of the walls.`, 5.5); e.angry = false; return; }
   if (dist(e, G.S) < 1500) toast(`The ${e.spec.name.toLowerCase()} is sinking. Sail over its cargo to collect it.`, 3.5);
 }
@@ -420,14 +420,13 @@ function updateLoot(dt){
   for (let i=LOOT.length-1;i>=0;i--){ const l = LOOT[i]; l.life -= dt;
     l.obj.position.set(l.x, waveAt(l.x, l.y, G.t) - Math.max(0, 5 - l.life)*3, l.y); l.obj.rotation.y += dt*.6;
     if (Math.hypot(S.x - l.x, S.y - l.y) < COMBAT.lootRange && !G.sheetOpen){
-      // the wreck's timber patches your hull first (each plank mends 6 hull), but only up to a field repair: a full repair needs a dry dock.
-      // What's left over goes in the hold.
-      const cap = ship().hull*COMBAT.patchTo, need = Math.ceil(Math.max(0, cap - S.hull)/6), patch = Math.min(need, l.wood), left = l.wood - patch;
-      const room = Math.max(0, ship().hold - holdUsed()), wood = Math.min(room, left);
-      S.hull = Math.max(S.hull, Math.min(cap, S.hull + patch*6)); S.gold += l.gold; S.cargo.wood += wood; l.life = 0;
+      // the wreck's timber patches your hull first, but only up to a field repair: a full repair needs a dry dock.
+      // What's left over (and any bronze) goes to your warehouse.
+      const ph = TUNING.plankHull, cap = ship().hull*COMBAT.patchTo, need = Math.ceil(Math.max(0, cap - S.hull)/ph), patch = Math.min(need, l.wood), wood = l.wood - patch;
+      S.hull = Math.max(S.hull, Math.min(cap, S.hull + patch*ph)); S.gold += l.gold; addMat('wood', wood); addMat('bronze', l.bronze); l.life = 0;
       if (l.goods){ const n = Math.min(l.goods.n, Math.max(0, ship().hold - holdUsed())); S.cargo[l.goods.k] = (S.cargo[l.goods.k] || 0) + n; if (n) setTimeout(() => toast(`+${n} ${l.goods.k === 'oil' ? 'olive oil' : l.goods.k} from the merchant's cargo`, 2.6), 3000); }
-      gain('coin', l.gold); if (wood) gain('wood', wood); if (l.goods) gain(l.goods.k, l.goods.n);
-      if (patch || wood < left) toast(`+${l.gold} drachmae${patch ? `, hull patched with ${patch} planks` : need === 0 && S.hull < ship().hull ? ', the rest needs a dry dock' : ''}${wood ? `, +${wood} wood` : ''}${wood < left ? ' (hold full)' : ''}`, 3); save();
+      gain('coin', l.gold); if (wood) gain('wood', wood); if (l.bronze) gain('bronze', l.bronze); if (l.goods) gain(l.goods.k, l.goods.n);
+      if (patch || l.bronze) toast(`+${l.gold} drachmae${patch ? `, hull patched with ${patch} wood` : need === 0 && S.hull < ship().hull ? ', the rest needs a dry dock' : ''}${wood ? `, +${wood} wood` : ''}${l.bronze ? `, +${l.bronze} bronze` : ''}`, 3); save();
     }
     if (l.life <= 0){ scene.remove(l.obj); LOOT.splice(i, 1); }
   }

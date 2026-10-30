@@ -1,9 +1,9 @@
 // Wakes: every moving ship pushes the water aside. White foam dashes peel off both sides of the bow and spread out in a V,
 // and a wider trail stays behind the stern. Drawn as one instanced mesh, so many ships cost little.
-import {G, ship} from './state.js?v=bdf91e0';
-import {scene} from './scene.js?v=bdf91e0';
-import {waveAt} from './world.js?v=bdf91e0';
-import {enemies} from './combat.js?v=bdf91e0';
+import {G, ship} from './state.js?v=5b5d761';
+import {scene} from './scene.js?v=5b5d761';
+import {waveAt} from './world.js?v=5b5d761';
+import {enemies} from './combat.js?v=5b5d761';
 
 const T = window.THREE;
 const MAX = 900;

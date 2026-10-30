@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board'.
-import {FISH, GOALS, REQUESTS, BOTTLES} from './config.js?v=bdf91e0';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=bdf91e0';
-import {G, save, ship} from './state.js?v=bdf91e0';
-import {scene} from './scene.js?v=bdf91e0';
-import {mesh} from './models.js?v=bdf91e0';
-import {toast} from './ui.js?v=bdf91e0';
-import {sfx} from './audio.js?v=bdf91e0';
+import {FISH, GOALS, REQUESTS, BOTTLES} from './config.js?v=5b5d761';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=5b5d761';
+import {G, save, ship} from './state.js?v=5b5d761';
+import {scene} from './scene.js?v=5b5d761';
+import {mesh} from './models.js?v=5b5d761';
+import {toast} from './ui.js?v=5b5d761';
+import {sfx} from './audio.js?v=5b5d761';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -36,8 +36,8 @@ function makeOffer(){
   const reach = S.tier >= 1 ? Infinity : 6500, close = o => Math.hypot(o.x - S.x, o.y - S.y) < reach; // the rowboat gets jobs near home
   if (t === 'deliver'){ const hs = HARBORS.filter(h => (!G.dock || h !== G.dock.h) && close(h.dock)), h = hs.length ? pick(R, hs) : HARBORS[0], n = fish === 'sardine' ? 3 + Math.floor(R()*3) : 1 + Math.floor(R()*2);
     return {t, kind:fish, n, to:h.is.name, gold:Math.round(n*FISH[fish].price*2 + 12), text:`Bring ${n} ${fn(n)} to ${h.is.name}`, who}; }
-  if (t === 'salvage'){ const n = 2 + Math.floor(R()*3); return {t, n, got:0, gold:n*5 + 6, text:`Salvage ${n} timbers from wrecks`, who}; }
-  if (t === 'wood'){ const n = 3 + Math.floor(R()*3); return {t, n, got:0, gold:n*4 + 4, text:`Cut ${n} cypress wood`, who}; }
+  if (t === 'salvage'){ const n = 2 + Math.floor(R()*3); return {t, n:n*5, got:0, gold:n*5 + 6, text:`Salvage ${n*5} wood from wrecks`, who}; }
+  if (t === 'wood'){ const n = 3 + Math.floor(R()*3); return {t, n:n*4, got:0, gold:n*4 + 4, text:`Cut ${n*4} cypress wood`, who}; }
   if (t === 'visit'){ const near = named.filter(close), is = pick(R, near.length ? near : named), far = Math.hypot(is.x - G.S.x, is.y - G.S.y);
     return {t, to:is.name, n:1, got:0, gold:Math.round(14 + far/350), text:`Sail to ${is.name} with a letter`, who}; }
   return {t:'sink', kind:'skiff', n:1, got:0, gold:45, text:'Sink a pirate skiff', who};
