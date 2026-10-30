@@ -9,8 +9,9 @@ export const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x-a)/(b-a
 
 // ---- which map ----
 // Builder tools pick the map and its scale. They are read straight from the saved settings because changing them reloads the game.
-const DEV = (() => { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)).dev || {}; } catch(e){ return {}; } })();
-const id = DEV.map === 'old' || MAPDATA[DEV.map] ? DEV.map : 'B';
+// With builder tools off (every player) it's always map D at normal scale.
+const DEV = (() => { try { const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)); return s.builder ? s.dev || {} : {}; } catch(e){ return {}; } })();
+const id = DEV.map === 'old' || MAPDATA[DEV.map] ? DEV.map : 'D';
 // The distance slider is relative to SPREAD_BASE: 1× on the slider = islands twice as far apart as the map data.
 const SPREAD_BASE = 2;
 export const MAP = {id, spread: id === 'old' ? 1 : SPREAD_BASE*(DEV.spread || 1), isle: id === 'old' ? 1 : DEV.isle || 1};

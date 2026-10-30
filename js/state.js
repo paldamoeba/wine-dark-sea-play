@@ -114,7 +114,7 @@ export function loadSettings(){
   const {dev, ...rest} = saved;
   G.settings = {quality:'auto', detected:null, showFps:false, builder:false, ...rest, // a new player starts with builder tools off
     // Builder tools: only for making the game, removed before release.
-    tools: {zoom:1, speed:1, teleport:false, markers:true, crew:true, raiders:true, fleet:false, map:'B', spread:1, isle:1, ...(dev || {})}};
+    tools: {zoom:1, speed:1, teleport:false, markers:true, crew:true, raiders:true, fleet:false, map:'D', spread:1, isle:1, ...(dev || {})}};
   // The game reads G.settings.dev. With builder tools off it gets what a player would have; the builder values stay saved for later.
   Object.defineProperty(G.settings, 'dev', {enumerable:false, value:new Proxy({}, {
     get:(_, k) => (!G.settings.builder && k in PLAYER_DEV ? PLAYER_DEV : G.settings.tools)[k],
