@@ -1,15 +1,15 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT} from './config.js?v=d4d0ac7';
-import {SPECS} from './ships.js?v=d4d0ac7';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=d4d0ac7';
-import {G, ship, holdUsed, save, gain} from './state.js?v=d4d0ac7';
-import {steering} from './input.js?v=d4d0ac7';
-import {toast, showZone} from './ui.js?v=d4d0ac7';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=d4d0ac7';
-import {startFish, stopFish} from './fishing.js?v=d4d0ac7';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=d4d0ac7';
-import {progress} from './quests.js?v=d4d0ac7';
-import {startSink} from './sinking.js?v=d4d0ac7';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=ceff53c';
+import {SPECS} from './ships.js?v=ceff53c';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=ceff53c';
+import {G, ship, holdUsed, save, gain} from './state.js?v=ceff53c';
+import {steering} from './input.js?v=ceff53c';
+import {toast, showZone} from './ui.js?v=ceff53c';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=ceff53c';
+import {startFish, stopFish} from './fishing.js?v=ceff53c';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=ceff53c';
+import {progress} from './quests.js?v=ceff53c';
+import {startSink} from './sinking.js?v=ceff53c';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -51,7 +51,7 @@ function gather(dt, sh){
   if (!slow) G.still = 0;
   if (slow && !G.sheetOpen){
     const sp = SPOTS.find(s => s.stock > 0 && Math.hypot(s.x-S.x, s.y-S.y) < TUNING.fishRange);
-    const wr = !sp && WRECKS.find(w => w.stock > 0 && Math.hypot(w.x-S.x, w.y-S.y) < TUNING.wreckRange);
+    const wr = !sp && WRECKS.find(w => w.stock > 0 && Math.hypot(w.x-S.x, w.y-S.y) < TUNING.wreckRange*Math.max(1, WRECK_SIZES[w.size].scale));
     const is = !sp && !wr && ISLANDS.find(i => i.stock > 0 && shoreDist(i, S.x, S.y) < sh.beam + TUNING.treeRange);
     const k = S.bless > 0 ? WILDLIFE.blessWork : 1;
     if (sp) cur = {type:'fish', ref:sp, time:sh.fishTime};
@@ -77,11 +77,12 @@ function gather(dt, sh){
   if (act.type === 'shore'){ S.cargo[SHORE_FISH.kind]++; progress('catch', SHORE_FISH.kind); gain(SHORE_FISH.kind); } // a little fish pops up from the boat instead of a message
   else if (act.type === 'wood'){ S.cargo.wood++; r.stock--; refreshTrees(r); gain('wood'); progress('wood'); }
   else {
-    S.cargo.wood++; r.stock--; progress('salvage');
-    if (Math.random() < TUNING.wreckGoldChance){
-      const c = TUNING.wreckGoldMin + Math.floor(Math.random()*(TUNING.wreckGoldMax - TUNING.wreckGoldMin + 1));
-      S.gold += c; gain('wood'); gain('coin', c);
-    } else gain('wood');
+    // bigger wrecks give more timber per pull, more coins, and merchant wrecks sometimes an amphora of wine or oil
+    const ws = WRECK_SIZES[r.size] || WRECK_SIZES.small, wood = Math.max(1, Math.min(ws.wood, sh.hold - holdUsed()));
+    S.cargo.wood += wood; r.stock--; progress('salvage', null, wood); gain('wood', wood);
+    const [gc, g0, g1] = ws.gold;
+    if (Math.random() < gc){ const c = g0 + Math.floor(Math.random()*(g1 - g0 + 1)); S.gold += c; gain('coin', c); }
+    if (ws.goods && Math.random() < ws.goods && holdUsed() < sh.hold){ const k = Math.random() < .5 ? 'wine' : 'oil'; S.cargo[k] = (S.cargo[k] || 0) + 1; gain(k); }
     if (!r.stock) toast('The wreck slips under the waves', 2.4);
   }
 }
@@ -89,7 +90,7 @@ function gather(dt, sh){
 function regrow(dt){
   for (const s of SPOTS) if (s.stock < TUNING.spotStock){ s.regen += dt; if (s.regen > TUNING.spotRegen){ s.stock++; s.regen = 0; } }
   for (const i of ISLANDS) if (i.trees && i.stock < i.trees){ i.regen += dt; if (i.regen > TUNING.treeRegen){ i.stock++; i.regen = 0; refreshTrees(i); } }
-  for (const w of WRECKS) if (!w.stock){ w.regen += dt; if (w.regen > TUNING.wreckRespawn){ w.stock = TUNING.wreckStock; w.regen = 0; } }
+  for (const w of WRECKS) if (!w.stock){ w.regen += dt; if (w.regen > TUNING.wreckRespawn){ w.stock = WRECK_SIZES[w.size].stock; w.regen = 0; } }
 }
 
 // ---- docking: dockhands pull the ship in alongside the pier, and push it off again when you set sail ----

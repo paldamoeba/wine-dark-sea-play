@@ -405,3 +405,14 @@ button.goal .more{color:var(--ochre);font-weight:800}
 .sheet.menu .tab.on span{color:#ffd28a}
 .hi.wx span svg{width:20px;height:20px}
 #wxChip span{background:#e9f2f5}
+
+/* ---- HUD, prototype 34: the hull bar runs along the very top, as wide as the space left of the map; resources and the weather
+   sit in one bar under it. Weather is part of that bar now instead of floating by the map. ---- */
+.hud{max-width:none;right:calc(140px + env(safe-area-inset-right,0px));align-items:stretch}
+.lifebar{width:auto;max-width:360px;box-sizing:border-box}
+.lifebar .bar{flex:1;width:auto;min-width:80px;height:14px}
+.hudbar{align-self:flex-start}
+#wxChip{position:static;border:0;box-shadow:none;background:#47362c;padding:3px 8px 3px 4px;border-radius:10px;z-index:auto}
+#wxChip.storm{background:#2f3a48}#wxChip.mist{background:#4a453f}
+@media (max-width:480px){ .hud{right:calc(128px + env(safe-area-inset-right,0px))} #wxChip{padding:3px 4px} }
+.toast.near{width:max-content;max-width:min(320px,calc(100vw - 32px))}

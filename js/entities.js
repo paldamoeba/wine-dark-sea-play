@@ -1,16 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=d4d0ac7';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=d4d0ac7';
-import {G, ship, lvl} from './state.js?v=d4d0ac7';
-import {scene} from './scene.js?v=d4d0ac7';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel} from './models.js?v=d4d0ac7';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=d4d0ac7';
-import {addTown, figure} from './town.js?v=d4d0ac7';
-import {buildStatue} from './monuments.js?v=d4d0ac7';
-import {makeFire, updateFire, burn} from './fire.js?v=d4d0ac7';
-import {sinkPose} from './sinking.js?v=d4d0ac7';
-import {moored} from './fleet.js?v=d4d0ac7';
-import {placeOnWaves} from './combat.js?v=d4d0ac7';
+import {SHIPS} from './config.js?v=ceff53c';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=ceff53c';
+import {G, ship, lvl} from './state.js?v=ceff53c';
+import {scene} from './scene.js?v=ceff53c';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel} from './models.js?v=ceff53c';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=ceff53c';
+import {addTown, figure} from './town.js?v=ceff53c';
+import {buildStatue} from './monuments.js?v=ceff53c';
+import {makeFire, updateFire, burn} from './fire.js?v=ceff53c';
+import {sinkPose} from './sinking.js?v=ceff53c';
+import {moored} from './fleet.js?v=ceff53c';
+import {placeOnWaves} from './combat.js?v=ceff53c';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -152,7 +152,7 @@ export const ICEBERGS = [];
 
 // ---- wrecks + gulls ----
 WRECKS.forEach((w, i) => {
-  const g = wreckModel(); g.position.set(w.x, w.stock ? 0 : -60, w.y); g.rotation.y = w.rot;
+  const g = wreckModel(w.size); g.position.set(w.x, w.stock ? 0 : -60, w.y); g.rotation.y = w.rot;
   w.bob = g.userData.bob;
   w.gulls = [0,1,2,3].map(k => { const gl = gull(); Object.assign(gl.userData, {R:34 + k*12, h:70 + k*9, sp:(.5 + hash(i,k)*.4) * (k%2 ? 1 : -1), a:k*1.7}); scene.add(gl); return gl; });
   w.g = g; scene.add(g);
@@ -192,7 +192,7 @@ export function showHomeFleet(){
   let nx = -PIER.dy, ny = PIER.dx, k = 60; const tip = PIER_LEN*.8, wet = sg => landDist(PIER.x + PIER.dx*tip - nx*sg*160, PIER.y + PIER.dy*tip - ny*sg*160);
   if (wet(-1) > wet(1)){ nx = -nx; ny = -ny; }
   for (const t of list){ const sh = SHIPS[t], s = SPECS[sh.model], up = (G.S.ups || {})[t] || {};
-    const f = buildShip(sh.model, {...((G.S.looks || {})[t] || {}), flag:G.S.crewName ? G.S.look.flag : 'none', ram:t === G.S.tier ? lvl('ram') : 0, plate:up.hull || 0}, G.settings.dev.crew);
+    const f = buildShip(sh.model, {...((G.S.looks || {})[t] || {}), flag:G.S.crewName ? G.S.look.flag : 'none', ram:t === G.S.tier ? lvl('ram') : 0, plate:up.hull || 0, sailLv:up.sail || 0}, G.settings.dev.crew);
     k += s.B/2 + (s.oarCount > 1 ? 34 : 10); const along = PIER_LEN*.8;
     f.userData.at = {x:PIER.x + PIER.dx*along - nx*k, y:PIER.y + PIER.dy*along - ny*k, a:Math.atan2(PIER.dy, PIER.dx), len:s.L};
     k += s.B/2 + (s.oarCount > 1 ? 34 : 10); scene.add(f); homeFleet.push(f); }
@@ -234,7 +234,7 @@ function animateDock(dt, t){
 
 // ---- player boat ----
 let boat = null;
-export function swapBoat(){ if (boat) scene.remove(boat); const sh = SHIPS[G.S.tier]; boat = buildShip(sh.model, {...G.S.look, ...(G.S.crewName ? {} : {flag:'none'}), ram:lvl('ram'), plate:lvl('hull')}, G.settings.dev.crew); // no flag until you found a crew
+export function swapBoat(){ if (boat) scene.remove(boat); const sh = SHIPS[G.S.tier]; boat = buildShip(sh.model, {...G.S.look, ...(G.S.crewName ? {} : {flag:'none'}), ram:lvl('ram'), plate:lvl('hull'), sailLv:lvl('sail')}, G.settings.dev.crew); // no flag until you found a crew
   boat.userData.fire = makeFire(sh.len, sh.beam, SPECS[sh.model].H*.9); boat.add(boat.userData.fire); scene.add(boat); }
 
 export function animateEntities(dt){

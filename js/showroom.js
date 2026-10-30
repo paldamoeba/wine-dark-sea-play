@@ -1,8 +1,9 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat} from './ships.js?v=d4d0ac7';
-import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=d4d0ac7';
-import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, whaleModel, dolphinModel, icebergModel, wreckModel} from './models.js?v=d4d0ac7';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS} from './ships.js?v=ceff53c';
+import {makePost} from './glow.js?v=ceff53c';
+import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=ceff53c';
+import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, whaleModel, dolphinModel, icebergModel, wreckModel} from './models.js?v=ceff53c';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -16,7 +17,43 @@ const sunDir = new T.Vector3(-400, 700, 400);
 const fill = new T.DirectionalLight(0xcfe3ff, .28); fill.position.set(300, 200, -300); scene.add(fill);
 const seaMat = new T.MeshLambertMaterial({color:'#2b7f93'});
 const sea = new T.Mesh(new T.CircleGeometry(6000, 64), seaMat); sea.rotation.x = -Math.PI/2; sea.receiveShadow = true; scene.add(sea);
+// Full graphics: a rolling sea like the game's, with drifting foam lines, white crests, sky reflections and sun glints.
+// The same wave sum runs here in JavaScript (wv) so ships ride on it. uCalm flattens it around islands and towns.
+const waveU = {uTime:{value:0}, uAmp:{value:.5}, uStorm:{value:0}, uGlint:{value:1}, uSky:{value:new T.Color()}, uSun:{value:new T.Vector3(0, 1, 0)}, uCalm:{value:new T.Vector3(0, 0, 0)}};
+const WV = `uniform float uTime, uAmp; uniform vec3 uCalm;
+  float wv(vec2 p){ float k = uAmp*smoothstep(uCalm.z, uCalm.z + 160., length(p - uCalm.xy));
+    return k*(sin(p.x*.012 + uTime*1.1)*3.2 + sin(p.y*.017 - uTime*1.3)*2.4 + sin((p.x + p.y)*.03 + uTime*1.9)*1.1 + sin((p.x - p.y)*.05 - uTime*2.4)*.5); }`;
+function wv(x, z, t){ const k = waveU.uAmp.value*Math.min(1, Math.max(0, (Math.hypot(x - waveU.uCalm.value.x, z - waveU.uCalm.value.y) - waveU.uCalm.value.z)/160));
+  return k*(Math.sin(x*.012 + t*1.1)*3.2 + Math.sin(z*.017 - t*1.3)*2.4 + Math.sin((x + z)*.03 + t*1.9)*1.1 + Math.sin((x - z)*.05 - t*2.4)*.5); }
+const waveMat = new T.MeshLambertMaterial({color:'#2b7f93'});
+waveMat.onBeforeCompile = sh => {
+  Object.assign(sh.uniforms, waveU);
+  sh.vertexShader = WV + '\nvarying vec3 vWorld;\n' + sh.vertexShader
+    .replace('#include <beginnormal_vertex>', 'vec2 pp = position.xz; float e = 2.; vec3 objectNormal = normalize(vec3(wv(pp - vec2(e, 0.)) - wv(pp + vec2(e, 0.)), 2.*e, wv(pp - vec2(0., e)) - wv(pp + vec2(0., e))));')
+    .replace('#include <begin_vertex>', 'vec3 transformed = position; transformed.y += wv(position.xz); vWorld = (modelMatrix*vec4(transformed, 1.)).xyz;');
+  sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uStorm, uGlint, uAmp; uniform vec3 uSun, uSky;
+    vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
+    float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
+      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(i + g);
+        o = .5 + .42*sin(uTime*.35 + 6.2831*o); float d = length(g + o - f); if (d < d1){ d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
+      return d2 - d1; }
+    ` + sh.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>
+      vec2 q = vWorld.xz/125.; q += .32*vec2(sin(q.y*1.3 + uTime*.4), cos(q.x*1.1 - uTime*.3)); q += .1*vec2(sin(q.y*4.7 - uTime*.6), cos(q.x*4.3 + uTime*.5));
+      float line = 1. - smoothstep(.02, .055, cells(q));
+      float dist = length(vWorld.xz - cameraPosition.xz), fade = smoothstep(3200., 600., dist);
+      vec3 foamC = mix(vec3(.92, .98, 1.), vec3(.42, .62, .68), uStorm);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, line*.75*fade*(1. - .45*uStorm));
+      float crest = smoothstep(.55, .9, vWorld.y/max(.01, 7.2*uAmp)); gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, crest*.45);
+      vec3 V = normalize(cameraPosition - vWorld); gl_FragColor.rgb = mix(gl_FragColor.rgb, uSky, pow(1. - max(V.y, 0.), 3.)*.35);
+      vec2 w = vWorld.xz;
+      vec3 nrm = normalize(vec3(sin(w.x*.045 + uTime*1.7)*.16 + sin((w.x + w.y)*.11 - uTime*2.3)*.08, 1., cos(w.y*.05 - uTime*1.4)*.16 + sin((w.x - w.y)*.09 + uTime*2.1)*.08));
+      float sp = max(dot(reflect(-uSun, nrm), V), 0.); gl_FragColor.rgb += vec3(1., .96, .86)*(pow(sp, 24.)*.1 + pow(sp, 260.)*.75)*uGlint;`);
+};
+const waveGeo = new T.PlaneGeometry(6000, 6000, 220, 220); waveGeo.rotateX(-Math.PI/2);
+const waves = new T.Mesh(waveGeo, waveMat); waves.receiveShadow = true; waves.visible = false; scene.add(waves);
+const post = makePost(renderer);
 const camera = new T.PerspectiveCamera(40, 1, 2, 9000);
+let group = 'ships', idx = 0, obj = null, focus = new T.Vector3(), dist = 300, yaw = -.9, pitch = .42, spin = false;
 
 // ---- lights: the times of day and weather from the game, plus a plain studio light for looking at shapes ----
 // sky = background and fog, hemi = [sky light, ground light, strength], sun = [color, strength, direction], sea = water color
@@ -25,16 +62,51 @@ const LIGHTS = {
   morning: {name:'Morning',     sky:'#f2dccb', hemi:['#f6e6da', '#8c8a7c', .75], sun:['#ffd9b0', .6, [700, 300, 300]],   fill:.3,  sea:'#3f8c9c'},
   golden:  {name:'Golden hour', sky:'#f4cf9c', hemi:['#f8dcae', '#8a7a5c', .68], sun:['#ffbf6e', .8, [-700, 260, 200]],  fill:.18, sea:'#2f7b88'},
   sunset:  {name:'Sunset',      sky:'#e99073', hemi:['#f6b49a', '#7a6670', .85], sun:['#ff9a62', .85, [-800, 160, -100]], fill:.25, sea:'#4f8399'},
-  night:   {name:'Night',       sky:'#1d2b47', hemi:['#5d74a8', '#1c2333', .55], sun:['#b8cbff', .38, [300, 600, -300]],  fill:.12, sea:'#173b56'},
+  night:   {name:'Night',       sky:'#16213a', hemi:['#5d74a8', '#1c2333', .4], sun:['#b8cbff', .24, [300, 600, -300]],  fill:.08, sea:'#14334c'},
   storm:   {name:'Storm',       sky:'#6e7d85', hemi:['#a9b5ba', '#4c5550', .7],  sun:['#d8dde0', .2, [-200, 700, 200]],  fill:.1,  sea:'#2c5560'},
   studio:  {name:'Studio',      sky:'#e9e6df', hemi:['#ffffff', '#b8b2a6', .85], sun:['#ffffff', .55, [-300, 600, 500]],  fill:.35, sea:'#d6d1c6'},
 };
+let lightKey = 'noon', full = false, glowOn = false;
 function setLight(k){
-  const L = LIGHTS[k]; scene.background = new T.Color(L.sky); scene.fog.color.set(L.sky);
+  lightKey = k; const L = LIGHTS[k]; scene.background = new T.Color(L.sky); scene.fog.color.set(L.sky);
+  scene.fog.near = k === 'storm' ? 900 : 2200; scene.fog.far = k === 'storm' ? 3200 : 5200;
+  waveMat.color.set(L.sea); waveU.uSky.value.set(L.sky); waveU.uStorm.value = k === 'storm' ? 1 : 0; waveU.uGlint.value = k === 'storm' ? .2 : k === 'night' ? .35 : 1;
+  rain.visible = k === 'storm'; lightTorches();
   hemi.color.set(L.hemi[0]); hemi.groundColor.set(L.hemi[1]); hemi.intensity = L.hemi[2];
   sun.color.set(L.sun[0]); sun.intensity = L.sun[1]; sunDir.set(...L.sun[2]); sun.position.copy(focus).add(sunDir); fill.intensity = L.fill; seaMat.color.set(L.sea);
-  document.body.style.background = L.sky; $('tagline').style.color = k === 'night' ? '#e9eef7' : '';
+  document.body.style.background = L.sky; $('tagline').style.color = k === 'night' || k === 'storm' ? '#e9eef7' : ''; document.body.classList.toggle('dark', k === 'night' || k === 'storm');
+  setWaves();
 }
+// waves: gentle in fair weather, big in a storm (full graphics only; the simple look keeps a flat sea)
+function setWaves(){ waves.visible = full; sea.visible = !full; waveU.uAmp.value = lightKey === 'storm' ? 1.25 : .5; }
+// Torches burn at night and in storms. With a few torches each one also lights the deck around it.
+function lightTorches(){ if (!obj) return; const on = lightKey === 'night' || lightKey === 'storm', roots = [];
+  obj.traverse(o => { if (o.userData.torches && o.userData.torches.length) roots.push(o); });
+  const n = roots.reduce((a, r) => a + r.userData.torches.length, 0);
+  roots.forEach(r => setTorches(r, on, n <= 12)); }
+
+// ---- the storm: rain streaks, rings where the drops hit the water, and lightning ----
+const RAIN = 1400, rainPos = new Float32Array(RAIN*6), rainV = new Float32Array(RAIN);
+const rainGeo = new T.BufferGeometry(); rainGeo.setAttribute('position', new T.BufferAttribute(rainPos, 3));
+const rain = new T.LineSegments(rainGeo, new T.LineBasicMaterial({color:'#dfe9ef', transparent:true, opacity:.55})); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
+const box = () => Math.max(300, dist*1.1);
+function dropAt(i, top){ const b = box(); const x = focus.x + (Math.random() - .5)*2*b, z = focus.z + (Math.random() - .5)*2*b, y = top ? focus.y + b*.8 + Math.random()*b*.3 : Math.random()*b*.9;
+  rainPos.set([x, y, z, x - 3, y + 26, z - 2], i*6); rainV[i] = 520 + Math.random()*180; }
+for (let i=0;i<RAIN;i++) dropAt(i, false);
+const ringGeo = new T.RingGeometry(.7, 1, 14); ringGeo.rotateX(-Math.PI/2);
+const rings = Array.from({length:70}, () => { const m = new T.Mesh(ringGeo, new T.MeshBasicMaterial({color:'#e9f3f7', transparent:true, opacity:0, depthWrite:false})); m.visible = false; scene.add(m); return {m, k:1}; });
+let ringI = 0, flash = 0, boltT = 3;
+function updateStorm(dt, t){
+  if (!rain.visible){ rings.forEach(r => r.m.visible = false); return; }
+  for (let i=0;i<RAIN;i++){ const o = i*6, dy = rainV[i]*dt; rainPos[o + 1] -= dy; rainPos[o + 4] -= dy; rainPos[o] -= dy*.1; rainPos[o + 3] -= dy*.1;
+    if (rainPos[o + 1] < 0){ if (Math.random() < .12){ const r = rings[ringI++ % rings.length]; r.k = 0; r.m.visible = true; r.m.position.set(rainPos[o], full ? wv(rainPos[o], rainPos[o + 2], t) + .6 : .6, rainPos[o + 2]); } dropAt(i, true); } }
+  rainGeo.attributes.position.needsUpdate = true;
+  for (const r of rings) if (r.m.visible){ r.k += dt*1.8; r.m.scale.setScalar(2 + r.k*9); r.m.material.opacity = (1 - r.k)*.7; if (r.k >= 1) r.m.visible = false; }
+  boltT -= dt; if (boltT <= 0){ flash = 1; boltT = 2.5 + Math.random()*5; }
+  flash = Math.max(0, flash - dt*2.6); const L = LIGHTS.storm, f = flash*flash;
+  sun.intensity = L.sun[1] + f*1.4; hemi.intensity = L.hemi[2] + f*.9; scene.background.set(L.sky).lerp(WHITE, f*.5);
+}
+const WHITE = new T.Color('#f4f7fb');
 
 // ---- small builders for the showroom scenes ----
 const grassDisc = (r, color = '#5f7433') => { const g = new T.Mesh(new T.CylinderGeometry(r, r*1.06, 6, 40), mat(color)); g.position.y = -2; g.receiveShadow = true; g.userData.ground = true; return g; };
@@ -46,6 +118,12 @@ const COLORS = ['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f', '#5c3470'
 function townsperson(color){ const g = new T.Group(), inner = new T.Group(); g.add(inner);
   const body = new T.Mesh(beanGeo(6.8), mat(color)); body.castShadow = true; body.scale.set(.85, 1, .85); inner.add(body);
   cuteHead(inner, 8.9); g.userData.inner = inner; return g; }
+// a name under a model, as a flat sign that always faces the camera
+function label(text, w = 60){ const c = document.createElement('canvas'); c.width = 512; c.height = 112; const g = c.getContext('2d');
+  g.fillStyle = 'rgba(43,33,28,.86)'; g.beginPath(); g.roundRect ? g.roundRect(4, 8, 504, 96, 40) : g.rect(4, 8, 504, 96); g.fill();
+  g.fillStyle = '#f6e7c6'; g.font = '800 54px Nunito, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 58);
+  const tex = new T.CanvasTexture(c); const sp = new T.Sprite(new T.SpriteMaterial({map:tex, depthTest:false, transparent:true})); sp.scale.set(w, w*112/512, 1); sp.renderOrder = 5; return sp; }
+const labeled = (o, text, y, w) => { const l = label(text, w); l.position.y = y; o.add(l); return o; };
 const hoppers = []; // people that hop in place, to show how they move in town
 function hopper(o, ph){ hoppers.push({o, ph}); return o; }
 
@@ -89,7 +167,7 @@ function snowyTown(){ const g = new T.Group();
 const SHIP_INFO = {
   rowboat:'Your first boat. One rower, a small hold.', fishing:'A sail, nets and a second crew member.', merchant:'Trade ships with a cabin and a cargo of amphorae.',
   penteconter:'A long fast warship with one row of oars.', bireme:'Your warship: one row of oars, four archers in bronze helmets, a captain with an officer\'s crest and a bronze ram.',
-  trireme:'Three rows of oars and an outrigger. Coming later.',
+  trireme:'A long warship with one row of oars, an outrigger, a canopy over the captain and a big bronze ram. Coming later.',
   raider:'The pirate galley: a dark hull, red eyes and a bronze boar\'s head ram, like the ships of Polycrates, the pirate king of Samos.',
   trader:'A small round trading ship. Some merchants sail these.', dinghy:'The small pirate boat.', skiff:'The pirate skiff, with its own little boar\'s head.'};
 const GROUPS = {
@@ -98,7 +176,13 @@ const GROUPS = {
     {name:'The whole fleet', desc:'Every ship side by side, smallest to largest.', make:() => { const g = new T.Group(); let z = 0;
       ['rowboat', 'fishing', 'trader', 'merchant', 'penteconter', 'bireme', 'trireme', 'dinghy', 'skiff', 'raider'].forEach(k => { const s = buildShip(k); z += SPECS[k].B*1.4 + 30; s.position.set(-SPECS[k].L/2 + 100, 0, z); g.add(s); z += SPECS[k].B*1.4; });
       g.position.z = -z/2; const w = new T.Group(); w.add(g); return w; }},
-    {name:'Shipwreck', desc:'Wrecks lie on the sea with cargo floating around them. Sail through to salvage.', make:() => wreckModel()},
+    {name:'Torches at night', desc:'At night every ship lights torches at the bow and stern, and big ships a pair at the rails. Turn Glow on and off to compare.', light:'night', glow:true,
+      make:() => { const g = new T.Group(); [['bireme', 0], ['merchant', 140], ['raider', 280]].forEach(([k, z]) => { const sh = buildShip(k); sh.position.z = z - 140; g.add(sh); }); return g; }},
+    {name:'Sail upgrades', desc:'Levels 1 to 5 make the sail bigger. Level 6 puts up a foresail over the bow, which grows to 10. Level 11 adds a topsail (to 15), and level 16 a little sail at the stern (to 20). The rowboat gets one small sail (5 levels).',
+      make:() => { const g = new T.Group(); [0, 5, 6, 10, 11, 15].forEach((lv, i) => { const sh = buildShip('trireme', {sailLv:lv}); sh.position.set((i % 3)*260 - 260, 0, Math.floor(i/3)*170 - 85); labeled(sh, 'Level ' + lv, -26, 70); g.add(sh); });
+        [1, 5].forEach((lv, i) => { const sh = buildShip('rowboat', {sailLv:lv, sail:'ochre'}); sh.position.set(i*90 - 45, 0, 240); labeled(sh, 'Rowboat ' + lv, -16, 50); g.add(sh); }); return g; }},
+    {name:'Shipwrecks', desc:'Three sizes. A fishing boat wreck: 4 pulls of 1 wood. A merchant wreck: 6 pulls of 2 wood, coins, and sometimes an amphora of wine or oil. A warship wreck: 9 pulls of 3 wood and more coins.',
+      make:() => { const g = new T.Group(); [['small', 'Fishing boat', -170], ['medium', 'Merchant', 0], ['large', 'Warship', 220]].forEach(([k, n, x]) => { const w = wreckModel(k); w.position.x = x; labeled(w, n, -22, 60); g.add(w); }); return g; }},
   ]},
   monuments:{name:'Monuments', items:[
     {name:'Colossus of Rhodes', desc:'The bronze sun god astride the arena gate: a torch held high, a bow, a quiver and a crown of sun rays.', make:() => { const c = buildColossus(300, 150); c.rotation.y = Math.PI/2; return c; }},
@@ -124,6 +208,9 @@ const GROUPS = {
         person('tunic2', 'archer', 'hoplite'), person('rTunic', 'archer', 'pirate'), person('#2c1f1f', 'stand', 'pirate')];
       ppl.forEach(p => p.rotation.y = .9); const g = row(ppl, 6); g.add(grassDisc(70)); return g; }},
     {name:'Townspeople', desc:'They hop around the harbor towns, popping up as you sail close.', make:() => { const g = row(COLORS.map((c, i) => hopper(townsperson(c), i*.5)), 6); g.add(grassDisc(50)); return g; }},
+    {name:'Helmets and hats', desc:'Every helmet and hat, left to right: hoplite, captain, Athenian (feathers), Spartan (bronze cone), Phrygian (curled top), Boeotian (wide brim), pirate cap, straw hat for fishermen and merchants, and the laurel wreath for champions of the games.',
+      make:() => { const ks = Object.keys(HELMETS); const g = row(ks.map((k, i) => { const p = person(['tunic1', 'tunic2', 'tunic3', '#9e2a22', 'tunic2', 'tunic1', 'rTunic', 'tunic3', '#5c3470'][i], 'stand', k); p.rotation.y = .9;
+        hopper(p, i*.4); labeled(p, HELMETS[k], -5, 15); return p; }), 7); g.add(grassDisc(75)); return g; }},
     {name:'Soldiers and archers', desc:'A round bronze helmet with cheek guards and a red horsehair crest from front to back.', make:() => { const g = row([0, 1, 2].map(i => { const p = person(['tunic1', 'tunic2', 'tunic3'][i], 'archer', 'hoplite'); p.rotation.y = .9; return p; }), 8); g.add(grassDisc(40)); return g; }},
     {name:'Captains and generals', desc:'Their crest runs from side to side, like Spartan officers wore, white with a red rim.', make:() => { const g = row([0, 1].map(i => { const p = person(['tunic3', 'tunic2'][i], 'stand', 'captain'); p.rotation.y = .9; return p; }), 8); g.add(grassDisc(36)); return g; }},
     {name:'Pirates', desc:'A dark pointed felt cap with a red band.', make:() => { const g = row([0, 1, 2].map(i => { const p = person(['rTunic', '#2c1f1f', 'rTunic'][i], i === 1 ? 'stand' : 'archer', 'pirate'); p.rotation.y = .9; return p; }), 8); g.add(grassDisc(40)); return g; }},
@@ -149,7 +236,6 @@ const GROUPS = {
 };
 
 // ---- showing one ----
-let group = 'ships', idx = 0, obj = null, focus = new T.Vector3(), dist = 300, yaw = -.9, pitch = .42, spin = false;
 function show(){
   if (obj) scene.remove(obj); hoppers.length = 0;
   const item = GROUPS[group].items[idx];
@@ -161,13 +247,25 @@ function show(){
   const big = Math.max(size.x, size.y, size.z); dist = big*1.45 + 40;
   const sc = sun.shadow.camera, half = Math.max(80, big*.9); Object.assign(sc, {left:-half, right:half, top:half, bottom:-half}); sc.updateProjectionMatrix();
   sun.target.position.copy(focus); sun.position.copy(focus).add(sunDir); scene.add(sun.target); $('desc').textContent = item.desc;
+  // the waves stay calm over islands and towns; ships ride them
+  const land = ground.length || group === 'cities' || group === 'monuments' || group === 'nature' || group === 'people';
+  waveU.uCalm.value.set(focus.x, focus.z, land ? Math.max(size.x, size.z)*.62 + 30 : 0);
+  if (item.light && !q0){ $('light').value = item.light; setLight(item.light); } if (item.glow && !q0){ setGlow(true); }
+  lightTorches(); ridersOf();
 }
+// the ships in view, so they can bob on the waves
+let riders = [];
+function ridersOf(){ riders = []; obj.traverse(o => { if (o.userData.body && o.userData.spec) riders.push({o, y:o.position.y}); }); }
+function setGlow(on){ glowOn = on; $('glow').setAttribute('aria-pressed', on); }
+function setFull(on){ full = on; $('gfx').value = on ? 'full' : 'simple'; renderer.shadowMap.type = on ? T.PCFSoftShadowMap : T.PCFShadowMap; setWaves(); }
 function fillPick(){ $('pick').innerHTML = GROUPS[group].items.map((it, i) => `<option value="${i}">${it.name}</option>`).join(''); $('pick').value = idx; }
 $('group').innerHTML = Object.entries(GROUPS).map(([k, g]) => `<option value="${k}">${g.name}</option>`).join('');
 $('light').innerHTML = Object.entries(LIGHTS).map(([k, l]) => `<option value="${k}">${l.name}</option>`).join('');
 $('group').addEventListener('change', e => { group = e.target.value; idx = 0; fillPick(); show(); });
 $('pick').addEventListener('change', e => { idx = +e.target.value; show(); });
 $('light').addEventListener('change', e => setLight(e.target.value));
+$('gfx').addEventListener('change', e => setFull(e.target.value === 'full'));
+$('glow').addEventListener('click', () => setGlow(!glowOn));
 // the cel-shaded test look: hard bands and ink outlines
 $('cel').addEventListener('click', () => { setCel(!CEL.on); $('cel').setAttribute('aria-pressed', CEL.on); show(); });
 $('spin').addEventListener('click', () => { spin = !spin; $('spin').setAttribute('aria-pressed', spin); });
@@ -191,15 +289,16 @@ function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspe
 addEventListener('resize', resize);
 
 // start: ?g=group&i=item&light=key (and test views: yaw, pitch, zoom, fx, fy, ui=0)
-const q = new URLSearchParams(location.search);
+const q = new URLSearchParams(location.search); let q0 = true; // q0: while starting, the address decides the light and glow
 if (GROUPS[q.get('g')]) group = q.get('g'); idx = Math.min(+(q.get('i') || 0), GROUPS[group].items.length - 1);
 $('group').value = group; fillPick();
 const lk = LIGHTS[q.get('light')] ? q.get('light') : 'noon'; $('light').value = lk; setLight(lk);
 if (q.get('cel') === '1'){ setCel(true); $('cel').setAttribute('aria-pressed', true); }
 if (q.get('ui') === '0') fold(true), $('unfold').hidden = true;
-show(); resize();
+setFull(q.get('gfx') === 'full'); setGlow(q.get('glow') === '1');
+show(); resize(); q0 = false;
 if (q.get('yaw')) yaw = +q.get('yaw'); if (q.get('pitch')) pitch = +q.get('pitch'); if (q.get('zoom')) dist /= +q.get('zoom');
-const fx = +(q.get('fx') || 0), fy = +(q.get('fy') || 0);
+const tmpV = new T.Vector3(), fx = +(q.get('fx') || 0), fy = +(q.get('fy') || 0);
 
 // gentle life: oars row, flags wave, animals swim and flap, people hop
 function animate(t){
@@ -215,12 +314,16 @@ function animate(t){
     if (h.rock) inner.rotation.z = Math.sin(t*2.6 + h.ph)*.25;
     else { const p = (t*1.3 + h.ph) % 2.2; inner.position.y = p < .42 ? Math.sin(p/.42*Math.PI)*5 : 0; } }
 }
-let t0 = performance.now();
+let t0 = performance.now(), last = 0;
 function frame(now){
-  const t = (now - t0)/1000; animate(t); if (spin && !pts.size) yaw += .003;
+  const t = (now - t0)/1000, dt = Math.min(.05, t - last); last = t; animate(t); if (spin && !pts.size) yaw += .003;
+  waveU.uTime.value = t; waveU.uSun.value.copy(sunDir).normalize(); updateStorm(dt, t);
+  // full graphics: ships ride the waves, pitching and rolling a little
+  for (const r of riders){ const p = r.o.getWorldPosition(tmpV), h = full ? wv(p.x, p.z, t) : 0;
+    r.o.position.y = r.y + h*.8; r.o.rotation.z = full ? (wv(p.x + 20, p.z, t) - wv(p.x - 20, p.z, t))*.012 : 0; r.o.rotation.x = full ? (wv(p.x, p.z - 12, t) - wv(p.x, p.z + 12, t))*.02 : 0; }
   focus.x += fx; focus.y += fy;
   camera.position.set(focus.x + Math.cos(yaw)*Math.cos(pitch)*dist, focus.y + Math.sin(pitch)*dist, focus.z + Math.sin(yaw)*Math.cos(pitch)*dist);
   camera.lookAt(focus); focus.x -= fx; focus.y -= fy;
-  renderer.render(scene, camera); requestAnimationFrame(frame);
+  post(scene, camera, {glow:glowOn ? 1.5 : 0, tilt:full}); requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

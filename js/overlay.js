@@ -1,15 +1,15 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=d4d0ac7';
-import {G, isExplored} from './state.js?v=d4d0ac7';
-import {fogLayer, islandPath} from './map.js?v=d4d0ac7';
-import {view, project} from './scene.js?v=d4d0ac7';
-import {JOY_RADIUS} from './input.js?v=d4d0ac7';
-import {enemies, combatState, capture} from './combat.js?v=d4d0ac7';
-import {drawFish} from './fishing.js?v=d4d0ac7';
-import {whale} from './wildlife.js?v=d4d0ac7';
-import {SHORE_FISH} from './config.js?v=d4d0ac7';
-import {bottle} from './quests.js?v=d4d0ac7';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=d4d0ac7';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=ceff53c';
+import {G, isExplored} from './state.js?v=ceff53c';
+import {fogLayer, islandPath} from './map.js?v=ceff53c';
+import {view, project} from './scene.js?v=ceff53c';
+import {JOY_RADIUS} from './input.js?v=ceff53c';
+import {enemies, combatState, capture} from './combat.js?v=ceff53c';
+import {drawFish} from './fishing.js?v=ceff53c';
+import {whale} from './wildlife.js?v=ceff53c';
+import {SHORE_FISH} from './config.js?v=ceff53c';
+import {bottle} from './quests.js?v=ceff53c';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=ceff53c';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;

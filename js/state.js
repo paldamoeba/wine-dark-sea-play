@@ -1,6 +1,6 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=d4d0ac7';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=d4d0ac7';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=ceff53c';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=ceff53c';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {

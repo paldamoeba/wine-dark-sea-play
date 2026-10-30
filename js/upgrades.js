@@ -1,12 +1,14 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM} from './config.js?v=d4d0ac7';
-import {G, lvl, ship} from './state.js?v=d4d0ac7';
-import {SPECS} from './ships.js?v=d4d0ac7';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM} from './config.js?v=ceff53c';
+import {G, lvl, ship} from './state.js?v=ceff53c';
+import {SPECS, sailSizes} from './ships.js?v=ceff53c';
 
 export const ramMax = () => UPGRADE_MAX*RAM.mats.length;
-// The upgrades this ship can take: crew quarters from the fishing boat on, a sail only on ships with a mast.
-export const upKeys = () => Object.keys(UPGRADES).filter(k => !(UPGRADES[k].crew && G.S.tier < 1) && !(UPGRADES[k].mast && !SPECS[ship().model].mast));
-export const maxOf = k => k === 'ram' ? ramMax() : UPGRADE_MAX;
+// The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
+// (the rowboat gets one small sail, the fishing boat and bireme two, the trireme three).
+export const upKeys = () => Object.keys(UPGRADES).filter(k => !(UPGRADES[k].crew && G.S.tier < 1) && !(k === 'sail' && !SPECS[ship().model].sailMax));
+export const maxOf = k => k === 'ram' ? ramMax() : k === 'sail' ? SPECS[ship().model].sailMax : UPGRADE_MAX;
+export const sailCount = (l = lvl('sail')) => sailSizes(SPECS[ship().model], l).filter(Boolean).length;
 // The ram's material and its level within that material (1-10). Level 0 = no ram.
 export function ramMat(l = lvl('ram')){ if (!l) return null; const m = Math.min(RAM.mats.length - 1, Math.floor((l - 1)/UPGRADE_MAX)); return {...RAM.mats[m], i:m, sub:l - m*UPGRADE_MAX}; }
 // Damage of a full-speed head-on hit with your ram (0 without one).
@@ -26,6 +28,7 @@ export function effectText(k, l = lvl(k)){
   const u = UPGRADES[k];
   if (k === 'ram'){ const m = ramMat(l); return m ? `${m.name} ram, level ${m.sub}: ${ramDmg(l)} damage` : 'No ram'; }
   if (k === 'seats') return `+${Math.floor(l/2)} seat${Math.floor(l/2) === 1 ? '' : 's'}`;
+  if (k === 'sail'){ const n = sailCount(l); return n ? `${n} sail${n > 1 ? 's' : ''}, +${Math.round(u.each*l*100)}% speed` : 'No sail'; }
   return `+${Math.round(u.each*l*100)}% ${u.unit}`;
 }
 // Spend warehouse wood and drachmae on the next level. Returns false if you can't afford it.

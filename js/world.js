@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY} from './config.js?v=d4d0ac7';
-import {MAPDATA} from './mapdata.js?v=d4d0ac7';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES} from './config.js?v=ceff53c';
+import {MAPDATA} from './mapdata.js?v=ceff53c';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -157,7 +157,9 @@ if (MAP.id === 'old'){
              ...scatter(41, 9, 1800*S, (x, y) => landDist(x, y) > 260 && zoneAt(x, y) === 2).map(p => ({kind:'galley', home:p}))];
 }
 export const SPOTS = spots.map(p => ({...p, kind: zoneAt(p.x, p.y) === 0 ? 'tuna' : 'swordfish', stock:TUNING.spotStock, regen:0}));
-export const WRECKS = wrecks.map((p, i) => ({...p, stock:TUNING.wreckStock, regen:0, rot:hash(i,9)*6.28}));
+// each wreck has a size (small, medium, large), picked from its spot so it stays the same every visit
+const wreckSize = i => { let r = hash(i, 13); for (const [k, w] of Object.entries(WRECK_SIZES)){ if ((r -= w.share) <= 0) return k; } return 'small'; };
+export const WRECKS = wrecks.map((p, i) => { const size = wreckSize(i); return {...p, size, stock:WRECK_SIZES[size].stock, regen:0, rot:hash(i,9)*6.28}; });
 export const RAIDERS = raiders;
 // Sardine schools along the shores (see SHORE_FISH): on for part of each cycle, off for the rest.
 export const SHOALS = scatter(61, MAP.id === 'old' ? 30 : 160, 420, (x, y) => { const d = landDist(x, y); return d > 45 && d < 150 && Math.hypot(x - DOCK.x, y - DOCK.y) > 260; })

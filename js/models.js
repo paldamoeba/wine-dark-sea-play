@@ -1,8 +1,8 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=d4d0ac7';
+import {hash} from './world.js?v=ceff53c';
 
 const T = window.THREE;
-import {mat} from './ships.js?v=d4d0ac7';
+import {mat} from './ships.js?v=ceff53c';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -112,14 +112,20 @@ export function icebergModel(r, R = Math.random){
   const tip = mesh(new T.ConeGeometry(r*.25, r*.35, sides - 1), ice[0]); tip.position.set(peak.position.x, r*1.12, peak.position.z); g.add(tip);
   return g;
 }
-export function wreckModel(){
-  const g = new T.Group();
-  const hull = makeHull(80, 26, 14, '#4f3a28', '#6d5640'); hull.rotation.set(.45, 0, .22); hull.position.y = -6; g.add(hull);
-  const mast = mesh(new T.CylinderGeometry(1.4, 1.8, 46, 6), '#4a3624'); mast.position.set(4, 14, -6); mast.rotation.set(.7, 0, -.15); g.add(mast);
-  const rag = mesh(new T.BoxGeometry(.8, 14, 18), '#cfc6ae'); rag.position.set(4, 26, -20); rag.rotation.set(.7, 0, -.15); g.add(rag);
-  const bob = [];
-  [[30,10],[-26,-18],[18,-30]].forEach(([x,z], k) => { const a = mesh(amphoraGeo, '#b8693a', {flatShading:false}); a.position.set(x, 0, z); a.rotation.z = 1.4; a.rotation.y = k; g.add(a); bob.push(a); });
-  [[-34,16],[40,-8],[-10,34]].forEach(([x,z], k) => { const p = mesh(new T.BoxGeometry(18, 2, 5), '#7a5a3a'); p.position.set(x, 0, z); p.rotation.y = k*1.3; g.add(p); bob.push(p); });
+// A shipwreck in three sizes: 'small' (a fishing boat, a snapped mast), 'medium' (a merchant ship with its amphorae
+// floating around), 'large' (a warship: long hull, its bronze ram in the air, two broken masts, lots of floating timber).
+export function wreckModel(size = 'medium'){
+  const g = new T.Group(), bob = [];
+  const L = {small:46, medium:80, large:130}[size], B = {small:18, medium:26, large:30}[size], H = {small:10, medium:14, large:18}[size], k = L/80;
+  const hull = makeHull(L, B, H, '#4f3a28', '#6d5640'); hull.rotation.set(.45, 0, .22); hull.position.y = -6*k; g.add(hull);
+  const masts = size === 'large' ? [[-18, 1], [26, .7]] : [[4, size === 'small' ? .45 : 1]];
+  for (const [x, h] of masts){ const mast = mesh(new T.CylinderGeometry(1.4*k, 1.8*k, 46*k*h, 6), '#4a3624'); mast.position.set(x, 14*k*h, -6*k); mast.rotation.set(.7, 0, -.15); g.add(mast);
+    if (h > .6){ const rag = mesh(new T.BoxGeometry(.8, 14*k, 18*k), '#cfc6ae'); rag.position.set(x, 26*k*h, -20*k*h); rag.rotation.set(.7, 0, -.15); g.add(rag); } }
+  if (size === 'large'){ const ram = mesh(new T.ConeGeometry(4, 22, 4), '#8a6a3c'); ram.rotation.set(0, 0, -1.1); ram.position.set(L*.52, 8, 4); g.add(ram); }
+  const R = (i => () => (i = (i*9301 + 49297) % 233280)/233280)(L);
+  const nA = {small:1, medium:4, large:3}[size], nP = {small:2, medium:3, large:7}[size];
+  for (let i=0;i<nA;i++){ const a = mesh(amphoraGeo, '#b8693a', {flatShading:false}), r = L*.45 + R()*20, an = R()*6.28; a.position.set(Math.cos(an)*r, 0, Math.sin(an)*r); a.rotation.z = 1.4; a.rotation.y = i; g.add(a); bob.push(a); }
+  for (let i=0;i<nP;i++){ const p = mesh(new T.BoxGeometry(14 + R()*10, 2, 5), '#7a5a3a'), r = L*.4 + R()*30, an = R()*6.28; p.position.set(Math.cos(an)*r, 0, Math.sin(an)*r); p.rotation.y = R()*3; g.add(p); bob.push(p); }
   g.userData.bob = bob;
   return g;
 }

@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=d4d0ac7';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=d4d0ac7';
-import {G, ship, holdUsed, lvl} from './state.js?v=d4d0ac7';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=d4d0ac7';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=d4d0ac7';
-import {board, active, canDeliver, goal} from './quests.js?v=d4d0ac7';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=d4d0ac7';
-import {shipPortrait} from './portrait.js?v=d4d0ac7';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=d4d0ac7';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=ceff53c';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=ceff53c';
+import {G, ship, holdUsed, lvl} from './state.js?v=ceff53c';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=ceff53c';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=ceff53c';
+import {board, active, canDeliver, goal} from './quests.js?v=ceff53c';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=ceff53c';
+import {shipPortrait} from './portrait.js?v=ceff53c';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=ceff53c';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -207,19 +207,19 @@ function upgradesCard(){
   const short = l => k === 'ram' ? (ramMat(l) ? `${ramDmg(l)} damage` : 'no ram') : effectText(k, l);
   const next = c ? (k === 'seats' && l % 2 === 0 ? `a seat at level ${l + 2}` : short(l + 1)) : '';
   const detail = `<div class="updetail"><div class="uh"><span class="uic">${UP_IC[k]()}</span><div><b>${u.label}</b><span class="lv">${k === 'ram' ? (m ? `${m.name} ram · level ${m.sub} of 10` : 'No ram yet') : `Level ${l} of ${maxOf(k)}`}</span></div></div>
-      ${pips(k === 'ram' ? (m ? m.sub : 0) : l, 10)}${k === 'ram' ? `<span class="mats">${['Wood', 'Bronze', 'Drachmae'].map((n, i) => `<i class="${m && m.i >= i ? 'on' : ''}" style="--c:${['#8a5a30', '#b07f3c', '#e3b341'][i]}">${n}</i>`).join('')}</span>` : ''}
+      ${pips(k === 'ram' ? (m ? m.sub : 0) : l, k === 'ram' ? 10 : maxOf(k))}${k === 'ram' ? `<span class="mats">${['Wood', 'Bronze', 'Drachmae'].map((n, i) => `<i class="${m && m.i >= i ? 'on' : ''}" style="--c:${['#8a5a30', '#b07f3c', '#e3b341'][i]}">${n}</i>`).join('')}</span>` : ''}
       <small>${u.desc}.${u.ship ? ' Stays with this ship.' : ' Comes with you to any ship.'}</small>
       <p class="eff"><span>Now: ${short(l)}</span>${c ? ` → <b>${next}</b>` : ''}</p>
       ${c ? `<div class="btnrow"><div class="cost">${costChips(c)}</div><button class="btn ${ok ? 'gold' : ''}" data-act="upgrade" data-k="${k}" ${ok ? '' : 'disabled'}>Upgrade</button></div>` : '<span class="tag on">Fully upgraded</span>'}</div>`;
-  return card(`Upgrades · ${ship().name}`, `<div class="stage"><div class="slots">${left.map(slot).join('')}</div><div class="hero">${shipImg(ship().model, {...S.look, ram:lvl('ram')})}</div><div class="slots">${right.map(slot).join('')}</div></div>${detail}
+  return card(`Upgrades · ${ship().name}`, `<div class="stage"><div class="slots">${left.map(slot).join('')}</div><div class="hero">${shipImg(ship().model, {...S.look, ram:lvl('ram'), sailLv:lvl('sail')})}</div><div class="slots">${right.map(slot).join('')}</div></div>${detail}
     <p class="note">Paid with wood from the Kallisto warehouse and gold. A + means you can afford the next level.</p>`);
 }
 function looksCard(){
   const spec = SPECS[ship().model], lk = {...spec.look, ...G.S.look};
   const opts = (obj, sel) => Object.entries(obj).filter(([, v]) => !v.city).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${v.name}</option>`).join('');
-  return card('Paint and flag', `${shipImg(ship().model, {...G.S.look, ram:lvl('ram')})}<div class="looks">
+  return card('Paint and flag', `${shipImg(ship().model, {...G.S.look, ram:lvl('ram'), sailLv:lvl('sail')})}<div class="looks">
       <label><span>Hull paint</span><select data-look="paint">${opts(PAINTS, lk.paint)}</select></label>
-      <label><span>Sail</span>${spec.mast ? `<select data-look="sail">${opts(SAILS, lk.sail)}</select>` : '<select disabled><option>Needs a mast</option></select>'}</label>
+      <label><span>Sail</span>${spec.mast || lvl('sail') ? `<select data-look="sail">${opts(SAILS, lk.sail)}</select>` : '<select disabled><option>Needs a mast</option></select>'}</label>
       <label><span>Flag</span>${founded() ? `<select data-look="flag">${opts(GODS, lk.flag)}</select>` : '<select disabled><option>Found a crew first</option></select>'}</label></div>`);
 }
 

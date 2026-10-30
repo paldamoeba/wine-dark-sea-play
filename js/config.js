@@ -13,7 +13,7 @@ export const SHIPS = [
     desc:'A sail, more speed, a second crew member, steadier in big waves'},
   {name:'Bireme',       model:'bireme',  speed:200, hull:170, hold:16, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, turn:1.04, cost:{wood:60, gold:250},
     desc:'A warship. Four archers, a hull that shrugs off big waves, but a small hold'},
-  {name:'Trireme', model:'trireme', locked:true, hull:260, speed:212, hold:18, fighters:6, cost:{wood:120, gold:600}, desc:'Three rows of oars and a bronze ram. Coming in a later build.'},
+  {name:'Trireme', model:'trireme', locked:true, hull:260, speed:212, hold:18, fighters:6, cost:{wood:120, gold:600}, desc:'A long warship with an outrigger and a big bronze ram. Coming in a later build.'},
 ];
 
 // spin = needle speed (radians per second), green = size of the green part (degrees). Bigger fish: faster, smaller.
@@ -79,13 +79,13 @@ export const BOTTLES = {first:40, every:[90, 170], life:100, dist:[260, 420], co
 export const UPGRADES = {
   hull:   {label:'Planking',        ship:true, each:.08, unit:'hull',  cost:{wood:4, gold:15}, desc:'Thicker planks: more hull'},
   oars:   {label:'Oars and benches', ship:true, each:.03, unit:'speed', cost:{wood:3, gold:18}, desc:'More rowers pulling: faster'},
-  sail:   {label:'Sail',            ship:true, mast:true, each:.05, unit:'speed', cost:{wood:2, gold:22}, desc:'A bigger, better cut sail: faster'},
+  sail:   {label:'Sails',           ship:true, each:.05, unit:'speed', cost:{wood:2, gold:22}, desc:'Linen from the sailmaker and wood for the yards. Every level makes the newest sail bigger; every 5 levels a new sail goes up'},
   helm:   {label:'Steering oars',   ship:true, each:.07, unit:'turning', cost:{wood:3, gold:16}, desc:'Longer steering oars: turns quicker'},
   seats:  {label:'Crew quarters',   ship:true, crew:true, cost:{wood:5, gold:25}, desc:'Room for one more sailor every two levels'},
   arrows: {label:'Arrowheads',      each:.08, unit:'arrow damage', cost:{wood:1, gold:22}, desc:'Sharper arrows for every archer'},
   ram:    {label:'Ram',             cost:{wood:4, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it'},
 };
-export const UPGRADE_MAX = 10;
+export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry
 export const SHIP_K = [.6, 1, 2];
 // The ram: wood levels 1-10, then bronze 1-10, then gold 1-10 (30 in all). Damage when your bow hits a ship head-on at speed.
 export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Bronze', color:'#b07f3c', k:2.2, cost:2.5}, {name:'Drachmae', color:'#e3b341', k:4, cost:6}],
@@ -128,7 +128,7 @@ export const TUNING = {
   spotRegen: 14,         // seconds to regrow one fish
   treeRegen: 25,         // seconds to regrow one tree
   wreckStock: 6,         // salvage pulls per wreck
-  wreckRespawn: 90,      // seconds until a new wreck washes in
+  wreckRespawn: 90,      // seconds until a new wreck washes in (sizes: WRECK_SIZES below)
   wreckGoldChance: .35,  // chance a salvage pull also finds coins
   wreckGoldMin: 4, wreckGoldMax: 9,
   repairPerGold: 3,      // hull points per gold
@@ -138,6 +138,13 @@ export const TUNING = {
   autosaveSeconds: 5,
 };
 
+// Three sizes of shipwreck. share = how many of the wrecks are this size; stock = salvage pulls; wood = timber per pull;
+// gold = [chance per pull, fewest, most coins]; goods = chance a pull also brings up an amphora (wine or oil) for the hold.
+export const WRECK_SIZES = {
+  small:  {label:'Fishing boat wreck', share:.45, scale:.6,  stock:4, wood:1, gold:[.25, 3, 6]},
+  medium: {label:'Merchant wreck',     share:.35, scale:1,   stock:6, wood:2, gold:[.35, 4, 9], goods:.3},
+  large:  {label:'Warship wreck',      share:.2,  scale:1.5, stock:9, wood:3, gold:[.55, 8, 16]},
+};
 // Graphics presets. "auto" starts on high and drops to low if the phone struggles.
 export const QUALITY = {
   low:  {dpr:1,    shadows:false, waterSeg:36, label:'Low'},

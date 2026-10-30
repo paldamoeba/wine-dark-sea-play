@@ -12,9 +12,11 @@ html,body{height:100%;margin:0;overflow:hidden;background:#c9e3e8;font-family:va
 .tag{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:16px;right:16px;pointer-events:none;color:#26242c}
 .tag h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,6vw,36px);margin:0}
 .tag p{margin:2px 0 0;font-weight:700;font-size:13px;color:#5c5446}
+.dark .tag p{color:#c9d3e0}
 .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));box-sizing:border-box;
   background:linear-gradient(#3b2d25,#2b211c);border:2px solid #6b4f3d;border-radius:18px;padding:10px 12px;color:var(--ink);display:grid;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
-.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.row{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .row2{display:flex;gap:6px}
 .bar.folded{display:none}
 .show{position:fixed;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));flex:none;padding:10px 16px}
@@ -35,11 +37,12 @@ button:focus-visible,select:focus-visible{outline:3px solid #f4fbff;outline-offs
     <label>Show<select id="group"></select></label>
     <label>Look at<select id="pick"></select></label>
     <label>Light<select id="light"></select></label>
+    <label>Graphics<select id="gfx"><option value="simple">Simple</option><option value="full">Full</option></select></label>
   </div>
-  <div class="row2"><button class="tab" id="cel" aria-pressed="false">Cel-shaded look</button><button class="tab" id="spin" aria-pressed="false">Turn slowly</button><button class="tab" id="fold" aria-expanded="true">Hide</button></div>
+  <div class="row2"><button class="tab" id="glow" aria-pressed="false">Glow</button><button class="tab" id="cel" aria-pressed="false">Cel look</button><button class="tab" id="spin" aria-pressed="false">Turn slowly</button><button class="tab" id="fold" aria-expanded="true">Hide</button></div>
   <p class="d" id="desc"></p>
 </div>
 <button class="tab show" id="unfold" hidden>Show panel</button>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the page.</div>');</script>
-<script type="module" src="js/showroom.js?v=d4d0ac7"></script>
+<script type="module" src="js/showroom.js?v=ceff53c"></script>

@@ -1,20 +1,20 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=d4d0ac7';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=d4d0ac7';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=d4d0ac7';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=d4d0ac7';
-import {swapBoat, refreshAllTrees} from './entities.js?v=d4d0ac7';
-import {setZoom} from './input.js?v=d4d0ac7';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=d4d0ac7';
-import {tutHTML} from './tutorial.js?v=d4d0ac7';
-import {founded, blessing, seats, candidates} from './crew.js?v=d4d0ac7';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=d4d0ac7';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=d4d0ac7';
-import {effectText, buy} from './upgrades.js?v=d4d0ac7';
-import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=d4d0ac7';
-import {GOODS, WAR} from './config.js?v=d4d0ac7';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=d4d0ac7';
-import {W, KINDS} from './weather.js?v=d4d0ac7';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=ceff53c';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=ceff53c';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=ceff53c';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=ceff53c';
+import {swapBoat, refreshAllTrees} from './entities.js?v=ceff53c';
+import {setZoom} from './input.js?v=ceff53c';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=ceff53c';
+import {tutHTML} from './tutorial.js?v=ceff53c';
+import {founded, blessing, seats, candidates} from './crew.js?v=ceff53c';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=ceff53c';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=ceff53c';
+import {effectText, buy} from './upgrades.js?v=ceff53c';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=ceff53c';
+import {GOODS, WAR} from './config.js?v=ceff53c';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=ceff53c';
+import {W, KINDS} from './weather.js?v=ceff53c';
 
 const $ = id => document.getElementById(id);
 
@@ -60,7 +60,7 @@ export function updateUI(dt, nearDock){
 function placeNearBoat(){
   if (G.sheetOpen || G.mapOpen) return;
   const [bx, by] = project(G.S.x, 0, G.S.y), x = Math.max(120, Math.min(view.W - 120, bx));
-  if (!toastEl.hidden){ toastEl.classList.add('near'); toastEl.style.left = x + 'px'; toastEl.style.top = Math.max(150, by - 70) + 'px'; }
+  if (!toastEl.hidden){ toastEl.classList.add('near'); toastEl.style.left = x + 'px'; toastEl.style.top = Math.max(200, by - 118) + 'px'; } // above the pick-up icons that pop out of the boat
   const below = Math.min(view.H - 150, by + 62);
   for (const id of ['dockbar', 'raidBtn', 'councilBtn', 'arenaBtn']){ const el = id === 'dockbar' ? document.querySelector('.dockbar') : $(id); if (!el) continue;
     el.classList.add('near'); el.style.left = x + 'px'; el.style.top = (below + (id === 'councilBtn' || id === 'arenaBtn' ? 54 : 0)) + 'px'; }
@@ -114,7 +114,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 33</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 34</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -170,7 +170,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'tutnext' || a === 'tutback'){ tutPage += a === 'tutnext' ? 1 : -1; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'tutdone'){ closeSheet(); toast('Fair winds!', 2); return; }
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
-  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ if (k === 'ram' || k === 'hull') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
+  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ if (k === 'ram' || k === 'hull' || k === 'sail') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   if (a === 'buywood'){ const h = G.dock ? G.dock.h : HARBORS[0], n = Math.min(+b.dataset.n, woodRoom(h), Math.floor(S.gold/woodPrice(h)));
     if (n > 0){ S.gold -= n*woodPrice(h); if (h.is.port) S.ware += n; else S.cargo.wood += n; toast(`Bought ${n} wood${h.is.port ? ' for the warehouse' : ''}`, 2); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k;
