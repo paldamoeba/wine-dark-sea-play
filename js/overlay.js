@@ -1,14 +1,14 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=1b5598e';
-import {G, isExplored} from './state.js?v=1b5598e';
-import {fogLayer, islandPath} from './map.js?v=1b5598e';
-import {view, project} from './scene.js?v=1b5598e';
-import {JOY_RADIUS} from './input.js?v=1b5598e';
-import {enemies, combatState, capture} from './combat.js?v=1b5598e';
-import {drawFish} from './fishing.js?v=1b5598e';
-import {whale} from './wildlife.js?v=1b5598e';
-import {SHORE_FISH} from './config.js?v=1b5598e';
-import {bottle} from './quests.js?v=1b5598e';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=d0f730c';
+import {G, isExplored} from './state.js?v=d0f730c';
+import {fogLayer, islandPath} from './map.js?v=d0f730c';
+import {view, project} from './scene.js?v=d0f730c';
+import {JOY_RADIUS} from './input.js?v=d0f730c';
+import {enemies, combatState, capture} from './combat.js?v=d0f730c';
+import {drawFish} from './fishing.js?v=d0f730c';
+import {whale} from './wildlife.js?v=d0f730c';
+import {SHORE_FISH} from './config.js?v=d0f730c';
+import {bottle} from './quests.js?v=d0f730c';
 
 const MINI_RANGE = 2600, SIDE_COLOR = {pirate:'#e0614d', merchant:'#e8dcc0'};
 const shipColor = e => (e.spec.side === 'navy' || e.spec.side === 'fort') && e.city ? CITIES[e.city].color : SIDE_COLOR[e.spec.side === 'fort' ? 'pirate' : e.spec.side];

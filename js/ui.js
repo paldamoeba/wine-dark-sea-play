@@ -1,20 +1,20 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=1b5598e';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=1b5598e';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=1b5598e';
-import {applyQuality} from './scene.js?v=1b5598e';
-import {swapBoat, refreshAllTrees} from './entities.js?v=1b5598e';
-import {setZoom} from './input.js?v=1b5598e';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=1b5598e';
-import {tutHTML} from './tutorial.js?v=1b5598e';
-import {founded, blessing, seats, candidates} from './crew.js?v=1b5598e';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=1b5598e';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=1b5598e';
-import {effectText, buy} from './upgrades.js?v=1b5598e';
-import {harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=1b5598e';
-import {GOODS, WAR} from './config.js?v=1b5598e';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=1b5598e';
-import {W, KINDS} from './weather.js?v=1b5598e';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=d0f730c';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=d0f730c';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=d0f730c';
+import {applyQuality} from './scene.js?v=d0f730c';
+import {swapBoat, refreshAllTrees} from './entities.js?v=d0f730c';
+import {setZoom} from './input.js?v=d0f730c';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=d0f730c';
+import {tutHTML} from './tutorial.js?v=d0f730c';
+import {founded, blessing, seats, candidates} from './crew.js?v=d0f730c';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=d0f730c';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=d0f730c';
+import {effectText, buy} from './upgrades.js?v=d0f730c';
+import {harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=d0f730c';
+import {GOODS, WAR} from './config.js?v=d0f730c';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=d0f730c';
+import {W, KINDS} from './weather.js?v=d0f730c';
 
 const $ = id => document.getElementById(id);
 

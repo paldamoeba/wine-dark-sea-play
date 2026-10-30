@@ -1,6 +1,6 @@
 // Portraits: real pictures of the 3D models for the menus. One small hidden renderer draws a model once and keeps the
 // picture, so the shipyard shows the same ships you sail, in their own paint, instead of drawings.
-import {buildShip, SPECS, mat} from './ships.js?v=1b5598e';
+import {buildShip, SPECS, mat} from './ships.js?v=d0f730c';
 
 const T = window.THREE;
 const W = 480, H = 300;
@@ -24,7 +24,7 @@ function shoot(obj, yaw = -1.08, pitch = .4){
   const r = Math.max(size.x, size.y*1.25, size.z)*.5;
   const d = r/Math.tan(cam.fov*Math.PI/360)*.9 + r*.5;
   cam.position.set(c.x + Math.cos(yaw)*Math.cos(pitch)*d, c.y + Math.sin(pitch)*d, c.z + Math.sin(yaw)*Math.cos(pitch)*d);
-  cam.lookAt(c); R.render(scene, cam);
+  cam.lookAt(c); R.render(scene, cam); R.render(scene, cam); // twice: the first draw can come out before the shading is ready
   const url = R.domElement.toDataURL('image/png');
   scene.remove(obj); return url;
 }
@@ -51,7 +51,7 @@ export const hasModel = m => !!SPECS[m];
 
 // ---- tutorial pictures: real renders of the game's boat on the sea, seen like in the game ----
 // The picture is 280 x 140 "screen units". Things are placed by screen position so the drawn hints (finger, arrows) line up.
-import {cypress} from './models.js?v=1b5598e';
+import {cypress} from './models.js?v=d0f730c';
 const TW = 560, TH = 280, K = .75, PITCH = 1.0; // world units per screen unit, camera tilt
 export function tutShot(kind, boats, isle){
   const key = 'tut' + kind; if (cache.has(key)) return cache.get(key);
@@ -71,7 +71,7 @@ export function tutShot(kind, boats, isle){
     for (const [model, sx, sy, rot] of boats){ const b = buildShip(model, {}, true), p = at(sx, sy); b.position.set(p.x, 0, p.z); b.rotation.y = -rot*Math.PI/180; sc.add(b); }
     const cam = new T.OrthographicCamera(-140*K, 140*K, 70*K, -70*K, 1, 3000);
     cam.position.set(0, Math.sin(PITCH)*800, Math.cos(PITCH)*800); cam.lookAt(0, 0, 0);
-    R.setSize(TW, TH, false); R.setClearColor(0x2f86a0, 1); R.render(sc, cam);
+    R.setSize(TW, TH, false); R.setClearColor(0x2f86a0, 1); R.render(sc, cam); R.render(sc, cam);
     url = R.domElement.toDataURL('image/png');
     R.setSize(W, H, false); R.setClearColor(0x000000, 0);
   } catch (e) { url = ''; }

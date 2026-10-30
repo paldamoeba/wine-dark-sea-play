@@ -1,15 +1,15 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=1b5598e';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=1b5598e';
-import {G, ship, lvl} from './state.js?v=1b5598e';
-import {scene} from './scene.js?v=1b5598e';
-import {mesh, cypress, house, temple, gull, wreckModel} from './models.js?v=1b5598e';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=1b5598e';
-import {addTown, figure} from './town.js?v=1b5598e';
-import {makeFire, updateFire, burn} from './fire.js?v=1b5598e';
-import {sinkPose} from './sinking.js?v=1b5598e';
-import {moored} from './fleet.js?v=1b5598e';
-import {placeOnWaves} from './combat.js?v=1b5598e';
+import {SHIPS} from './config.js?v=d0f730c';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=d0f730c';
+import {G, ship, lvl} from './state.js?v=d0f730c';
+import {scene} from './scene.js?v=d0f730c';
+import {mesh, cypress, house, temple, gull, wreckModel} from './models.js?v=d0f730c';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=d0f730c';
+import {addTown, figure} from './town.js?v=d0f730c';
+import {makeFire, updateFire, burn} from './fire.js?v=d0f730c';
+import {sinkPose} from './sinking.js?v=d0f730c';
+import {moored} from './fleet.js?v=d0f730c';
+import {placeOnWaves} from './combat.js?v=d0f730c';
 
 const T = window.THREE;
 
