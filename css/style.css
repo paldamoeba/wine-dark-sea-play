@@ -416,3 +416,4 @@ button.goal .more{color:var(--ochre);font-weight:800}
 #wxChip.storm{background:#2f3a48}#wxChip.mist{background:#4a453f}
 @media (max-width:480px){ .hud{right:calc(128px + env(safe-area-inset-right,0px))} #wxChip{padding:3px 4px} }
 .toast.near{width:max-content;max-width:min(320px,calc(100vw - 32px))}
+.toast{z-index:3}

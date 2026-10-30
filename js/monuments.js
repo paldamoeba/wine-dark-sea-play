@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat} from './ships.js?v=ceff53c';
+import {mat, statue} from './ships.js?v=957c092';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -135,7 +135,7 @@ export function buildFortress(owner, color){
   // braziers on the walls
   for (const [x, z] of [[100, 30], [100, -30], [53, 50], [53, -50]]){ cyl(3, 2, 5, dark, x, 54 + (x < 90 ? 42 : 0), z, 6); const f = M(new T.ConeGeometry(2.6, 6, 6), mat('#f2b247'), false); f.position.set(x, 60 + (x < 90 ? 42 : 0), z); g.add(f); }
   // the city's god watches the sea from the terrace
-  const st = buildStatue(owner === 'athens' ? 'athena' : owner === 'sparta' ? 'zeus' : 'poseidon', pirate ? 'bronze' : 'marble'); st.position.set(44, 93, 0); st.scale.setScalar(.8); g.add(st);
+  const st = statue(owner === 'athens' ? 'athena' : owner === 'sparta' ? 'zeus' : 'poseidon', pirate ? 'bronze' : 'painted'); st.position.set(44, 93, 0); st.scale.setScalar(.58); g.add(st);
   // stair down to a little dock on the sea side
   for (let k=0;k<6;k++) box(12, 4, 30, shade, 108 + k*7, 40 - k*7, 0);
   box(40, 3, 26, wood, 160, 3, 0);

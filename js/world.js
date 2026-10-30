@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES} from './config.js?v=ceff53c';
-import {MAPDATA} from './mapdata.js?v=ceff53c';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES} from './config.js?v=957c092';
+import {MAPDATA} from './mapdata.js?v=957c092';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -205,6 +205,20 @@ for (const is of (MAP.id === 'old' ? named.filter(i => !i.port).slice(0, 2) : na
   const h = {is, pier, dock:dockOf(pier), prices:HARBOR_AT[is.name] || {}}; is.harbor = h; HARBORS.push(h);
 }
 home.harbor = HARBORS[0];
+// The other big city islands get a town too (streets, houses, temple, a pier), just for looks: you can't dock there.
+export const TOWN_PIERS = [];
+// The town's pier goes on the side with the most flat grass behind it (room for the main street), away from hills.
+function townPier(is){
+  const [, grass, hill] = is.tiers; if (!grass) return null; let best = null, bl = 120;
+  for (let k=0;k<16;k++){ const a = k/16*Math.PI*2, dx = Math.cos(a), dy = Math.sin(a);
+    let t = is.r + 60; while (t > 0 && landDist(is.x + dx*t, is.y + dy*t) > 0) t -= 6;
+    const p = {x:is.x + dx*(t - 12), y:is.y + dy*(t - 12), dx, dy};
+    if (landDist(p.x + dx*(PIER_LEN + 60), p.y + dy*(PIER_LEN + 60)) <= 70) continue; // the pier needs open water
+    let l = 0; for (; l < 320; l += 10){ const x = p.x - is.x - dx*(l + 40), z = p.y - is.y - dy*(l + 40); if (!inPoly(grass, x, z) || (hill && inPoly(hill, x, z))) break; }
+    if (l > bl){ bl = l; best = p; } }
+  return best;
+}
+for (const is of named){ if (is.harbor || !is.city || is.r < 500) continue; const pier = townPier(is); if (pier){ is.town = {pier}; TOWN_PIERS.push(pier); } }
 // No woodcutting in towns: harbor islands keep their trees for the townsfolk. Wood comes from the other islands.
 for (const h of HARBORS){ h.is.trees = h.is.stock = 0; }
 

@@ -1,8 +1,8 @@
 // Touch, mouse and keyboard. Double tap = sail there (a single tap only marks the spot). Press and drag = joystick.
-import {G, ship, saveSettings} from './state.js?v=ceff53c';
-import {landDist} from './world.js?v=ceff53c';
-import {canvas, screenToSea} from './scene.js?v=ceff53c';
-import {hideHint, toast} from './ui.js?v=ceff53c';
+import {G, ship, saveSettings} from './state.js?v=957c092';
+import {landDist} from './world.js?v=957c092';
+import {canvas, screenToSea} from './scene.js?v=957c092';
+import {hideHint, toast} from './ui.js?v=957c092';
 
 export const JOY_RADIUS = 58;
 const keys = new Set();

@@ -1,16 +1,15 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=ceff53c';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=ceff53c';
-import {G, ship, lvl} from './state.js?v=ceff53c';
-import {scene} from './scene.js?v=ceff53c';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel} from './models.js?v=ceff53c';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=ceff53c';
-import {addTown, figure} from './town.js?v=ceff53c';
-import {buildStatue} from './monuments.js?v=ceff53c';
-import {makeFire, updateFire, burn} from './fire.js?v=ceff53c';
-import {sinkPose} from './sinking.js?v=ceff53c';
-import {moored} from './fleet.js?v=ceff53c';
-import {placeOnWaves} from './combat.js?v=ceff53c';
+import {SHIPS} from './config.js?v=957c092';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=957c092';
+import {G, ship, lvl} from './state.js?v=957c092';
+import {scene} from './scene.js?v=957c092';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel} from './models.js?v=957c092';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=957c092';
+import {addTown, figure} from './town.js?v=957c092';
+import {makeFire, updateFire, burn} from './fire.js?v=957c092';
+import {sinkPose} from './sinking.js?v=957c092';
+import {moored} from './fleet.js?v=957c092';
+import {placeOnWaves} from './combat.js?v=957c092';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -76,7 +75,10 @@ ISLANDS.forEach((is, i) => {
   if (!is.trees && !is.port && !is.harbor && !is.frame){ const c = tree(); c.position.set(0, treeAt([0, 0]), 0); c.scale.setScalar(.7); g.add(c); popIn(c); }
   // the mainland gets scattered trees too, just for looks
   if (is.frame) for (let k=0;k<Math.min(60, is.area/90000);k++){ const p = spotIn(R, ground, 20); if (!p) break; const c = tree(); c.position.set(p[0], treeAt(p), p[1]); g.add(c); popIn(c); }
-  if (is.harbor) buildTown(is, g, top, R, ground, is.harbor.pier, hill);
+  if (is.harbor || is.town){ const free = buildTown(is, g, top, R, ground, (is.harbor || is.town).pier, hill);
+    // trees that landed in the streets or on houses move elsewhere on the island
+    for (const c of is.treeObjs){ if (free(c.position.x, c.position.z)) continue;
+      for (let k=0;k<40;k++){ const p = spotIn(R, ground, 10); if (p && free(...p)){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } } }
   scene.add(g);
 });
 
@@ -92,7 +94,7 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   // street; trees fill the gaps; the temple and the city's god stand on a little square at the top of the main street ----
   const ux = -PIER.dx, uz = -PIER.dy, vx = -uz, vz = ux, x0 = px + ux*24, z0 = pz + uz*24, stone = '#e2d3ae', houses = [], keep = [];
   let len = 0; while (len < 300 && flat([x0 + ux*(len + 20), z0 + uz*(len + 20)], 10)) len += 20;
-  const road = (x, z, l, w, a2) => { const r = mesh(new T.BoxGeometry(l, 1, w), stone, {}, false); r.position.set(x, top + .4, z); r.rotation.y = -a2; r.receiveShadow = true; g.add(r); };
+  const roads = [], road = (x, z, l, w, a2) => { roads.push({x, z, l, w, c:Math.cos(a2), s:Math.sin(a2)}); const r = mesh(new T.BoxGeometry(l, 1, w), stone, {}, false); r.position.set(x, top + .4, z); r.rotation.y = -a2; r.receiveShadow = true; g.add(r); };
   if (len > 40){ road(x0 + ux*len/2, z0 + uz*len/2, len, 16, Math.atan2(uz, ux));
     for (let d = 50; d < len - 20; d += 75) for (const sg of [1, -1]){ let l = 0; const sx = x0 + ux*d, sz = z0 + uz*d;
       while (l < 140 && flat([sx + vx*sg*(l + 20), sz + vz*sg*(l + 20)], 10)) l += 20;
@@ -110,7 +112,7 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   if (tp){ const sq = mesh(new T.CylinderGeometry(40, 40, 1, 20), stone, {}, false); sq.position.set(tp[0], top + .5, tp[1]); g.add(sq);
     const t = temple(); t.position.set(tp[0], top, tp[1]); t.scale.setScalar(.8); t.rotation.y = -ang; g.add(t); keep.push(tp, [tp[0] + 18, tp[1]], [tp[0] - 18, tp[1]]);
     // the city's god in front of its temple: Athena for Athens, Apollo for Sparta, Poseidon at Kallisto
-    const gd = buildStatue(is.port ? 'poseidon' : is.city === 'sparta' ? 'apollo' : 'athena'), sx = tp[0] - ux*34, sz = tp[1] - uz*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.6); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); }
+    const gd = statue(is.port ? 'poseidon' : is.city === 'sparta' ? 'apollo' : 'athena', 'painted'), sx = tp[0] - ux*34, sz = tp[1] - uz*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.45); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); }
   // trees in the gaps between houses and along the edge of town
   const tree = () => R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
   for (let k=0, n=0;k<120 && n<(is.port ? 14 : 10);k++){ const p = spotIn(R, ground, 10, cx, cz, 200);
@@ -127,17 +129,19 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   const pier = new T.Group(); pier.position.set(px, 0, pz); pier.rotation.y = -ang; g.add(pier);
   const deck = mesh(new T.BoxGeometry(PIER_LEN + 30, 3, 18), '#9b6b3a'); deck.position.set(PIER_LEN/2 - 15, 6, 0); pier.add(deck);
   for (let k=0;k<=5;k++) for (const z of [-8, 8]){ const post = mesh(new T.CylinderGeometry(1.4, 1.4, 16, 5), '#6e4a26'); post.position.set(k*PIER_LEN/5, 1, z); pier.add(post); }
+  // where a tree may stand: off the streets, away from houses, the square and the pier
+  return (x, z) => roads.every(r => { const dx = x - r.x, dz = z - r.z, a = Math.abs(dx*r.c + dz*r.s), b = Math.abs(-dx*r.s + dz*r.c); return a > r.l/2 + 8 || b > r.w/2 + 8; })
+    && keep.every(([hx, hz]) => Math.hypot(hx - x, hz - z) > 22) && Math.hypot(x - px, z - pz) > 50;
 }
 export function refreshTrees(is){ is.treeObjs.forEach((c, k) => { const alive = k < is.stock; c.userData.live.forEach(m => m.visible = alive); c.userData.stump.visible = !alive; }); }
 export function refreshAllTrees(){ ISLANDS.forEach(i => i.trees && refreshTrees(i)); }
 
 // ---- fishing spots ----
 const ringGeo = new T.RingGeometry(10, 13.5, 20); ringGeo.rotateX(-Math.PI/2);
-const fishGeo = new T.ConeGeometry(1.8, 8, 5); fishGeo.rotateZ(-Math.PI/2);
 SPOTS.forEach((s, i) => {
   const g = new T.Group(); g.position.set(s.x, 0, s.y);
   s.rings = [0,1].map(() => { const m = new T.Mesh(ringGeo, new T.MeshBasicMaterial({color:0xf4fbff, transparent:true, opacity:.5, depthWrite:false})); g.add(m); return m; });
-  s.fish = [0,1,2].map(k => { const f = mesh(fishGeo, s.kind === 'swordfish' ? '#5f86a8' : '#8fb0c4', {metalness:.3, roughness:.4}); f.userData.ph = hash(i,k); f.userData.ang = hash(k,i)*6.28; g.add(f); return f; });
+  s.fish = [0,1,2].map(k => { const f = fishModel(s.kind); f.userData.ph = hash(i,k); f.userData.ang = hash(k,i)*6.28; g.add(f); return f; });
   s.g = g; scene.add(g);
 });
 
@@ -275,7 +279,7 @@ export function animateEntities(dt){
     w.gulls.forEach((gl, k) => { const u = gl.userData; u.a += u.sp*dt; gl.visible = w.stock > 0;
       gl.position.set(w.x + Math.cos(u.a)*u.R, u.h + Math.sin(t*1.3 + k)*4, w.y + Math.sin(u.a)*u.R);
       gl.rotation.y = -u.a - Math.sign(u.sp)*Math.PI/2; gl.rotation.x = -Math.sign(u.sp)*.35;
-      u.wings.forEach(({p, s}) => p.rotation.x = s*Math.sin(t*7 + k*2)*.5); });
+      u.wings.forEach(({p, s}) => p.rotation.x = s*(Math.sin(t*2.4 + k*2)*.16 + .04)); }); // gliding, with slow soft wingbeats
   }
   for (const w of WAKE){ if (!w.m.visible) continue; w.life -= dt*.55; if (w.life <= 0){ w.m.visible = false; continue; }
     w.m.scale.setScalar(4 + (1-w.life)*14); w.m.material.opacity = w.life*.45; w.m.position.y = waveAt(w.m.position.x, w.m.position.z, t) + .8; }

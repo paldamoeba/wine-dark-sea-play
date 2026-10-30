@@ -1,8 +1,8 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=ceff53c';
-import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=ceff53c';
-import {G} from './state.js?v=ceff53c';
-import {mat} from './ships.js?v=ceff53c';
+import {QUALITY} from './config.js?v=957c092';
+import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=957c092';
+import {G} from './state.js?v=957c092';
+import {mat} from './ships.js?v=957c092';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');

@@ -1,7 +1,7 @@
 // Your crew: founded once you own a second ship. You name it, pick a god's flag (each god gives a blessing), and hire sailors with jobs.
-import {CREW, GOD_BLESSINGS, SHIPS} from './config.js?v=ceff53c';
-import {G} from './state.js?v=ceff53c';
-import {extraSeats} from './upgrades.js?v=ceff53c';
+import {CREW, GOD_BLESSINGS, SHIPS} from './config.js?v=957c092';
+import {G} from './state.js?v=957c092';
+import {extraSeats} from './upgrades.js?v=957c092';
 
 export const founded = () => !!G.S.crewName;
 // The current god's blessing, or {} before the crew is founded or with no flag.

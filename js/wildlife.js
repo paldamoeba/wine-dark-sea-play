@@ -1,11 +1,11 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that jump beside the boat.
-import {WILDLIFE} from './config.js?v=ceff53c';
-import {WORLD, landDist, waveAt} from './world.js?v=ceff53c';
-import {G, save} from './state.js?v=ceff53c';
-import {scene} from './scene.js?v=ceff53c';
-import {whaleModel, dolphinModel} from './models.js?v=ceff53c';
-import {toast} from './ui.js?v=ceff53c';
-import {combatState} from './combat.js?v=ceff53c';
+import {WILDLIFE} from './config.js?v=957c092';
+import {WORLD, landDist, waveAt} from './world.js?v=957c092';
+import {G, save} from './state.js?v=957c092';
+import {scene} from './scene.js?v=957c092';
+import {whaleModel, dolphinModel} from './models.js?v=957c092';
+import {toast} from './ui.js?v=957c092';
+import {combatState} from './combat.js?v=957c092';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -50,7 +50,7 @@ function updateWhale(dt){
     const k = Math.min(1, W.t/3.5); pitch = -.5*Math.sin(k*Math.PI*.9); y = -k*80;
     if (k >= 1){ W.state = 'gone'; W.obj.visible = false; W.wait = rand(WILDLIFE.whaleEvery); }
   }
-  W.obj.position.set(W.x, waveAt(W.x, W.y, G.t) + y + 3, W.y);
+  W.obj.position.set(W.x, waveAt(W.x, W.y, G.t) + y - 8, W.y); // only the back shows above the water
   W.obj.rotation.set(0, -W.a, 0); ud.body.rotation.z = pitch;
   ud.tail.rotation.z = Math.sin(G.t*1.6)*.18 + (W.state === 'dive' ? .5 : 0);
   // spout

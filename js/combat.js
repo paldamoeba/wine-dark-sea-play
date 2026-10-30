@@ -1,19 +1,19 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=ceff53c';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=ceff53c';
-import {G, ship, holdUsed, save, gain} from './state.js?v=ceff53c';
-import {scene} from './scene.js?v=ceff53c';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=ceff53c';
-import {makeFire, updateFire, burn} from './fire.js?v=ceff53c';
-import {blessing, fighters} from './crew.js?v=ceff53c';
-import {progress} from './quests.js?v=ceff53c';
-import {arrowK, ramDmg} from './upgrades.js?v=ceff53c';
-import {toast} from './ui.js?v=ceff53c';
-import {sink} from './player.js?v=ceff53c';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=ceff53c';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=ceff53c';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=957c092';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=957c092';
+import {G, ship, holdUsed, save, gain} from './state.js?v=957c092';
+import {scene} from './scene.js?v=957c092';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=957c092';
+import {makeFire, updateFire, burn} from './fire.js?v=957c092';
+import {blessing, fighters} from './crew.js?v=957c092';
+import {progress} from './quests.js?v=957c092';
+import {arrowK, ramDmg} from './upgrades.js?v=957c092';
+import {toast} from './ui.js?v=957c092';
+import {sink} from './player.js?v=957c092';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=957c092';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=957c092';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -52,7 +52,7 @@ function fortSite(is){
     let t = is.r + 120; while (t > 0 && landDist(is.x + dx*t, is.y + dy*t) > 0) t -= 6; // walk in to the shore
     const x = is.x + dx*(t - 60), y = is.y + dy*(t - 60);
     if (landDist(is.x + dx*(t + 320), is.y + dy*(t + 320)) < 160) continue; // needs open water in front
-    if (HARBORS.some(h => Math.hypot(h.dock.x - x, h.dock.y - y) < 520)) continue; // keep clear of the town's pier
+    if (HARBORS.some(h => Math.hypot(h.dock.x - x, h.dock.y - y) < 520) || TOWN_PIERS.some(p => Math.hypot(p.x - x, p.y - y) < 600)) continue; // keep clear of the town's pier
     return {x, y, a, sea:{x:is.x + dx*(t + 250), y:is.y + dy*(t + 250)}}; }
   return null;
 }

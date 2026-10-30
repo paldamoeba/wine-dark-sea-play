@@ -2,14 +2,14 @@
 // The landward side of the ring runs up onto the island; the gate faces the open sea, and the Colossus stands astride it,
 // facing out. You sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round won.
 // The crowd on the walls cheers. The Colossus turns see-through while you're inside so he never blocks the fight.
-import {ISLANDS, landDist} from './world.js?v=ceff53c';
-import {G, save} from './state.js?v=ceff53c';
-import {scene} from './scene.js?v=ceff53c';
-import {mat} from './ships.js?v=ceff53c';
-import {figure} from './town.js?v=ceff53c';
-import {buildColossus} from './monuments.js?v=ceff53c';
-import {spawnArena, clearArena, enemies} from './combat.js?v=ceff53c';
-import {toast} from './ui.js?v=ceff53c';
+import {ISLANDS, landDist} from './world.js?v=957c092';
+import {G, save} from './state.js?v=957c092';
+import {scene} from './scene.js?v=957c092';
+import {mat} from './ships.js?v=957c092';
+import {figure} from './town.js?v=957c092';
+import {buildColossus} from './monuments.js?v=957c092';
+import {spawnArena, clearArena, enemies} from './combat.js?v=957c092';
+import {toast} from './ui.js?v=957c092';
 
 const T = window.THREE;
 const R = 780, WALL_H = 58, WALL_T = 26, N = 72, GATE = .17; // radius, wall height and thickness, wall pieces, half the gate's opening (radians)

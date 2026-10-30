@@ -211,6 +211,16 @@ const leafGeo = new T.SphereGeometry(.8, 5, 4);
 //  'laurel'   a golden laurel wreath, for champions of the games
 export const HELMETS = {hoplite:'Hoplite', captain:'Captain', attic:'Athenian', spartan:'Spartan', phrygian:'Phrygian', boeotian:'Boeotian', pirate:'Pirate cap', petasos:'Straw hat', laurel:'Laurel wreath'};
 const HATS = ['petasos', 'laurel']; // worn over the hair
+// A tube that narrows along a curve: circles swept along pts, radius r(t) from 0 (start) to 1 (end), closed with a point.
+function taper(pts, r, seg = 24, rad = 14){
+  const curve = new T.CatmullRomCurve3(pts.map(p => new T.Vector3(...p))), fr = curve.computeFrenetFrames(seg, false), pos = [], idx = [];
+  for (let i=0;i<=seg;i++){ const t = i/seg, c = curve.getPointAt(t), rr = r(t), N = fr.normals[i], B = fr.binormals[i];
+    for (let j=0;j<=rad;j++){ const a = j/rad*Math.PI*2; pos.push(c.x + (N.x*Math.cos(a) + B.x*Math.sin(a))*rr, c.y + (N.y*Math.cos(a) + B.y*Math.sin(a))*rr, c.z + (N.z*Math.cos(a) + B.z*Math.sin(a))*rr); } }
+  for (let i=0;i<seg;i++) for (let j=0;j<rad;j++){ const a = i*(rad + 1) + j, b = a + rad + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+// the Phrygian cap's tall top: rises from the crown and curls forward over the brow, ending in a little knob
+const phryGeo = taper([[-.4, 1.6, 0], [-.2, 4.2, 0], [.9, 6.1, 0], [2.6, 6.6, 0], [3.7, 5.7, 0]], t => 3.25*(1 - t*.82));
 function cheeks(parent, y){ for (const sg of [1, -1]){ const ch = mesh(cheekGeo, 'bronze'); ch.scale.set(.9, 1.25, .45); ch.position.set(1.1, y - 1.2, sg*2.75); parent.add(ch); } }
 function helmetOn(parent, y, kind){
   if (kind === 'pirate'){ const cap = mesh(pilosGeo, '#2e2522'); cap.position.y = y - .3; parent.add(cap);
@@ -219,7 +229,7 @@ function helmetOn(parent, y, kind){
     const crown = mesh(capGeo, '#c9a055'); crown.scale.set(.82, .7, .82); crown.position.y = y + 1.8; parent.add(crown);
     const band = mesh(rimGeo, '#8a5530'); band.scale.setScalar(.78); band.rotation.x = Math.PI/2; band.position.y = y + 2.3; parent.add(band); return; }
   if (kind === 'laurel'){ for (let i=0;i<14;i++){ const a = i/14*Math.PI*2; if (Math.cos(a) > .8) continue; // open at the front
-      const l = mesh(leafGeo, '#d9b13f'); l.scale.set(1.5, .7, .8); l.position.set(Math.cos(a)*3.15, y + 1.3 + Math.sin(i*2.1)*.15, Math.sin(a)*3.15); l.rotation.y = -a; l.rotation.z = (i % 2 ? .5 : -.5); parent.add(l); }
+      const l = mesh(leafGeo, '#d9b13f'); l.scale.set(1.1, .5, .6); l.position.set(Math.cos(a)*3.15, y + 1.3 + Math.sin(i*2.1)*.15, Math.sin(a)*3.15); l.rotation.y = -a; l.rotation.z = (i % 2 ? .5 : -.5); parent.add(l); }
     return; }
   if (kind === 'spartan'){ const c = mesh(coneGeo, 'bronze'); c.position.y = y - .2; parent.add(c);
     const r = mesh(rimGeo, '#8a6330'); r.rotation.x = Math.PI/2; r.position.y = y; parent.add(r); return; }
@@ -227,9 +237,12 @@ function helmetOn(parent, y, kind){
     const brim = mesh(new T.CylinderGeometry(4.6, 5.6, 1.6, 16, 1, true), 'bronze', {side:T.DoubleSide}); brim.position.y = y - .2; brim.rotation.z = -.12; parent.add(brim);
     const knob = mesh(cheekGeo, 'bronze'); knob.scale.set(1, .6, .7); knob.position.y = y + 3.4; parent.add(knob); return; }
   const hm = mesh(helmGeo, 'bronze'); hm.position.y = y + .25; parent.add(hm);
-  if (kind === 'phrygian'){ // the tip curls forward like a Phrygian cap
-    const tip = mesh(new T.ConeGeometry(2.4, 6, 10), 'bronze'); tip.position.set(1.4, y + 3.8, 0); tip.rotation.z = -1.0; parent.add(tip);
-    cheeks(parent, y); const cr = mesh(crestGeo, 'plume'); cr.scale.set(.75, .7, .6); cr.position.set(-.6, y + 2.5, 0); parent.add(cr); return; }
+  if (kind === 'phrygian'){ // a bronze cap whose top curls forward, a ridge of decoration along it, big cheek guards
+    const top = mesh(phryGeo, 'bronze', {flatShading:false}); top.position.y = y; parent.add(top);
+    const knob = mesh(cheekGeo, '#d4a24c'); knob.scale.setScalar(.55); knob.position.set(3.75, y + 5.5, 0); parent.add(knob);
+    const band = mesh(rimGeo, '#d4a24c'); band.rotation.x = Math.PI/2; band.position.y = y + .1; parent.add(band);
+    for (const sg of [1, -1]){ const ch = mesh(cheekGeo, 'bronze'); ch.scale.set(1.15, 1.5, .45); ch.position.set(1, y - 1.3, sg*2.8); parent.add(ch); }
+    return; }
   cheeks(parent, y);
   const neck = mesh(cheekGeo, 'bronze'); neck.scale.set(.5, .9, 1.6); neck.position.set(-2.6, y - .9, 0); parent.add(neck);
   const capt = kind === 'captain';
@@ -239,18 +252,24 @@ function helmetOn(parent, y, kind){
   if (kind === 'attic') for (const sg of [1, -1]){ const f = mesh(featherGeo, '#f4efe2'); f.position.set(-.2, y + 4.6, sg*2.9); f.rotation.x = -sg*.25; parent.add(f); }
   parent.add(cr);
 }
+// fine strands drawn on the hair, from the crown down (you liked the look of hair when the shadows striped them)
+let hairT = null;
+function hairTex(){ if (hairT) return hairT; const c = document.createElement('canvas'); c.width = 128; c.height = 32; const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, 128, 32);
+  for (let i=0;i<64;i++){ const x = i*2 + (i % 3)*.6; g.fillStyle = i % 2 ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.18)'; g.fillRect(x, 0, 1, 32); }
+  hairT = new T.CanvasTexture(c); hairT.wrapS = T.RepeatWrapping; return hairT; }
 // a big round head (no eyes, by choice), hair or a helmet; y = the head's center. helmet: false, true (hoplite) or a kind above.
 export function cuteHead(parent, y, hairColor = 'hair', helmet = false){
   const head = mesh(headGeo, 'skin'); head.position.y = y; parent.add(head);
   const kind = helmet === true ? 'hoplite' : helmet;
-  if (!kind || HATS.includes(kind)){ const hair = mesh(capGeo, hairColor); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
+  if (!kind || HATS.includes(kind)){ const hair = mesh(capGeo, hairColor, {map:hairTex()}); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
   if (kind) helmetOn(parent, y, kind);
 }
 // A crew member: a round peg figure like the townspeople, a body and a head with no arms or legs. About 13 units tall. Faces +x.
 // pose: 'row' (seated lower, rocks with the stroke), 'stand', 'helm', 'archer' (a bow at their side, leans in to shoot).
 export function person(tunic, pose = 'stand', helmet = false){
   const g = new T.Group(), inner = new T.Group(); g.add(inner);
-  const sit = pose === 'row', base = sit ? 1.6 : 2.4, h = sit ? 5.2 : 6.6;
+  const sit = pose === 'row', base = sit ? 1.6 : .3, h = sit ? 5.2 : 6.6; // standing people stand right on the deck
   const body = mesh(beanGeo(h), tunic); body.position.y = base; body.scale.set(.85, 1, .85); inner.add(body);
   cuteHead(inner, base + h + 2.1, 'hair', helmet);
   if (pose === 'archer'){ const bow = mesh(new T.TorusGeometry(4.6, .35, 4, 10, Math.PI*.8), 'bow'); bow.rotation.set(0, 0, Math.PI*.6); bow.position.set(3.4, base + 4.5, 0); inner.add(bow); }
@@ -352,7 +371,7 @@ function torch(){
 // Light or put out a ship's torches. light = also give each one a real point light (pretty, but costly on phones).
 export function setTorches(root, on, light = false){
   for (const t of root.userData.torches || []){ t.visible = on;
-    if (on && light && !t.userData.light){ const l = new T.PointLight('#ff9c48', 1.3, 110, 2); l.userData.base = 1.3; l.position.y = 17; t.add(l); t.userData.light = l; }
+    if (on && light && !t.userData.light){ const l = new T.PointLight('#ff9c48', 1.2, 150, 2); l.userData.base = 1.2; l.position.y = 17; t.add(l); t.userData.light = l; }
     if (t.userData.light) t.userData.light.visible = on && light; }
 }
 
@@ -409,7 +428,7 @@ export function buildShip(key, look = {}, crew = true){
   root.userData.torches = [];
   const torchAt = [[-s.L*.43, info.deckY(.86) - 1, 0], [s.L*.39, info.deckY(.78) - 1, 0]];
   if (s.L >= 100) for (const sg of [1, -1]) torchAt.push([-s.L*.12, info.deckY(.24), sg*info.W(.24)*.95]);
-  for (const [x, y, z] of torchAt){ const t = torch(); t.position.set(x, y, z); t.visible = false; body.add(t); root.userData.torches.push(t); }
+  for (const [x, y, z] of torchAt){ const t = torch(); t.scale.setScalar(.65); t.position.set(x, y, z); t.visible = false; body.add(t); root.userData.torches.push(t); }
   // The player's ship shows its upgrades: the ram it has bought (not the built-in one) and extra planking along the sides.
   if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/10)), sub = lk.ram - m*10; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.03 + m*.1)); } }
   else if (s.raider && s.ram) body.add(boarRam(s));
@@ -446,8 +465,8 @@ export function buildShip(key, look = {}, crew = true){
       if (kind === 'archer'){
         // On long oared warships the archers stand on a gangway down the middle, clear of the rowers on both sides
         // (and of the mast); on small boats they stand at the rails. Half face each side.
-        const mid = s.oarCount >= 9, gy = info.deckLevel + s.H*.12;
-        if (mid && n){ const walk = mesh(new T.BoxGeometry(s.L*.62, 1, 6), pc.deck); walk.position.set(0, gy - .5, 0); body.add(walk); }
+        const mid = s.oarCount >= 9, gy = info.deckLevel + (mid ? 1.2 : 0);
+        if (mid && n){ const walk = mesh(new T.BoxGeometry(s.L*.62, 1.2, 6), pc.deck); walk.position.set(0, gy - .6, 0); body.add(walk); }
         for (let i=0;i<n;i++){
           const sg = i % 2 ? 1 : -1;
           const x = mid ? (n === 1 ? .1 : -.27 + .54*i/(n - 1))*s.L : (-.2 + .45*Math.floor(i/2)/Math.max(1, Math.ceil(n/2) - 1))*s.L;
@@ -491,7 +510,7 @@ function limb(a, b, r1, r2, color){
 export function statue(god, stone = 'painted'){
   const g = new T.Group();
   const skinC = stone === 'bronze' ? '#a3733d' : '#e8e2d6';
-  const robeC = stone === 'bronze' ? '#8f6332' : stone === 'painted' ? ({poseidon:'#41699f', zeus:'#5c3470', athena:'#71873f', apollo:'#cf9035'})[god] : '#ded7c9';
+  const robeC = stone === 'bronze' ? '#8f6332' : stone === 'painted' ? ({poseidon:'#41699f', zeus:'#5c3470', athena:'#71873f', apollo:'#cf9035', artemis:'#26473e'})[god] : '#ded7c9';
   const hairC = stone === 'painted' ? '#6b4a2a' : skinC, goldC = stone === 'marble' ? '#d9d1c1' : '#dcb453';
   const p1 = mesh(new T.BoxGeometry(48, 6, 48), '#d3cab6'); p1.position.y = 3; g.add(p1);
   const p2 = mesh(new T.BoxGeometry(38, 9, 38), '#e2dbcb'); p2.position.y = 10.5; g.add(p2);
@@ -535,6 +554,10 @@ export function statue(god, stone = 'painted'){
     for (const dz of [-3.6, 3.6]) lyre.add(limb([0, 0, dz*.6], [0, 13, dz*1.3], 1, .8, goldC));
     const bar = mesh(new T.BoxGeometry(1.2, 1.2, 11), goldC); bar.position.y = 12.5; lyre.add(bar);
     arm(shR, [6, base + 40, 13], [12, base + 40, 5]);
+  } else if (god === 'artemis'){ // the huntress holds up her bow
+    arm(shL, [5, base + 42, -14], [12, base + 45, -13]);
+    const bow = mesh(new T.TorusGeometry(13, .9, 5, 14, Math.PI*.85), goldC); bow.position.set(13, base + 45, -13); bow.rotation.set(0, Math.PI/2, Math.PI*.575); g.add(bow);
+    arm(shR, [2, base + 36, 13], [4, base + 28, 13]);
   }
   return g;
 }

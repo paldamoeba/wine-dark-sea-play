@@ -1,15 +1,15 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=ceff53c';
-import {SPECS} from './ships.js?v=ceff53c';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=ceff53c';
-import {G, ship, holdUsed, save, gain} from './state.js?v=ceff53c';
-import {steering} from './input.js?v=ceff53c';
-import {toast, showZone} from './ui.js?v=ceff53c';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=ceff53c';
-import {startFish, stopFish} from './fishing.js?v=ceff53c';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=ceff53c';
-import {progress} from './quests.js?v=ceff53c';
-import {startSink} from './sinking.js?v=ceff53c';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=957c092';
+import {SPECS} from './ships.js?v=957c092';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=957c092';
+import {G, ship, holdUsed, save, gain} from './state.js?v=957c092';
+import {steering} from './input.js?v=957c092';
+import {toast, showZone} from './ui.js?v=957c092';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=957c092';
+import {startFish, stopFish} from './fishing.js?v=957c092';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=957c092';
+import {progress} from './quests.js?v=957c092';
+import {startSink} from './sinking.js?v=957c092';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -109,7 +109,7 @@ function berth(sh, P){
 }
 // Piers are solid: the ship slides along them instead of sailing through.
 function pierPush(S, rad){ let hit = false;
-  for (const h of HARBORS){ const P = h.pier, nx = -P.dy, ny = P.dx, rx = S.x - P.x, ry = S.y - P.y, t = rx*P.dx + ry*P.dy, s = rx*nx + ry*ny, w = 9 + rad;
+  for (const P of [...HARBORS.map(h => h.pier), ...TOWN_PIERS]){ const nx = -P.dy, ny = P.dx, rx = S.x - P.x, ry = S.y - P.y, t = rx*P.dx + ry*P.dy, s = rx*nx + ry*ny, w = 9 + rad;
     if (t < -5 || t > PIER_LEN + 6 || Math.abs(s) > w) continue;
     const side = s < 0 ? -1 : 1; S.x += nx*(side*w - s); S.y += ny*(side*w - s); hit = true; }
   return hit;
