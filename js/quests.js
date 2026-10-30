@@ -1,11 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board'.
-import {FISH, GOALS, REQUESTS, BOTTLES} from './config.js?v=9a0fb4f';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=9a0fb4f';
-import {G, save, ship} from './state.js?v=9a0fb4f';
-import {scene} from './scene.js?v=9a0fb4f';
-import {mesh} from './models.js?v=9a0fb4f';
-import {toast} from './ui.js?v=9a0fb4f';
+import {FISH, GOALS, REQUESTS, BOTTLES} from './config.js?v=b855190';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=b855190';
+import {G, save, ship} from './state.js?v=b855190';
+import {scene} from './scene.js?v=b855190';
+import {mesh} from './models.js?v=b855190';
+import {toast} from './ui.js?v=b855190';
+import {sfx} from './audio.js?v=b855190';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -19,7 +20,7 @@ export function goal(){
 function goalStep(type, kind, n){
   const g = goal(); if (!g || g.t !== type || (g.kind && g.kind !== kind)) return;
   G.S.goalN = (G.S.goalN || 0) + n;
-  if (G.S.goalN >= g.n){ G.S.gold += g.gold; G.S.goal = (G.S.goal || 0) + 1; G.S.goalN = 0;
+  if (G.S.goalN >= g.n){ G.S.gold += g.gold; sfx('chime'); setTimeout(() => sfx('coins'), 500); G.S.goal = (G.S.goal || 0) + 1; G.S.goalN = 0;
     const next = goal(); toast(`Goal done! +${g.gold} drachmae${next ? `. Next: ${next.text}` : '. You have the hang of it: the request boards always have work.'}`, 4.5); }
 }
 
@@ -50,7 +51,7 @@ export function accept(i){
 }
 export function decline(i){ board().splice(i, 1, makeOffer()); }
 export function drop(i){ G.S.reqs = active().filter((_, k) => k !== i); }
-function finish(r){ G.S.gold += r.gold; G.S.reqs = active().filter(q => q !== r); toast(`Job done: ${r.text}. +${r.gold} drachmae`, 3.5); save(); }
+function finish(r){ G.S.gold += r.gold; sfx('chime'); setTimeout(() => sfx('coins'), 500); G.S.reqs = active().filter(q => q !== r); toast(`Job done: ${r.text}. +${r.gold} drachmae`, 3.5); save(); }
 // Deliveries are handed over in the harbor.
 export const canDeliver = (r, h) => r.t === 'deliver' && h && h.is.name === r.to && (G.S.cargo[r.kind] || 0) >= r.n;
 export function deliver(i, h){ const r = active()[i]; if (!canDeliver(r, h)) return; G.S.cargo[r.kind] -= r.n; finish(r); }
@@ -89,7 +90,7 @@ function spawnBottle(){
     Object.assign(B, {on:true, x, y, life:BOTTLES.life}); B.obj.visible = true; return; }
 }
 function openBottle(){
-  const S = G.S, roll = Math.random();
+  const S = G.S, roll = Math.random(); sfx('bottle');
   if (roll < BOTTLES.coins){ const c = 6 + Math.floor(Math.random()*13); S.gold += c; toast(`A message in a bottle, with ${c} drachmae rolled inside!`, 3.5); }
   else if (roll < BOTTLES.coins + BOTTLES.map && !S.treasure){
     const spot = beachSpot(1500, 3700);
@@ -140,7 +141,7 @@ export function updateQuests(dt){
   if (chest.visible){
     if (tr.land){ chest.position.set(tr.x, 3.5, tr.y); chest.userData.x.visible = true; } // half buried on the beach; sail up close to dig it out
     else { chest.position.set(tr.x, waveAt(tr.x, tr.y, G.t) + 1, tr.y); chest.rotation.y += dt*.5; chest.userData.x.visible = false; }
-    if (near < (tr.land ? 75 + ship().beam*1.5 : 70)){ S.gold += tr.gold; toast(`You found the treasure: ${tr.gold} drachmae!`, 4); S.treasure = null; chest.visible = false; save(); } }
+    if (near < (tr.land ? 75 + ship().beam*1.5 : 70)){ S.gold += tr.gold; sfx('treasure'); toast(`You found the treasure: ${tr.gold} drachmae!`, 4); S.treasure = null; chest.visible = false; save(); } }
   // visits
   checkT += dt; if (checkT < .5) return; checkT = 0;
   for (const r of [...active()]) if (r.t === 'visit'){ const is = ISLANDS.find(i => i.name === r.to); if (is && Math.hypot(is.x - S.x, is.y - S.y) < is.r + 450) finish(r); }

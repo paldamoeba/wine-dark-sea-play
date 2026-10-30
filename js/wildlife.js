@@ -1,11 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that jump beside the boat.
-import {WILDLIFE} from './config.js?v=9a0fb4f';
-import {WORLD, landDist, waveAt} from './world.js?v=9a0fb4f';
-import {G, save} from './state.js?v=9a0fb4f';
-import {scene} from './scene.js?v=9a0fb4f';
-import {whaleModel, dolphinModel} from './models.js?v=9a0fb4f';
-import {toast} from './ui.js?v=9a0fb4f';
-import {combatState} from './combat.js?v=9a0fb4f';
+import {WILDLIFE} from './config.js?v=b855190';
+import {WORLD, landDist, waveAt} from './world.js?v=b855190';
+import {G, save} from './state.js?v=b855190';
+import {scene} from './scene.js?v=b855190';
+import {whaleModel, dolphinModel} from './models.js?v=b855190';
+import {toast} from './ui.js?v=b855190';
+import {combatState} from './combat.js?v=b855190';
+import {sfx} from './audio.js?v=b855190';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -21,7 +22,7 @@ function spawnWhale(){
     const a = S.a + (Math.random() - .5)*2.2, d = 300 + Math.random()*140, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
     if (!openSea(x, y, 650)) continue; // whales keep well away from land
     Object.assign(W, {state:'rise', x, y, a:Math.random()*6.28, t:0, blessed:false, puff:1});
-    W.obj.visible = true; toast('A whale is surfacing! Sail close to it.', 3.5);
+    W.obj.visible = true; toast('A whale is surfacing! Sail close to it.', 3.5); sfx('whale', W);
     return true;
   }
   return false;
@@ -44,7 +45,7 @@ function updateWhale(dt){
   if (W.state === 'rise'){ const k = Math.min(1, W.t/2.5); y = -40 + 40*k; pitch = (1 - k)*.25; if (k >= 1){ W.state = 'swim'; W.t = 0; } }
   else if (W.state === 'swim'){
     y = Math.sin(G.t*.8)*1.5; pitch = Math.sin(G.t*.6)*.03;
-    W.puff -= dt; if (W.puff <= 0){ W.puff = 5; ud.spoutT = 0; }
+    W.puff -= dt; if (W.puff <= 0){ W.puff = 5; ud.spoutT = 0; sfx('spout', W); if (Math.random() < .35) setTimeout(() => sfx('whale', W), 1500); }
     if (W.t > 24){ W.state = 'dive'; W.t = 0; }
   } else if (W.state === 'dive'){
     const k = Math.min(1, W.t/3.5); pitch = -.5*Math.sin(k*Math.PI*.9); y = -k*80;
@@ -59,7 +60,7 @@ function updateWhale(dt){
       if (p.visible){ p.position.set(38 + Math.sin(i*2.1)*k*8, 18 + k*55, Math.cos(i*1.7)*k*8); p.scale.setScalar(.6 + k*1.6); p.material.opacity = .8*(1 - k); } }); }
   // the blessing
   if (!W.blessed && W.state !== 'dive' && Math.hypot(S.x - W.x, S.y - W.y) < WILDLIFE.whaleNear){
-    W.blessed = true; S.bless = WILDLIFE.blessSeconds; save();
+    W.blessed = true; S.bless = WILDLIFE.blessSeconds; save(); sfx('blessing');
     toast(`Poseidon's blessing! Faster sailing and quicker work for ${Math.round(WILDLIFE.blessSeconds/60)} minutes.`, 4.5);
   }
 }
@@ -85,6 +86,7 @@ function updateDolphins(dt){
     const x = S.x + Math.cos(S.a)*fwd - Math.sin(S.a)*out, y = S.y + Math.sin(S.a)*fwd + Math.cos(S.a)*out;
     const ph = (P.t*.9 + i*.33) % 1, jump = ph < .45 ? Math.sin(ph/.45*Math.PI) : -Math.sin((ph - .45)/.55*Math.PI)*.4;
     d.visible = jump > -.15 && P.t < 13;
+    const was = d.userData.up; d.userData.up = jump > 0; if (d.visible && was !== undefined && was !== d.userData.up) sfx('splash', {x, y}, .35);
     d.position.set(x, waveAt(x, y, G.t) + jump*26 - 3, y);
     d.rotation.set(0, -S.a, ph < .45 ? Math.cos(ph/.45*Math.PI)*.8 : -.5);
   });

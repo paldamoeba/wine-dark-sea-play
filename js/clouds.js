@@ -1,7 +1,7 @@
 // Clouds: soft white puffs drifting between the camera and the sea. A few on fair days, many in mist (instead of one white
 // fog over everything), grey in storms. They wrap around the camera so there are always some nearby.
-import {G} from './state.js?v=9a0fb4f';
-import {scene, camera} from './scene.js?v=9a0fb4f';
+import {G} from './state.js?v=b855190';
+import {scene, camera} from './scene.js?v=b855190';
 
 const T = window.THREE;
 const N = 22, R = 1100;

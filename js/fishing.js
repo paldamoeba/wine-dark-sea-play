@@ -1,10 +1,11 @@
 // Fishing minigame: a needle spins around a ring over your boat. Tap (or press Space) while it is in the green part.
 // Bigger fish have a smaller green part and a faster needle (see FISH in config.js).
-import {FISH} from './config.js?v=9a0fb4f';
-import {G, ship, holdUsed, save, gain} from './state.js?v=9a0fb4f';
-import {toast} from './ui.js?v=9a0fb4f';
-import {blessing, fishBoost} from './crew.js?v=9a0fb4f';
-import {progress} from './quests.js?v=9a0fb4f';
+import {FISH} from './config.js?v=b855190';
+import {G, ship, holdUsed, save, gain} from './state.js?v=b855190';
+import {toast} from './ui.js?v=b855190';
+import {blessing, fishBoost} from './crew.js?v=b855190';
+import {progress} from './quests.js?v=b855190';
+import {sfx} from './audio.js?v=b855190';
 
 const TAU = Math.PI*2;
 const angDiff = (a, b) => ((a - b + Math.PI*3) % TAU) - Math.PI;
@@ -29,11 +30,11 @@ function tap(){
   if (holdUsed() >= ship().hold){ toast('Your hold is full'); return; }
   F.next = true; F.flash = 1;
   if (Math.abs(angDiff(F.ang, F.g)) < F.size/2){
-    S.cargo[kind]++; F.ref.stock--; F.ok = true; F.cool = .55; progress('catch', kind);
+    S.cargo[kind]++; F.ref.stock--; F.ok = true; F.cool = .55; progress('catch', kind); sfx('catch');
     gain(kind);
     if (F.ref.stock <= 0){ toast('The fish have moved on', 2); G.fish = null; }
     save();
-  } else { F.ok = false; F.cool = .9; toast('It got away'); }
+  } else { F.ok = false; F.cool = .9; toast('It got away'); sfx('miss'); }
 }
 document.addEventListener('fishtap', tap);
 addEventListener('keydown', e => { if ((e.code === 'Space' || e.code === 'Enter') && G.fish && !G.mapOpen){ e.preventDefault(); tap(); } });

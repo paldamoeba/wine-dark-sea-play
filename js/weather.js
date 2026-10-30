@@ -1,9 +1,10 @@
 // Weather: fair, calm, windy or stormy, each for a few minutes. Storms are announced a little before they hit.
 // wave = how big the waves are; storm = dark sky, rain and lightning (0 to 1).
 // Storms wear down small boats outside the Shallows, but fish bite faster in them: a reward for the brave.
-import {G} from './state.js?v=9a0fb4f';
-import {WEATHER_WAVES} from './world.js?v=9a0fb4f';
-import {toast} from './ui.js?v=9a0fb4f';
+import {G} from './state.js?v=b855190';
+import {WEATHER_WAVES} from './world.js?v=b855190';
+import {toast} from './ui.js?v=b855190';
+import {sfx} from './audio.js?v=b855190';
 
 export const KINDS = {
   fair:  {label:'Fair',   wave:1,   storm:0,   dur:[150, 280], icon:'☀'},
@@ -21,7 +22,7 @@ function pick(from){ let r = Math.random(); for (const [k, p] of NEXT[from]){ if
 export function updateWeather(dt){
   if (!W.next) W.next = pick(W.kind);
   W.t -= dt;
-  if (W.next === 'storm' && !W.warned && W.t < WARN){ W.warned = true; toast('The sky darkens to the west. A storm is coming: small boats should head for the Shallows.', 5); }
+  if (W.next === 'storm' && !W.warned && W.t < WARN){ W.warned = true; toast('The sky darkens to the west. A storm is coming: small boats should head for the Shallows.', 5); sfx('warn'); }
   if (W.t <= 0){
     W.kind = W.next; W.next = null; W.warned = false; W.t = rand(KINDS[W.kind].dur);
     if (W.kind === 'calm') toast('The wind drops. A calm, glassy sea.', 3);
@@ -33,7 +34,7 @@ export function updateWeather(dt){
   G.stormK += (k.storm - G.stormK)*f; G.mistK = (G.mistK ?? 1) + ((k.mist || 0) - (G.mistK ?? 1))*f;
   WEATHER_WAVES.k += (k.wave - WEATHER_WAVES.k)*f;
   // lightning now and then in a storm
-  if (G.stormK > .6){ W.bolt -= dt; if (W.bolt <= 0){ G.flash = 1; W.bolt = 3 + Math.random()*7; } }
+  if (G.stormK > .6){ W.bolt -= dt; if (W.bolt <= 0){ G.flash = 1; W.bolt = 3 + Math.random()*7; setTimeout(() => sfx('thunder'), 300 + Math.random()*1500); } }
 }
 // How much a storm is blowing right now (0 to 1): used for wave damage and fishing.
 export const storminess = () => G.stormK;

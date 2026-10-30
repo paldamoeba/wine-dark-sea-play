@@ -1,9 +1,10 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=9a0fb4f';
-import {makePost} from './glow.js?v=9a0fb4f';
-import {buildColossus, buildFortress} from './monuments.js?v=9a0fb4f';
-import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=9a0fb4f';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=b855190';
+import {makePost} from './glow.js?v=b855190';
+import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=b855190';
+import {buildColossus, buildFortress} from './monuments.js?v=b855190';
+import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=b855190';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -103,7 +104,7 @@ function updateStorm(dt, t){
     if (rainPos[o + 1] < 0){ if (Math.random() < .12){ const r = rings[ringI++ % rings.length]; r.k = 0; r.m.visible = true; r.m.position.set(rainPos[o], full ? wv(rainPos[o], rainPos[o + 2], t) + .6 : .6, rainPos[o + 2]); } dropAt(i, true); } }
   rainGeo.attributes.position.needsUpdate = true;
   for (const r of rings) if (r.m.visible){ r.k += dt*1.8; r.m.scale.setScalar(2 + r.k*9); r.m.material.opacity = (1 - r.k)*.7; if (r.k >= 1) r.m.visible = false; }
-  boltT -= dt; if (boltT <= 0){ flash = 1; boltT = 2.5 + Math.random()*5; }
+  boltT -= dt; if (boltT <= 0){ flash = 1; boltT = 2.5 + Math.random()*5; setTimeout(() => sfx('thunder'), 300 + Math.random()*1200); }
   flash = Math.max(0, flash - dt*2.6); const L = LIGHTS.storm, f = flash*flash;
   sun.intensity = L.sun[1] + f*1.4; hemi.intensity = L.hemi[2] + f*.9; scene.background.set(L.sky).lerp(WHITE, f*.5);
 }
@@ -172,6 +173,54 @@ const SHIP_INFO = {
   trireme:'A long warship with one row of oars, an outrigger, a canopy over the captain and a big bronze ram. Coming later.',
   raider:'The pirate galley: a dark hull, red eyes and a bronze boar\'s head ram, like the ships of Polycrates, the pirate king of Samos.',
   trader:'A small round trading ship. Some merchants sail these.', dinghy:'The small pirate boat.', skiff:'The pirate skiff, with its own little boar\'s head.'};
+// ---- sounds: every sound in the game, with a model to look at while it plays ----
+// Scenes keep playing (music, the sea); single sounds play once when picked and again with Play.
+const SOUND_SCENES = [
+  {name:'Music: a day at sea', desc:'A lyre, a soft drone and now and then a flute, in a warm old Greek mode. It makes itself up as it plays, so it never repeats exactly. In the game it rests every few minutes to let the sea be heard.', music:'day', make:() => statue('apollo', 'painted')},
+  {name:'Music: night', desc:'Slower and softer, in a darker mode, for sailing under the stars.', music:'night', light:'night', make:() => statue('apollo', 'painted')},
+  {name:'Music: in the harbor', desc:'Brighter, with a little hand drum, while your ship is tied up in a harbor.', music:'harbor', make:() => harborTown('poseidon')},
+  {name:'Music: battle', desc:'A frame drum and a tense mode when raiders or warships come for you. It fades back to the sea music when the fight is over.', music:'battle', make:() => buildShip('raider')},
+  {name:'Sea: calm near an island', desc:'Soft waves, gulls calling from the shore, the hull creaking now and then.', sea:{speed:.3, waves:.55, wind:.1, land:.4, gulls:.8, sail:true}, make:() => buildShip('fishing')},
+  {name:'Sea: rowing at full speed', desc:'Oars dipping in time, water rushing past the hull, the wind in your ears.', sea:{speed:1, waves:1, wind:.4, rowing:true}, make:() => buildShip('bireme')},
+  {name:'Sea: storm', desc:'Big waves, howling wind, rain and thunder after each lightning flash.', sea:{speed:.8, waves:2.1, storm:1, wind:1, rain:1, rowing:true}, light:'storm', make:() => buildShip('bireme')},
+  {name:'Sea: night by an island', desc:'Quiet waves, crickets on the island and the crackle of the fire bowls.', sea:{speed:0, waves:.6, wind:.15, night:1, land:1, fire:.8}, light:'night', make:() => statue('poseidon', 'painted')},
+];
+const SOUND_INFO = {
+  click:'Every button gives a soft tap.', open:'A menu opens.', close:'A menu closes.', coin:'A coin from a wreck or a crate.', coins:'Selling fish or goods, getting paid for a job.',
+  fish:'A sardine comes aboard.', catch:'You landed a tuna or swordfish in the fishing game.', miss:'The fish got away.', wood:'Wood comes aboard.', chop:'Your crew cuts a tree.',
+  bow:'Each archer looses an arrow.', thud:'An arrow hits a ship.', plop:'An arrow misses and drops in the sea.', hurt:'Something hits your ship.', volley:'Every archer fires at once.',
+  catapult:'A fortress catapult throws a stone.', bigsplash:'The stone lands in the sea.', ram:'Your ram hits a ship head-on.', bump:'Two ships bump.', crash:'A ship breaks apart and sinks.',
+  sink:'Your own ship goes down.', bubbles:'Bubbles from a sinking ship.', bell:'The harbor bell as you come in to dock.', horn:'A war horn when you raid a ship, or a navy ship sees a crime.',
+  chime:'A goal or a job is done.', fanfare:'Your new ship is ready, or an island raises your flag.', hammer:'The shipwright fits an upgrade or repairs your hull.', buy:'You buy something.',
+  blessing:'Poseidon blesses you after you sail close to a whale.', whale:'A whale surfaces.', spout:'The whale breathes out.', splash:'Dolphins splash beside your boat.', gull:'Gulls over islands, wrecks and harbors.',
+  thunder:'After each lightning flash in a storm.', creak:'Your hull creaks as it rolls on the waves.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
+  bottle:'You open a message in a bottle.', treasure:'You dig up a treasure.', crowd:'The crowd at the Rhodes arena.', zone:'You sail into new waters.', warn:'Distant rumbling when a storm is coming.', dock:'Mooring ropes pull tight at the pier.'};
+const SOUND_MODEL = {
+  coin:() => wreckModel('medium'), coins:() => harborTown('poseidon'), fish:() => buildShip('fishing'), catch:() => buildShip('fishing'), miss:() => buildShip('fishing'),
+  wood:() => wreckModel('small'), chop:() => { const g = row([0, 1, 2].map(() => cypress(CYPRESS_TINTS[0])), 12); g.add(grassDisc(50)); return g; },
+  bow:() => buildShip('bireme'), thud:() => buildShip('raider'), plop:() => buildShip('raider'), hurt:() => buildShip('bireme'), volley:() => buildShip('bireme'),
+  catapult:() => buildFortress('pirate', '#231d1d'), bigsplash:() => buildFortress('pirate', '#231d1d'), ram:() => buildShip('bireme', {ram:1}), bump:() => buildShip('trader'),
+  crash:() => wreckModel('large'), sink:() => wreckModel('small'), bubbles:() => wreckModel('medium'), bell:() => harborTown('poseidon'), horn:() => buildShip('raider'),
+  chime:() => temple(), fanfare:() => buildShip('trireme'), hammer:() => buildShip('bireme'), buy:() => harborTown('athena'), blessing:() => statue('poseidon', 'painted'),
+  whale:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; }, spout:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; },
+  splash:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const d = dolphinModel(); d.position.set(i*30 - 30, 6, (i % 2)*24 - 12); d.userData.ph = i*1.2; g.add(d); }); g.userData.anim = 'dolphins'; return g; },
+  gull:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const b = gull(); b.position.set(i*22 - 22, 30 + (i % 2)*10, (i - 1)*14); b.scale.setScalar(1.6); g.add(b); }); g.userData.anim = 'gulls'; return g; },
+  thunder:() => buildShip('merchant'), creak:() => buildShip('merchant'), oar:() => buildShip('rowboat'), sail:() => buildShip('fishing'),
+  bottle:() => buildShip('rowboat'), treasure:() => wreckModel('medium'), crowd:() => buildColossus(300, 150), zone:() => buildShip('fishing'), warn:() => buildShip('fishing'), dock:() => harborTown('poseidon'),
+};
+let playing = null; // the item whose sound is on
+function playItem(item){
+  playing = item.music || item.sea ? item : null;
+  if (item.music) testMusic(item.music, true); else stopMusic();
+  if (item.sound) setTimeout(() => sfx(item.sound), 150);
+  $('play').hidden = !(item.sound || item.music || item.sea); 
+}
+function updateSoundScene(dt){
+  if (!playing) return updateAudio(dt, {seaOff:true});
+  if (playing.music) return updateAudio(dt, {seaOff:true, musicOn:true});
+  updateAudio(dt, playing.sea);
+}
+
 const GROUPS = {
   ships:{name:'Ships', items:[
     ...Object.keys(SPECS).map(k => ({name:k[0].toUpperCase() + k.slice(1), desc:SHIP_INFO[k] || '', make:() => buildShip(k, {}, true)})),
@@ -247,6 +296,10 @@ const GROUPS = {
     {name:'Snowy trees', desc:'On the cold northern islands, with snow lying on top of the tufts.', make:() => { const g = row([0, 1, 2].map(() => cypress(['#2f4d3a', '#f4f8fa'])), 12); g.add(grassDisc(50, '#eef3f5')); return g; }},
     {name:'Iceberg', desc:'Chunks of sharp-cut ice: a wide slab, a tall peak and a smaller chunk. Twenty-six of them float in the cold north. Ships can\'t sail through.', make:() => icebergModel(70)},
   ]},
+  sounds:{name:'Sounds and music', items:[
+    ...SOUND_SCENES,
+    ...Object.entries(SOUNDS).map(([k, v]) => ({name:v.name, desc:`${SOUND_INFO[k] || ''} Tap Play to hear it again.`, sound:k, make:SOUND_MODEL[k] || (() => buildShip('fishing'))})),
+  ]},
 };
 
 // ---- showing one ----
@@ -267,7 +320,7 @@ function show(){
   waveU.uCalm.value.set(focus.x, focus.z, land ? Math.max(size.x, size.z)*.62 + 30 : 0);
   if (item.light && !q0){ $('light').value = item.light; setLight(item.light); } if (item.glow && !q0){ setGlow(true); }
   if (obj.userData.view && !q.get('yaw')){ yaw = obj.userData.view.yaw; pitch = obj.userData.view.pitch; dist *= .8; }
-  lightTorches(); ridersOf();
+  lightTorches(); ridersOf(); playItem(item);
 }
 // the ships in view, so they can bob on the waves
 let riders = [];
@@ -284,6 +337,7 @@ $('gfx').addEventListener('change', e => setFull(e.target.value === 'full'));
 $('glow').addEventListener('click', () => setGlow(!glowOn));
 // the cel-shaded test look: hard bands and ink outlines
 $('cel').addEventListener('click', () => { setCel(!CEL.on); $('cel').setAttribute('aria-pressed', CEL.on); show(); });
+$('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true); });
 $('spin').addEventListener('click', () => { spin = !spin; $('spin').setAttribute('aria-pressed', spin); });
 const fold = on => { $('bar').classList.toggle('folded', on); $('unfold').hidden = !on; $('fold').setAttribute('aria-expanded', !on); resize(); };
 $('fold').addEventListener('click', () => fold(true)); $('unfold').addEventListener('click', () => fold(false));
@@ -337,7 +391,7 @@ function animate(t){
 }
 let t0 = performance.now(), last = 0;
 function frame(now){
-  const t = (now - t0)/1000, dt = Math.min(.05, t - last); last = t; animate(t); if (spin && !pts.size) yaw += .003;
+  const t = (now - t0)/1000, dt = Math.min(.05, t - last); last = t; animate(t); updateSoundScene(dt); if (spin && !pts.size) yaw += .003;
   waveU.uTime.value = t; waveU.uSun.value.copy(sunDir).normalize(); updateStorm(dt, t);
   // full graphics: ships ride the waves, pitching and rolling a little
   for (const r of riders){ const p = r.o.getWorldPosition(tmpV), h = full ? wv(p.x, p.z, t) : 0;

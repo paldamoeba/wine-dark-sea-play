@@ -1,20 +1,21 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=9a0fb4f';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=9a0fb4f';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=9a0fb4f';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=9a0fb4f';
-import {swapBoat, refreshAllTrees} from './entities.js?v=9a0fb4f';
-import {setZoom} from './input.js?v=9a0fb4f';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=9a0fb4f';
-import {tutHTML} from './tutorial.js?v=9a0fb4f';
-import {founded, blessing, seats, candidates} from './crew.js?v=9a0fb4f';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=9a0fb4f';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=9a0fb4f';
-import {effectText, buy} from './upgrades.js?v=9a0fb4f';
-import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=9a0fb4f';
-import {GOODS, WAR} from './config.js?v=9a0fb4f';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=9a0fb4f';
-import {W, KINDS} from './weather.js?v=9a0fb4f';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=b855190';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=b855190';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl} from './state.js?v=b855190';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=b855190';
+import {swapBoat, refreshAllTrees} from './entities.js?v=b855190';
+import {setZoom} from './input.js?v=b855190';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=b855190';
+import {tutHTML} from './tutorial.js?v=b855190';
+import {founded, blessing, seats, candidates} from './crew.js?v=b855190';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=b855190';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=b855190';
+import {effectText, buy} from './upgrades.js?v=b855190';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, woodPrice, woodRoom, goodPrice, goodSell} from './menus.js?v=b855190';
+import {GOODS, WAR} from './config.js?v=b855190';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=b855190';
+import {W, KINDS} from './weather.js?v=b855190';
+import {sfx, SND, applyVolumes} from './audio.js?v=b855190';
 
 const $ = id => document.getElementById(id);
 
@@ -25,7 +26,7 @@ let zoneT = 0;
 export function showZone(z){
   $('zoneName').textContent = ZONES[z].name;
   $('zoneSub').textContent = z === 2 && G.S.tier >= 2 ? 'Your bireme can take it.' : ZONES[z].sub;
-  $('zone').style.opacity = 1; zoneT = 3;
+  $('zone').style.opacity = 1; zoneT = 3; sfx('zone');
 }
 export function hideHint(){ if (G.S.hint){ G.S.hint = false; $('hint').hidden = true; } }
 
@@ -67,11 +68,11 @@ function placeNearBoat(){
 }
 // ---- sheets (harbor, settings) ----
 const sheetEl = $('sheet'); let sheet = null, resetArmed = false;
-function openSheet(name){ sheet = name; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
-function closeSheet(){ sheet = null; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); }
+function openSheet(name){ if (!sheet) sfx('open'); sheet = name; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
+function closeSheet(){ if (sheet) sfx('close'); sheet = null; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); }
 export function openPort(){
   G.v = 0;
-  if (G.S.cargo.wood && (!G.dock || G.dock.h.is.port)){ G.S.ware += G.S.cargo.wood; toast(`Unloaded ${G.S.cargo.wood} wood to the warehouse`); G.S.cargo.wood = 0; }
+  if (G.S.cargo.wood && (!G.dock || G.dock.h.is.port)){ G.S.ware += G.S.cargo.wood; setTimeout(() => sfx('wood'), 300); toast(`Unloaded ${G.S.cargo.wood} wood to the warehouse`); G.S.cargo.wood = 0; }
   openSheet('port'); save();
 }
 
@@ -100,6 +101,9 @@ function mapHTML(){
 }
 
 // Settings: the same Greek menu as the harbor, with a close button, and three tabs.
+// sound volumes: Off, Quiet, Medium, Loud
+const VOLS = [[0, 'Off'], [.3, 'Quiet'], [.6, 'Medium'], [1, 'Loud']];
+function saveSound(){ const {on, music, sfx: fx, sea} = SND; G.settings.sound = {on, music, sfx:fx, sea}; saveSettings(); applyVolumes(); }
 const tog = (act, on, label) => `<button class="tog ${on ? 'on' : ''}" data-act="${act}" role="switch" aria-checked="${on}" aria-label="${label}"><i></i></button>`;
 const row = (title, small, ctl) => `<div class="row"><div>${title}${small ? `<small>${small}</small>` : ''}</div>${ctl}</div>`;
 function settingsHTML(){
@@ -111,10 +115,12 @@ function settingsHTML(){
   const list = [['game', 'Game', IC.ship], ['gfx', 'Graphics', IC.star], ...(s.builder || s.showBuilder ? [['dev', 'Builder', IC.gear]] : [])];
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
   const game = card('Your voyage', `<div class="stats big">${IC.ship} ${ship().name} · ${mins} min at sea</div>${row('How to play', 'The two pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}`)
+    + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and a soft lyre tune.', tog('sound', SND.on, 'Sound'))
+      + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`)
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 36</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 37</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -145,6 +151,8 @@ function settingsHTML(){
   return `<div class="mtop">${top('Settings', '<span class="xspace"></span>')}${tabBar(list, tabs.set, 'set')}</div><div class="mbody">${tabs.set === 'gfx' ? gfx : tabs.set === 'dev' ? dev : game}</div>`;
 }
 
+// every button gives a soft tap
+document.addEventListener('click', e => { if (e.target.closest('button, a.btn')) sfx('click'); });
 let verTaps = 0;
 sheetEl.addEventListener('click', e => { if (e.target.closest('[data-act=ver]') && ++verTaps >= 5){ G.settings.showBuilder = true; saveSettings(); verTaps = 0; toast('Builder tab unlocked'); render(); } });
 sheetEl.addEventListener('click', e => {
@@ -159,10 +167,10 @@ sheetEl.addEventListener('click', e => {
   if (a === 'drop'){ drop(+b.dataset.i); toast('Job dropped'); }
   if (a === 'found' && S.gold >= CREW.foundCost){
     S.crewName = ($('crewName').value.trim() || 'The Sea Swallows').slice(0, 24); S.gold -= CREW.foundCost;
-    S.look = {...S.look, flag:$('crewGod').value}; S.crew = []; swapBoat(); toast(`${S.crewName} sail under the flag of ${GODS[S.look.flag].name}!`, 3.5);
+    S.look = {...S.look, flag:$('crewGod').value}; S.crew = []; swapBoat(); sfx('fanfare'); toast(`${S.crewName} sail under the flag of ${GODS[S.look.flag].name}!`, 3.5);
   }
   if (a === 'hire' && S.gold >= CREW.hireCost && (S.crew || []).length < seats()){
-    const c = candidates()[+b.dataset.i]; S.gold -= CREW.hireCost; S.crew = [...(S.crew || []), c]; S.hireSeed = (S.hireSeed || 1) + 3;
+    const c = candidates()[+b.dataset.i]; S.gold -= CREW.hireCost; sfx('buy'); S.crew = [...(S.crew || []), c]; S.hireSeed = (S.hireSeed || 1) + 3;
     toast(`${c.n} joins the crew as a ${CREW.jobs[c.job].label.toLowerCase()}`, 2.6);
   }
   if (a === 'letgo'){ const c = S.crew[+b.dataset.i]; S.crew = S.crew.filter((_, i) => i !== +b.dataset.i); toast(`${c.n} goes ashore`); }
@@ -170,18 +178,18 @@ sheetEl.addEventListener('click', e => {
   if (a === 'tutnext' || a === 'tutback'){ tutPage += a === 'tutnext' ? 1 : -1; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'tutdone'){ closeSheet(); toast('Fair winds!', 2); return; }
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
-  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ if (k === 'ram' || k === 'hull' || k === 'sail') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
+  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); if (k === 'ram' || k === 'hull' || k === 'sail') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   if (a === 'buywood'){ const h = G.dock ? G.dock.h : HARBORS[0], n = Math.min(+b.dataset.n, woodRoom(h), Math.floor(S.gold/woodPrice(h)));
-    if (n > 0){ S.gold -= n*woodPrice(h); if (h.is.port) S.ware += n; else S.cargo.wood += n; toast(`Bought ${n} wood${h.is.port ? ' for the warehouse' : ''}`, 2); } }
+    if (n > 0){ sfx('buy'); S.gold -= n*woodPrice(h); if (h.is.port) S.ware += n; else S.cargo.wood += n; toast(`Bought ${n} wood${h.is.port ? ' for the warehouse' : ''}`, 2); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k;
-    if (a === 'buygood' && holdUsed() < ship().hold && S.gold >= goodPrice(h, k) && canBuyGood(h, k)){ S.gold -= goodPrice(h, k); S.cargo[k] = (S.cargo[k] || 0) + 1; }
-    if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; toast(`Sold ${S.cargo[k]} ${GOODS[k].label.toLowerCase()} for ${g} drachmae`, 2.4); S.cargo[k] = 0; progress('trade'); } }
-  if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]); S.gold += g; for (const k in FISH) S.cargo[k] = 0; toast(`Sold the catch for ${g} drachmae`); progress('sell'); }
-  if (a === 'repair'){ const cost = Math.min(Math.ceil((sh.hull - S.hull)/TUNING.repairPerGold), S.gold); S.gold -= cost; S.hull = Math.min(sh.hull, S.hull + cost*TUNING.repairPerGold); }
-  if (a === 'build'){ const t = +b.dataset.t, n = SHIPS[t]; if (S.ware >= n.cost.wood && S.gold >= n.cost.gold){ S.ware -= n.cost.wood; S.gold -= n.cost.gold; launch(t); progress('build'); swapBoat(); toast(`Your ${n.name} is ready${lvl('ram') || lvl('arrows') ? '. Your ram and arrowheads came along' : ''}`, 3); } }
+    if (a === 'buygood' && holdUsed() < ship().hold && S.gold >= goodPrice(h, k) && canBuyGood(h, k)){ S.gold -= goodPrice(h, k); S.cargo[k] = (S.cargo[k] || 0) + 1; sfx('buy'); }
+    if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; sfx('coins'); toast(`Sold ${S.cargo[k]} ${GOODS[k].label.toLowerCase()} for ${g} drachmae`, 2.4); S.cargo[k] = 0; progress('trade'); } }
+  if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]); S.gold += g; if (g) sfx('coins'); for (const k in FISH) S.cargo[k] = 0; toast(`Sold the catch for ${g} drachmae`); progress('sell'); }
+  if (a === 'repair'){ const cost = Math.min(Math.ceil((sh.hull - S.hull)/TUNING.repairPerGold), S.gold); S.gold -= cost; S.hull = Math.min(sh.hull, S.hull + cost*TUNING.repairPerGold); if (cost) sfx('hammer'); }
+  if (a === 'build'){ const t = +b.dataset.t, n = SHIPS[t]; if (S.ware >= n.cost.wood && S.gold >= n.cost.gold){ S.ware -= n.cost.wood; S.gold -= n.cost.gold; launch(t); progress('build'); swapBoat(); sfx('fanfare'); toast(`Your ${n.name} is ready${lvl('ram') || lvl('arrows') ? '. Your ram and arrowheads came along' : ''}`, 3); } }
   if (a === 'captain'){ const n = hireCaptain(+b.dataset.t); if (n){ toast(`${n} takes your ${SHIPS[+b.dataset.t].name.toLowerCase()} out fishing`, 3); document.dispatchEvent(new Event('fleetmoved')); } }
-  if (a === 'collect'){ toast(`+${S.purse} drachmae from your captains`, 2.5); S.gold += S.purse; S.purse = 0; }
-  if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); toast(`You go aboard your ${SHIPS[t].name.toLowerCase()}`, 2.4); } }
+  if (a === 'collect'){ sfx('coins'); toast(`+${S.purse} drachmae from your captains`, 2.5); S.gold += S.purse; S.purse = 0; }
+  if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(`You go aboard your ${SHIPS[t].name.toLowerCase()}`, 2.4); } }
   if (a === 'quality'){ G.settings.quality = b.dataset.v; G.settings.detected = null; applyQuality(b.dataset.v === 'auto' ? 'high' : b.dataset.v); G.autoCheck = b.dataset.v === 'auto'; saveSettings(); }
   if (a === 'speed'){ G.settings.dev.speed = +b.dataset.v; saveSettings(); }
   if (a === 'teleport'){ G.settings.dev.teleport = !G.settings.dev.teleport; saveSettings(); }
@@ -194,7 +202,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'bottle'){ document.dispatchEvent(new Event('bottle')); closeSheet(); return; }
   if (a === 'selup'){ sel.up = b.dataset.k; render(); return; }
   if (a === 'wartake' && G.council){ const o = WAR.offers[+b.dataset.i]; S.war = {...o, city:G.council.city, foe:rival(G.council.city), got:0}; toast('Contract taken. Good hunting.', 2.5); }
-  if (a === 'warclaim' && S.war && S.war.got >= S.war.n){ S.gold += S.war.gold; toast(`${CITIES[S.war.city].name} pays you ${S.war.gold} drachmae.`, 3); S.war = null; }
+  if (a === 'warclaim' && S.war && S.war.got >= S.war.n){ S.gold += S.war.gold; sfx('coins'); toast(`${CITIES[S.war.city].name} pays you ${S.war.gold} drachmae.`, 3); S.war = null; }
   if (a === 'wardrop'){ S.war = null; }
   if (a === 'tab'){ tabs[b.dataset.sheet] = b.dataset.t; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'treasure'){ document.dispatchEvent(new Event('treasure')); closeSheet(); return; }
@@ -209,6 +217,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'bright'){ G.settings.bright = G.settings.bright === false; saveSettings(); setSeaLook(G.settings.bright); }
   if (a === 'tiny'){ G.settings.tiny = G.settings.tiny === false; saveSettings(); }
   if (a === 'cel'){ G.settings.cel = !G.settings.cel; saveSettings(); setCel(G.settings.cel); document.dispatchEvent(new Event('crew')); swapBoat(); }
+  if (a === 'sound'){ SND.on = !SND.on; saveSound(); if (SND.on) sfx('chime'); }
   if (a === 'fps'){ G.settings.showFps = !G.settings.showFps; saveSettings(); }
   if (a === 'angle'){ G.settings.angle = b.dataset.v; saveSettings(); }
   if (a === 'reset'){
@@ -220,6 +229,7 @@ sheetEl.addEventListener('click', e => {
 sheetEl.addEventListener('change', e => {
   const ci = e.target.dataset && e.target.dataset.crew;
   if (ci !== undefined){ const c = G.S.crew[+ci]; c.job = e.target.value; toast(`${c.n} is now a ${CREW.jobs[c.job].label.toLowerCase()}`, 2); save(); render(); return; }
+  const sk = e.target.dataset && e.target.dataset.snd; if (sk){ SND[sk] = +e.target.value; saveSound(); sfx(sk === 'sea' ? 'gull' : 'coin'); return; }
   const k = e.target.dataset && e.target.dataset.look; if (!k) return;
   G.S.look = {...G.S.look, [k]:e.target.value}; swapBoat(); save();
 });

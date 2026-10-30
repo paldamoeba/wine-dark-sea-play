@@ -1,9 +1,9 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=9a0fb4f';
-import {ARENA} from './arena.js?v=9a0fb4f';
-import {enemies} from './combat.js?v=9a0fb4f';
-import {G, ship, isExplored, reveal, save} from './state.js?v=9a0fb4f';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=b855190';
+import {ARENA} from './arena.js?v=b855190';
+import {enemies} from './combat.js?v=b855190';
+import {G, ship, isExplored, reveal, save} from './state.js?v=b855190';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');

@@ -1,19 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=9a0fb4f';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=9a0fb4f';
-import {G, ship, holdUsed, save, gain} from './state.js?v=9a0fb4f';
-import {scene} from './scene.js?v=9a0fb4f';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=9a0fb4f';
-import {makeFire, updateFire, burn} from './fire.js?v=9a0fb4f';
-import {blessing, fighters} from './crew.js?v=9a0fb4f';
-import {progress} from './quests.js?v=9a0fb4f';
-import {arrowK, ramDmg} from './upgrades.js?v=9a0fb4f';
-import {toast} from './ui.js?v=9a0fb4f';
-import {sink} from './player.js?v=9a0fb4f';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=9a0fb4f';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=9a0fb4f';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=b855190';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=b855190';
+import {G, ship, holdUsed, save, gain} from './state.js?v=b855190';
+import {scene} from './scene.js?v=b855190';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=b855190';
+import {makeFire, updateFire, burn} from './fire.js?v=b855190';
+import {blessing, fighters} from './crew.js?v=b855190';
+import {progress} from './quests.js?v=b855190';
+import {arrowK, ramDmg} from './upgrades.js?v=b855190';
+import {toast} from './ui.js?v=b855190';
+import {sink} from './player.js?v=b855190';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=b855190';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=b855190';
+import {sfx} from './audio.js?v=b855190';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -287,7 +288,7 @@ function throwStone(f, i){
   const [lx, lz] = FORT_GUNS[i], ca = Math.cos(f.a), sa = Math.sin(f.a), S = G.S, lead = G.v*FORTS.stoneFlight*.8;
   const st = STONES[stoneI++ % STONES.length], sp = 40 + Math.random()*30, ang = Math.random()*6.28;
   Object.assign(st, {live:true, t:0, x0:f.x + lx*ca - lz*sa, y0:f.y + lx*sa + lz*ca, tx:S.x + Math.cos(S.a)*lead + Math.cos(ang)*sp, ty:S.y + Math.sin(S.a)*lead + Math.sin(ang)*sp});
-  st.m.visible = st.r.visible = true;
+  st.m.visible = st.r.visible = true; sfx('catapult', f);
 }
 function updateStones(dt){
   for (const st of STONES){
@@ -297,10 +298,10 @@ function updateStones(dt){
     st.m.position.set(st.x0 + (st.tx - st.x0)*k, 70*(1 - k) + Math.sin(k*Math.PI)*300, st.y0 + (st.ty - st.y0)*k); st.m.rotation.x += dt*4; st.m.rotation.z += dt*3;
     st.r.position.set(st.tx, waveAt(st.tx, st.ty, G.t) + 1.5, st.ty); st.r.scale.setScalar(FORTS.stoneHit*(1.15 - k*.15)); st.r.material.opacity = .25 + k*.6;
     if (k < 1) continue;
-    st.live = false; st.m.visible = st.r.visible = false; st.splash = .9; st.sp.visible = true;
+    st.live = false; st.m.visible = st.r.visible = false; st.splash = .9; st.sp.visible = true; sfx('bigsplash', {x:st.tx, y:st.ty});
     const S = G.S;
     if (!G.sheetOpen && !G.sinking && Math.hypot(S.x - st.tx, S.y - st.ty) < FORTS.stoneHit){
-      S.hull -= FORTS.stoneDmg; G.hurt = 1; G.kick = Math.min(.25, (G.kick || 0) + .15); G.shake = 1;
+      S.hull -= FORTS.stoneDmg; G.hurt = 1; sfx('hurt'); G.kick = Math.min(.25, (G.kick || 0) + .15); G.shake = 1;
       if (!S.stoneTip){ S.stoneTip = true; toast('Hit by a catapult stone! Keep moving and turn away from the red rings.', 4); }
       if (S.hull <= 0){ sink(); enemies.forEach(e => { if (e.mode === 'chase') e.mode = 'return'; e.angry = false; e.attacked = false; }); crimeT = 0; }
     }
@@ -325,6 +326,7 @@ function witnesses(dt){
     if (e.dead || side(e) !== 'navy' || e.angry || e.city !== crimeCity) continue; // only that city's ships care
     if (dist(e, G.S) < e.spec.sight || (crimeVictim && !crimeVictim.dead && dist(e, crimeVictim) < e.spec.sight)){ e.angry = true; e.lost = 0; seen++; }
   }
+  if (seen) sfx('horn');
   if (seen) toast(seen > 1 ? `${seen} ${adj(crimeCity)} ships saw that! They will chase you until they lose sight of you.` : `An ${adj(crimeCity)} ship saw that! It will chase you until it loses sight of you.`.replace('An Spartan', 'A Spartan'), 4);
 }
 
@@ -357,14 +359,14 @@ function shoot(from, to, dmg){
   const a = ARROWS[arrowI++ % ARROWS.length], src = from || G.S, sa = from ? from.a : G.S.a, al = (Math.random() - .5)*lenOf(from)*.6;
   Object.assign(a, {live:true, from, to, dmg, t:0, x0:src.x + Math.cos(sa)*al, y0:src.y + Math.sin(sa)*al, hit:Math.random() < COMBAT.hitChance + (from ? 0 : blessing().hit || 0),
     ox:(Math.random()-.5)*70, oy:(Math.random()-.5)*70});
-  a.m.visible = true;
+  a.m.visible = true; sfx('bow', src);
 }
 function updateArrows(dt){
   for (const a of ARROWS){ if (!a.live) continue;
     const tgt = a.to || G.S, tx = tgt.x + (a.hit ? 0 : a.ox), ty = tgt.y + (a.hit ? 0 : a.oy);
     const dist = Math.hypot(tx - a.x0, ty - a.y0), dur = Math.max(.35, dist/COMBAT.arrowSpeed);
     a.t += dt/dur;
-    if (a.t >= 1){ a.live = false; a.m.visible = false; if (a.hit) land(a); else splash(tx, ty, 1); continue; }
+    if (a.t >= 1){ a.live = false; a.m.visible = false; if (a.hit) land(a); else { splash(tx, ty, 1); sfx('plop', {x:tx, y:ty}); } continue; }
     const k = a.t, h = 18 + Math.sin(k*Math.PI)*dist*.28, x = a.x0 + (tx - a.x0)*k, y = a.y0 + (ty - a.y0)*k;
     const k2 = Math.min(1, k + .02), h2 = 18 + Math.sin(k2*Math.PI)*dist*.28;
     a.m.position.set(x, h, y);
@@ -372,7 +374,7 @@ function updateArrows(dt){
   }
 }
 function land(a){
-  const tg = a.to || G.S; spark(tg.x, tg.y);
+  const tg = a.to || G.S; spark(tg.x, tg.y); sfx(a.to ? 'thud' : 'hurt', tg);
   if (a.to){ const e = a.to; if (e.dead) return; e.hull -= a.dmg; e.hitT = .25; e.quiet = 0; e.kick = Math.min(.12, (e.kick || 0) + .5*a.dmg/e.spec.len);
     if (!a.from && side(e) !== 'pirate' && !(e.fort && !e.city)) crime(e); // you shot a merchant, a navy ship or a city's fort
     if (a.from && side(e) === 'pirate' && side(a.from) === 'navy'){ e.foe = a.from; startFight(e); } // pirates fight back
@@ -405,6 +407,7 @@ function sinkEnemy(e, byPlayer){
   const coins = mesh(new T.CylinderGeometry(4.5, 5, 3, 8), '#e3ad48'); coins.position.y = 7.5; crate.add(coins);
   scene.add(crate);
   const at = e.fort ? e.sea : e; // a fort's treasury floats out in front of it
+  sfx('crash', e);
   if (e.fort) crate.scale.setScalar(1.8);
   // a merchant's cargo spills out with it: a few of its trade goods
   const goods = side(e) === 'merchant' ? {k:['wine', 'oil', 'pottery', 'obsidian'][Math.floor(Math.random()*4)], n:2 + Math.floor(Math.random()*4)} : null;
@@ -448,13 +451,13 @@ function collide(){
     S.x -= nx*over*kP; S.y -= ny*over*kP; e.x += nx*over*(1 - kP); e.y += ny*over*(1 - kP); pushOut(S, sh.beam*.6); pushOut(e, e.spec.beam*.6);
     const into = Math.cos(S.a)*nx + Math.sin(S.a)*ny, fast = G.v/sh.speed;
     if (hit.i >= 3 && into > .6 && fast > RAM.minSpeed && !e.ramT && zoneAt(S.x, S.y) !== 0){ e.ramT = RAM.cooldown; ramHit(e, Math.min(1, fast)*into); G.v *= .35; e.v *= .4; }
-    else if (!e.bumpT && G.v > 20){ e.bumpT = .8; G.kick = Math.min(.25, (G.kick || 0) + .06); G.shake = Math.min(1, (G.shake || 0) + .25); G.v *= .6; e.v *= .7; }
+    else if (!e.bumpT && G.v > 20){ e.bumpT = .8; sfx('bump', e); G.kick = Math.min(.25, (G.kick || 0) + .06); G.shake = Math.min(1, (G.shake || 0) + .25); G.v *= .6; e.v *= .7; }
   }
 }
 // A head-on hit. With a ram it hurts them a lot and you a little; without one, both ships take the same small knock.
 function ramHit(e, k){
   const S = G.S, r = ramDmg(), dmg = Math.max(1, Math.round((r || RAM.bump)*k)), self = r ? Math.round(1 + dmg*.04) : dmg;
-  e.hull -= dmg; e.hitT = .3; e.kick = .18;
+  e.hull -= dmg; e.hitT = .3; e.kick = .18; sfx('ram', e);
   S.hull -= self; G.hurt = 1; G.kick = Math.min(.25, (G.kick || 0) + .15); G.shake = 1;
   G.pops = [...(G.pops || []), {t:G.t, txt:`-${dmg}`, x:e.x, y:e.y, c:'#f2a093'}];
   if (side(e) !== 'pirate') crime(e); else startFight(e);
@@ -475,7 +478,7 @@ function flip(is, c, byPlayer){
   if (f && f.owner !== 'pirate'){ f.owner = c; f.spec = fortSpec(c); f.city = c; f.dead = false; f.sinkT = 0; f.hull = f.spec.hull*.5; f.angry = false; f.quiet = 0; buildEnemy(f);
     for (const gd of f.guards) gd.respawn = Math.min(gd.respawn, ISLES.guardBack*2); }
   enemies.forEach(o => { if (o.goal === is) o.goal = null; });
-  if (byPlayer){ G.S.gold += ISLES.reward; toast(`${is.name} raises the flag of ${cityName(c)}! ${cityName(c)} pays you ${ISLES.reward} drachmae and rebuilds the fortress.`, 5); }
+  if (byPlayer){ G.S.gold += ISLES.reward; sfx('fanfare'); toast(`${is.name} raises the flag of ${cityName(c)}! ${cityName(c)} pays you ${ISLES.reward} drachmae and rebuilds the fortress.`, 5); }
   else if (dist(is, G.S) < 4000) toast(`${cityName(c)} has taken ${is.name}.`, 3.5);
   save();
 }
@@ -488,7 +491,7 @@ export function freePort(f, quiet){
   if (!HARBORS.some(h => h.fort === f)){ const dx = Math.cos(f.a), dy = Math.sin(f.a), pier = {x:f.x + dx*120, y:f.y + dy*120, dx, dy};
     HARBORS.push({is:f.isle, pier, dock:{x:pier.x + dx*(PIER_LEN + 30), y:pier.y + dy*(PIER_LEN + 30)}, prices:{sardine:FREEPORT.fish, tuna:FREEPORT.fish, swordfish:FREEPORT.fish}, free:true, fort:f}); }
   const S = G.S; S.freePorts = [...new Set([...(S.freePorts || []), f.isle.name])];
-  if (!quiet){ S.gold += ISLES.reward; toast(`${f.isle.name} is yours! The pirates are gone and its fortress is now your free port. Dock there for cheap goods and purple dye.`, 6); save(); }
+  if (!quiet){ S.gold += ISLES.reward; sfx('fanfare'); toast(`${f.isle.name} is yours! The pirates are gone and its fortress is now your free port. Dock there for cheap goods and purple dye.`, 6); save(); }
 }
 for (const e of enemies) if (e.fort && e.owner === 'pirate' && (G.S.freePorts || []).includes(e.isle.name)) freePort(e, true);
 function updateFreePorts(dt){
@@ -548,13 +551,13 @@ function volley(){
   salvo(null, tgt, fighters()*COMBAT.volleyArrows, COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(), 70);
   // everyone leans over the rail at once: the boat heels away from the target and the view jolts
   G.kick = Math.min(.25, (G.kick || 0) + .1); G.shake = Math.min(1, (G.shake || 0) + .5);
-  toast('Volley!', 1);
+  toast('Volley!', 1); sfx('volley');
 }
 $('volleyBtn').addEventListener('click', volley);
 // Raid: attack the nearest merchant or navy ship on purpose. Your crew opens fire, and any navy ship watching will come for you.
 $('raidBtn').addEventListener('click', () => {
   const e = combatState.prey; if (!e) return;
-  crime(e); pCool = 0;
+  crime(e); pCool = 0; sfx('horn');
   if (!G.S.raidTip){ G.S.raidTip = true; toast('Only navy ships that see it will come after you. Get out of sight and they give up.', 5); }
 });
 addEventListener('keydown', e => { if (e.code === 'Space' && !G.fish && !G.sheetOpen && !G.mapOpen){ e.preventDefault(); volley(); } });

@@ -1,6 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=9a0fb4f';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=9a0fb4f';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=b855190';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=b855190';
+import {sfx} from './audio.js?v=b855190';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -46,7 +47,7 @@ export const ship = () => { const b = SHIPS[G.S.tier], key = `${G.S.tier}|${lvl(
   return shipC.v; };
 // Something picked up: a little icon and "+n" springs up from the boat, then drops back into it (drawn by overlay.js).
 // kind = 'fish' | 'tuna' | 'swordfish' | 'wood' | 'coin' | a trade good.
-export function gain(kind, n = 1, x, y){ const slot = (G.pops || []).filter(p => p.ic && G.t - p.t < .6).length; G.pops = [...(G.pops || []), {t:G.t + slot*.15, slot, ic:kind, txt:`+${n}`, x, y}]; }
+export function gain(kind, n = 1, x, y){ sfx(kind === 'coin' ? 'coin' : kind === 'sardine' ? 'fish' : kind === 'tuna' || kind === 'swordfish' ? '' : 'wood'); const slot = (G.pops || []).filter(p => p.ic && G.t - p.t < .6).length; G.pops = [...(G.pops || []), {t:G.t + slot*.15, slot, ic:kind, txt:`+${n}`, x, y}]; }
 export const holdUsed = () => Object.values(G.S.cargo).reduce((a, b) => a + (b || 0), 0);
 
 export function newSave(){
