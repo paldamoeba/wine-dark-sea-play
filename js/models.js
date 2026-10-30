@@ -1,8 +1,8 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=8e33298';
+import {hash} from './world.js?v=fdeb845';
 
 const T = window.THREE;
-import {mat} from './ships.js?v=8e33298';
+import {mat} from './ships.js?v=fdeb845';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
 export function jitter(geo, amt, seed){
@@ -13,12 +13,23 @@ export function jitter(geo, amt, seed){
 }
 
 // ---- island pieces ----
-export function cypress(){ const g = new T.Group();
+// Tree colors: cypress greens, and round trees in spring and autumn colors (blossom pink, orange, gold, lilac, lime).
+export const CYPRESS_TINTS = [['#3f5524', '#4b6429'], ['#35603a', '#447546'], ['#56682a', '#667a33'], ['#2f4d3a', '#3d6048']];
+export const ROUND_TINTS = [['#e9a3bd', '#f3c2d3'], ['#e39a3a', '#efb85a'], ['#d8c24a', '#e8d870'], ['#a88cc9', '#c2abdd'], ['#86ad4a', '#a2c45e'], ['#5f8f3a', '#77a748'], ['#d66a4a', '#e78a62']];
+export function cypress(tint = CYPRESS_TINTS[0]){ const g = new T.Group();
   const tr = mesh(new T.CylinderGeometry(1.6, 2.2, 8, 5), '#6b4a2b'); tr.position.y = 4; g.add(tr);
-  const c = mesh(new T.ConeGeometry(7, 40, 6), '#3f5524'); c.position.y = 26; g.add(c);
-  const c2 = mesh(new T.ConeGeometry(5.5, 22, 6), '#4b6429'); c2.position.y = 40; g.add(c2);
+  const c = mesh(new T.ConeGeometry(7, 40, 6), tint[0]); c.position.y = 26; g.add(c);
+  const c2 = mesh(new T.ConeGeometry(5.5, 22, 6), tint[1]); c2.position.y = 40; g.add(c2);
   const stump = mesh(new T.CylinderGeometry(2.4, 2.8, 4, 6), '#8a6a3c'); stump.position.y = 2; stump.visible = false; g.add(stump);
   g.userData = {live:[tr, c, c2], stump}; return g; }
+// A round, fluffy tree (olive, almond, fig): a short trunk and a cluster of balls.
+const ballGeo = new T.IcosahedronGeometry(1, 1);
+export function roundTree(tint = ROUND_TINTS[0], seed = 0){ const g = new T.Group();
+  const tr = mesh(new T.CylinderGeometry(1.6, 2.4, 14, 5), '#6b4a2b'); tr.position.y = 7; g.add(tr);
+  const live = [tr];
+  [[0, 22, 0, 10], [6, 18, 3, 7], [-5, 19, -3, 7.5], [1, 28, -2, 6.5]].forEach(([x, y, z, r], i) => { const b = mesh(ballGeo, tint[i % 2]); b.position.set(x, y, z); b.scale.setScalar(r*(.9 + ((seed*7 + i*3) % 5)*.05)); g.add(b); live.push(b); });
+  const stump = mesh(new T.CylinderGeometry(2.4, 2.8, 4, 6), '#8a6a3c'); stump.position.y = 2; stump.visible = false; g.add(stump);
+  g.userData = {live, stump}; return g; }
 export function house(dome){ const g = new T.Group();
   const b = mesh(new T.BoxGeometry(22, 16, 20), '#f4f1e8'); b.position.y = 8; g.add(b);
   const door = mesh(new T.BoxGeometry(.6, 8, 5), '#2c5fa8', {}, false); door.position.set(11.2, 4, 0); g.add(door);

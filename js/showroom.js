@@ -1,7 +1,8 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides. Uses the game's own builders,
 // so what you see here is exactly what sails in the game.
-import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=8e33298';
-import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=8e33298';
+import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=fdeb845';
+import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=fdeb845';
+import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS} from './models.js?v=fdeb845';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -25,6 +26,10 @@ const GROUPS = {
     {key:'athens', name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
     {key:'sparta', name:'Spartan fortress', desc:'The same plan in warmer stone, with red banners.', make:() => buildFortress('sparta', '#9e2a22')},
     {key:'pirate', name:'Pirate fortress', desc:'Dark stone on Thasos and Kos, with black banners.', make:() => buildFortress('pirate', '#231d1d')},
+    {key:'trees', name:'Trees', desc:'Every tree color on the islands: cypress greens and round trees in blossom pink, orange, gold, lilac and greens.', make:() => { const g = new T.Group();
+      CYPRESS_TINTS.forEach((t, i) => { const c = cypress(t); c.position.set(-60 + i*40, 0, -30); g.add(c); });
+      ROUND_TINTS.forEach((t, i) => { const c = roundTree(t, i); c.position.set(-90 + i*30, 0, 25 + (i % 2)*18); g.add(c); });
+      const grass = new T.Mesh(new T.CylinderGeometry(130, 140, 6, 24), new T.MeshLambertMaterial({color:'#7d9a45'})); grass.position.y = -3; g.add(grass); return g; }},
     {key:'statue', name:'Marble statue', desc:'A god on a plinth, for the harbors.', make:() => buildStatue('marble')},
     {key:'bronze', name:'Bronze statue', desc:'The same god cast in bronze.', make:() => buildStatue('bronze')},
   ]};

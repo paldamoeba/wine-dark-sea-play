@@ -1,20 +1,21 @@
 // Weather: fair, calm, windy or stormy, each for a few minutes. Storms are announced a little before they hit.
 // wave = how big the waves are; storm = dark sky, rain and lightning (0 to 1).
 // Storms wear down small boats outside the Shallows, but fish bite faster in them: a reward for the brave.
-import {G} from './state.js?v=8e33298';
-import {WEATHER_WAVES} from './world.js?v=8e33298';
-import {toast} from './ui.js?v=8e33298';
+import {G} from './state.js?v=fdeb845';
+import {WEATHER_WAVES} from './world.js?v=fdeb845';
+import {toast} from './ui.js?v=fdeb845';
 
 export const KINDS = {
   fair:  {label:'Fair',   wave:1,   storm:0,   dur:[150, 280], icon:'☀'},
   calm:  {label:'Calm',   wave:.55, storm:0,   dur:[90, 170],  icon:'☼'},
   windy: {label:'Windy',  wave:1.5, storm:.2,  dur:[90, 160],  icon:'≋'},
   storm: {label:'Storm',  wave:2.1, storm:1,   dur:[70, 130],  icon:'⚡'},
+  mist:  {label:'Misty',  wave:.5,  storm:0,   mist:1, dur:[60, 120], icon:'☁'}, // a soft white morning fog, sunlight glowing through
 };
-const NEXT = {fair:[['calm', .3], ['windy', .35], ['storm', .22], ['fair', .13]], calm:[['fair', .6], ['windy', .4]], windy:[['storm', .4], ['fair', .6]], storm:[['fair', .6], ['calm', .4]]};
+const NEXT = {fair:[['calm', .25], ['windy', .3], ['storm', .2], ['mist', .13], ['fair', .12]], calm:[['fair', .45], ['windy', .3], ['mist', .25]], mist:[['fair', .7], ['calm', .3]], windy:[['storm', .4], ['fair', .6]], storm:[['fair', .6], ['calm', .4]]};
 const WARN = 25; // seconds of warning before a storm
 const rand = ([a, b]) => a + Math.random()*(b - a);
-export const W = {kind:'fair', t:rand(KINDS.fair.dur), next:null, warned:false, bolt:6};
+export const W = {kind:'mist', t:45, next:'fair', warned:false, bolt:6}; // every voyage starts on a misty morning that soon lifts
 function pick(from){ let r = Math.random(); for (const [k, p] of NEXT[from]){ if ((r -= p) <= 0) return k; } return 'fair'; }
 
 export function updateWeather(dt){
@@ -24,11 +25,12 @@ export function updateWeather(dt){
   if (W.t <= 0){
     W.kind = W.next; W.next = null; W.warned = false; W.t = rand(KINDS[W.kind].dur);
     if (W.kind === 'calm') toast('The wind drops. A calm, glassy sea.', 3);
+    if (W.kind === 'mist') toast('A soft mist rolls over the sea.', 3);
     if (W.kind === 'windy') toast('The wind picks up. Bigger waves.', 3);
     if (W.kind === 'fair' && G.stormK > .3) toast('The storm passes.', 3);
   }
   const k = KINDS[W.kind], f = Math.min(1, dt*.25); // weather changes slowly
-  G.stormK += (k.storm - G.stormK)*f;
+  G.stormK += (k.storm - G.stormK)*f; G.mistK = (G.mistK ?? 1) + ((k.mist || 0) - (G.mistK ?? 1))*f;
   WEATHER_WAVES.k += (k.wave - WEATHER_WAVES.k)*f;
   // lightning now and then in a storm
   if (G.stormK > .6){ W.bolt -= dt; if (W.bolt <= 0){ G.flash = 1; W.bolt = 3 + Math.random()*7; } }

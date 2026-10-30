@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=8e33298';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=8e33298';
-import {G, ship, holdUsed, lvl} from './state.js?v=8e33298';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=8e33298';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=8e33298';
-import {board, active, canDeliver, goal} from './quests.js?v=8e33298';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=8e33298';
-import {shipPortrait} from './portrait.js?v=8e33298';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=8e33298';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=fdeb845';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=fdeb845';
+import {G, ship, holdUsed, lvl} from './state.js?v=fdeb845';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=fdeb845';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=fdeb845';
+import {board, active, canDeliver, goal} from './quests.js?v=fdeb845';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=fdeb845';
+import {shipPortrait} from './portrait.js?v=fdeb845';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=fdeb845';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;

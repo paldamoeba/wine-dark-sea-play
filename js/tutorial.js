@@ -1,6 +1,6 @@
 // The two "how to play" pages shown on a new game (and from Settings). Pictures are real renders of the game's boat with
 // drawn hints on top (a finger, arrows); if 3D can't draw, the old drawings are used.
-import {tutShot} from './portrait.js?v=8e33298';
+import {tutShot} from './portrait.js?v=fdeb845';
 const C = {sea:'#2f7f9a', shallow:'#6cc3bd', sand:'#e6d29c', grass:'#76883c', hill:'#8a8a74', wood:'#a3754a', deck:'#d2a873',
   foam:'#f4fbff', ink:'#22283a', ochre:'#d48a2a', skin:'#e3b591', green:'#5f9c3a', ring:'#d9cba8', parch:'#f7eed6'};
 

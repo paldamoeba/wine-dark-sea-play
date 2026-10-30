@@ -1,17 +1,34 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=8e33298';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=8e33298';
-import {G, ship, lvl} from './state.js?v=8e33298';
-import {scene} from './scene.js?v=8e33298';
-import {mesh, cypress, house, temple, gull, wreckModel} from './models.js?v=8e33298';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=8e33298';
-import {addTown, figure} from './town.js?v=8e33298';
-import {makeFire, updateFire, burn} from './fire.js?v=8e33298';
-import {sinkPose} from './sinking.js?v=8e33298';
-import {moored} from './fleet.js?v=8e33298';
-import {placeOnWaves} from './combat.js?v=8e33298';
+import {SHIPS} from './config.js?v=fdeb845';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=fdeb845';
+import {G, ship, lvl} from './state.js?v=fdeb845';
+import {scene} from './scene.js?v=fdeb845';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=fdeb845';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=fdeb845';
+import {addTown, figure} from './town.js?v=fdeb845';
+import {makeFire, updateFire, burn} from './fire.js?v=fdeb845';
+import {sinkPose} from './sinking.js?v=fdeb845';
+import {moored} from './fleet.js?v=fdeb845';
+import {placeOnWaves} from './combat.js?v=fdeb845';
 
 const T = window.THREE;
+// ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
+const POPS = [], POP_R = 1300, popEase = t => { const c = 1.9; return 1 + (c + 1)*Math.pow(t - 1, 3) + c*Math.pow(t - 1, 2); };
+function popIn(o){ Object.assign(o.userData, {s0:o.scale.x, y0:o.position.y, on:false, pop:0}); o.scale.setScalar(.001); POPS.push(o); }
+const popV = new T.Vector3();
+function updatePops(dt){
+  const z = Math.max(1, G.settings.dev.zoom || 1), r = POP_R*z, cx = G.cam.x, cy = G.cam.y;
+  for (const o of POPS){ const u = o.userData;
+    if (!u.wp){ o.updateWorldMatrix(true, false); u.wp = o.getWorldPosition(popV).clone(); }
+    const d = Math.hypot(u.wp.x - cx, u.wp.z - cy);
+    if (!u.on){ if (d < r){ u.on = true; u.pop = -Math.random()*.35; } else continue; } // a small random delay so they don't all pop at once
+    else if (d > r + 500){ u.on = false; o.scale.setScalar(.001); continue; }
+    if (u.pop >= .5) continue;
+    u.pop += dt; const k = Math.max(0, u.pop)/.5;
+    o.scale.setScalar(Math.max(.001, u.s0*popEase(Math.min(1, k)))); o.position.y = u.y0 + Math.sin(Math.min(1, k)*Math.PI)*6*u.s0;
+    if (k >= 1){ o.scale.setScalar(u.s0); o.position.y = u.y0; u.pop = .5; }
+  }
+}
 
 // ---- islands ----
 // Each island is stacked flat layers of its real outline: sand, grass, and a rocky hilltop on the bigger ones.
@@ -49,11 +66,13 @@ ISLANDS.forEach((is, i) => {
   // trees: on the grass, or on the hilltop if they land there
   is.treeObjs = [];
   const ground = grass || beach, treeAt = ([x, z]) => hill && inPoly(hill, x, z) ? hillTop : top;
-  for (let k=0;k<is.trees;k++){ const p = spotIn(R, ground, 10, 0, 0, size*.45) || spotIn(R, ground, 4) || [0, 0], c = cypress();
-    c.position.set(p[0], treeAt(p), p[1]); c.scale.setScalar(.85 + R()*.35); g.add(c); is.treeObjs.push(c); }
-  if (!is.trees && !is.port && !is.harbor && !is.frame){ const c = cypress(); c.position.set(0, treeAt([0, 0]), 0); c.scale.setScalar(.7); g.add(c); }
+  // every island gets its own mix of tree colors: some cypresses, some round trees in blossom or autumn colors
+  const tree = () => R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
+  for (let k=0;k<is.trees;k++){ const p = spotIn(R, ground, 10, 0, 0, size*.45) || spotIn(R, ground, 4) || [0, 0], c = tree();
+    c.position.set(p[0], treeAt(p), p[1]); c.scale.setScalar(.85 + R()*.35); g.add(c); is.treeObjs.push(c); popIn(c); }
+  if (!is.trees && !is.port && !is.harbor && !is.frame){ const c = tree(); c.position.set(0, treeAt([0, 0]), 0); c.scale.setScalar(.7); g.add(c); popIn(c); }
   // the mainland gets scattered trees too, just for looks
-  if (is.frame) for (let k=0;k<Math.min(60, is.area/90000);k++){ const p = spotIn(R, ground, 20); if (!p) break; const c = cypress(); c.position.set(p[0], treeAt(p), p[1]); g.add(c); }
+  if (is.frame) for (let k=0;k<Math.min(60, is.area/90000);k++){ const p = spotIn(R, ground, 20); if (!p) break; const c = tree(); c.position.set(p[0], treeAt(p), p[1]); g.add(c); popIn(c); }
   if (is.harbor) buildTown(is, g, top, R, ground, is.harbor.pier, hill);
   scene.add(g);
 });
@@ -68,7 +87,7 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   for (let k=0;k<300;k++){ const p = spotIn(R, ground, 1, px, pz, 260); if (!p) continue; const d = depthIn(ground, p[0], p[1]); if (d > best){ best = d; cx = p[0]; cz = p[1]; } }
   const houses = [];
   for (let k=0;k<90 && houses.length<(is.port ? 7 : 5);k++){ const p = spotIn(R, ground, 14, cx, cz, 120); if (flat(p, 14) && houses.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 30)) houses.push(p); }
-  houses.forEach(([x, z], k) => { const h = house(k % 2); h.position.set(x, top, z); h.rotation.y = -ang + (R()-.5)*.4; g.add(h); });
+  houses.forEach(([x, z], k) => { const h = house(k % 2); h.position.set(x, top, z); h.rotation.y = -ang + (R()-.5)*.4; g.add(h); popIn(h); });
   const keep = [...houses];
   // the temple on the highest, widest ground a little away from the houses; the statue by the pier
   let tp = null; for (let k=0;k<80 && !tp;k++){ const p = spotIn(R, ground, 24, cx, cz, 230); if (flat(p, 24) && houses.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 46)) tp = p; }
@@ -186,6 +205,7 @@ export function swapBoat(){ if (boat) scene.remove(boat); const sh = SHIPS[G.S.t
   boat.userData.fire = makeFire(sh.len, sh.beam, SPECS[sh.model].H*.9); boat.add(boat.userData.fire); scene.add(boat); }
 
 export function animateEntities(dt){
+  updatePops(dt);
   const S = G.S, t = G.t, sh = SHIPS[S.tier];
   const wh = waveAt(S.x, S.y, t);
   const fx = Math.cos(S.a)*sh.len*.4, fz = Math.sin(S.a)*sh.len*.4;
