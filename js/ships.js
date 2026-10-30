@@ -61,7 +61,8 @@ function gradTex(steps){ const d = new Uint8Array(steps.length*3); steps.forEach
 const GRAD = gradTex([150, 205, 255]); // three gentle steps
 // ---- the cel-shaded test look: two hard bands of light and dark ink outlines (a setting under Graphics) ----
 export const CEL = {on:(() => { try { return !!JSON.parse(localStorage.getItem('wine-dark-sea-settings')).cel; } catch (e) { return false; } })()};
-export function setCel(on){ CEL.on = on; GRAD.image.data.set(on ? [118, 118, 118, 255, 255, 255, 255, 255, 255] : [150, 150, 150, 205, 205, 205, 255, 255, 255]); GRAD.needsUpdate = true; }
+export function setCel(on){ CEL.on = on; GRAD.image.data.set(on ? [118, 118, 118, 255, 255, 255, 255, 255, 255] : [150, 150, 150, 205, 205, 205, 255, 255, 255]);
+  GRAD.minFilter = GRAD.magFilter = on ? T.NearestFilter : T.LinearFilter; GRAD.needsUpdate = true; } // the normal look shades smoothly; cel has hard bands
 setCel(CEL.on);
 const inkMat = new T.MeshBasicMaterial({color:'#1d1a22', side:T.BackSide});
 inkMat.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = position + normal * 0.9;'); };
@@ -190,15 +191,16 @@ function hull(s, paint){
 // pose: 'row' (seated lower, rocks with the stroke), 'stand', 'helm', 'archer' (a bow at their side, leans in to shoot).
 // Round, cute bodies: a bean shape (wide in the middle, rounded at the bottom) and a big round head, no face. Shared by crews and towns.
 const beans = {};
-export function beanGeo(h = 7.4){ return beans[h] || (beans[h] = new T.LatheGeometry([[0, 0], [2.1, .25], [3, 1.3], [3.3, 2.9], [3.1, 4.5], [2.5, 5.9], [1.5, 6.9], [0, 7.3]].map(([r, y]) => new T.Vector2(r, y*h/7.3)), 10)); }
-const headGeo = new T.SphereGeometry(3, 12, 9);
-const capGeo = new T.SphereGeometry(3.15, 12, 6, 0, Math.PI*2, 0, Math.PI/2.1), helmGeo = new T.SphereGeometry(3.35, 14, 7, 0, Math.PI*2, 0, Math.PI/1.75);
-const cheekGeo = new T.SphereGeometry(1.5, 8, 6), standGeo = new T.CylinderGeometry(.5, .7, 1.2, 6);
-const crestGeo = new T.CylinderGeometry(3.4, 3.4, 1.3, 16, 1, false, Math.PI/2, Math.PI); crestGeo.rotateX(Math.PI/2); // a solid half disc, like a horsehair crest
-const pilosGeo = new T.LatheGeometry([[3.45, 0], [3.35, 1.4], [2.8, 3], [1.8, 4.4], [.7, 5.4], [0, 5.7]].map(([r, y]) => new T.Vector2(r, y)), 16), bandGeo = new T.TorusGeometry(3.35, .5, 5, 16);
-const coneGeo = new T.LatheGeometry([[3.5, 0], [3.4, 1.6], [2.8, 3.6], [1.6, 5.6], [.5, 6.8], [0, 7]].map(([r, y]) => new T.Vector2(r, y)), 16);
-const brimGeo = new T.CylinderGeometry(6.4, 6.8, .5, 20), rimGeo = new T.TorusGeometry(3.4, .45, 5, 18), featherGeo = new T.ConeGeometry(.9, 7, 5);
-const leafGeo = new T.SphereGeometry(.8, 5, 4);
+export function beanGeo(h = 7.4){ return beans[h] || (beans[h] = new T.LatheGeometry([[0, 0], [2.1, .25], [3, 1.3], [3.3, 2.9], [3.1, 4.5], [2.5, 5.9], [1.5, 6.9], [0, 7.3]].map(([r, y]) => new T.Vector2(r, y*h/7.3)), 18)); }
+const headGeo = new T.SphereGeometry(3, 22, 16);
+const SM = {flatShading:false}; // people are smooth and round
+const capGeo = new T.SphereGeometry(3.15, 22, 9, 0, Math.PI*2, 0, Math.PI/2.1), helmGeo = new T.SphereGeometry(3.35, 24, 10, 0, Math.PI*2, 0, Math.PI/1.75);
+const cheekGeo = new T.SphereGeometry(1.5, 14, 10), standGeo = new T.CylinderGeometry(.5, .7, 1.2, 10);
+const crestGeo = new T.CylinderGeometry(3.4, 3.4, 1.3, 24, 1, false, Math.PI/2, Math.PI); crestGeo.rotateX(Math.PI/2); // a solid half disc, like a horsehair crest
+const pilosGeo = new T.LatheGeometry([[3.45, 0], [3.35, 1.4], [2.8, 3], [1.8, 4.4], [.7, 5.4], [0, 5.7]].map(([r, y]) => new T.Vector2(r, y)), 22), bandGeo = new T.TorusGeometry(3.35, .5, 8, 24);
+const coneGeo = new T.LatheGeometry([[3.5, 0], [3.4, 1.6], [2.8, 3.6], [1.6, 5.6], [.5, 6.8], [0, 7]].map(([r, y]) => new T.Vector2(r, y)), 22);
+const brimGeo = new T.CylinderGeometry(6.4, 6.8, .5, 28), rimGeo = new T.TorusGeometry(3.4, .45, 8, 24), featherGeo = new T.ConeGeometry(.7, 5.5, 10);
+const leafGeo = new T.SphereGeometry(.8, 8, 6);
 // Helmets and hats (no face under them, by choice):
 //  'hoplite'  a round bronze helmet with cheek guards and a front-to-back horsehair crest (archers, marines)
 //  'captain'  the same helmet with a tall crest running side to side, like Spartan officers wore (captains, generals)
@@ -219,37 +221,41 @@ function taper(pts, r, seg = 24, rad = 14){
   for (let i=0;i<seg;i++) for (let j=0;j<rad;j++){ const a = i*(rad + 1) + j, b = a + rad + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
 }
-// the Phrygian cap's tall top: rises from the crown and curls forward over the brow, ending in a little knob
-const phryGeo = taper([[-.4, 1.6, 0], [-.2, 4.2, 0], [.9, 6.1, 0], [2.6, 6.6, 0], [3.7, 5.7, 0]], t => 3.25*(1 - t*.82));
-function cheeks(parent, y){ for (const sg of [1, -1]){ const ch = mesh(cheekGeo, 'bronze'); ch.scale.set(.9, 1.25, .45); ch.position.set(1.1, y - 1.2, sg*2.75); parent.add(ch); } }
+// the Phrygian helmet in one smooth piece: it fits the head, rises, and its top curls forward over the brow to a little knob
+const phryGeo = taper([[-.3, -.7, 0], [-.5, 1.6, 0], [-.3, 4, 0], [.7, 6, 0], [2.4, 6.9, 0], [4, 6.5, 0], [4.9, 5.2, 0], [4.8, 3.9, 0]], t => t < .25 ? 3.45 - t*.6 : 3.3*(1 - (t - .25)/.75*.86), 48, 24);
+// the Boeotian helmet: a round dome and a wide brim that flares down, with soft folds in it
+const boeoGeo = (() => { const g = new T.LatheGeometry(new T.SplineCurve([[0, 3.7], [1.9, 3.5], [3.1, 2.7], [3.55, 1.3], [3.65, .2], [4.5, -.5], [5.5, -1.5], [6, -2.3], [5.8, -2.6]].map(([r, y]) => new T.Vector2(r, y))).getPoints(30), 36);
+  const p = g.attributes.position; for (let i=0;i<p.count;i++){ const x = p.getX(i), z = p.getZ(i), y = p.getY(i); if (y > 0) continue; const k = 1 + Math.sin(Math.atan2(x, z)*6)*.07*Math.min(1, -y/1.5); p.setX(i, x*k); p.setZ(i, z*k); p.setY(i, y - Math.max(0, x)/6*.6*Math.min(1, -y)); }
+  g.computeVertexNormals(); return g; })();
+const hm = (geo, c, o = {}) => mesh(geo, c, {...SM, ...o}); // helmets are smooth too
+function cheeks(parent, y){ for (const sg of [1, -1]){ const ch = hm(cheekGeo, 'bronze'); ch.scale.set(.9, 1.25, .45); ch.position.set(1.1, y - 1.2, sg*2.75); parent.add(ch); } }
 function helmetOn(parent, y, kind){
-  if (kind === 'pirate'){ const cap = mesh(pilosGeo, '#2e2522'); cap.position.y = y - .3; parent.add(cap);
-    const band = mesh(bandGeo, '#9b2c26'); band.rotation.x = Math.PI/2; band.position.y = y + .2; parent.add(band); return; }
-  if (kind === 'petasos'){ const brim = mesh(brimGeo, '#d9b56a'); brim.position.y = y + 1.9; parent.add(brim);
-    const crown = mesh(capGeo, '#c9a055'); crown.scale.set(.82, .7, .82); crown.position.y = y + 1.8; parent.add(crown);
-    const band = mesh(rimGeo, '#8a5530'); band.scale.setScalar(.78); band.rotation.x = Math.PI/2; band.position.y = y + 2.3; parent.add(band); return; }
+  if (kind === 'pirate'){ const cap = hm(pilosGeo, '#2e2522'); cap.position.y = y - .3; parent.add(cap);
+    const band = hm(bandGeo, '#9b2c26'); band.rotation.x = Math.PI/2; band.position.y = y + .2; parent.add(band); return; }
+  if (kind === 'petasos'){ const brim = hm(brimGeo, '#d9b56a'); brim.position.y = y + 1.9; parent.add(brim);
+    const crown = hm(capGeo, '#c9a055'); crown.scale.set(.82, .7, .82); crown.position.y = y + 1.8; parent.add(crown);
+    const band = hm(rimGeo, '#8a5530'); band.scale.setScalar(.78); band.rotation.x = Math.PI/2; band.position.y = y + 2.3; parent.add(band); return; }
   if (kind === 'laurel'){ for (let i=0;i<14;i++){ const a = i/14*Math.PI*2; if (Math.cos(a) > .8) continue; // open at the front
-      const l = mesh(leafGeo, '#d9b13f'); l.scale.set(1.1, .5, .6); l.position.set(Math.cos(a)*3.15, y + 1.3 + Math.sin(i*2.1)*.15, Math.sin(a)*3.15); l.rotation.y = -a; l.rotation.z = (i % 2 ? .5 : -.5); parent.add(l); }
+      const l = hm(leafGeo, '#d9b13f'); l.scale.set(1.1, .5, .6); l.position.set(Math.cos(a)*3.15, y + 1.3 + Math.sin(i*2.1)*.15, Math.sin(a)*3.15); l.rotation.y = -a; l.rotation.z = (i % 2 ? .5 : -.5); parent.add(l); }
     return; }
-  if (kind === 'spartan'){ const c = mesh(coneGeo, 'bronze'); c.position.y = y - .2; parent.add(c);
-    const r = mesh(rimGeo, '#8a6330'); r.rotation.x = Math.PI/2; r.position.y = y; parent.add(r); return; }
-  if (kind === 'boeotian'){ const hm = mesh(helmGeo, 'bronze'); hm.position.y = y + .25; parent.add(hm);
-    const brim = mesh(new T.CylinderGeometry(4.6, 5.6, 1.6, 16, 1, true), 'bronze', {side:T.DoubleSide}); brim.position.y = y - .2; brim.rotation.z = -.12; parent.add(brim);
-    const knob = mesh(cheekGeo, 'bronze'); knob.scale.set(1, .6, .7); knob.position.y = y + 3.4; parent.add(knob); return; }
-  const hm = mesh(helmGeo, 'bronze'); hm.position.y = y + .25; parent.add(hm);
-  if (kind === 'phrygian'){ // a bronze cap whose top curls forward, a ridge of decoration along it, big cheek guards
-    const top = mesh(phryGeo, 'bronze', {flatShading:false}); top.position.y = y; parent.add(top);
-    const knob = mesh(cheekGeo, '#d4a24c'); knob.scale.setScalar(.55); knob.position.set(3.75, y + 5.5, 0); parent.add(knob);
-    const band = mesh(rimGeo, '#d4a24c'); band.rotation.x = Math.PI/2; band.position.y = y + .1; parent.add(band);
-    for (const sg of [1, -1]){ const ch = mesh(cheekGeo, 'bronze'); ch.scale.set(1.15, 1.5, .45); ch.position.set(1, y - 1.3, sg*2.8); parent.add(ch); }
+  if (kind === 'spartan'){ const c = hm(coneGeo, 'bronze'); c.position.y = y - .2; parent.add(c);
+    const r = hm(rimGeo, '#8a6330'); r.rotation.x = Math.PI/2; r.position.y = y; parent.add(r); return; }
+  if (kind === 'boeotian'){ const hb = hm(boeoGeo, 'bronze', {side:T.DoubleSide}); hb.position.y = y + .1; parent.add(hb);
+    const r = hm(rimGeo, '#d4a24c'); r.scale.set(1.06, 1.06, 1.4); r.rotation.x = Math.PI/2; r.position.y = y + .5; parent.add(r); return; }
+  if (kind === 'phrygian'){ // a bronze cap that rises and curls forward, a gold band and knob, big cheek guards
+    const top = hm(phryGeo, 'bronze', {side:T.DoubleSide}); top.position.y = y; parent.add(top);
+    const knob = hm(cheekGeo, '#d4a24c'); knob.scale.setScalar(.5); knob.position.set(4.8, y + 3.7, 0); parent.add(knob);
+    const band = hm(rimGeo, '#d4a24c'); band.scale.set(1.02, 1.02, 1.3); band.rotation.x = Math.PI/2; band.position.set(-.3, y - .3, 0); parent.add(band);
+    for (const sg of [1, -1]){ const ch = hm(cheekGeo, 'bronze'); ch.scale.set(1.1, 1.45, .4); ch.position.set(1.2, y - 1.4, sg*2.95); ch.rotation.x = -sg*.15; parent.add(ch); }
     return; }
+  const dome = hm(helmGeo, 'bronze'); dome.position.y = y + .25; parent.add(dome);
   cheeks(parent, y);
-  const neck = mesh(cheekGeo, 'bronze'); neck.scale.set(.5, .9, 1.6); neck.position.set(-2.6, y - .9, 0); parent.add(neck);
+  const neck = hm(cheekGeo, 'bronze'); neck.scale.set(.5, .9, 1.6); neck.position.set(-2.6, y - .9, 0); parent.add(neck);
   const capt = kind === 'captain';
-  const st = mesh(standGeo, 'bronze'); st.position.y = y + 3.6; parent.add(st);
-  const cr = mesh(crestGeo, capt ? '#f1e6c8' : kind === 'attic' ? '#2f5f8a' : 'plume'); cr.scale.set(capt ? 1.2 : 1.05, capt ? 1.45 : 1, capt ? 1 : .9); cr.position.y = y + 2.6;
-  if (capt){ cr.rotation.y = Math.PI/2; const rim = mesh(crestGeo, 'plume'); rim.scale.set(1.32, 1.58, .55); rim.rotation.y = Math.PI/2; rim.position.set(.1, y + 2.5, 0); parent.add(rim); }
-  if (kind === 'attic') for (const sg of [1, -1]){ const f = mesh(featherGeo, '#f4efe2'); f.position.set(-.2, y + 4.6, sg*2.9); f.rotation.x = -sg*.25; parent.add(f); }
+  const st = hm(standGeo, 'bronze'); st.position.y = y + 3.6; parent.add(st);
+  const cr = hm(crestGeo, capt ? '#f1e6c8' : kind === 'attic' ? '#2f5f8a' : 'plume'); cr.scale.set(capt ? 1.2 : 1.05, capt ? 1.45 : 1, capt ? 1 : .9); cr.position.y = y + 2.6;
+  if (capt){ cr.rotation.y = Math.PI/2; const rim = hm(crestGeo, 'plume'); rim.scale.set(1.32, 1.58, .55); rim.rotation.y = Math.PI/2; rim.position.set(.1, y + 2.5, 0); parent.add(rim); }
+  if (kind === 'attic') for (const sg of [1, -1]){ const f = hm(featherGeo, '#f4efe2'); f.position.set(-.2, y + 4.6, sg*2.9); f.rotation.x = -sg*.25; parent.add(f); }
   parent.add(cr);
 }
 // fine strands drawn on the hair, from the crown down (you liked the look of hair when the shadows striped them)
@@ -259,18 +265,19 @@ function hairTex(){ if (hairT) return hairT; const c = document.createElement('c
   for (let i=0;i<64;i++){ const x = i*2 + (i % 3)*.6; g.fillStyle = i % 2 ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.18)'; g.fillRect(x, 0, 1, 32); }
   hairT = new T.CanvasTexture(c); hairT.wrapS = T.RepeatWrapping; return hairT; }
 // a big round head (no eyes, by choice), hair or a helmet; y = the head's center. helmet: false, true (hoplite) or a kind above.
-export function cuteHead(parent, y, hairColor = 'hair', helmet = false){
-  const head = mesh(headGeo, 'skin'); head.position.y = y; parent.add(head);
+export function cuteHead(parent, y, hairColor = 'hair', helmet = false){ const n0 = parent.children.length;
+  const head = mesh(headGeo, 'skin', SM); head.position.y = y; parent.add(head);
   const kind = helmet === true ? 'hoplite' : helmet;
-  if (!kind || HATS.includes(kind)){ const hair = mesh(capGeo, hairColor, {map:hairTex()}); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
+  if (!kind || HATS.includes(kind)){ const hair = mesh(capGeo, hairColor, {...SM, map:hairTex()}); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
   if (kind) helmetOn(parent, y, kind);
+  parent.children.slice(n0).forEach(m => { m.receiveShadow = false; m.userData.ns = true; }); // no shadow blotches sliding over heads and helmets as people move
 }
 // A crew member: a round peg figure like the townspeople, a body and a head with no arms or legs. About 13 units tall. Faces +x.
 // pose: 'row' (seated lower, rocks with the stroke), 'stand', 'helm', 'archer' (a bow at their side, leans in to shoot).
 export function person(tunic, pose = 'stand', helmet = false){
   const g = new T.Group(), inner = new T.Group(); g.add(inner);
   const sit = pose === 'row', base = sit ? 1.6 : .3, h = sit ? 5.2 : 6.6; // standing people stand right on the deck
-  const body = mesh(beanGeo(h), tunic); body.position.y = base; body.scale.set(.85, 1, .85); inner.add(body);
+  const body = mesh(beanGeo(h), tunic, SM); body.receiveShadow = false; body.userData.ns = true; body.position.y = base; body.scale.set(.85, 1, .85); inner.add(body);
   cuteHead(inner, base + h + 2.1, 'hair', helmet);
   if (pose === 'archer'){ const bow = mesh(new T.TorusGeometry(4.6, .35, 4, 10, Math.PI*.8), 'bow'); bow.rotation.set(0, 0, Math.PI*.6); bow.position.set(3.4, base + 4.5, 0); inner.add(bow); }
   g.userData = {inner, pose};
@@ -371,10 +378,15 @@ function torch(){
 // Light or put out a ship's torches. light = also give each one a real point light (pretty, but costly on phones).
 export function setTorches(root, on, light = false){
   for (const t of root.userData.torches || []){ t.visible = on;
-    if (on && light && !t.userData.light){ const l = new T.PointLight('#ff9c48', 1.2, 150, 2); l.userData.base = 1.2; l.position.y = 17; t.add(l); t.userData.light = l; }
+    if (on && light && !t.userData.light){ const b = t.userData.lb || 1.2, l = new T.PointLight('#ff9c48', b, 150, 2); l.userData.base = b; l.position.y = t.userData.ly || 17; t.add(l); t.userData.light = l; }
     if (t.userData.light) t.userData.light.visible = on && light; }
 }
 
+// Torch and fire bowl flames dance and their lights flicker (ships, and the fire bowls around statues).
+export function flicker(root, t){
+  for (const tc of root.userData.torches || []) if (tc.visible){ const f = tc.userData.flame, k = 1 + Math.sin(t*13 + tc.userData.ph)*.08 + Math.sin(t*23 + tc.userData.ph*2)*.06;
+    f.scale.set(1/k, k, 1/k); f.rotation.y = t*2; if (tc.userData.light) tc.userData.light.intensity = tc.userData.light.userData.base*(.85 + .15*k); }
+}
 // Build a ship. look = {paint, sail, flag, helm (the archers' helmet), sailLv (the player's sail upgrades)}; crew = show the crew.
 export function buildShip(key, look = {}, crew = true){
   const s = SPECS[key], lk = {...s.look, ...look}, root = new T.Group(), body = new T.Group(); root.add(body);
@@ -495,69 +507,112 @@ export function animateShip(root, t, speed){
     if (pose === 'row') inner.rotation.z = Math.sin(t*2.6 + c.ph)*.25*row;                                  // rocking with the oar
     else if (pose === 'archer') inner.rotation.z = root.userData.firing ? -.18*(.5 + .5*Math.sin(t*5 + c.ph*9)) : 0; } // leaning in to shoot
   (root.userData.sails || []).forEach((sl, i) => { sl.scale.x = 1 + Math.min(.9, speed/80) + Math.sin(t*1.3 + i)*.06; });
-  for (const tc of root.userData.torches || []) if (tc.visible){ const f = tc.userData.flame, k = 1 + Math.sin(t*13 + tc.userData.ph)*.08 + Math.sin(t*23 + tc.userData.ph*2)*.06;
-    f.scale.set(1/k, k, 1/k); f.rotation.y = t*2; if (tc.userData.light) tc.userData.light.intensity = tc.userData.light.userData.base*(.85 + .15*k); }
+  flicker(root, t);
   root.userData.flags.forEach(f => { const p = f.geometry.attributes.position, b = f.userData.flagBase;
     for (let i=0;i<p.count;i++){ const x = b[i*3]; p.setZ(i, Math.sin(x*.5 + t*6)*(-x)*.06); } p.needsUpdate = true; });
 }
 
 // ---------- statues ----------
-function limb(a, b, r1, r2, color){
-  const A = new T.Vector3(...a), B = new T.Vector3(...b);
-  const m = mesh(new T.CylinderGeometry(r2, r1, A.distanceTo(B), 6), color);
-  m.position.copy(A).add(B).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), B.clone().sub(A).normalize()); return m;
+// Statues are smooth: one turned body with soft folds in the robe, rounded arms, a round head, with soft shading
+// (a little shine on bronze) instead of the flat facets of boats and houses. Fire bowls stand at the corners and burn at night.
+const smats = {};
+const smat = (c, shine = 10) => smats[c + shine] || (smats[c + shine] = new T.MeshPhongMaterial({color:c === 'vc' ? '#ffffff' : P[c] || c, vertexColors:c === 'vc', shininess:shine, specular:new T.Color(shine > 20 ? '#6a5030' : '#262626')}));
+function sm(geo, c, shine){ const m = new T.Mesh(geo, smat(c, shine)); m.castShadow = m.receiveShadow = true; return m; }
+const sphere = (r, c, shine, sx = 1, sy = 1, sz = 1) => { const m = sm(new T.SphereGeometry(r, 24, 16), c, shine); m.scale.set(sx, sy, sz); return m; };
+// the body from the hem of the robe to the neck, turned on a lathe; colorAt(x, y, z) paints it (robe, bare skin, a drape)
+function statueBody(colorAt, shine){
+  const prof = new T.SplineCurve([[11.5, 0], [10.6, 3], [9.2, 10], [8.2, 18], [7.4, 26], [7.3, 30], [8.1, 35], [8.8, 39], [8.7, 42], [7.6, 45], [5, 47], [3, 48.4], [2.7, 51]].map(([r, y]) => new T.Vector2(r, y))).getPoints(64);
+  const geo = new T.LatheGeometry(prof, 44), pos = geo.attributes.position, col = new Float32Array(pos.count*3);
+  for (let i=0;i<pos.count;i++){ const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), a = Math.atan2(x, z);
+    const fold = 1 + Math.sin(a*9)*.045*Math.max(0, 1 - y/30); // soft folds, deepest at the hem
+    pos.setX(i, x*fold*.8); pos.setZ(i, z*fold); }
+  for (let i=0;i<pos.count;i++){ const c = colorAt(pos.getX(i), pos.getY(i), pos.getZ(i)); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.computeVertexNormals();
+  return sm(geo, 'vc', shine);
+}
+// a fire bowl on three bronze legs; returns the stand and its flame (the flame is what lights at night)
+const bowlLathe = new T.LatheGeometry([[0, 0], [1.6, .2], [3.4, 1.4], [4.2, 3], [4.4, 3.4], [3.9, 3.5]].map(([x, y]) => new T.Vector2(x, y)), 20);
+function brazier(){
+  const g = new T.Group();
+  for (let k=0;k<3;k++){ const a = k/3*Math.PI*2, leg = sm(taper([[Math.cos(a)*3.2, 0, Math.sin(a)*3.2], [Math.cos(a)*1.6, 6, Math.sin(a)*1.6], [Math.cos(a)*2.2, 11, Math.sin(a)*2.2]], () => .45, 10, 6), 'bronze', 40); g.add(leg); }
+  const bowl = sm(bowlLathe, 'bronze', 40); bowl.position.y = 10.6; g.add(bowl);
+  const flame = new T.Group(); flame.position.y = 13.4; flame.visible = false; g.add(flame);
+  const f = new T.Mesh(flameGeo, flameMat); f.position.y = 2.6; f.scale.setScalar(1.15); f.userData.glow = true; flame.add(f);
+  const c = new T.Mesh(coreGeo, coreMat); c.position.y = 1.8; c.userData.glow = true; flame.add(c);
+  flame.userData = {flame, ph:torchN++ % 97, ly:5, lb:.45};
+  return {g, flame};
 }
 export function statue(god, stone = 'painted'){
-  const g = new T.Group();
-  const skinC = stone === 'bronze' ? '#a3733d' : '#e8e2d6';
-  const robeC = stone === 'bronze' ? '#8f6332' : stone === 'painted' ? ({poseidon:'#41699f', zeus:'#5c3470', athena:'#71873f', apollo:'#cf9035', artemis:'#26473e'})[god] : '#ded7c9';
-  const hairC = stone === 'painted' ? '#6b4a2a' : skinC, goldC = stone === 'marble' ? '#d9d1c1' : '#dcb453';
-  const p1 = mesh(new T.BoxGeometry(48, 6, 48), '#d3cab6'); p1.position.y = 3; g.add(p1);
-  const p2 = mesh(new T.BoxGeometry(38, 9, 38), '#e2dbcb'); p2.position.y = 10.5; g.add(p2);
-  const base = 15, bare = god === 'poseidon' || god === 'zeus';
-  if (god === 'poseidon'){ const wave = mesh(new T.TorusGeometry(9, 3.6, 6, 10, Math.PI), robeC); wave.position.set(-2, base, 0); wave.rotation.y = Math.PI/2; g.add(wave); }
-  const robe = mesh(new T.CylinderGeometry(6.6, 10, 30, 10), robeC); robe.position.y = base + 15; g.add(robe);
-  const torso = mesh(new T.CylinderGeometry(8, 6.6, 16, 9), bare ? skinC : robeC); torso.position.y = base + 38; g.add(torso);
-  const sash = mesh(new T.BoxGeometry(2.4, 20, 15), robeC); sash.position.set(.5, base + 37, 0); sash.rotation.x = .75; g.add(sash);
-  const shoulders = mesh(new T.BoxGeometry(9, 5, 20), bare ? skinC : robeC); shoulders.position.y = base + 46; g.add(shoulders);
-  const neck = mesh(new T.CylinderGeometry(2.6, 3, 4, 6), skinC); neck.position.y = base + 50; g.add(neck);
-  const head = mesh(new T.IcosahedronGeometry(5.6, 1), skinC); head.position.y = base + 56; g.add(head);
-  const nose = mesh(new T.BoxGeometry(2, 2.6, 1.4), skinC); nose.position.set(5.4, base + 56, 0); g.add(nose);
-  const hair = mesh(new T.SphereGeometry(6, 9, 5, 0, Math.PI*2, 0, Math.PI/2), hairC); hair.position.set(-.8, base + 56.6, 0); hair.rotation.z = .25; g.add(hair);
-  if (bare){ const beard = mesh(new T.ConeGeometry(4.6, 10, 7), hairC); beard.rotation.z = Math.PI; beard.position.set(3, base + 50, 0); g.add(beard); }
-  if (god === 'zeus' || god === 'apollo'){ const w = mesh(new T.TorusGeometry(5.8, 1, 5, 16), god === 'apollo' && stone !== 'marble' ? '#7d9a48' : goldC); w.rotation.x = Math.PI/2; w.position.y = base + 58.5; g.add(w); }
-  if (god === 'athena'){
-    const helm = mesh(new T.SphereGeometry(6.4, 10, 6, 0, Math.PI*2, 0, Math.PI/1.8), stone === 'marble' ? skinC : '#c4a04c'); helm.position.y = base + 56.5; g.add(helm);
-    const crest = mesh(new T.BoxGeometry(15, 6, 1.8), stone === 'painted' ? '#bd4a37' : robeC); crest.position.set(-1.5, base + 64, 0); g.add(crest);
-  }
-  const shL = [0, base + 46, -10], shR = [0, base + 46, 10];
-  const arm = (sh, el, hand) => { g.add(limb(sh, el, 2.4, 2.1, skinC)); g.add(limb(el, hand, 2.1, 1.8, skinC)); const f = mesh(new T.SphereGeometry(2.3, 6, 5), skinC); f.position.set(...hand); g.add(f); };
-  const staff = (x, z, top) => { const s = mesh(new T.CylinderGeometry(.9, .9, top - base + 2, 6), goldC); s.position.set(x, (top + base)/2, z); g.add(s); return top; };
+  const g = new T.Group(), shine = stone === 'bronze' ? 45 : stone === 'marble' ? 14 : 8;
+  const skinC = stone === 'bronze' ? '#a3733d' : '#efe9de';
+  const robeC = stone === 'bronze' ? '#8f6332' : stone === 'painted' ? ({poseidon:'#41699f', zeus:'#5c3470', athena:'#71873f', apollo:'#cf9035', artemis:'#26473e'})[god] : '#e2dccf';
+  const hairC = stone === 'painted' ? '#6b4a2a' : skinC, goldC = stone === 'marble' ? '#ddd5c4' : '#dcb453', trimC = stone === 'painted' ? '#e8c867' : robeC;
+  // the pedestal: a step, a block with a molding top and bottom
+  const stoneC = '#e2dbcb';
+  [[48, 5, 2.5, '#d3cab6'], [40, 2.4, 6.2, stoneC], [35, 10, 12.4, stoneC], [40, 2.6, 18.7, '#ece6d8']].forEach(([w, h, y, c]) => { const b = mesh(new T.BoxGeometry(w, h, w), c); b.position.y = y; g.add(b); });
+  const base = 20, bare = god === 'poseidon' || god === 'zeus', S = base + 0;
+  const RC = new T.Color(robeC), SC = new T.Color(skinC), TC = new T.Color(trimC);
+  // bare-chested gods wear the robe from the waist down, with a drape over the left shoulder
+  const body = statueBody((x, y, z) => {
+    if (y < 1.4 || (y > 28.6 && y < 30.2)) return TC; // a gold hem and belt
+    return !bare || y < 29 ? RC : SC; }, shine);
+  body.position.y = S; g.add(body);
+  if (bare){ const drape = new T.CatmullRomCurve3([[0, 48, -8.2], [6, 42, -3.5], [6.6, 36, 2.5], [5, 31, 7.6], [0, 29.6, 9.4], [-5, 31, 7.6], [-6.6, 36, 2.5], [-6, 42, -3.5]].map(p => new T.Vector3(...p)), true);
+    const d = sm(new T.TubeGeometry(drape, 60, 1.9, 12, true), robeC, shine); d.scale.set(.98, 1, 1); d.position.y = S; g.add(d); }
+  if (god === 'poseidon'){ const wave = sm(taper([[4, 0, 12], [9, 4, 9], [11, 9, 4], [8, 12, 1], [5, 10, 2]], t => 2.6*(1 - t*.6), 24, 12), robeC, shine); wave.position.y = S; g.add(wave); }
+  // the head: round, a small nose, hair, and a beard for Zeus and Poseidon
+  const hy = S + 56;
+  const neck = sm(new T.CylinderGeometry(2.6, 3, 5, 16), skinC, shine); neck.position.y = S + 51.5; g.add(neck);
+  const head = sphere(5.4, skinC, shine, 1, 1.05, .96); head.position.y = hy; g.add(head);
+  const nose = sphere(1, skinC, shine, .9, 1.5, .8); nose.position.set(5.2, hy - .5, 0); g.add(nose);
+  const hair = sm(new T.SphereGeometry(5.75, 28, 14, 0, Math.PI*2, 0, Math.PI/2), hairC, shine); hair.position.set(-.5, hy + .2, 0); hair.rotation.z = .35; g.add(hair);
+  if (god === 'artemis' || god === 'apollo'){ const bun = sphere(2.6, hairC, shine); bun.position.set(-5.2, hy + 1.5, 0); g.add(bun); }
+  if (bare){ const beard = sphere(4, hairC, shine, .85, 1.25, 1.05); beard.position.set(2.8, hy - 4.6, 0); g.add(beard); }
+  if (god === 'zeus' || god === 'apollo'){ const w = sm(new T.TorusGeometry(5.6, .85, 8, 36), god === 'apollo' && stone !== 'marble' ? '#7d9a48' : goldC, shine + 20); w.rotation.set(Math.PI/2, .18, 0); w.position.set(-.3, hy + 2.4, 0); g.add(w); }
+  if (god === 'athena'){ // a smooth bronze helmet with a tall curved red crest
+    const helm = sm(new T.SphereGeometry(6.1, 28, 14, 0, Math.PI*2, 0, Math.PI/1.85), stone === 'marble' ? skinC : '#c4a04c', 40); helm.position.set(-.3, hy + .4, 0); g.add(helm);
+    const crest = sm(taper([[4.2, hy + 4.4, 0], [1, hy + 8.6, 0], [-3.5, hy + 8.4, 0], [-6.6, hy + 4.4, 0], [-7.2, hy + 1, 0]], t => .9 + Math.sin(Math.PI*Math.min(1, t*1.15))*1.6, 30, 12), stone === 'painted' ? '#bd4a37' : robeC, shine);
+    crest.scale.z = .6; g.add(crest); }
+  // arms: rounded tubes from the shoulder through the elbow to a round hand; sleeves for the robed gods
+  const shL = [0, S + 43, -9.4], shR = [0, S + 43, 9.4];
+  const arm = (sh, el, hand) => { g.add(sm(taper([sh, el, hand], t => 2.6 - .7*t, 20, 12), skinC, shine));
+    const top = sphere(3.1, bare && sh[2] > 0 ? skinC : robeC, shine); top.position.set(...sh); g.add(top);
+    const f = sphere(2.2, skinC, shine); f.position.set(...hand); g.add(f); };
+  const staff = (x, z, top) => { const s = sm(new T.CylinderGeometry(.85, .85, top - S + 2, 12), goldC, shine + 25); s.position.set(x, (top + S)/2, z); g.add(s); return top; };
   if (god === 'poseidon'){
-    arm(shR, [2, base + 44, 16], [3, base + 52, 15.5]); const top = staff(3, 15.5, base + 84);
-    const bar = mesh(new T.BoxGeometry(1.6, 1.8, 13), goldC); bar.position.set(3, top - 4, 15.5); g.add(bar);
-    for (const dz of [-5.5, 0, 5.5]){ const pr = mesh(new T.ConeGeometry(1.4, 10, 5), goldC); pr.position.set(3, top + 1.5, 15.5 + dz); g.add(pr); }
-    arm(shL, [1, base + 36, -12], [3, base + 27, -11]);
+    arm(shR, [3, S + 38, 15], [3, S + 48, 15.5]); const top = staff(3, 15.5, S + 84);
+    const bar = sm(taper([[3, top - 4, 9.5], [3, top - 6.5, 15.5], [3, top - 4, 21.5]], () => .8, 16, 8), goldC, shine + 25); g.add(bar);
+    for (const dz of [-6, 0, 6]){ const pr = sm(new T.ConeGeometry(1.2, 9, 12), goldC, shine + 25); pr.position.set(3, top + (dz ? -.6 : 2), 15.5 + dz); g.add(pr); }
+    arm(shL, [2, S + 34, -12], [5, S + 26, -10.5]);
   } else if (god === 'zeus'){
-    arm(shR, [-4, base + 54, 14], [-6, base + 64, 12]);
+    arm(shR, [-3, S + 52, 14], [-5, S + 62, 12]);
     const shape = new T.Shape([[0,-11],[3.5,-1],[0,-1],[3,10],[-3.5,-2],[0,-2],[-2.5,-11]].map(([x, y]) => new T.Vector2(x, y)));
-    const bolt = mesh(new T.ExtrudeGeometry(shape, {depth:2.4, bevelEnabled:false}), goldC); bolt.position.set(-6, base + 66, 11); bolt.rotation.set(0, Math.PI/2, .5); g.add(bolt);
-    arm(shL, [7, base + 42, -12], [15, base + 41, -8]);
+    const bolt = sm(new T.ExtrudeGeometry(shape, {depth:1.4, bevelEnabled:true, bevelThickness:.5, bevelSize:.5, bevelSegments:3}), goldC, shine + 25); bolt.position.set(-5.4, S + 64, 11.4); bolt.rotation.set(0, Math.PI/5, .5); g.add(bolt);
+    arm(shL, [7, S + 38, -12], [14, S + 40, -8]);
   } else if (god === 'athena'){
-    arm(shR, [2, base + 44, 16], [3, base + 52, 15.5]); const top = staff(3, 15.5, base + 86);
-    const tip = mesh(new T.ConeGeometry(1.8, 8, 5), goldC); tip.position.set(3, top + 4, 15.5); g.add(tip);
-    arm(shL, [2, base + 36, -13], [4, base + 29, -14]);
-    const shield = mesh(new T.CylinderGeometry(12, 12, 1.8, 18), stone === 'painted' ? '#c4a04c' : goldC); shield.rotation.x = Math.PI/2; shield.position.set(4, base + 22, -17); g.add(shield);
+    arm(shR, [3, S + 38, 15], [3, S + 48, 15.5]); const top = staff(3, 15.5, S + 86);
+    const tip = sphere(1.6, goldC, shine + 25, .45, 3, 1); tip.position.set(3, top + 4, 15.5); g.add(tip);
+    arm(shL, [3, S + 33, -12.5], [5, S + 26, -13.5]);
+    const shield = sm(new T.LatheGeometry([[0, 2.2], [6, 1.9], [10.5, 1], [12.6, .5], [12.8, -.4], [11.4, -.6], [0, -.2]].map(([x, y]) => new T.Vector2(x, y)), 36), stone === 'painted' ? '#c4a04c' : goldC, 40);
+    shield.rotation.x = -Math.PI/2; shield.position.set(5, S + 24, -16.5); g.add(shield);
+    if (stone === 'painted'){ const owl = sm(new T.CircleGeometry(4, 24), '#bd4a37', 8); owl.position.set(5, S + 24, -18.75); owl.rotation.y = Math.PI; g.add(owl); }
   } else if (god === 'apollo'){
-    arm(shL, [5, base + 36, -12], [8, base + 38, -5]);
-    const lyre = new T.Group(); lyre.position.set(9, base + 38, -4); g.add(lyre);
-    for (const dz of [-3.6, 3.6]) lyre.add(limb([0, 0, dz*.6], [0, 13, dz*1.3], 1, .8, goldC));
-    const bar = mesh(new T.BoxGeometry(1.2, 1.2, 11), goldC); bar.position.y = 12.5; lyre.add(bar);
-    arm(shR, [6, base + 40, 13], [12, base + 40, 5]);
+    const lyre = new T.Group(); lyre.position.set(10, S + 31, -4); lyre.rotation.x = .25; g.add(lyre);
+    const box = sphere(4, goldC, shine + 25, .7, .55, 1); lyre.add(box);
+    for (const sd of [-1, 1]) lyre.add(sm(taper([[0, 1, sd*2.4], [0, 7, sd*5], [0, 12, sd*4.2], [0, 14, sd*5.6]], t => .9 - t*.3, 16, 8), goldC, shine + 25));
+    const bar = sm(new T.CylinderGeometry(.6, .6, 11, 10), goldC, shine + 25); bar.rotation.x = Math.PI/2; bar.position.y = 12.2; lyre.add(bar);
+    for (const dz of [-1.6, 0, 1.6]){ const s = new T.Mesh(new T.CylinderGeometry(.12, .12, 10, 4), smat('#f4efe2')); s.position.set(.2, 7, dz); lyre.add(s); }
+    arm(shL, [5, S + 33, -12], [9, S + 30, -6]);
+    arm(shR, [6, S + 36, 13], [11, S + 34, 3]);
   } else if (god === 'artemis'){ // the huntress holds up her bow
-    arm(shL, [5, base + 42, -14], [12, base + 45, -13]);
-    const bow = mesh(new T.TorusGeometry(13, .9, 5, 14, Math.PI*.85), goldC); bow.position.set(13, base + 45, -13); bow.rotation.set(0, Math.PI/2, Math.PI*.575); g.add(bow);
-    arm(shR, [2, base + 36, 13], [4, base + 28, 13]);
+    arm(shL, [5, S + 40, -14], [12, S + 43, -13]);
+    const bow = sm(new T.TorusGeometry(16, .7, 8, 32, Math.PI*.6), goldC, shine + 25); bow.position.set(12, S + 43, 2); bow.rotation.set(0, -Math.PI/2, Math.PI*.7); g.add(bow);
+    const str = new T.Mesh(new T.CylinderGeometry(.12, .12, 32*Math.sin(Math.PI*.3), 4), smat('#f4efe2')); str.position.set(12, S + 43, 2 - 16*Math.cos(Math.PI*.3)); g.add(str); // the bowstring
+    arm(shR, [2, S + 33, 13], [4, S + 26, 13]);
+    const quiver = sm(new T.CylinderGeometry(1.8, 1.5, 14, 14), '#7a4a22', 8); quiver.position.set(-8, S + 40, 3); quiver.rotation.x = .5; g.add(quiver);
   }
+  // fire bowls at the four corners, lit at night (setTorches)
+  g.userData.torches = [];
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]){ const b = brazier(); b.g.position.set(x*20.5, 5, z*20.5); g.add(b.g); g.userData.torches.push(b.flame); }
   return g;
 }

@@ -417,3 +417,13 @@ button.goal .more{color:var(--ochre);font-weight:800}
 @media (max-width:480px){ .hud{right:calc(128px + env(safe-area-inset-right,0px))} #wxChip{padding:3px 4px} }
 .toast.near{width:max-content;max-width:min(320px,calc(100vw - 32px))}
 .toast{z-index:3}
+
+/* ---- HUD, prototype 36: a short hull bar, and a book button (under the map) that opens your goal and jobs ---- */
+.hud{right:auto;align-items:flex-start}
+.lifebar{max-width:none;padding:3px 7px 3px 3px}
+.lifebar .ic{width:20px;height:20px;border-radius:6px}.lifebar .ic svg{width:16px;height:16px}
+.lifebar .bar{flex:none;width:min(34vw,130px);min-width:0;height:9px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.goalwrap button.goal.book{width:52px;height:52px;padding:0;border-radius:14px;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.goal.book .ic svg{width:32px;height:32px;display:block}
+.goal.book:active{transform:translateY(2px)}

@@ -1,9 +1,9 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue} from './ships.js?v=957c092';
-import {makePost} from './glow.js?v=957c092';
-import {buildColossus, buildFortress} from './monuments.js?v=957c092';
-import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=957c092';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=9a0fb4f';
+import {makePost} from './glow.js?v=9a0fb4f';
+import {buildColossus, buildFortress} from './monuments.js?v=9a0fb4f';
+import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=9a0fb4f';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -83,7 +83,8 @@ function setWaves(){ waves.visible = full; sea.visible = !full; waveU.uAmp.value
 function lightTorches(){ if (!obj) return; const on = lightKey === 'night' || lightKey === 'storm', roots = [];
   obj.traverse(o => { if (o.userData.torches && o.userData.torches.length) roots.push(o); });
   const n = roots.reduce((a, r) => a + r.userData.torches.length, 0);
-  roots.forEach(r => setTorches(r, on, n <= 12)); }
+  roots.forEach(r => setTorches(r, on, n <= 12)); fires = roots.filter(r => !r.userData.spec); }
+let fires = []; // statues with fire bowls (ships flicker their own torches)
 
 // ---- the storm: rain streaks, rings where the drops hit the water, and lightning ----
 const RAIN = 1400, rainPos = new Float32Array(RAIN*6), rainV = new Float32Array(RAIN);
@@ -116,7 +117,7 @@ const row = (items, gap) => { const g = new T.Group(); let x = 0; const w = item
 const COLORS = ['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f', '#5c3470'];
 // a townsperson, the same as in the harbor towns
 function townsperson(color){ const g = new T.Group(), inner = new T.Group(); g.add(inner);
-  const body = new T.Mesh(beanGeo(6.8), mat(color)); body.castShadow = true; body.scale.set(.85, 1, .85); inner.add(body);
+  const body = new T.Mesh(beanGeo(6.8), mat(color, {flatShading:false})); body.castShadow = true; body.userData.ns = true; body.scale.set(.85, 1, .85); inner.add(body);
   cuteHead(inner, 8.9); g.userData.inner = inner; return g; }
 // a name under a model, as a flat sign that always faces the camera
 function label(text, w = 60){ const c = document.createElement('canvas'); c.width = 512; c.height = 112; const g = c.getContext('2d');
@@ -149,6 +150,7 @@ function harborTown(god = 'poseidon'){
   for (const [x, z] of [[170, 72], [160, -78], [45, 70], [50, -76], [-60, 70], [-62, -74], [200, 105], [40, 135], [-110, 95], [-110, -100], [-205, 45], [-200, -50], [150, -150], [-30, 150]]){
     const c = R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*4)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], k++);
     c.position.set(x, top, z); c.scale.setScalar(.75 + R()*.3); g.add(c); }
+  [[-215, 150, .4], [-235, -120, -.3], [175, -205, 1], [190, 185, -.9]].forEach(([x, z, r], i) => { const f = farm(i); f.position.set(x, top, z); f.rotation.y = r; g.add(f); });
   for (let i=0;i<9;i++){ const p = hopper(townsperson(COLORS[i % 6]), i*.7); p.position.set(-70 + i*28, top, (i % 3 - 1)*6); p.rotation.y = R()*6; g.add(p); }
   const pier = new T.Group(); pier.position.set(250, 0, 0); g.add(pier);
   const deck = new T.Mesh(new T.BoxGeometry(170, 3, 18), mat('#9b6b3a')); deck.position.set(60, 6, 0); deck.castShadow = deck.receiveShadow = true; pier.add(deck);
@@ -189,17 +191,18 @@ const GROUPS = {
     {name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
     {name:'Spartan fortress', desc:'The same plan in warmer stone, with red banners.', make:() => buildFortress('sparta', '#9e2a22')},
     {name:'Pirate fortress', desc:'Dark stone on Thasos and Kos, with black banners.', make:() => buildFortress('pirate', '#231d1d')},
-    {name:'Statue of Poseidon', desc:'With his trident. Stands at harbors and pirate fortresses.', make:() => statue('poseidon', 'painted')},
-    {name:'Statue of Athena', desc:'Helmet, spear and shield. On Athenian fortresses and harbors.', make:() => statue('athena', 'painted')},
-    {name:'Statue of Zeus', desc:'A thunderbolt and a laurel wreath. On Spartan fortresses.', make:() => statue('zeus', 'painted')},
-    {name:'Statue of Apollo', desc:'With his lyre. In front of Spartan temples.', make:() => statue('apollo', 'painted')},
-    {name:'Statue of Artemis', desc:'The huntress, with her bow, cast in bronze.', make:() => statue('artemis', 'bronze')},
+    {name:'Statue of Poseidon', desc:'With his trident, a wave at his feet. Stands at harbors and pirate fortresses. Try the Night light: the fire bowls at the corners burn.', make:() => statue('poseidon', 'painted')},
+    {name:'Statue of Athena', desc:'Helmet, spear and shield. On Athenian fortresses and harbors. Fire bowls at the corners burn at night.', make:() => statue('athena', 'painted')},
+    {name:'Statue of Zeus', desc:'A thunderbolt and a golden wreath. On Spartan fortresses. Fire bowls at the corners burn at night.', make:() => statue('zeus', 'painted')},
+    {name:'Statue of Apollo', desc:'With his lyre. In front of Spartan temples. Fire bowls at the corners burn at night.', make:() => statue('apollo', 'painted')},
+    {name:'Statue of Artemis', desc:'The huntress, with her bow and quiver, cast in shiny bronze. Fire bowls at the corners burn at night.', make:() => statue('artemis', 'bronze')},
     {name:'Temple', desc:'Every harbor town has one on its square.', make:() => temple()},
   ]},
   cities:{name:'Cities', items:[
     {name:'Harbor town', desc:'A town like Kallisto: a main street up from the pier, side streets, houses facing the street, the temple and Poseidon on the square, trees and townspeople.', make:() => harborTown('poseidon')},
     {name:'Athenian town', desc:'City harbors are built the same way, with Athena in front of the temple.', make:() => harborTown('athena')},
     {name:'Snowy northern town', desc:'In the cold north the islands, roofs and trees are covered in snow, and icebergs float offshore.', make:() => snowyTown()},
+    {name:'Farms', desc:'Little farms just outside the towns, inside low stone walls: a vineyard with grapes, an olive grove, a wheat field and a vegetable garden with melons.', make:() => { const g = row([0, 1, 2, 3].map(i => farm(i)), 14); g.add(grassDisc(120)); return g; }},
     {name:'Houses', desc:'The four kinds of house: white with a flat roof, a blue dome, a red tile roof, and two floors with a terrace.', make:() => { const g = row([0, 1, 2, 3].map(k => house(k)), 18); g.add(grassDisc(90)); return g; }},
   ]},
   people:{name:'People', items:[
@@ -209,8 +212,10 @@ const GROUPS = {
       ppl.forEach(p => p.rotation.y = .9); const g = row(ppl, 6); g.add(grassDisc(70)); return g; }},
     {name:'Townspeople', desc:'They hop around the harbor towns, popping up as you sail close.', make:() => { const g = row(COLORS.map((c, i) => hopper(townsperson(c), i*.5)), 6); g.add(grassDisc(50)); return g; }},
     {name:'Helmets and hats', desc:'Every helmet and hat, left to right: hoplite, captain, Athenian (feathers), Spartan (bronze cone), Phrygian (curled top), Boeotian (wide brim), pirate cap, straw hat for fishermen and merchants, and the laurel wreath for champions of the games.',
-      make:() => { const ks = Object.keys(HELMETS); const g = row(ks.map((k, i) => { const p = person(['tunic1', 'tunic2', 'tunic3', '#9e2a22', 'tunic2', 'tunic1', 'rTunic', 'tunic3', '#5c3470'][i], 'stand', k); p.rotation.y = .9;
-        hopper(p, i*.4); labeled(p, HELMETS[k], 23, 15); return p; }), 7); g.add(grassDisc(75)); return g; }},
+      make:() => { const ks = Object.keys(HELMETS), g = new T.Group(); g.userData.view = {yaw:0, pitch:.38};
+        ks.forEach((k, i) => { const p = person(['tunic1', 'tunic2', 'tunic3', '#9e2a22', 'tunic2', 'tunic1', 'rTunic', 'tunic3', '#5c3470'][i], 'stand', k); p.scale.setScalar(1.8); p.rotation.y = -.6;
+          p.position.set((Math.floor(i/3) - 1)*-56, 0, (1 - i % 3)*36); hopper(p, i*.4); labeled(p, HELMETS[k], 19, 9); g.add(p); });
+        g.add(grassDisc(70)); return g; }},
     {name:'Soldiers and archers', desc:'A round bronze helmet with cheek guards and a red horsehair crest from front to back.', make:() => { const g = row([0, 1, 2].map(i => { const p = person(['tunic1', 'tunic2', 'tunic3'][i], 'archer', 'hoplite'); p.rotation.y = .9; return p; }), 8); g.add(grassDisc(40)); return g; }},
     {name:'Captains and generals', desc:'Their crest runs from side to side, like Spartan officers wore, white with a red rim.', make:() => { const g = row([0, 1].map(i => { const p = person(['tunic3', 'tunic2'][i], 'stand', 'captain'); p.rotation.y = .9; return p; }), 8); g.add(grassDisc(36)); return g; }},
     {name:'Pirates', desc:'A dark pointed felt cap with a red band.', make:() => { const g = row([0, 1, 2].map(i => { const p = person(['rTunic', '#2c1f1f', 'rTunic'][i], i === 1 ? 'stand' : 'archer', 'pirate'); p.rotation.y = .9; return p; }), 8); g.add(grassDisc(40)); return g; }},
@@ -220,22 +225,27 @@ const GROUPS = {
     {name:'Whale, whole body', desc:'The same whale lifted out of the sea, so you can see its whole shape: flippers, flukes and the low fin on its back.', make:() => { const w = whaleModel(); w.position.y = 24; w.userData.anim = 'whale'; return w; }},
     {name:'Whale', desc:'Surfaces now and then out at sea. Sail close for Poseidon\'s blessing.', make:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; }},
     {name:'Dolphins', desc:'A pod that jumps beside your boat when you sail fast in open water.', make:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const d = dolphinModel(); d.position.set(i*30 - 30, 6, (i % 2)*24 - 12); d.userData.ph = i*1.2; g.add(d); }); g.userData.anim = 'dolphins'; return g; }},
-    {name:'Gulls', desc:'They circle above the islands.', make:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const b = gull(); b.position.set(i*22 - 22, 30 + (i % 2)*10, (i - 1)*14); b.scale.setScalar(1.6); g.add(b); }); g.userData.anim = 'gulls'; return g; }},
+    {name:'Gulls', desc:'They glide above the islands and wrecks on long bent wings, flapping slowly now and then.', make:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const b = gull(); b.position.set(i*22 - 22, 30 + (i % 2)*10, (i - 1)*14); b.scale.setScalar(1.6); g.add(b); }); g.userData.anim = 'gulls'; return g; }},
     {name:'Fish', desc:'Sardines (caught near shores), tuna and swordfish (in bubbling water). Smooth bodies, dark backs and silver bellies.', make:() => { const g = new T.Group();
       ['sardine', 'tuna', 'swordfish'].forEach((k, i) => { const f = fishModel(k); f.scale.setScalar([2.2, 3.2, 3.4][i]); f.position.set(0, 10, i*34 - 34); f.userData.ph = i; labeled(f, k[0].toUpperCase() + k.slice(1), -3, 8); g.add(f); });
       g.userData.anim = 'wiggle'; return g; }},
-    {name:'A school of fish', desc:'Fish leap out of the bubbling water. Stop there and your crew fishes.', make:() => { const g = new T.Group();
-      for (let i=0;i<9;i++){ const f = fishModel(i % 3 ? 'tuna' : 'sardine'); f.scale.setScalar(2.2); f.userData.ph = i*.7; g.add(f); } g.userData.anim = 'fish'; return g; }},
+    {name:'Fishing spot', desc:'Out at sea, look for rings of bubbling water with fish jumping out of it. Stop your boat inside the rings and your crew starts fishing. Sardines live near the shore, tuna and swordfish farther out.', make:() => { const g = new T.Group();
+      const water = new T.Mesh(new T.CircleGeometry(60, 40), new T.MeshBasicMaterial({color:'#3f9db0', transparent:true, opacity:.5})); water.rotation.x = -Math.PI/2; water.position.y = .3; g.add(water);
+      const ringG = new T.RingGeometry(10, 13.5, 32); ringG.rotateX(-Math.PI/2);
+      g.userData.rings = [0, 1, 2].map(() => { const m = new T.Mesh(ringG, new T.MeshBasicMaterial({color:0xf4fbff, transparent:true, opacity:.5, depthWrite:false})); m.position.y = .6; g.add(m); return m; });
+      g.userData.fish = [0, 1, 2, 3].map(k => { const f = fishModel(k % 2 ? 'tuna' : 'sardine'); f.scale.setScalar(1.6); f.userData.ph = k*.27; f.userData.ang = k*1.9; g.add(f); return f; });
+      const boat = buildShip('fishing'); boat.position.set(-22, 2, 26); boat.rotation.y = .5; boat.scale.setScalar(.7); g.add(boat); g.userData.ships = [boat];
+      g.userData.anim = 'spot'; return g; }},
   ]},
   nature:{name:'Trees and ice', items:[
     {name:'All trees', desc:'Every tree color on the islands: cypress greens, and round trees in blossom pink, orange, gold, lilac and greens.', make:() => { const g = new T.Group();
       CYPRESS_TINTS.forEach((t, i) => { const c = cypress(t); c.position.set(-60 + i*40, 0, -30); g.add(c); });
       ROUND_TINTS.forEach((t, i) => { const c = roundTree(t, i); c.position.set(-90 + i*30, 0, 25 + (i % 2)*18); g.add(c); });
       g.add(grassDisc(135)); return g; }},
-    {name:'Cypress trees', desc:'Tall and pointed, in four greens.', make:() => { const g = row(CYPRESS_TINTS.map(t => cypress(t)), 12); g.add(grassDisc(70)); return g; }},
+    {name:'Cypress trees', desc:'Tall and slim like a flame, with soft tufts of leaves, in four greens.', make:() => { const g = row(CYPRESS_TINTS.map(t => cypress(t)), 12); g.add(grassDisc(70)); return g; }},
     {name:'Round trees', desc:'Olive, almond and fig trees in blossom and autumn colors.', make:() => { const g = row(ROUND_TINTS.map((t, i) => roundTree(t, i)), 6); g.add(grassDisc(120)); return g; }},
-    {name:'Snowy trees', desc:'On the cold northern islands.', make:() => { const g = row([0, 1, 2].map(() => cypress(['#2f4d3a', '#f4f8fa'])), 12); g.add(grassDisc(50, '#eef3f5')); return g; }},
-    {name:'Iceberg', desc:'Twenty-six of them float in the cold north. Ships can\'t sail through.', make:() => icebergModel(70)},
+    {name:'Snowy trees', desc:'On the cold northern islands, with snow lying on top of the tufts.', make:() => { const g = row([0, 1, 2].map(() => cypress(['#2f4d3a', '#f4f8fa'])), 12); g.add(grassDisc(50, '#eef3f5')); return g; }},
+    {name:'Iceberg', desc:'Chunks of sharp-cut ice: a wide slab, a tall peak and a smaller chunk. Twenty-six of them float in the cold north. Ships can\'t sail through.', make:() => icebergModel(70)},
   ]},
 };
 
@@ -243,7 +253,7 @@ const GROUPS = {
 function show(){
   if (obj) scene.remove(obj); hoppers.length = 0;
   const item = GROUPS[group].items[idx];
-  obj = item.make(); if (CEL.on) inkify(obj); obj.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+  obj = item.make(); if (CEL.on) inkify(obj); obj.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = !o.userData.ns; } });
   scene.add(obj);
   // frame the models, not the ground they stand on; fit the sun's shadow to them so shadows stay crisp
   const ground = obj.children.filter(o => o.userData.ground); ground.forEach(o => obj.remove(o));
@@ -256,6 +266,7 @@ function show(){
   const land = ground.length || group === 'cities' || group === 'monuments' || group === 'nature' || group === 'people';
   waveU.uCalm.value.set(focus.x, focus.z, land ? Math.max(size.x, size.z)*.62 + 30 : 0);
   if (item.light && !q0){ $('light').value = item.light; setLight(item.light); } if (item.glow && !q0){ setGlow(true); }
+  if (obj.userData.view && !q.get('yaw')){ yaw = obj.userData.view.yaw; pitch = obj.userData.view.pitch; dist *= .8; }
   lightTorches(); ridersOf();
 }
 // the ships in view, so they can bob on the waves
@@ -311,11 +322,15 @@ function animate(t){
   if (obj.userData.oars) animateShip(obj, t, 20);
   for (const s of obj.userData.ships || []) animateShip(s, t, 10);
   const a = obj.userData.anim;
+  for (const r of fires) flicker(r, t);
   if (a === 'whale'){ obj.userData.tail.rotation.z = Math.sin(t*1.4)*.25; obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
   if (a === 'dolphins') obj.children.forEach(d => { const p = (t*.9 + d.userData.ph) % (Math.PI*2); d.position.y = 6 + Math.max(0, Math.sin(p))*26 - 8; d.rotation.z = Math.cos(p)*.7; });
   if (a === 'gulls') obj.children.forEach((b, i) => { b.userData.wings.forEach(w => w.p.rotation.x = w.s*(Math.sin(t*2.4 + i)*.16 + .04)); b.position.y = 34 + Math.sin(t*1.5 + i)*4; });
   if (a === 'wiggle') obj.children.forEach(f => { f.rotation.y = Math.sin(t*3 + f.userData.ph)*.18; f.position.y = 10 + Math.sin(t*1.4 + f.userData.ph)*1.5; });
-  if (a === 'fish') obj.children.forEach(f => { const p = t*.7 + f.userData.ph; f.position.set(Math.cos(p)*40, 4 + Math.sin(p*2)*2, Math.sin(p)*40*.6); f.rotation.y = -p - Math.PI/2; });
+  if (a === 'spot'){ // the same as at sea: rings spread out, fish leap in arcs and dive back in
+    obj.userData.rings.forEach((r, k) => { const p = (t*.45 + k/3) % 1; r.scale.setScalar(1 + p*2.6); r.material.opacity = .55*(1 - p); });
+    obj.userData.fish.forEach(f => { const u = ((t*.4 + f.userData.ph) % 1)/.3, a = f.userData.ang; f.visible = u < 1;
+      if (f.visible){ f.position.set(Math.cos(a)*(u - .5)*26, Math.sin(u*Math.PI)*16 - 1, Math.sin(a)*(u - .5)*26); f.rotation.set(0, -a, Math.cos(u*Math.PI)*1.1); } }); }
   for (const h of hoppers){ const inner = h.o.userData.inner; if (!inner) continue;
     if (h.rock) inner.rotation.z = Math.sin(t*2.6 + h.ph)*.25;
     else { const p = (t*1.3 + h.ph) % 2.2; inner.position.y = p < .42 ? Math.sin(p/.42*Math.PI)*5 : 0; } }

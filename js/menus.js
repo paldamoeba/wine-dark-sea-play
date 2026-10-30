@@ -1,19 +1,21 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=957c092';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=957c092';
-import {G, ship, holdUsed, lvl} from './state.js?v=957c092';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=957c092';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=957c092';
-import {board, active, canDeliver, goal} from './quests.js?v=957c092';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=957c092';
-import {shipPortrait} from './portrait.js?v=957c092';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=957c092';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=9a0fb4f';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=9a0fb4f';
+import {G, ship, holdUsed, lvl} from './state.js?v=9a0fb4f';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=9a0fb4f';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=9a0fb4f';
+import {board, active, canDeliver, goal} from './quests.js?v=9a0fb4f';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=9a0fb4f';
+import {shipPortrait} from './portrait.js?v=9a0fb4f';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=9a0fb4f';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
 // ---- icons: small drawings in the game's colors ----
 export const IC = {
+  // a book of quests: a red leather cover, cream pages and a ribbon
+  book: svg(`<path d="M4 5.5 Q4 4 5.5 4 H18.5 a1 1 0 0 1 1 1 V18 H6 a2 2 0 0 0 0 4 H19.5" fill="none" stroke="#3a2618" stroke-width="1.3"/><path d="M4 5.5 Q4 4 5.5 4 H18.5 a1 1 0 0 1 1 1 V18 H6 Q4 18 4 20Z" fill="#b8402f" stroke="#3a2618" stroke-width="1.2"/><path d="M6 18 H19.5 V21.5 H6 a1.75 1.75 0 0 1 0 -3.5Z" fill="#f3e3b8" stroke="#3a2618" stroke-width="1.2"/><path d="M8 7.5 H16 V11 H8Z" fill="#e8c867"/><path d="M15 4 V9 L16.3 8 L17.6 9 V4" fill="#e8c867"/>`),
   // a silver drachma: the owl of Athena on a worn silver coin
   coin: svg(`<circle cx="12" cy="12.8" r="9.6" fill="#8d949b"/><circle cx="12" cy="12" r="9.6" fill="#d5dade"/><circle cx="12" cy="12" r="7.6" fill="#c3c9ce"/><path d="M8.2 16.5 Q7.6 9 12 7.4 Q16.4 9 15.8 16.5 Q12 18 8.2 16.5Z" fill="#9aa1a8"/><circle cx="10.3" cy="10.9" r="1.7" fill="#eef1f3"/><circle cx="13.7" cy="10.9" r="1.7" fill="#eef1f3"/><circle cx="10.3" cy="10.9" r=".8" fill="#3c4148"/><circle cx="13.7" cy="10.9" r=".8" fill="#3c4148"/><path d="M11.4 12.6 L12 13.6 L12.6 12.6Z" fill="#7a5a2a"/>`),
   wood: svg(`<rect x="3" y="8" width="16" height="8" rx="4" fill="${WOOD}"/><ellipse cx="19" cy="12" rx="3" ry="4" fill="#d9b382"/><ellipse cx="19" cy="12" rx="1.2" ry="1.6" fill="${WOOD}"/>`),

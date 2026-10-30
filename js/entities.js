@@ -1,15 +1,15 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=957c092';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=957c092';
-import {G, ship, lvl} from './state.js?v=957c092';
-import {scene} from './scene.js?v=957c092';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel} from './models.js?v=957c092';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=957c092';
-import {addTown, figure} from './town.js?v=957c092';
-import {makeFire, updateFire, burn} from './fire.js?v=957c092';
-import {sinkPose} from './sinking.js?v=957c092';
-import {moored} from './fleet.js?v=957c092';
-import {placeOnWaves} from './combat.js?v=957c092';
+import {SHIPS} from './config.js?v=9a0fb4f';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=9a0fb4f';
+import {G, ship, lvl} from './state.js?v=9a0fb4f';
+import {scene} from './scene.js?v=9a0fb4f';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=9a0fb4f';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=9a0fb4f';
+import {addTown, figure} from './town.js?v=9a0fb4f';
+import {makeFire, updateFire, burn} from './fire.js?v=9a0fb4f';
+import {sinkPose} from './sinking.js?v=9a0fb4f';
+import {moored} from './fleet.js?v=9a0fb4f';
+import {placeOnWaves} from './combat.js?v=9a0fb4f';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -118,6 +118,11 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   for (let k=0, n=0;k<120 && n<(is.port ? 14 : 10);k++){ const p = spotIn(R, ground, 10, cx, cz, 200);
     if (!flat(p, 10) || keep.some(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) < 20) || Math.abs((p[0] - x0)*vx + (p[1] - z0)*vz) < 12) continue;
     const c = tree(); c.position.set(p[0], top, p[1]); c.scale.setScalar(.7 + R()*.3); g.add(c); popIn(c); keep.push(p); n++; }
+  // little farms just outside town: vineyards, olive groves, wheat and vegetables, turned to face the town
+  const onRoad = (x, z, m) => roads.some(r => { const dx = x - r.x, dz = z - r.z; return Math.abs(dx*r.c + dz*r.s) < r.l/2 + m && Math.abs(-dx*r.s + dz*r.c) < r.w/2 + m; });
+  for (let k=0, n=0, kind=Math.floor(R()*4); k<300 && n<(is.port ? 4 : 3); k++){ const p = spotIn(R, ground, 26, cx, cz, 340);
+    if (!flat(p, 26) || Math.hypot(p[0] - cx, p[1] - cz) < (is.port ? 60 : 90) || keep.some(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) < (is.port ? 34 : 42)) || onRoad(p[0], p[1], 30) || Math.hypot(p[0] - px, p[1] - pz) < 70) continue;
+    const f = farm(kind++); f.position.set(p[0], top, p[1]); f.rotation.y = -Math.atan2(cz - p[1], cx - p[0]); g.add(f); popIn(f); keep.push(p, [p[0] + 16, p[1]], [p[0] - 16, p[1]], [p[0], p[1] + 16], [p[0], p[1] - 16]); n++; }
   let sp = null; for (let k=0;k<60 && !sp;k++){ const p = spotIn(R, ground, 8, px - PIER.dx*30, pz - PIER.dy*30, 60); if (p && keep.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 24)) sp = p; }
   if (!is.port && sp){ // a flagpole by the pier with the owner's colors
     const pole = mesh(new T.CylinderGeometry(1, 1.2, 46, 5), '#6e4a26'); pole.position.set(sp[0], top + 23, sp[1]); g.add(pole);

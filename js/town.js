@@ -1,8 +1,8 @@
 // Townspeople: little hopping figures (no arms or legs) who wander the harbor towns.
 // They pop up one after another when you sail close, and pop away again before the town leaves the screen.
-import {rng} from './world.js?v=957c092';
-import {G} from './state.js?v=957c092';
-import {mat, beanGeo, cuteHead} from './ships.js?v=957c092';
+import {rng} from './world.js?v=9a0fb4f';
+import {G} from './state.js?v=9a0fb4f';
+import {mat, beanGeo, cuteHead} from './ships.js?v=9a0fb4f';
 
 const T = window.THREE;
 const COLORS = ['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f', '#5c3470'];
@@ -10,7 +10,7 @@ const HOP_TIME = .42, HOP_H = 6, SHOW_D = 430, HIDE_D = 520;
 
 export function figure(color){
   const g = new T.Group(), inner = new T.Group(); g.add(inner);
-  const body = new T.Mesh(beanGeo(6.8), mat(color)); body.castShadow = true; body.scale.set(.85, 1, .85); inner.add(body);
+  const body = new T.Mesh(beanGeo(6.8), mat(color, {flatShading:false})); body.castShadow = true; body.userData.ns = true; body.scale.set(.85, 1, .85); inner.add(body);
   cuteHead(inner, 8.9);
   g.userData.inner = inner; g.scale.setScalar(.001); g.visible = false; return g;
 }

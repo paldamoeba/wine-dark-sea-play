@@ -1,8 +1,8 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=957c092';
+import {hash} from './world.js?v=9a0fb4f';
 
 const T = window.THREE;
-import {mat} from './ships.js?v=957c092';
+import {mat} from './ships.js?v=9a0fb4f';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -17,12 +17,32 @@ export function jitter(geo, amt, seed){
 // Tree colors: cypress greens, and round trees in spring and autumn colors (blossom pink, orange, gold, lilac, lime).
 export const CYPRESS_TINTS = [['#3f5524', '#4b6429'], ['#35603a', '#447546'], ['#56682a', '#667a33'], ['#2f4d3a', '#3d6048']];
 export const ROUND_TINTS = [['#e9a3bd', '#f3c2d3'], ['#e39a3a', '#efb85a'], ['#d8c24a', '#e8d870'], ['#a88cc9', '#c2abdd'], ['#86ad4a', '#a2c45e'], ['#5f8f3a', '#77a748'], ['#d66a4a', '#e78a62']];
+// A Mediterranean cypress: a tall slim flame of leaves, widest low down, with soft tufts all over it and a darker inside.
+// Snowy cypresses (tint[1] white) have snow lying on the tops of the tufts. One shared shape per tint and variant.
+const cypGeos = {};
+function cypressGeo(tint, v){ const key = tint.join() + v; if (cypGeos[key]) return cypGeos[key];
+  const prof = new T.SplineCurve([[0, 0], [4.6, 1.5], [6.6, 6], [7.2, 12], [6.8, 20], [5.6, 30], [3.9, 40], [2, 48], [0, 54]].map(([r, y]) => new T.Vector2(r, y))).getPoints(40);
+  const geo = new T.LatheGeometry(prof, 22), p = geo.attributes.position, col = new Float32Array(p.count*3);
+  const snow = tint[1] === '#f4f8fa', D = new T.Color(tint[0]).multiplyScalar(.72), L = new T.Color(snow ? tint[0] : tint[1]), S = new T.Color('#f4f8fa'), c = new T.Color();
+  const tuft = (a, y) => Math.sin(a*4 + y*.4 + v)*Math.sin(y*.46 - a*2 + v*2) + .35*Math.sin(a*7 - y*.8 + v*3); // leafy lumps
+  for (let i=0;i<p.count;i++){ const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(x, z), r = Math.hypot(x, z);
+    const k = 1 + tuft(a, y)*.14*Math.min(1, y/6), lean = Math.sin(y*.08 + v)*.6;
+    p.setX(i, x*k + lean); p.setZ(i, z*k); }
+  geo.computeVertexNormals();
+  const n = geo.attributes.normal;
+  for (let i=0;i<p.count;i++){ const y = p.getY(i), x = p.getX(i), z = p.getZ(i), t = tuft(Math.atan2(x, z), y);
+    c.copy(D).lerp(L, Math.min(1, Math.max(0, .45 + t*.35 + y/110))); // the tufts catch the light, the hollows stay dark
+    if (snow && n.getY(i) > .12 && t > -.3) c.lerp(S, Math.min(1, (n.getY(i) - .12)*3.5)); // snow on the tops of the tufts
+    col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  return cypGeos[key] = geo; }
+const trunkGeo = new T.CylinderGeometry(1.3, 2, 7, 8);
+let cypN = 0;
 export function cypress(tint = CYPRESS_TINTS[0]){ const g = new T.Group();
-  const tr = mesh(new T.CylinderGeometry(1.6, 2.2, 8, 5), '#6b4a2b'); tr.position.y = 4; g.add(tr);
-  const c = mesh(new T.ConeGeometry(7, 40, 12), tint[0], {flatShading:false}); c.position.y = 26; g.add(c);
-  const c2 = mesh(new T.ConeGeometry(5.5, 22, 12), tint[1], {flatShading:false}); c2.position.y = 40; g.add(c2);
-  const stump = mesh(new T.CylinderGeometry(2.4, 2.8, 4, 6), '#8a6a3c'); stump.position.y = 2; stump.visible = false; g.add(stump);
-  g.userData = {live:[tr, c, c2], stump}; return g; }
+  const tr = mesh(trunkGeo, '#6b4a2b', {flatShading:false}); tr.position.y = 3.5; g.add(tr);
+  const c = mesh(cypressGeo(tint, cypN++ % 3), '#ffffff', {vertexColors:true, flatShading:false}); c.position.y = 4.5; c.rotation.y = cypN*1.7; g.add(c);
+  const stump = mesh(new T.CylinderGeometry(2.4, 2.8, 4, 8), '#8a6a3c'); stump.position.y = 2; stump.visible = false; g.add(stump);
+  g.userData = {live:[tr, c], stump}; return g; }
 // A round, fluffy tree (olive, almond, fig): a short trunk and a cluster of balls.
 const ballGeo = new T.IcosahedronGeometry(1, 3);
 export function roundTree(tint = ROUND_TINTS[0], seed = 0){ const g = new T.Group();
@@ -50,6 +70,34 @@ export function temple(){ const g = new T.Group();
   const roof = mesh(new T.CylinderGeometry(0, 26, 10, 4, 1), '#d9cfb6'); roof.rotation.y = Math.PI/4; roof.scale.set(1, 1, .72); roof.position.y = 31; g.add(roof);
   const lint = mesh(new T.BoxGeometry(44, 3, 28), '#e9e2cf'); lint.position.y = 27; g.add(lint);
   return g; }
+
+// ---- little farms around the towns: a vineyard, an olive grove, a wheat field or a vegetable garden inside a low stone wall ----
+// Each farm is one merged mesh (colors per vertex), so a town full of them stays cheap to draw.
+const FARM_KINDS = ['vines', 'olives', 'wheat', 'garden'];
+const farmGeos = {};
+const blobGeo = new T.IcosahedronGeometry(1, 2), boxGeo = new T.BoxGeometry(1, 1, 1), stemGeo = new T.CylinderGeometry(.5, .7, 1, 8);
+function mergeParts(parts){
+  const gs = parts.map(([geo, c, m]) => { const g = geo.index ? geo.toNonIndexed() : geo.clone(); g.applyMatrix4(m); return [g, new T.Color(c)]; });
+  const n = gs.reduce((a, [g]) => a + g.attributes.position.count, 0), pos = new Float32Array(n*3), nor = new Float32Array(n*3), col = new Float32Array(n*3);
+  let o = 0; for (const [g, c] of gs){ const k = g.attributes.position.count; pos.set(g.attributes.position.array, o*3); nor.set(g.attributes.normal.array, o*3);
+    for (let i=0;i<k;i++) col.set([c.r, c.g, c.b], (o + i)*3); o += k; }
+  const out = new T.BufferGeometry(); out.setAttribute('position', new T.BufferAttribute(pos, 3)); out.setAttribute('normal', new T.BufferAttribute(nor, 3)); out.setAttribute('color', new T.BufferAttribute(col, 3)); return out; }
+const at = (x, y, z, sx, sy, sz, ry = 0) => new T.Matrix4().compose(new T.Vector3(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(0, ry, 0)), new T.Vector3(sx, sy, sz));
+function farmGeo(kind){ if (farmGeos[kind]) return farmGeos[kind];
+  const P = [], L = 46, W = 34;
+  P.push([boxGeo, {vines:'#9a7650', olives:'#b0925e', wheat:'#b8913f', garden:'#8a6544'}[kind], at(0, .6, 0, L, 1.2, W)]);
+  for (const sg of [1, -1]){ P.push([boxGeo, '#d8ccb0', at(0, 1.6, sg*(W/2 + .8), L + 3.2, 3, 1.6)]); P.push([boxGeo, '#d1c4a6', at(sg*(L/2 + .8), 1.6, sg > 0 ? -5 : 0, 1.6, 3, sg > 0 ? W - 10 : W)]); } // a gap in one wall, the gate
+  if (kind === 'vines') for (let r=0;r<5;r++){ const z = -12 + r*6;
+    P.push([blobGeo, r % 2 ? '#5f8a35' : '#557f30', at(0, 3.4, z, 19, 2.4, 1.7)]);
+    for (let k=0;k<5;k++) P.push([blobGeo, '#6b3a74', at(-14 + k*7 + (r % 2)*3, 2.6, z + (k % 2 ? 1.4 : -1.4), .9, 1.2, .9)]); }
+  if (kind === 'olives') for (let i=0;i<3;i++) for (let j=0;j<2;j++){ const x = -14 + i*14 + j*3, z = -7 + j*14;
+    P.push([stemGeo, '#7a5a3a', at(x, 4, z, 1.2, 6, 1.2)]); P.push([blobGeo, (i + j) % 2 ? '#8fa060' : '#9cab6c', at(x, 9.5, z, 5.4, 4.2, 5.4)]); }
+  if (kind === 'wheat') for (let r=0;r<6;r++) P.push([boxGeo, r % 2 ? '#d8b350' : '#cca646', at(0, 2.2, -12.5 + r*5, 42, 2.2 + (r % 3)*.3, 3.6)]);
+  if (kind === 'garden') for (let r=0;r<4;r++) for (let k=0;k<7;k++){ const melon = r === 3 && k % 2 === 0;
+    P.push([blobGeo, melon ? '#e09a3a' : r % 2 ? '#7fb04a' : '#6aa040', at(-18 + k*6, 2.4, -10.5 + r*7, melon ? 2 : 1.8, melon ? 1.6 : 1.5, melon ? 2 : 1.8)]); }
+  return farmGeos[kind] = mergeParts(P); }
+export function farm(kind = 'vines'){ if (typeof kind === 'number') kind = FARM_KINDS[kind % FARM_KINDS.length];
+  const m = mesh(farmGeo(kind), '#ffffff', {vertexColors:true, flatShading:false}); m.userData.kind = kind; return m; }
 
 // ---- boats (wreck hulls; the player's ships come from ships.js) ----
 function hullShape(L, B, scale=1){ const s = new T.Shape(), l = L*scale, b = B*scale;
@@ -91,20 +139,24 @@ function fin(pts, d, color){
   const geo = new T.ExtrudeGeometry(sh, {depth:d, bevelEnabled:true, bevelThickness:d*.45, bevelSize:d*.45, bevelSegments:3, curveSegments:10}); geo.translate(0, 0, -d/2);
   return soft(geo, color);
 }
-// A gull that glides like the birds in a Ghibli film: one smooth white body, long slim wings bent like an M, grey tips.
+// A gull, kept simple and smooth like the birds in a Ghibli film: a white body, and long wings each made in one piece,
+// bent up then gently down like an M, with grey tips.
+function wingGeo(){
+  const out = smooth([[0, -2.3], [6, -2.1], [11, -1], [14.6, 1], [16.4, 3.2], [12.6, 2.4], [7.5, 2], [3, 2.2], [0, 2.2]], 36);
+  const geo = new T.ExtrudeGeometry(new T.Shape(out.map(([x, y]) => new T.Vector2(x, y))), {depth:.22, bevelEnabled:true, bevelThickness:.14, bevelSize:.14, bevelSegments:2, curveSegments:4});
+  geo.translate(0, 0, -.11); geo.rotateX(Math.PI/2); geo.rotateY(-Math.PI/2);
+  const p = geo.attributes.position, col = new Float32Array(p.count*3), W = new T.Color('#f1f0ec'), G = new T.Color('#5a5f66'), c = new T.Color();
+  for (let i=0;i<p.count;i++){ const z = p.getZ(i); p.setY(i, p.getY(i) + 1.9*Math.sin(Math.min(z/6.5, 1)*Math.PI/2) - Math.pow(Math.max(0, z - 6.5), 1.3)*.13);
+    const k = Math.min(1, Math.max(0, (z - 11.8)/1.4)); c.copy(W).lerp(G, k); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.computeVertexNormals(); return geo; }
+let wingG = null;
 export function gull(){ const g = new T.Group();
-  g.add(latheBody([[-8, 0], [-6.5, .9], [-3.5, 1.9], [0, 2.4], [3, 2.3], [5, 1.9], [6.6, 1.7], [7.8, 1.2], [8.4, 0]], '#f2f2ee', '#ffffff', .95, .95, 20, .3));
-  const head = soft(new T.SphereGeometry(1.75, 20, 14), '#f8f8f4'); head.position.set(6.4, 1.1, 0); g.add(head);
-  const beak = soft(new T.ConeGeometry(.5, 2.4, 12), '#e0a030'); beak.rotation.z = -Math.PI/2 - .12; beak.position.set(8.8, .8, 0); g.add(beak);
-  const tail = fin(smooth([[0, -1.6], [-3.6, -2.2], [-4.4, 0], [-3.6, 2.2], [0, 1.6]], 10), .3, '#e4e4de'); tail.rotation.x = Math.PI/2; tail.position.x = -7; g.add(tail);
-  const inner = smooth([[0, -2.6], [7, -2.4], [11, -1.2], [11, 1.4], [6, 2.2], [0, 2.2]], 14), outer = smooth([[0, -1.2], [6, -.6], [11, 1.2], [12.5, 3.2], [9, 2.4], [4, 1.6], [0, 1.4]], 16);
-  // wing pieces are drawn flat (span along x, chord along y) and laid along +z; the left wing is the same, mirrored
-  const lay = m => { m.geometry.rotateX(Math.PI/2); m.geometry.rotateY(-Math.PI/2); return m; };
-  const wings = [1, -1].map(sd => { const p = new T.Group(); p.position.set(.5, 1, sd*1.2); p.scale.z = sd; g.add(p);
-    const a = new T.Group(); a.rotation.x = -.28; p.add(a); a.add(lay(fin(inner, .35, '#ecebe6')));   // the inner wing rises
-    const b = new T.Group(); b.position.z = 10.6; b.rotation.x = .42; a.add(b); b.add(lay(fin(outer, .3, '#ecebe6'))); // the outer wing bends down
-    const tip = lay(fin(smooth([[7, -.2], [11, 1.2], [12.5, 3.2], [9.6, 2.5], [7.5, 1.8]], 10), .36, '#4a4f55')); tip.position.y = .14; b.add(tip);
-    return {p, s:sd}; });
+  g.add(latheBody([[-8, 0], [-6.5, .9], [-3.5, 1.9], [0, 2.3], [3, 2.1], [5, 1.7], [6.4, 1.75], [7.6, 1.5], [8.5, .9], [8.9, 0]], '#f0f0ec', '#ffffff', .95, .95, 20, .3));
+  const beak = soft(new T.ConeGeometry(.45, 2.2, 12), '#e0a030'); beak.rotation.z = -Math.PI/2 - .1; beak.position.set(9.6, .1, 0); g.add(beak);
+  const tail = fin(smooth([[0, -1.5], [-3.4, -2], [-4, 0], [-3.4, 2], [0, 1.5]], 10), .25, '#e8e8e2'); tail.rotation.x = Math.PI/2; tail.position.x = -7; g.add(tail);
+  wingG = wingG || wingGeo();
+  const wings = [1, -1].map(sd => { const p = new T.Group(); p.position.set(.6, .9, sd*1.1); p.scale.z = sd; g.add(p);
+    const w = new T.Mesh(wingG, softMat('#ffffff', true)); w.castShadow = w.receiveShadow = true; p.add(w); return {p, s:sd}; });
   g.userData.wings = wings; return g; }
 // The whale: one long smooth body, dark blue-grey on top and pale underneath, long flippers and wide flukes.
 export function whaleModel(){
@@ -141,13 +193,26 @@ export function fishModel(kind = 'tuna'){
   g.scale.setScalar(1.2); return g;
 }
 
-// An iceberg: a big flat-topped slab of ice with a taller peak, a pale-blue skirt under the water line. R = a random source.
+// An iceberg: chunks of ice with sharp facets, a wide flat-topped slab, a tall cracked peak and a smaller chunk at its side.
+// The tops are snowy white, the cliffs pale blue, deeper blue near the water, and a turquoise skirt shows under the sea.
+const icePos = (x, y, z, s) => Math.sin(x*1.7 + s)*Math.sin(z*1.9 - s) + .6*Math.sin(y*2.3 + x*1.1 + s*2) + .4*Math.sin(z*3.1 + y*1.7 - s);
+function iceChunk(r, h, R, top = .75){
+  const geo = new T.IcosahedronGeometry(1, 1), p = geo.attributes.position, s = R()*10, sx = .85 + R()*.3, sz = .85 + R()*.3;
+  for (let i=0;i<p.count;i++){ let x = p.getX(i), y = p.getY(i), z = p.getZ(i); const k = 1 + icePos(x, y, z, s)*.2;
+    x *= k*r*sx; z *= k*r*sz; y = y*k; y = y < -.2 ? -.35 : Math.min(y, top + icePos(z, x, y, s)*.06) ; // a flat bottom and a rough plateau on top
+    p.setXYZ(i, x, (y + .35)*h - 8, z); }
+  geo.computeVertexNormals(); // the faces stay sharp: every triangle has its own corners, so the ice looks cut
+  const n = geo.attributes.normal, col = new Float32Array(p.count*3), W = new T.Color('#f2f8fa'), C = new T.Color('#a9d6e6'), B = new T.Color('#5fa9c8'), c = new T.Color();
+  for (let i=0;i<p.count;i++){ const ny = n.getY(i), y = p.getY(i);
+    c.copy(C).lerp(W, Math.min(1, Math.max(0, (ny - .55)*3))); if (y < 8) c.lerp(B, Math.min(1, (8 - y)/14)*(1 - Math.max(0, ny))); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  return mesh(geo, '#ffffff', {vertexColors:true}); }
 export function icebergModel(r, R = Math.random){
-  const g = new T.Group(), sides = 6 + Math.floor(R()*3), ice = ['#f4f9fb', '#dbeef5'];
-  const skirt = mesh(new T.CylinderGeometry(r*1.15, r*1.3, 10, sides), '#9fd3e6'); skirt.position.y = -4; g.add(skirt);
-  const slab = mesh(new T.CylinderGeometry(r*.9, r*1.05, r*.35, sides), ice[0]); slab.position.y = r*.15; slab.rotation.y = R()*3; g.add(slab);
-  const peak = mesh(new T.CylinderGeometry(r*.25, r*.55, r*.7, sides - 1), ice[1]); peak.position.set((R() - .5)*r*.4, r*.6, (R() - .5)*r*.4); peak.rotation.y = R()*3; g.add(peak);
-  const tip = mesh(new T.ConeGeometry(r*.25, r*.35, sides - 1), ice[0]); tip.position.set(peak.position.x, r*1.12, peak.position.z); g.add(tip);
+  const g = new T.Group();
+  const skirt = mesh(new T.CylinderGeometry(r*1.12, r*1.3, 8, 18), '#7fd0e0', {transparent:true, opacity:.55, depthWrite:false, flatShading:false}, false); skirt.position.y = -5; g.add(skirt);
+  const slab = iceChunk(r, r*.42, R); slab.rotation.y = R()*6; g.add(slab);
+  const peak = iceChunk(r*.48, r*1.25, R, .9); peak.position.set((R() - .5)*r*.5, 0, (R() - .5)*r*.5); peak.rotation.y = R()*6; g.add(peak);
+  const a = R()*6.28, side = iceChunk(r*.42, r*.5, R); side.position.set(Math.cos(a)*r*.85, 0, Math.sin(a)*r*.85); g.add(side);
   return g;
 }
 // A shipwreck in three sizes: 'small' (a fishing boat, a snapped mast), 'medium' (a merchant ship with its amphorae
