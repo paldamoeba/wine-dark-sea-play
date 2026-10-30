@@ -1,14 +1,34 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=f3aa387';
-import {G, isExplored} from './state.js?v=f3aa387';
-import {fogLayer, islandPath} from './map.js?v=f3aa387';
-import {view, project} from './scene.js?v=f3aa387';
-import {JOY_RADIUS} from './input.js?v=f3aa387';
-import {enemies, combatState, capture} from './combat.js?v=f3aa387';
-import {drawFish} from './fishing.js?v=f3aa387';
-import {whale} from './wildlife.js?v=f3aa387';
-import {SHORE_FISH} from './config.js?v=f3aa387';
-import {bottle} from './quests.js?v=f3aa387';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=34a2ac7';
+import {G, isExplored} from './state.js?v=34a2ac7';
+import {fogLayer, islandPath} from './map.js?v=34a2ac7';
+import {view, project} from './scene.js?v=34a2ac7';
+import {JOY_RADIUS} from './input.js?v=34a2ac7';
+import {enemies, combatState, capture} from './combat.js?v=34a2ac7';
+import {drawFish} from './fishing.js?v=34a2ac7';
+import {whale} from './wildlife.js?v=34a2ac7';
+import {SHORE_FISH} from './config.js?v=34a2ac7';
+import {bottle} from './quests.js?v=34a2ac7';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=34a2ac7';
+// A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
+function drawGain(c, p, t, S){
+  const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
+  let [bx, by] = project(p.x ?? S.x, 40, p.y ?? S.y);
+  const up = k < .3 ? (1 - Math.pow(1 - k/.3, 3)) : k < .7 ? 1 : 1 - Math.pow((k - .7)/.3, 2);
+  const sc = k < .15 ? .6 + k/.15*.6 : k < .3 ? 1.2 - (k - .15)/.15*.2 : k < .7 ? 1 : 1 - (k - .7)/.3*.7;
+  const y = by - 34 - up*48, im = iconImg(p.ic), s = 30*sc; bx += ((p.slot || 0) % 3 - 1)*64 + 12; // several pick-ups sit side by side
+  c.save(); c.globalAlpha = k > .85 ? (1 - k)/.15 : 1;
+  c.fillStyle = 'rgba(43,33,28,.82)'; c.beginPath(); c.arc(bx - 10, y, s*.72, 0, Math.PI*2); c.fill();
+  if (im.complete) c.drawImage(im, bx - 10 - s/2, y - s/2, s, s);
+  c.font = `800 ${Math.round(17*sc)}px Nunito, system-ui, sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
+  c.lineWidth = 4; c.strokeStyle = 'rgba(34,28,24,.8)'; c.strokeText(p.txt, bx + s*.45, y); c.fillStyle = '#fbf3df'; c.fillText(p.txt, bx + s*.45, y);
+  c.restore(); c.textBaseline = 'alphabetic'; return true;
+}
+// pick-up icons, drawn from the menu icons once
+const icons = {};
+function iconImg(k){ if (icons[k]) return icons[k];
+  const svg = k === 'wood' ? IC.wood : k === 'coin' ? IC.coin : FISH_COLOR[k] ? IC.fish(FISH_COLOR[k]) : k === 'fish' ? IC.fish(FISH_COLOR.sardine) : GOOD_IC(k);
+  const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" ')); return icons[k] = im; }
 
 const MINI_RANGE = 2600, SIDE_COLOR = {pirate:'#e0614d', merchant:'#e8dcc0'};
 const shipColor = e => (e.spec.side === 'navy' || e.spec.side === 'fort') && e.city ? CITIES[e.city].color : SIDE_COLOR[e.spec.side === 'fort' ? 'pirate' : e.spec.side];
@@ -86,7 +106,7 @@ export function drawOverlay(fps){
       const a = Math.sin(ph/.4*Math.PI); c.fillStyle = `rgba(244,251,255,${.75*a})`; c.beginPath(); c.ellipse(px, py, 5*a + 1.5, 2.2*a + .6, 0, 0, Math.PI*2); c.fill(); }
   }
   // small "+1" pops over the boat (sardines)
-  if (G.pops) G.pops = G.pops.filter(p => { const k = (t - p.t)/1.1; if (k > 1) return false; const [bx, by] = project(p.x ?? S.x, 60, p.y ?? S.y);
+  if (G.pops) G.pops = G.pops.filter(p => { if (p.ic){ return drawGain(c, p, t, S); } const k = (t - p.t)/1.1; if (k > 1) return false; const [bx, by] = project(p.x ?? S.x, 60, p.y ?? S.y);
     c.font = `800 ${p.c ? 20 : 15}px Nunito, system-ui, sans-serif`; c.textAlign = 'center'; c.globalAlpha = 1 - k; c.fillStyle = p.c || 'rgb(247,238,214)'; c.fillText(p.txt, bx + 18, by - k*26); c.globalAlpha = 1; return true; });
   if (G.act && G.act.type !== 'shore'){
     const [bx, by] = project(S.x, 70, S.y);

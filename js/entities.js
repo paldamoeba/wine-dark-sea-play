@@ -1,15 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=f3aa387';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=f3aa387';
-import {G, ship, lvl} from './state.js?v=f3aa387';
-import {scene} from './scene.js?v=f3aa387';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=f3aa387';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=f3aa387';
-import {addTown, figure} from './town.js?v=f3aa387';
-import {makeFire, updateFire, burn} from './fire.js?v=f3aa387';
-import {sinkPose} from './sinking.js?v=f3aa387';
-import {moored} from './fleet.js?v=f3aa387';
-import {placeOnWaves} from './combat.js?v=f3aa387';
+import {SHIPS} from './config.js?v=34a2ac7';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=34a2ac7';
+import {G, ship, lvl} from './state.js?v=34a2ac7';
+import {scene} from './scene.js?v=34a2ac7';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=34a2ac7';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=34a2ac7';
+import {addTown, figure} from './town.js?v=34a2ac7';
+import {buildStatue} from './monuments.js?v=34a2ac7';
+import {makeFire, updateFire, burn} from './fire.js?v=34a2ac7';
+import {sinkPose} from './sinking.js?v=34a2ac7';
+import {moored} from './fleet.js?v=34a2ac7';
+import {placeOnWaves} from './combat.js?v=34a2ac7';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -91,7 +92,9 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   const keep = [...houses];
   // the temple on the highest, widest ground a little away from the houses; the statue by the pier
   let tp = null; for (let k=0;k<80 && !tp;k++){ const p = spotIn(R, ground, 24, cx, cz, 230); if (flat(p, 24) && houses.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 46)) tp = p; }
-  if (tp){ const t = temple(); t.position.set(tp[0], top, tp[1]); t.scale.setScalar(.8); t.rotation.y = -ang; g.add(t); keep.push(tp, [tp[0] + 18, tp[1]], [tp[0] - 18, tp[1]]); }
+  if (tp){ const t = temple(); t.position.set(tp[0], top, tp[1]); t.scale.setScalar(.8); t.rotation.y = -ang; g.add(t); keep.push(tp, [tp[0] + 18, tp[1]], [tp[0] - 18, tp[1]]);
+    // the city's god in front of its temple: Athena for Athens, Apollo for Sparta
+    if (!is.port){ const gd = buildStatue(is.city === 'sparta' ? 'apollo' : 'athena'), sx = tp[0] + PIER.dx*34, sz = tp[1] + PIER.dy*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.55); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); } }
   let sp = null; for (let k=0;k<60 && !sp;k++){ const p = spotIn(R, ground, 8, px - PIER.dx*30, pz - PIER.dy*30, 60); if (p && keep.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 24)) sp = p; }
   if (!is.port && sp){ // a flagpole by the pier with the owner's colors
     const pole = mesh(new T.CylinderGeometry(1, 1.2, 46, 5), '#6e4a26'); pole.position.set(sp[0], top + 23, sp[1]); g.add(pole);

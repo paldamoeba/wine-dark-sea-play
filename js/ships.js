@@ -49,6 +49,7 @@ export const SPECS = {
   bireme:     {L:160, B:30, H:18, rise:26, oarRows:1, oarCount:14, mast:true, sailW:62, sailH:52, ram:true, fans:true, eyes:true, crew:[['stand', 1], ['archer', 4]], look:{paint:'gold', sail:'bwr', flag:'poseidon'}},
   trireme:    {L:190, B:34, H:21, rise:32, oarRows:3, oarCount:11, mast:true, sailW:74, sailH:60, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, outrigger:true, canopy:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
   raider:     {L:135, B:28, H:16, rise:22, oarRows:1, oarCount:9, mast:true, sailW:56, sailH:46, ram:true, fans:true, shields:true, raider:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'raider', sail:'blood', flag:'none'}},
+  trader:     {L:84, B:36, H:18, rise:12, mast:true, sailW:50, sailH:42, cargo:true, crew:[['stand', 2]], crewAt:[[-.4, 0], [.33, 0]], look:{paint:'oak', sail:'ochre', flag:'hermes'}}, // a small round trading ship
   dinghy:     {L:44, B:17, H:9, rise:6, oarRows:1, oarCount:2, mast:true, sailW:20, sailH:18, raider:true, crew:[['archer', 1]], look:{paint:'raider', sail:'blood', flag:'none'}},
   skiff:      {L:72, B:22, H:12, rise:12, oarRows:1, oarCount:3, mast:true, sailW:34, sailH:28, fans:true, shields:true, shieldCount:5, raider:true, crew:[['archer', 3]], look:{paint:'raider', sail:'blood', flag:'none'}},
 };

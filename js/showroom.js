@@ -1,8 +1,8 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides. Uses the game's own builders,
 // so what you see here is exactly what sails in the game.
-import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=f3aa387';
-import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=f3aa387';
-import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS} from './models.js?v=f3aa387';
+import {buildShip, SPECS, CEL, setCel, inkify} from './ships.js?v=34a2ac7';
+import {buildColossus, buildFortress, buildStatue} from './monuments.js?v=34a2ac7';
+import {cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS} from './models.js?v=34a2ac7';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -18,7 +18,7 @@ const camera = new T.PerspectiveCamera(40, 1, 2, 9000);
 const SHIP_INFO = {
   rowboat:'Your first boat. One rower, a small hold.', fishing:'A sail, nets and a second crew member.', merchant:'Trade ships with a cabin and a cargo of amphorae.',
   penteconter:'A long fast warship with one row of oars.', bireme:'Your warship: one row of oars, four archers, a bronze ram.', trireme:'Three rows of oars and an outrigger. Coming later.',
-  raider:'The pirate galley, with shields along its sides.', dinghy:'The small pirate boat.', skiff:'The pirate skiff.'};
+  raider:'The pirate galley, with shields along its sides.', trader:'A small round trading ship. Some merchants sail these.', dinghy:'The small pirate boat.', skiff:'The pirate skiff.'};
 const GROUPS = {
   ships:Object.keys(SPECS).map(k => ({key:k, name:k[0].toUpperCase() + k.slice(1), desc:SHIP_INFO[k] || '', make:() => buildShip(k, {}, true)})),
   monuments:[
@@ -30,8 +30,11 @@ const GROUPS = {
       CYPRESS_TINTS.forEach((t, i) => { const c = cypress(t); c.position.set(-60 + i*40, 0, -30); g.add(c); });
       ROUND_TINTS.forEach((t, i) => { const c = roundTree(t, i); c.position.set(-90 + i*30, 0, 25 + (i % 2)*18); g.add(c); });
       const grass = new T.Mesh(new T.CylinderGeometry(130, 140, 6, 24), new T.MeshLambertMaterial({color:'#7d9a45'})); grass.position.y = -3; g.add(grass); return g; }},
-    {key:'statue', name:'Marble statue', desc:'A god on a plinth, for the harbors.', make:() => buildStatue('marble')},
-    {key:'bronze', name:'Bronze statue', desc:'The same god cast in bronze.', make:() => buildStatue('bronze')},
+    {key:'poseidon', name:'Statue of Poseidon', desc:'With his trident. Stands at harbors and pirate fortresses.', make:() => buildStatue('poseidon')},
+    {key:'athena', name:'Statue of Athena', desc:'Helmet, spear and shield. On Athenian fortresses and harbors.', make:() => buildStatue('athena')},
+    {key:'zeus', name:'Statue of Zeus', desc:'A thunderbolt and a laurel wreath. On Spartan fortresses.', make:() => buildStatue('zeus')},
+    {key:'apollo', name:'Statue of Apollo', desc:'With his lyre.', make:() => buildStatue('apollo')},
+    {key:'artemis', name:'Statue of Artemis', desc:'The huntress, with her bow, cast in bronze.', make:() => buildStatue('artemis', 'bronze')},
   ]};
 
 let group = 'ships', obj = null, focus = new T.Vector3(), dist = 300, yaw = -.9, pitch = .42;

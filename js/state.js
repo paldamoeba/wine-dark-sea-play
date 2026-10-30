@@ -1,6 +1,6 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=f3aa387';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=f3aa387';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=34a2ac7';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=34a2ac7';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -44,6 +44,9 @@ export const ship = () => { const b = SHIPS[G.S.tier], key = `${G.S.tier}|${lvl(
   if (shipC.key !== key) shipC = {key, v:{...b, hull:Math.round(b.hull*(1 + UPGRADES.hull.each*lvl('hull'))),
     speed:Math.round(b.speed*(1 + UPGRADES.oars.each*lvl('oars') + UPGRADES.sail.each*lvl('sail'))), turn:b.turn*(1 + UPGRADES.helm.each*lvl('helm'))}};
   return shipC.v; };
+// Something picked up: a little icon and "+n" springs up from the boat, then drops back into it (drawn by overlay.js).
+// kind = 'fish' | 'tuna' | 'swordfish' | 'wood' | 'coin' | a trade good.
+export function gain(kind, n = 1, x, y){ const slot = (G.pops || []).filter(p => p.ic && G.t - p.t < .6).length; G.pops = [...(G.pops || []), {t:G.t + slot*.15, slot, ic:kind, txt:`+${n}`, x, y}]; }
 export const holdUsed = () => Object.values(G.S.cargo).reduce((a, b) => a + (b || 0), 0);
 
 export function newSave(){

@@ -1,10 +1,10 @@
 // Fishing minigame: a needle spins around a ring over your boat. Tap (or press Space) while it is in the green part.
 // Bigger fish have a smaller green part and a faster needle (see FISH in config.js).
-import {FISH} from './config.js?v=f3aa387';
-import {G, ship, holdUsed, save} from './state.js?v=f3aa387';
-import {toast} from './ui.js?v=f3aa387';
-import {blessing, fishBoost} from './crew.js?v=f3aa387';
-import {progress} from './quests.js?v=f3aa387';
+import {FISH} from './config.js?v=34a2ac7';
+import {G, ship, holdUsed, save, gain} from './state.js?v=34a2ac7';
+import {toast} from './ui.js?v=34a2ac7';
+import {blessing, fishBoost} from './crew.js?v=34a2ac7';
+import {progress} from './quests.js?v=34a2ac7';
 
 const TAU = Math.PI*2;
 const angDiff = (a, b) => ((a - b + Math.PI*3) % TAU) - Math.PI;
@@ -30,7 +30,7 @@ function tap(){
   F.next = true; F.flash = 1;
   if (Math.abs(angDiff(F.ang, F.g)) < F.size/2){
     S.cargo[kind]++; F.ref.stock--; F.ok = true; F.cool = .55; progress('catch', kind);
-    toast(`+1 ${FISH[kind].label}`);
+    gain(kind);
     if (F.ref.stock <= 0){ toast('The fish have moved on', 2); G.fish = null; }
     save();
   } else { F.ok = false; F.cool = .9; toast('It got away'); }

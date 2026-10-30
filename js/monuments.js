@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat} from './ships.js?v=f3aa387';
+import {mat} from './ships.js?v=34a2ac7';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -16,8 +16,17 @@ const V = (x, y, z) => new T.Vector3(x, y, z);
 // A bronze sun god, eight heads tall, one foot on each side of the harbor gate: a torch held high in one hand, a bow in the
 // other, a quiver on his back and a crown of sun rays. Built facing +x with his feet `stance` apart along z, soles at y = 0.
 // Returns the group; group.userData.flame is the torch fire and group.userData.mats the materials (to fade him).
-export function buildColossus(height = 480, stance = 260, fade = false){
-  const g = new T.Group(), u = height/8, F = stance/2;
+// What a god holds and wears. The Colossus (Helios) has a torch, a bow, a quiver and a crown of sun rays.
+export const GODS_LOOK = {
+  helios:  {up:'torch', low:'bow', crown:'rays', quiver:true},
+  poseidon:{up:'trident', low:'none', crown:'none', beard:true},
+  athena:  {up:'spear', low:'shield', crown:'helmet'},
+  zeus:    {up:'bolt', low:'none', crown:'wreath', beard:true},
+  apollo:  {up:'none', low:'lyre', crown:'wreath'},
+  artemis: {up:'none', low:'bow', crown:'none', quiver:true},
+};
+export function buildColossus(height = 480, stance = 260, fade = false, look = GODS_LOOK.helios){
+  const g = new T.Group(), u = height/8, F = stance/2, L = look;
   const o = fade ? {transparent:true, opacity:1} : {};
   const skin = mat('#b98a4a', o), dark = mat('#94683a', o), cloth = mat('#7d5a33', o), fire = mat('#f2b247', o), wood = mat('#6e4a2a', o);
   g.userData.mats = [skin, dark, cloth, fire, wood];
@@ -36,28 +45,42 @@ export function buildColossus(height = 480, stance = 260, fade = false){
   const torso = M(new T.CylinderGeometry(1.05*u, .7*u, 2.3*u, 10), skin); torso.position.set(0, 5.75*u, 0); torso.scale.x = .62; g.add(torso);
   for (const s of [-1, 1]){ g.add(ball(V(.4*u, 6.3*u, s*.42*u), .42*u, skin, .55, .7, 1)); g.add(ball(V(.38*u, 5.2*u, s*.2*u), .25*u, skin, .5, .55, .7)); }
   // the quiver strap across the chest, the quiver and arrows on his back
-  const strap = M(new T.BoxGeometry(.1*u, 3*u, .2*u), wood); strap.position.set(.45*u, 5.8*u, 0); strap.rotation.x = .75; g.add(strap);
+  if (L.quiver){ const strap = M(new T.BoxGeometry(.1*u, 3*u, .2*u), wood); strap.position.set(.45*u, 5.8*u, 0); strap.rotation.x = .75; g.add(strap);
   const quiver = M(new T.CylinderGeometry(.22*u, .18*u, 1.6*u, 8), wood); quiver.position.set(-.55*u, 6.1*u, .35*u); quiver.rotation.x = -.5; g.add(quiver);
-  for (let i=0;i<4;i++){ const ar = M(new T.CylinderGeometry(.03*u, .03*u, .6*u, 4), dark); ar.position.set(-.55*u + (i - 1.5)*.06*u, 7*u, .85*u); ar.rotation.x = -.5; g.add(ar); }
+  for (let i=0;i<4;i++){ const ar = M(new T.CylinderGeometry(.03*u, .03*u, .6*u, 4), dark); ar.position.set(-.55*u + (i - 1.5)*.06*u, 7*u, .85*u); ar.rotation.x = -.5; g.add(ar); } }
   // neck, head, curls and the crown of sun rays
   g.add(limb(V(0, 6.8*u, 0), V(0, 7.15*u, 0), .3*u, .28*u, skin));
   g.add(ball(V(.05*u, 7.5*u, 0), .46*u, skin, .95, 1.08, .9));
   g.add(ball(V(-.16*u, 7.72*u, 0), .44*u, dark, .85, .62, .98)); // hair, swept back
   const nose = M(new T.BoxGeometry(.16*u, .22*u, .12*u), skin); nose.position.set(.48*u, 7.45*u, 0); nose.rotation.z = -.3; g.add(nose); // a strong nose and brow
   const brow = M(new T.BoxGeometry(.1*u, .08*u, .5*u), dark); brow.position.set(.44*u, 7.62*u, 0); g.add(brow);
-  const ray = new T.ConeGeometry(.1*u, .75*u, 4);
-  for (let i=0;i<11;i++){ const a = -Math.PI*.6 + i/10*Math.PI*1.2, r = M(ray, fire);
-    r.position.set(-.05*u, 7.55*u + Math.cos(a)*.65*u, Math.sin(a)*.65*u); r.rotation.x = a; g.add(r); }
+  if (L.crown === 'rays'){ const ray = new T.ConeGeometry(.1*u, .75*u, 4);
+    for (let i=0;i<11;i++){ const a = -Math.PI*.6 + i/10*Math.PI*1.2, r = M(ray, fire);
+      r.position.set(-.05*u, 7.55*u + Math.cos(a)*.65*u, Math.sin(a)*.65*u); r.rotation.x = a; g.add(r); } }
+  if (L.crown === 'helmet'){ const hm = M(new T.SphereGeometry(.52*u, 12, 6, 0, Math.PI*2, 0, Math.PI/1.8), dark); hm.position.set(0, 7.6*u, 0); g.add(hm);
+    const crest = M(new T.BoxGeometry(1.1*u, .5*u, .1*u), cloth); crest.position.set(-.1*u, 8.15*u, 0); g.add(crest); }
+  if (L.crown === 'wreath'){ const w = M(new T.TorusGeometry(.42*u, .07*u, 5, 14), mat('#7c8a3a', o)); w.rotation.x = Math.PI/2; w.position.set(0, 7.7*u, 0); g.add(w); }
+  if (L.beard){ const b = ball(V(.3*u, 7.1*u, 0), .3*u, dark, .8, 1, 1.1); g.add(b); }
   // torch arm (right, +z): up and out, the torch cup and its flame above his head
   const shR = V(0, 6.6*u, 1.08*u), elR = V(.2*u, 7.55*u, 1.65*u), haR = V(.3*u, 8.6*u, 1.45*u);
   g.add(ball(shR, .38*u, skin)); g.add(limb(shR, elR, .3*u, .24*u, skin)); g.add(limb(elR, haR, .24*u, .18*u, skin)); g.add(ball(haR, .2*u, skin));
-  const cup = M(new T.CylinderGeometry(.32*u, .12*u, .55*u, 8), dark); cup.position.set(.3*u, 8.95*u, 1.45*u); g.add(cup);
-  const flame = M(new T.ConeGeometry(.34*u, 1.1*u, 7), fire, false); flame.position.set(.3*u, 9.7*u, 1.45*u); g.add(flame); g.userData.flame = flame;
+  if (L.up === 'torch'){ const cup = M(new T.CylinderGeometry(.32*u, .12*u, .55*u, 8), dark); cup.position.set(.3*u, 8.95*u, 1.45*u); g.add(cup);
+    const flame = M(new T.ConeGeometry(.34*u, 1.1*u, 7), fire, false); flame.position.set(.3*u, 9.7*u, 1.45*u); g.add(flame); g.userData.flame = flame; }
+  if (L.up === 'trident' || L.up === 'spear'){ // a long shaft held upright, three prongs or a bronze point on top
+    const sh = M(new T.CylinderGeometry(.06*u, .06*u, 5.4*u, 5), L.up === 'spear' ? wood : dark); sh.position.set(.3*u, 7.6*u, 1.45*u); g.add(sh);
+    if (L.up === 'spear'){ const tip = M(new T.ConeGeometry(.16*u, .6*u, 5), fire); tip.position.set(.3*u, 10.6*u, 1.45*u); g.add(tip); }
+    else { const bar = M(new T.BoxGeometry(.1*u, .1*u, .9*u), dark); bar.position.set(.3*u, 10.2*u, 1.45*u); g.add(bar);
+      for (const z of [-.42, 0, .42]){ const pr = M(new T.ConeGeometry(.08*u, .7*u, 4), dark); pr.position.set(.3*u, 10.6*u, (1.45 + z)*u); g.add(pr); } } }
+  if (L.up === 'bolt') [[0, 9.1, 0, .5], [.12, 9.75, .1, -.5], [0, 10.4, 0, .5]].forEach(([x, y, z, r]) => { const b = M(new T.BoxGeometry(.14*u, .8*u, .18*u), fire); b.position.set((.3 + x)*u, y*u, (1.45 + z)*u); b.rotation.x = r; g.add(b); });
   // bow arm (left, -z): down along his side, holding a tall bow
   const shL = V(0, 6.6*u, -1.08*u), elL = V(.15*u, 5.35*u, -1.45*u), haL = V(.55*u, 4.5*u, -1.4*u);
   g.add(ball(shL, .38*u, skin)); g.add(limb(shL, elL, .3*u, .24*u, skin)); g.add(limb(elL, haL, .24*u, .18*u, skin)); g.add(ball(haL, .2*u, skin));
-  const bow = M(new T.TorusGeometry(1.6*u, .07*u, 5, 16, Math.PI*.9), wood); bow.position.set(.4*u, 4.5*u, -1.5*u); bow.rotation.set(0, Math.PI/2, Math.PI/2 + Math.PI*.05); g.add(bow);
-  const str = M(new T.CylinderGeometry(.015*u, .015*u, 3.1*u, 3), mat('#e9dcc0', o)); str.position.set(.4*u, 4.5*u, -1.5*u); g.add(str);
+  if (L.low === 'bow'){ const bow = M(new T.TorusGeometry(1.6*u, .07*u, 5, 16, Math.PI*.9), wood); bow.position.set(.4*u, 4.5*u, -1.5*u); bow.rotation.set(0, Math.PI/2, Math.PI/2 + Math.PI*.05); g.add(bow);
+    const str = M(new T.CylinderGeometry(.015*u, .015*u, 3.1*u, 3), mat('#e9dcc0', o)); str.position.set(.4*u, 4.5*u, -1.5*u); g.add(str); }
+  if (L.low === 'shield'){ const sd = M(new T.CylinderGeometry(1.05*u, 1.05*u, .12*u, 16), dark); sd.rotation.z = Math.PI/2; sd.position.set(.75*u, 4.9*u, -1.5*u); g.add(sd);
+    const boss = M(new T.SphereGeometry(.3*u, 8, 6), fire); boss.position.set(.82*u, 4.9*u, -1.5*u); boss.scale.x = .4; g.add(boss); }
+  if (L.low === 'lyre'){ const ly = M(new T.TorusGeometry(.5*u, .07*u, 5, 12, Math.PI), fire); ly.position.set(.7*u, 4.9*u, -1.4*u); ly.rotation.set(Math.PI, Math.PI/2, 0); g.add(ly);
+    const yoke = M(new T.BoxGeometry(.08*u, .08*u, 1.1*u), wood); yoke.position.set(.7*u, 5.4*u, -1.4*u); g.add(yoke); }
   return g;
 }
 
@@ -111,6 +134,8 @@ export function buildFortress(owner, color){
   const flag = box(1, 16, 26, cloth, -20, 192, 13); flag.castShadow = false; g.userData.flag = flag;
   // braziers on the walls
   for (const [x, z] of [[100, 30], [100, -30], [53, 50], [53, -50]]){ cyl(3, 2, 5, dark, x, 54 + (x < 90 ? 42 : 0), z, 6); const f = M(new T.ConeGeometry(2.6, 6, 6), mat('#f2b247'), false); f.position.set(x, 60 + (x < 90 ? 42 : 0), z); g.add(f); }
+  // the city's god watches the sea from the terrace
+  const st = buildStatue(owner === 'athens' ? 'athena' : owner === 'sparta' ? 'zeus' : 'poseidon', pirate ? 'bronze' : 'marble'); st.position.set(44, 93, 0); st.scale.setScalar(.8); g.add(st);
   // stair down to a little dock on the sea side
   for (let k=0;k<6;k++) box(12, 4, 30, shade, 108 + k*7, 40 - k*7, 0);
   box(40, 3, 26, wood, 160, 3, 0);
@@ -118,11 +143,12 @@ export function buildFortress(owner, color){
   return g;
 }
 
-// ---- a marble statue on a plinth (gods for the harbors and the art page) ----
-export function buildStatue(kind = 'poseidon'){
-  const g = new T.Group(), marble = mat('#eee6d6'), plinth = mat('#cfc3a8'), bronze = mat('#9c7038');
+// ---- a statue of a god on a plinth (for harbors, fortresses and the art page) ----
+export function buildStatue(god = 'poseidon', stone = 'marble'){
+  const g = new T.Group(), marble = mat(stone === 'bronze' ? '#9c7038' : '#eee6d6'), plinth = mat('#cfc3a8');
   const pl = M(new T.BoxGeometry(18, 10, 18), plinth); pl.position.y = 5; g.add(pl);
-  const top = M(new T.BoxGeometry(20, 2, 20), marble); top.position.y = 11; g.add(top);
-  const s = buildColossus(44, 8); s.traverse(o => { if (o.isMesh && o.material !== s.userData.mats[3]) o.material = kind === 'bronze' ? bronze : marble; });
+  const top = M(new T.BoxGeometry(20, 2, 20), mat('#e4dac4')); top.position.y = 11; g.add(top);
+  const s = buildColossus(44, 8, false, GODS_LOOK[god] || GODS_LOOK.poseidon);
+  const keep = new Set([s.userData.mats[3]]); s.traverse(o => { if (o.isMesh && !keep.has(o.material)) o.material = marble; });
   s.position.y = 12; g.add(s); return g;
 }

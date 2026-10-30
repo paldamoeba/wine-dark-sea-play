@@ -1,19 +1,19 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=f3aa387';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=f3aa387';
-import {G, ship, holdUsed, save} from './state.js?v=f3aa387';
-import {scene} from './scene.js?v=f3aa387';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=f3aa387';
-import {makeFire, updateFire, burn} from './fire.js?v=f3aa387';
-import {blessing, fighters} from './crew.js?v=f3aa387';
-import {progress} from './quests.js?v=f3aa387';
-import {arrowK, ramDmg} from './upgrades.js?v=f3aa387';
-import {toast} from './ui.js?v=f3aa387';
-import {sink} from './player.js?v=f3aa387';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=f3aa387';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=f3aa387';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=34a2ac7';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=34a2ac7';
+import {G, ship, holdUsed, save, gain} from './state.js?v=34a2ac7';
+import {scene} from './scene.js?v=34a2ac7';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=34a2ac7';
+import {makeFire, updateFire, burn} from './fire.js?v=34a2ac7';
+import {blessing, fighters} from './crew.js?v=34a2ac7';
+import {progress} from './quests.js?v=34a2ac7';
+import {arrowK, ramDmg} from './upgrades.js?v=34a2ac7';
+import {toast} from './ui.js?v=34a2ac7';
+import {sink} from './player.js?v=34a2ac7';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=34a2ac7';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=34a2ac7';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -73,10 +73,20 @@ function buildFort(e){
 function side(e){ return e.spec.side; }
 const cityName = c => CITIES[c] ? CITIES[c].name : '';
 const adj = c => c === 'athens' ? 'Athenian' : 'Spartan';
+// Every ship gets its own look: merchants in many paints and sails (some on a smaller round trader), pirates in dark
+// colors, navies in their city's colors. Picked once per ship so it keeps its look.
+const pick = (list, e, salt) => list[Math.abs(Math.floor(Math.sin((e.home.x + salt)*12.9898 + e.home.y*78.233)*43758.5453)) % list.length];
+function lookOf(e){
+  if (e.look) return e.look;
+  const sd = side(e);
+  if (sd === 'merchant'){ e.model = pick(['merchant', 'merchant', 'trader'], e, 1);
+    return e.look = {flag:e.city || 'hermes', paint:pick(['white', 'oak', 'gold', 'green', 'aegean', 'white'], e, 2), sail:pick(['plain', 'ochre', 'sea', 'purple', 'bwr', 'plain'], e, 3)}; }
+  if (sd === 'pirate') return e.look = {...(e.spec.look || {}), paint:pick(['raider', 'raider', 'black', 'oak'], e, 4), sail:pick(['blood', 'blood', 'purple', 'plain'], e, 5)};
+  return e.spec.look || {};
+}
 function buildEnemy(e){ if (e.obj) scene.remove(e.obj);
   if (e.fort){ e.obj = buildFort(e); e.obj.position.set(e.x, 2, e.y); e.fire = makeFire(140, 120, 90); e.obj.add(e.fire); scene.add(e.obj); return; }
-  const look = side(e) === 'merchant' ? {flag:e.city || 'hermes'} : e.spec.look || {}; // merchants fly their city's flag
-  e.obj = buildShip(e.spec.model, look, G.settings.dev.crew);
+  e.obj = buildShip(e.model || e.spec.model, lookOf(e), G.settings.dev.crew);
   e.fire = makeFire(e.spec.len, e.spec.beam, SPECS[e.spec.model].H*.9); e.obj.add(e.fire); scene.add(e.obj); }
 export function rebuildEnemies(){ enemies.forEach(buildEnemy); }
 enemies.forEach(buildEnemy);
@@ -377,7 +387,8 @@ function updateLoot(dt){
       const room = Math.max(0, ship().hold - holdUsed()), wood = Math.min(room, left);
       S.hull = Math.max(S.hull, Math.min(cap, S.hull + patch*6)); S.gold += l.gold; S.cargo.wood += wood; l.life = 0;
       if (l.goods){ const n = Math.min(l.goods.n, Math.max(0, ship().hold - holdUsed())); S.cargo[l.goods.k] = (S.cargo[l.goods.k] || 0) + n; if (n) setTimeout(() => toast(`+${n} ${l.goods.k === 'oil' ? 'olive oil' : l.goods.k} from the merchant's cargo`, 2.6), 3000); }
-      toast(`+${l.gold} drachmae${patch ? `, hull patched with ${patch} planks` : need === 0 && S.hull < ship().hull ? ', the rest needs a dry dock' : ''}${wood ? `, +${wood} wood` : ''}${wood < left ? ' (hold full)' : ''}`, 3); save();
+      gain('coin', l.gold); if (wood) gain('wood', wood); if (l.goods) gain(l.goods.k, l.goods.n);
+      if (patch || wood < left) toast(`+${l.gold} drachmae${patch ? `, hull patched with ${patch} planks` : need === 0 && S.hull < ship().hull ? ', the rest needs a dry dock' : ''}${wood ? `, +${wood} wood` : ''}${wood < left ? ' (hold full)' : ''}`, 3); save();
     }
     if (l.life <= 0){ scene.remove(l.obj); LOOT.splice(i, 1); }
   }

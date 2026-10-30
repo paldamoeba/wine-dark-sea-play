@@ -1,8 +1,8 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=f3aa387';
-import {seaInfo, waveH, sstep, landDist} from './world.js?v=f3aa387';
-import {G} from './state.js?v=f3aa387';
-import {mat} from './ships.js?v=f3aa387';
+import {QUALITY} from './config.js?v=34a2ac7';
+import {seaInfo, waveH, sstep, landDist, WEATHER_WAVES} from './world.js?v=34a2ac7';
+import {G} from './state.js?v=34a2ac7';
+import {mat} from './ships.js?v=34a2ac7';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -45,11 +45,11 @@ function buildWater(seg){
 const LOOKS = {classic:['#2b8e8f', '#175c7c', '#1b4a63', '#5cc2b2'], bright:['#35a6d8', '#1d72cc', '#1a5fb4', '#7fd3e2']};
 const CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
 const waterMat = mat('#ffffff', {vertexColors:true}).clone(); waterMat.gradientMap = mat('#ffffff').gradientMap;
-const foamU = {uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}};
+const foamU = {uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}};
 waterMat.onBeforeCompile = sh => {
   Object.assign(sh.uniforms, foamU);
   sh.vertexShader = 'varying vec3 vWorld;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorld = (modelMatrix*vec4(transformed, 1.0)).xyz;');
-  sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uFoam, uGlint; uniform vec3 uSun;
+  sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uFoam, uGlint, uStorm; uniform vec3 uSun, uSky;
     vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
     float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
       for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(i + g);
@@ -58,8 +58,16 @@ waterMat.onBeforeCompile = sh => {
     ` + sh.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>
       vec2 q = vWorld.xz/125.; q += .32*vec2(sin(q.y*1.3 + uTime*.4), cos(q.x*1.1 - uTime*.3)); q += .1*vec2(sin(q.y*4.7 - uTime*.6), cos(q.x*4.3 + uTime*.5));
       float e = cells(q), line = 1. - smoothstep(.02, .055, e);
-      float fade = smoothstep(2600., 900., length(vWorld.xz - cameraPosition.xz));
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(.92, .98, 1.), line*uFoam*.85*fade);
+      float dist = length(vWorld.xz - cameraPosition.xz), fade = smoothstep(2300., 500., dist);
+      // in storms and mist the foam dims to a teal line, so the sea gets darker and calmer to look at
+      vec3 foamC = mix(vec3(.92, .98, 1.), vec3(.32, .62, .68), uStorm);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, line*uFoam*.85*fade*(1. - .45*uStorm));
+      // big waves: a white line along each crest, so a rough sea shows separate rolling waves instead of a flat pool
+      float cy = vWorld.y, crest = smoothstep(6.0, 6.5, cy)*(1. - smoothstep(6.7, 7.6, cy));
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, crest*.5*smoothstep(2600., 700., dist));
+      // a little of the sky reflects off the water further away
+      vec3 Vv = normalize(cameraPosition - vWorld); float fres = pow(1. - max(Vv.y, 0.), 3.);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, uSky, fres*.35);
       // sunlight glinting off the little waves: a soft sheen toward the sun and bright twinkles inside it
       vec2 w = vWorld.xz;
       vec3 nrm = normalize(vec3(sin(w.x*.045 + uTime*1.7)*.16 + sin((w.x + w.y)*.11 - uTime*2.3)*.08, 1., cos(w.y*.05 - uTime*1.4)*.16 + sin((w.x - w.y)*.09 + uTime*2.1)*.08));
@@ -69,19 +77,26 @@ waterMat.onBeforeCompile = sh => {
 };
 export function setSeaLook(bright){ const L = LOOKS[bright ? 'bright' : 'classic']; CSH.set(L[0]); CSEA.set(L[1]); CST.set(L[2]); CLAG.set(L[3]); foamU.uFoam.value = bright ? 1 : 0; SKY.set(bright ? '#b8def0' : '#a9c9cf'); }
 setSeaLook(!G.settings || G.settings.bright !== false);
+// Colors and wave sizes only depend on where a point is, so they're worked out again only when the water tile moves
+// (or the look changes); every frame just moves the points up and down. This keeps phones and tablets fast.
+let wKey = '', wAmp = null;
 export function updateWater(){
   foamU.uTime.value = G.t;
   const step = waterSize/WN, ox = Math.round(G.cam.x/step)*step, oz = Math.round(G.cam.y/step)*step;
   water.position.set(ox, 0, oz);
-  const p = wgeo.attributes.position.array, c = wgeo.attributes.color.array;
-  for (let i=0;i<p.length;i+=3){
-    const x = wbase[i] + ox, z = wbase[i+2] + oz, s = seaInfo(x, z);
-    p[i+1] = waveH(x, z, s.amp, G.t);
-    tmpC.copy(CSH).lerp(CSEA, s.k0).lerp(CST, s.k1);
-    const ld = landDist(x, z); if (ld < 170) tmpC.lerp(CLAG, sstep(170, 0, ld)*.85); // light lagoon water near every shore: the crew fishes here
-    c[i] = tmpC.r; c[i+1] = tmpC.g; c[i+2] = tmpC.b;
-  }
-  wgeo.attributes.position.needsUpdate = true; wgeo.attributes.color.needsUpdate = true; wgeo.computeVertexNormals();
+  const p = wgeo.attributes.position.array, c = wgeo.attributes.color.array, n = p.length/3, key = ox + ',' + oz + ',' + CSEA.getHex() + ',' + n;
+  if (key !== wKey){ wKey = key; if (!wAmp || wAmp.length !== n) wAmp = new Float32Array(n);
+    for (let i=0, v=0;i<p.length;i+=3, v++){
+      const x = wbase[i] + ox, z = wbase[i+2] + oz, s = seaInfo(x, z);
+      wAmp[v] = s.amp/(WEATHER_WAVES.k || 1);
+      tmpC.copy(CSH).lerp(CSEA, s.k0).lerp(CST, s.k1);
+      const ld = landDist(x, z); if (ld < 170) tmpC.lerp(CLAG, sstep(170, 0, ld)*.85); // light lagoon water near every shore: the crew fishes here
+      c[i] = tmpC.r; c[i+1] = tmpC.g; c[i+2] = tmpC.b;
+    }
+    wgeo.attributes.color.needsUpdate = true; }
+  const k = WEATHER_WAVES.k;
+  for (let i=0, v=0;i<p.length;i+=3, v++) p[i+1] = waveH(wbase[i] + ox, wbase[i+2] + oz, wAmp[v]*k, G.t);
+  wgeo.attributes.position.needsUpdate = true; wgeo.computeVertexNormals();
 }
 
 // Builder zoom: grows the water tile, fog and shadow area to match how far out the camera is.
@@ -124,11 +139,11 @@ export function updateCamera(){
 export function updateWeather(){
   const k = G.stormK;
   const m = G.mistK || 0; // mist: a soft warm-white fog that closes in, with the sun glowing through it
-  scene.fog.color.copy(SKY).lerp(MIST, m*.85).lerp(STORMSKY, k); scene.background.copy(scene.fog.color);
+  scene.fog.color.copy(SKY).lerp(MIST, m*.5).lerp(STORMSKY, k); scene.background.copy(scene.fog.color);
   const z = viewZoom();
-  scene.fog.near = (1000 - k*550 - m*820)*z; scene.fog.far = (2300 - k*1000 - m*1400)*z;
+  scene.fog.near = (1000 - k*550 - m*420)*z; scene.fog.far = (2300 - k*1000 - m*750)*z;
   sun.intensity = .64 - k*.42 + m*.08 + G.flash*.8; hemi.intensity = .62 - k*.22 + m*.1 + G.flash*.6;
-  foamU.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); foamU.uGlint.value = 1 - k*.8 - m*.5;
+  foamU.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); foamU.uGlint.value = 1 - k*.8 - m*.5; foamU.uStorm.value = Math.min(1, k + m*.4); foamU.uSky.value.copy(scene.fog.color);
 }
 
 // World point -> screen pixels (for labels drawn on the 2D overlay).
@@ -151,7 +166,7 @@ const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.
       float d = abs(vUv.y - focus), r = smoothstep(.26, .5, d)*15.0; // only the outer edges blur
       // a soft round blur: 24 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
       vec4 c = texture2D(tex, vUv); float tot = 1., spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
-      for (int i = 1; i <= 24; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/24.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; }
+      if (r > .4) for (int i = 1; i <= 16; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/16.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; } // the sharp middle skips the blur
       vec3 col = c.rgb/tot; float l = dot(col, vec3(.299, .587, .114));
       col = mix(vec3(l), col, 1.15)*vec3(1.035, 1.0, .955);
       col *= mix(.84, 1., smoothstep(.98, .45, length((vUv - .5)*vec2(1.1, 1.))));
