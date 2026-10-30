@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY} from './config.js';
-import {MAPDATA} from './mapdata.js';
+import {TUNING, SETTINGS_KEY} from './config.js?v=1b5598e';
+import {MAPDATA} from './mapdata.js?v=1b5598e';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -10,7 +10,10 @@ export const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x-a)/(b-a
 // ---- which map ----
 // Builder tools pick the map and its scale. They are read straight from the saved settings because changing them reloads the game.
 // With builder tools off (every player) it's always map D at normal scale.
-const DEV = (() => { try { const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)); return s.builder ? s.dev || {} : {}; } catch(e){ return {}; } })();
+// Saves from before map D became the default move to D once.
+const DEV = (() => { try { const s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+  if (s && !s.mapD){ s.mapD = true; if (s.dev && s.dev.map === 'B') s.dev.map = 'D'; localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+  return s.builder ? s.dev || {} : {}; } catch(e){ return {}; } })();
 const id = DEV.map === 'old' || MAPDATA[DEV.map] ? DEV.map : 'D';
 // The distance slider is relative to SPREAD_BASE: 1× on the slider = islands twice as far apart as the map data.
 const SPREAD_BASE = 2;

@@ -1,7 +1,7 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM} from './config.js';
-import {G, lvl, ship} from './state.js';
-import {SPECS} from './ships.js';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM} from './config.js?v=1b5598e';
+import {G, lvl, ship} from './state.js?v=1b5598e';
+import {SPECS} from './ships.js?v=1b5598e';
 
 export const ramMax = () => UPGRADE_MAX*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on, a sail only on ships with a mast.
