@@ -1,19 +1,19 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=9b0ba4f';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=9b0ba4f';
-import {G, ship, holdUsed, save, gain} from './state.js?v=9b0ba4f';
-import {scene} from './scene.js?v=9b0ba4f';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=9b0ba4f';
-import {makeFire, updateFire, burn} from './fire.js?v=9b0ba4f';
-import {blessing, fighters} from './crew.js?v=9b0ba4f';
-import {progress} from './quests.js?v=9b0ba4f';
-import {arrowK, ramDmg} from './upgrades.js?v=9b0ba4f';
-import {toast} from './ui.js?v=9b0ba4f';
-import {sink} from './player.js?v=9b0ba4f';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=9b0ba4f';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=9b0ba4f';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT} from './config.js?v=77dd129';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=77dd129';
+import {G, ship, holdUsed, save, gain} from './state.js?v=77dd129';
+import {scene} from './scene.js?v=77dd129';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=77dd129';
+import {makeFire, updateFire, burn} from './fire.js?v=77dd129';
+import {blessing, fighters} from './crew.js?v=77dd129';
+import {progress} from './quests.js?v=77dd129';
+import {arrowK, ramDmg} from './upgrades.js?v=77dd129';
+import {toast} from './ui.js?v=77dd129';
+import {sink} from './player.js?v=77dd129';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=77dd129';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=77dd129';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -306,6 +306,19 @@ function witnesses(dt){
   if (seen) toast(seen > 1 ? `${seen} ${adj(crimeCity)} ships saw that! They will chase you until they lose sight of you.` : `An ${adj(crimeCity)} ship saw that! It will chase you until it loses sight of you.`.replace('An Spartan', 'A Spartan'), 4);
 }
 
+// ---- hit effects: little water splashes for misses, wood chips flying for hits ----
+const fxGeo = new T.IcosahedronGeometry(1, 1), chipGeo = new T.BoxGeometry(2.4, 1, 1.2);
+const FX = Array.from({length:60}, (_, i) => { const chip = i % 2 === 0, m = new T.Mesh(chip ? chipGeo : fxGeo, new T.MeshBasicMaterial({color:chip ? '#8a5d3e' : '#f4fbff', transparent:true, depthWrite:false}));
+  m.visible = false; scene.add(m); return {m, chip, life:0}; });
+let fxI = 0;
+function puff(x, y, chip, n){ for (let k=0;k<n;k++){ let f; for (let j=0;j<FX.length;j++){ const c = FX[(fxI + j) % FX.length]; if (c.chip === chip){ f = c; fxI = (fxI + j + 1) % FX.length; break; } }
+  const a = Math.random()*6.28, sp = 20 + Math.random()*30; Object.assign(f, {life:.7, x, y, h:6, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, vh:30 + Math.random()*40}); f.m.visible = true; } }
+function splash(x, y){ puff(x, y, false, 5); }
+function spark(x, y){ puff(x, y, true, 4); }
+function updateFx(dt){ for (const f of FX){ if (f.life <= 0) continue; f.life -= dt; if (f.life <= 0){ f.m.visible = false; continue; }
+  f.vh -= 140*dt; f.x += f.vx*dt; f.y += f.vy*dt; f.h = Math.max(0, f.h + f.vh*dt);
+  f.m.position.set(f.x, waveAt(f.x, f.y, G.t) + f.h, f.y); f.m.rotation.x += dt*9; f.m.scale.setScalar(f.chip ? 1.4 : 2 + (1 - f.life)*2); f.m.material.opacity = Math.min(1, f.life*2); } }
+
 // ---- arrows ----
 const arrowGeo = new T.CylinderGeometry(.9, .9, 20, 4); arrowGeo.rotateZ(Math.PI/2);
 const ARROWS = Array.from({length:160}, () => { const m = mesh(arrowGeo, '#f1ece0'); m.visible = false; m.castShadow = false; scene.add(m); return {m, live:false}; });
@@ -329,7 +342,7 @@ function updateArrows(dt){
     const tgt = a.to || G.S, tx = tgt.x + (a.hit ? 0 : a.ox), ty = tgt.y + (a.hit ? 0 : a.oy);
     const dist = Math.hypot(tx - a.x0, ty - a.y0), dur = Math.max(.35, dist/COMBAT.arrowSpeed);
     a.t += dt/dur;
-    if (a.t >= 1){ a.live = false; a.m.visible = false; if (a.hit) land(a); continue; }
+    if (a.t >= 1){ a.live = false; a.m.visible = false; if (a.hit) land(a); else splash(tx, ty, 1); continue; }
     const k = a.t, h = 18 + Math.sin(k*Math.PI)*dist*.28, x = a.x0 + (tx - a.x0)*k, y = a.y0 + (ty - a.y0)*k;
     const k2 = Math.min(1, k + .02), h2 = 18 + Math.sin(k2*Math.PI)*dist*.28;
     a.m.position.set(x, h, y);
@@ -337,6 +350,7 @@ function updateArrows(dt){
   }
 }
 function land(a){
+  const tg = a.to || G.S; spark(tg.x, tg.y);
   if (a.to){ const e = a.to; if (e.dead) return; e.hull -= a.dmg; e.hitT = .25; e.quiet = 0; e.kick = Math.min(.12, (e.kick || 0) + .5*a.dmg/e.spec.len);
     if (!a.from && side(e) !== 'pirate' && !(e.fort && !e.city)) crime(e); // you shot a merchant, a navy ship or a city's fort
     if (a.from && side(e) === 'pirate' && side(a.from) === 'navy'){ e.foe = a.from; startFight(e); } // pirates fight back
@@ -551,6 +565,7 @@ export function updateCombat(dt){
   updateFreePorts(dt);
   updateArrows(dt);
   updateStones(dt);
+  updateFx(dt);
   updateLoot(dt);
   updateSinking(dt, G.t);
   G.hurt = Math.max(0, (G.hurt || 0) - dt*2);

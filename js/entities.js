@@ -1,16 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=9b0ba4f';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=9b0ba4f';
-import {G, ship, lvl} from './state.js?v=9b0ba4f';
-import {scene} from './scene.js?v=9b0ba4f';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=9b0ba4f';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=9b0ba4f';
-import {addTown, figure} from './town.js?v=9b0ba4f';
-import {buildStatue} from './monuments.js?v=9b0ba4f';
-import {makeFire, updateFire, burn} from './fire.js?v=9b0ba4f';
-import {sinkPose} from './sinking.js?v=9b0ba4f';
-import {moored} from './fleet.js?v=9b0ba4f';
-import {placeOnWaves} from './combat.js?v=9b0ba4f';
+import {SHIPS} from './config.js?v=77dd129';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=77dd129';
+import {G, ship, lvl} from './state.js?v=77dd129';
+import {scene} from './scene.js?v=77dd129';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel} from './models.js?v=77dd129';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=77dd129';
+import {addTown, figure} from './town.js?v=77dd129';
+import {buildStatue} from './monuments.js?v=77dd129';
+import {makeFire, updateFire, burn} from './fire.js?v=77dd129';
+import {sinkPose} from './sinking.js?v=77dd129';
+import {moored} from './fleet.js?v=77dd129';
+import {placeOnWaves} from './combat.js?v=77dd129';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
