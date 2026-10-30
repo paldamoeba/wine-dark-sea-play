@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=5b5d761';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=5b5d761';
-import {G, ship, holdUsed, lvl, have, canPay} from './state.js?v=5b5d761';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5b5d761';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=5b5d761';
-import {board, active, canDeliver, goal} from './quests.js?v=5b5d761';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=5b5d761';
-import {shipPortrait} from './portrait.js?v=5b5d761';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=5b5d761';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=6731910';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=6731910';
+import {G, ship, holdUsed, lvl, have, canPay} from './state.js?v=6731910';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=6731910';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=6731910';
+import {board, active, canDeliver, goal} from './quests.js?v=6731910';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=6731910';
+import {shipPortrait} from './portrait.js?v=6731910';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=6731910';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -61,6 +61,7 @@ Object.assign(IC, {
   ship: svg(`<path d="M2.5 14 Q12 21.5 21.5 14 L20.3 12 H3.7Z" fill="#b5793f" ${OL}/><path d="M11 2.5 V12" stroke="#6e3d1e" stroke-width="1.8"/><path d="M11.6 3.5 Q18 7.5 11.6 11.5Z" fill="#fbf3df" ${OL}/><path d="M12 5.4 Q15 7.4 12 9.6" stroke="#3f6c94" stroke-width="1.6" fill="none"/><path d="M3 18.5 Q7 17 12 18.5 T21 18.5" stroke="#3f8fb0" stroke-width="1.6" fill="none"/>`),
   world: svg(`<circle cx="12" cy="12" r="9.2" fill="#3f8fb0" ${OL}/><path d="M6.5 8.5 Q9 5 12.5 7.5 Q12 10.5 8.5 11Z M13 14 Q16.5 11.5 17.5 15 Q15.5 18.5 13 16.5Z M8 15.5 q1.5 -1 2 1 q-1 1.5 -2 -1Z" fill="#8fb34a" ${OL}/><path d="M6.5 6 A8 8 0 0 1 11 3.6" stroke="#bfe3f0" stroke-width="1.4" fill="none" stroke-linecap="round"/>`),
   swords: svg(`<path d="M4.5 3.5 L17 16 M19.5 3.5 L7 16" stroke="#2a1d17" stroke-width="3.6" stroke-linecap="round"/><path d="M4.5 3.5 L17 16 M19.5 3.5 L7 16" stroke="#d7e2ea" stroke-width="2" stroke-linecap="round"/><path d="M14.5 19.5 L19.5 14.5 M4.5 14.5 L9.5 19.5" stroke="#2a1d17" stroke-width="3.6" stroke-linecap="round"/><path d="M14.5 19.5 L19.5 14.5 M4.5 14.5 L9.5 19.5" stroke="#e3b341" stroke-width="2" stroke-linecap="round"/>`),
+  flame: svg(`<path d="M12 2.5 C14 7 19 9 18.5 14.5 C18 19 15 21.5 12 21.5 C8.5 21.5 5.5 19 5.5 14.8 C5.5 11 8.5 9.5 9 6 C10.5 8 11 9.5 11 11 C12.5 9 12.8 5.5 12 2.5Z" fill="#ef7a2c" ${OL}/><path d="M12 12 C13.8 14 15 15.5 14.6 17.6 C14.2 19.6 13 20.4 12 20.4 C10.6 20.4 9.4 19.4 9.4 17.6 C9.4 15.6 11.2 14.6 12 12Z" fill="#ffd35a"/>`),
   bronze: svg(`<path d="M3 16.5 L6.5 9 H17.5 L21 16.5Z" fill="#c48a3e" ${OL}/><path d="M6.5 9 L8.5 5.5 H15.5 L17.5 9Z" fill="#e2ac5a" ${OL}/><path d="M9 7.2 H14" stroke="#f6d79a" stroke-width="1.3" stroke-linecap="round"/>`),
   linen: svg(`<path d="M4 6 H17 V18 H4Z" fill="#efe6cf" ${OL}/><ellipse cx="17" cy="12" rx="3.2" ry="6" fill="#e2d6b6" ${OL}/><ellipse cx="17" cy="12" rx="1.2" ry="2.4" fill="#b9a57e"/><path d="M4 10 H15 M4 14 H15" stroke="#cbbd99" stroke-width="1"/>`),
   wood: svg(`<rect x="2.5" y="7.5" width="16" height="9" rx="4.5" fill="#a3683a" ${OL}/><ellipse cx="18.5" cy="12" rx="3.2" ry="4.5" fill="#e6c48f" ${OL}/><ellipse cx="18.5" cy="12" rx="1.4" ry="2" fill="none" stroke="#a3683a" stroke-width="1"/><path d="M5 10h8M6 13.5h7" stroke="#7a4a25" stroke-width="1"/>`),
@@ -83,7 +84,7 @@ export const goodPrice = (h, k) => Math.round(GOODS[k].base*(h.free ? FREEPORT.g
 export const canBuyGood = (h, k) => !GOODS[k].rare || !!h.free;
 export const goodSell = (h, k) => Math.round(goodPrice(h, k)*TRADE.sellK);
 const JOB_IC = {catch:() => IC.fish(), deliver:() => IC.hold, salvage:() => IC.wreck, wood:() => IC.wood, visit:() => IC.letter, sink:() => IC.swords};
-const UP_IC = {sail:() => IC.sail, helm:() => IC.helm, hull:() => IC.hull, oars:() => IC.rower, seats:() => IC.seats, arrows:() => IC.arrows, ram:() => IC.ram((ramMat(lvl('ram') + 1) || ramMat(lvl('ram')) || {color:'#8a5a30'}).color)};
+const UP_IC = {fire:() => IC.flame, sail:() => IC.sail, helm:() => IC.helm, hull:() => IC.hull, oars:() => IC.rower, seats:() => IC.seats, arrows:() => IC.arrows, ram:() => IC.ram((ramMat(lvl('ram') + 1) || ramMat(lvl('ram')) || {color:'#8a5a30'}).color)};
 export const FISH_COLOR = {sardine:'#9fb8c8', tuna:'#4f7fa3', swordfish:'#2f5f8a'};
 // cost chips: "12 [log] 40 [coin]", red when you're short
 const chip = (icon, n, ok = true) => `<span class="chipc ${ok ? '' : 'short'}">${icon}${n}</span>`;
@@ -228,7 +229,7 @@ function upgradesCard(){
 }
 function looksCard(){
   const spec = SPECS[ship().model], lk = {...spec.look, ...G.S.look};
-  const opts = (obj, sel) => Object.entries(obj).filter(([, v]) => !v.city).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${v.name}</option>`).join('');
+  const opts = (obj, sel) => Object.entries(obj).filter(([, v]) => !v.city && !v.hidden).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${v.name}</option>`).join('');
   return card('Paint and flag', `${shipImg(ship().model, {...G.S.look, ram:lvl('ram'), sailLv:lvl('sail')})}<div class="looks">
       <label><span>Hull paint</span><select data-look="paint">${opts(PAINTS, lk.paint)}</select></label>
       <label><span>Sail</span>${spec.mast || lvl('sail') ? `<select data-look="sail">${opts(SAILS, lk.sail)}</select>` : '<select disabled><option>Needs a mast</option></select>'}</label>
@@ -300,7 +301,7 @@ function shipTab(){
 }
 function bagJobs(){
   const S = G.S, g = goal(), tr = S.treasure;
-  return (g ? card(`First voyage · goal ${(S.goal || 0) + 1} of ${GOALS.length}`, `<div class="job"><span class="jic">${IC.star}</span><div><b>${g.text}</b>${g.n > 1 ? bar((S.goalN || 0)/g.n) : ''}<small>${g.n > 1 ? `${S.goalN || 0} of ${g.n} · ` : ''}reward</small></div><span class="reward">${chip(IC.coin, '+' + g.gold)}</span></div>`) : '')
+  return (g ? card(g.chapter ? `Chapter one · goal ${(S.goal || 0) + 1 - STARTER_GOALS} of ${GOALS.length - STARTER_GOALS}` : `First voyage · goal ${(S.goal || 0) + 1} of ${STARTER_GOALS}`, `<div class="job"><span class="jic">${IC.star}</span><div><b>${g.text}</b>${g.n > 1 ? bar((S.goalN || 0)/g.n) : ''}<small>${g.n > 1 ? `${S.goalN || 0} of ${g.n} · ` : ''}reward</small></div><span class="reward">${chip(IC.coin, '+' + g.gold)}</span></div>`) : '')
     + card(`Your jobs · ${active().length} of ${REQUESTS.max}`, myJobs() + (active().some(r => r.to) ? '<p class="note">The islands they send you to have a dashed red ring on the chart.</p>' : ''))
     + (S.war ? card('War contract', `<div class="job"><span class="jic">${IC.swords}</span><div><b>${warText(S.war)}</b><small>For ${CITIES[S.war.city].name} · ${Math.min(S.war.got, S.war.n)} of ${S.war.n}</small>${bar(S.war.got/S.war.n)}</div><span class="reward">${chip(IC.coin, '+' + S.war.gold)}</span></div>`) : '')
     + (tr ? card('Treasure map', `<div class="line">${IC.map}<div><b>${tr.land ? `Buried on a beach${tr.name ? ` of ${tr.name}` : ''}` : 'Floating out at sea'}</b><small>The red X on your chart. ${tr.land ? 'Sail up close to the beach to dig it out.' : 'Sail over it.'}</small></div></div>`) : '');

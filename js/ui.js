@@ -1,22 +1,22 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=5b5d761';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=5b5d761';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=5b5d761';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=5b5d761';
-import {swapBoat, refreshAllTrees} from './entities.js?v=5b5d761';
-import {setZoom} from './input.js?v=5b5d761';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=5b5d761';
-import {tutHTML} from './tutorial.js?v=5b5d761';
-import {founded, blessing, seats, candidates} from './crew.js?v=5b5d761';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=5b5d761';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=5b5d761';
-import {effectText, buy} from './upgrades.js?v=5b5d761';
-import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=5b5d761';
-import {GOODS, WAR} from './config.js?v=5b5d761';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=5b5d761';
-import {W, KINDS} from './weather.js?v=5b5d761';
-import {sfx, SND, applyVolumes} from './audio.js?v=5b5d761';
-import {setTimeOfDay} from './daynight.js?v=5b5d761';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=6731910';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=6731910';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=6731910';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=6731910';
+import {swapBoat, refreshAllTrees} from './entities.js?v=6731910';
+import {setZoom} from './input.js?v=6731910';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=6731910';
+import {tutHTML} from './tutorial.js?v=6731910';
+import {founded, blessing, seats, candidates} from './crew.js?v=6731910';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=6731910';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=6731910';
+import {effectText, buy} from './upgrades.js?v=6731910';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=6731910';
+import {GOODS, WAR} from './config.js?v=6731910';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=6731910';
+import {W, KINDS} from './weather.js?v=6731910';
+import {sfx, SND, applyVolumes} from './audio.js?v=6731910';
+import {setTimeOfDay} from './daynight.js?v=6731910';
 
 const $ = id => document.getElementById(id);
 
@@ -26,7 +26,7 @@ export function toast(msg, dur=1.8){ toastEl.textContent = msg; toastEl.hidden =
 let zoneT = 0;
 export function showZone(z){
   $('zoneName').textContent = ZONES[z].name;
-  $('zoneSub').textContent = z === 2 && G.S.tier >= 2 ? 'Your bireme can take it.' : ZONES[z].sub;
+  $('zoneSub').textContent = z === 2 && G.S.tier >= 2 ? `Your ${ship().name.toLowerCase()} can take it.` : ZONES[z].sub;
   $('zone').style.opacity = 1; zoneT = 3; sfx('zone');
 }
 export function hideHint(){ if (G.S.hint){ G.S.hint = false; $('hint').hidden = true; } }
@@ -71,6 +71,8 @@ function placeNearBoat(){
 }
 // ---- sheets (harbor, settings) ----
 const sheetEl = $('sheet'); let sheet = null, resetArmed = false;
+// the end of chapter one: a page with your voyage in numbers
+document.addEventListener('chapterdone', () => openSheet('end'));
 function openSheet(name){ if (!sheet) sfx('open'); sheet = name; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
 function closeSheet(){ if (sheet) sfx('close'); sheet = null; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); }
 export function openPort(){
@@ -79,8 +81,18 @@ export function openPort(){
 }
 
 function render(){ const st = sheetEl.scrollTop;
-  sheetEl.innerHTML = sheet === 'port' ? harborHTML(G.dock ? G.dock.h : HARBORS[0]) : sheet === 'tut' ? tutHTML(tutPage) : sheet === 'inv' ? bagHTML() : sheet === 'council' && G.council ? councilHTML(G.council) : settingsHTML();
+  sheetEl.innerHTML = sheet === 'port' ? harborHTML(G.dock ? G.dock.h : HARBORS[0]) : sheet === 'tut' ? tutHTML(tutPage) : sheet === 'inv' ? bagHTML() : sheet === 'council' && G.council ? councilHTML(G.council) : sheet === 'end' ? endHTML() : settingsHTML();
   sheetEl.classList.add('menu'); sheetEl.scrollTop = st; }
+
+// The end of chapter one.
+function endHTML(){
+  const S = G.S, mins = Math.round((S.playSeconds || 0)/60), ships = (S.owned || []).length || S.tier + 1;
+  return `<div class="mtop">${top('Chapter one complete', '<span class="xspace"></span>')}</div><div class="mbody">
+    ${card('The pirate king is beaten', `<div class="endpic">${IC.ship}${IC.swords}${IC.star}</div>
+      <p class="endtxt">Polycrates' black and gold galley lies at the bottom of the sea, and the merchants of the Aegean sail safe again. From one little rowboat you built a fleet${S.crewName ? ` and the ${S.crewName}` : ''}.</p>
+      <div class="stats big">${IC.ship} ${ships} ships · ${IC.coin} ${S.gold} drachmae · ${mins} min at sea</div>`)}
+    ${card('What next', '<p class="note">Chapter two takes you north to the Vikings, and it is coming in a later build. Until then the Aegean is yours: keep fishing, trading and fighting as long as you like.</p><button class="btn gold wide" data-act="close">Keep sailing</button>')}</div>`;
+}
 
 // How to play: two pages, shown on a new game and from Settings.
 let tutPage = 0;
@@ -122,7 +134,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 39</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 40</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -182,7 +194,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'tutnext' || a === 'tutback'){ tutPage += a === 'tutnext' ? 1 : -1; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'tutdone'){ closeSheet(); toast('Fair winds!', 2); return; }
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
-  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); if (k === 'ram' || k === 'hull' || k === 'sail') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
+  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); progress('upgrade', k); if (k === 'ram' || k === 'hull' || k === 'sail') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   if (a === 'buymat'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k, n = +b.dataset.n, p = matPrice(h, k), cost = n/matStep(k)*p;
     if (p !== null && S.gold >= cost){ sfx('buy'); S.gold -= cost; addMat(k, n); toast(`Bought ${n} ${k} for the warehouse`, 2); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k;
@@ -190,7 +202,7 @@ sheetEl.addEventListener('click', e => {
     if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; sfx('coins'); toast(`Sold ${S.cargo[k]} ${GOODS[k].label.toLowerCase()} for ${g} drachmae`, 2.4); S.cargo[k] = 0; progress('trade'); } }
   if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]); S.gold += g; if (g) sfx('coins'); for (const k in FISH) S.cargo[k] = 0; toast(`Sold the catch for ${g} drachmae`); progress('sell'); }
   if (a === 'repair'){ const cost = Math.min(Math.ceil((sh.hull - S.hull)/TUNING.repairPerGold), S.gold); S.gold -= cost; S.hull = Math.min(sh.hull, S.hull + cost*TUNING.repairPerGold); if (cost) sfx('hammer'); }
-  if (a === 'build'){ const t = +b.dataset.t, n = SHIPS[t]; if (pay(n.cost)){ launch(t); progress('build'); swapBoat(); sfx('fanfare'); toast(`Your ${n.name} is ready${lvl('ram') || lvl('arrows') ? '. Your ram and arrowheads came along' : ''}`, 3); } }
+  if (a === 'build'){ const t = +b.dataset.t, n = SHIPS[t]; if (pay(n.cost)){ launch(t); progress('build', n.model); swapBoat(); sfx('fanfare'); toast(`Your ${n.name} is ready${lvl('ram') || lvl('arrows') ? '. Your ram and arrowheads came along' : ''}`, 3); } }
   if (a === 'captain'){ const n = hireCaptain(+b.dataset.t); if (n){ toast(`${n} takes your ${SHIPS[+b.dataset.t].name.toLowerCase()} out fishing`, 3); document.dispatchEvent(new Event('fleetmoved')); } }
   if (a === 'collect'){ sfx('coins'); toast(`+${S.purse} drachmae from your captains`, 2.5); S.gold += S.purse; S.purse = 0; }
   if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(`You go aboard your ${SHIPS[t].name.toLowerCase()}`, 2.4); } }

@@ -1,20 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING} from './config.js?v=5b5d761';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=5b5d761';
-import {G, ship, holdUsed, save, gain, addMat} from './state.js?v=5b5d761';
-import {scene} from './scene.js?v=5b5d761';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=5b5d761';
-import {makeFire, updateFire, burn} from './fire.js?v=5b5d761';
-import {blessing, fighters} from './crew.js?v=5b5d761';
-import {progress} from './quests.js?v=5b5d761';
-import {arrowK, ramDmg} from './upgrades.js?v=5b5d761';
-import {toast} from './ui.js?v=5b5d761';
-import {sink} from './player.js?v=5b5d761';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=5b5d761';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=5b5d761';
-import {sfx} from './audio.js?v=5b5d761';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS} from './config.js?v=6731910';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=6731910';
+import {G, ship, holdUsed, save, gain, addMat, lvl} from './state.js?v=6731910';
+import {scene} from './scene.js?v=6731910';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=6731910';
+import {makeFire, updateFire, burn} from './fire.js?v=6731910';
+import {blessing, fighters} from './crew.js?v=6731910';
+import {progress, goal} from './quests.js?v=6731910';
+import {arrowK, ramDmg} from './upgrades.js?v=6731910';
+import {toast} from './ui.js?v=6731910';
+import {sink} from './player.js?v=6731910';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=6731910';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=6731910';
+import {sfx} from './audio.js?v=6731910';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -122,6 +122,37 @@ export function clearArena(){ for (let i=enemies.length-1;i>=0;i--) if (enemies[
 export function spawnNear(kind = 'skiff'){
   const e = enemies.find(e => e.kind === kind && (e.dead || Math.hypot(e.x - G.S.x, e.y - G.S.y) > 1500)) || enemies.find(e => e.kind === kind);
   respawn(e); e.x = G.S.x + Math.cos(G.S.a + 1.2)*380; e.y = G.S.y + Math.sin(G.S.a + 1.2)*380; e.home = {x:e.x, y:e.y};
+}
+
+// ---- Polycrates, the pirate king: the end of chapter one ----
+// He waits off his pirate fortress (BOSS.lair) with two skiffs, once the last goal comes up. He chases you when you come
+// close, throws flaming volleys now and then, and calls two more skiffs at half hull. He never heals.
+export const boss = {e:null};
+function bossShip(kind, at, extra = {}){
+  const spec = {...ENEMIES[kind], leash:BOSS.leash, sight:BOSS.sight, ...(extra.spec || {})};
+  const e = {kind, city:null, spec, x:at.x, y:at.y, home:{x:at.x, y:at.y}, a:Math.random()*6.28, v:0, hull:spec.hull, cool:2, mode:'patrol', pa:Math.random()*6.28, dead:false, sinkY:0, respawn:1e9,
+    obj:null, leg:1, wait:0, angry:false, attacked:false, foe:null, lost:0, calm:0, lane:0, spd:1, orbit:Math.random() < .5 ? 1 : -1, ring:200 + Math.random()*120, tacT:0, temp:true, ...extra, spec};
+  pushOut(e, 160); buildEnemy(e); enemies.push(e); return e;
+}
+function spawnBoss(){
+  const f = enemies.find(o => o.fort && o.owner === 'pirate' && o.isle.name === BOSS.lair) || enemies.find(o => o.fort && o.owner === 'pirate');
+  // out at sea in front of his fortress, beyond the reach of its catapults
+  const at = f ? {x:f.sea.x + Math.cos(f.a)*800, y:f.sea.y + Math.sin(f.a)*800} : {x:G.S.x + 1500, y:G.S.y};
+  const e = bossShip('galley', at, {boss:true, look:{paint:'king', sail:'purple'}, fireT:BOSS.fireEvery, called:false,
+    spec:{name:BOSS.name, model:BOSS.model, hull:BOSS.hull, speed:BOSS.speed, turn:BOSS.turn, fighters:BOSS.fighters, dmg:BOSS.dmg, gold:BOSS.gold, wood:BOSS.wood, bronze:BOSS.bronze, len:BOSS.len, beam:BOSS.beam}});
+  e.obj.scale.setScalar(BOSS.scale); boss.e = e; if (G.S.bossHull > 0) e.hull = Math.min(e.hull, G.S.bossHull); // he keeps his wounds if you leave and come back
+  for (let i=0;i<BOSS.escorts;i++) bossShip('skiff', {x:at.x + Math.cos(i*3.1 + 1)*260, y:at.y + Math.sin(i*3.1 + 1)*260});
+}
+function bossDown(e){
+  boss.e = null; progress('boss'); G.S.chapter = Math.max(G.S.chapter || 0, 1); save();
+  toast('Polycrates\' flagship breaks apart! The pirate king is beaten.', 5); sfx('fanfare');
+  setTimeout(() => document.dispatchEvent(new Event('chapterdone')), 4500);
+}
+function bossThink(e, dt){
+  const d = dist(e, G.S);
+  // a flaming volley every so often while he is fighting you
+  if (e.mode === 'chase' && d < COMBAT.range*1.1 && (e.fireT -= dt) <= 0){ e.fireT = BOSS.fireEvery; salvo(e, null, BOSS.fireArrows, BOSS.dmg, 60, true); sfx('horn', e); toast('Polycrates looses a flaming volley!', 2.5); }
+  if (!e.called && e.hull < e.spec.hull*.5){ e.called = true; for (let i=0;i<2;i++) startFight(bossShip('skiff', {x:e.x + Math.cos(e.a + 1.6 + i*3.1)*320, y:e.y + Math.sin(e.a + 1.6 + i*3.1)*320})); toast('Polycrates calls for help! Two skiffs join him.', 3.5); sfx('horn', e); }
 }
 
 const angDiff = (want, a) => ((want - a + Math.PI*3) % (Math.PI*2)) - Math.PI;
@@ -345,7 +376,8 @@ function updateFx(dt){ for (const f of FX){ if (f.life <= 0) continue; f.life -=
 
 // ---- arrows ----
 const arrowGeo = new T.CylinderGeometry(.9, .9, 20, 4); arrowGeo.rotateZ(Math.PI/2);
-const ARROWS = Array.from({length:160}, () => { const m = mesh(arrowGeo, '#f1ece0'); m.visible = false; m.castShadow = false; scene.add(m); return {m, live:false}; });
+const ARROWS = Array.from({length:160}, () => { const m = mesh(arrowGeo, '#f1ece0'); m.visible = false; m.castShadow = false; m.userData.mat0 = m.material; scene.add(m); return {m, live:false}; });
+const fireArrowMat = new T.MeshBasicMaterial({color:'#ff9a3c'}); // flaming arrows glow orange
 let arrowI = 0;
 // Every arrow does the same damage whoever shoots it. Bigger ships win by having more archers and thicker hulls.
 const lenOf = e => e ? e.spec.len : ship().len;
@@ -353,13 +385,13 @@ const lenOf = e => e ? e.spec.len : ship().len;
 export function broadside(from, to){ const src = from || G.S, a = from ? from.a : G.S.a, tg = to || G.S;
   return Math.abs(Math.sin(Math.atan2(tg.y - src.y, tg.x - src.x) - a)) > COMBAT.sideArc; }
 // Every archer aboard shoots their own arrow, a moment apart.
-function salvo(from, to, n, dmg, gap){ for (let i=0;i<n;i++) setTimeout(() => { if (!(from && from.dead) && !(to && to.dead) && !(!to && G.sinking)) shoot(from, to, dmg); }, i*gap*(.7 + Math.random()*.6)); }
+function salvo(from, to, n, dmg, gap, fire = !from && lvl('fire') > 0){ for (let i=0;i<n;i++) setTimeout(() => { if (!(from && from.dead) && !(to && to.dead) && !(!to && G.sinking)) shoot(from, to, dmg, fire); }, i*gap*(.7 + Math.random()*.6)); }
 // from = an enemy (or null for the player); to = an enemy (or null for the player).
-function shoot(from, to, dmg){
+function shoot(from, to, dmg, fire = false){
   const a = ARROWS[arrowI++ % ARROWS.length], src = from || G.S, sa = from ? from.a : G.S.a, al = (Math.random() - .5)*lenOf(from)*.6;
   Object.assign(a, {live:true, from, to, dmg, t:0, x0:src.x + Math.cos(sa)*al, y0:src.y + Math.sin(sa)*al, hit:Math.random() < COMBAT.hitChance + (from ? 0 : blessing().hit || 0),
-    ox:(Math.random()-.5)*70, oy:(Math.random()-.5)*70});
-  a.m.visible = true; sfx('bow', src);
+    ox:(Math.random()-.5)*70, oy:(Math.random()-.5)*70, fire});
+  a.m.material = fire ? fireArrowMat : a.m.userData.mat0; a.m.visible = true; sfx('bow', src);
 }
 function updateArrows(dt){
   for (const a of ARROWS){ if (!a.live) continue;
@@ -375,13 +407,13 @@ function updateArrows(dt){
 }
 function land(a){
   const tg = a.to || G.S; spark(tg.x, tg.y); sfx(a.to ? 'thud' : 'hurt', tg);
-  if (a.to){ const e = a.to; if (e.dead) return; e.hull -= a.dmg; e.hitT = .25; e.quiet = 0; e.kick = Math.min(.12, (e.kick || 0) + .5*a.dmg/e.spec.len);
+  if (a.to){ const e = a.to; if (e.dead) return; e.hull -= a.dmg; e.hitT = .25; e.quiet = 0; if (a.fire) e.burnT = FIRE_ARROWS.burnSeconds; e.kick = Math.min(.12, (e.kick || 0) + .5*a.dmg/e.spec.len);
     if (!a.from && side(e) !== 'pirate' && !(e.fort && !e.city)) crime(e); // you shot a merchant, a navy ship or a city's fort
     if (a.from && side(e) === 'pirate' && side(a.from) === 'navy'){ e.foe = a.from; startFight(e); } // pirates fight back
     if (a.from && side(e) === 'merchant' && side(a.from) === 'pirate') e.scare = a.from;
     if (e.hull <= 0) sinkEnemy(e, !a.from); return; }
   if (G.sheetOpen || G.sinking) return;
-  G.S.hull -= a.dmg; G.hurt = 1;
+  G.S.hull -= a.dmg; G.hurt = 1; if (a.fire) G.burnT = BOSS.burnSeconds;
   // a hit rocks the boat away from the shooter and shakes the view; harder on small boats
   const src = a.from, push = Math.min(10, a.dmg*90/ship().len);
   if (src){ const d = Math.hypot(G.S.x - src.x, G.S.y - src.y) || 1; G.S.x += (G.S.x - src.x)/d*push; G.S.y += (G.S.y - src.y)/d*push; }
@@ -393,6 +425,8 @@ function land(a){
 const LOOT = [];
 function sinkEnemy(e, byPlayer){
   if (byPlayer) progress('sink', e.kind);
+  if (byPlayer && e.fort && !e.city) progress('fort');
+  if (e.boss) bossDown(e);
   const w = G.S.war; // a war contract from a fortress
   if (byPlayer && w && w.got < w.n && e.city === w.foe && (w.t === 'fort' ? e.fort : side(e) === 'navy')){ w.got++;
     setTimeout(() => toast(w.got >= w.n ? `War contract done! Hand it in at any ${adj(w.city)} fortress for ${w.gold} drachmae.` : `War contract: ${w.got} of ${w.n}`, 3.5), 1800); }
@@ -568,20 +602,29 @@ export function updateCombat(dt){
       if (e.dead){ e.sinkT += dt; e.respawn -= dt; e.obj.position.y = 2 - Math.min(70, e.sinkT*10); if (e.respawn <= 0){ respawn(e); e.obj.position.y = 2; } }
       else { think(e, dt); const d = dist(e, G.S); if (d < 150){ G.S.x = e.x + (G.S.x - e.x)/d*150; G.S.y = e.y + (G.S.y - e.y)/d*150; } } // the walls are solid
       e.hitT = Math.max(0, (e.hitT || 0) - dt);
-      updateFire(e.fire, dist(e, G.S) < 1600 && (!e.dead || e.sinkT < 8) ? burn(e.hull, e.spec.hull) : 0, G.t);
+      updateFire(e.fire, dist(e, G.S) < 1600 && (!e.dead || e.sinkT < 8) ? Math.max(burn(e.hull, e.spec.hull), e.burnT > 0 && !e.dead ? .6 : 0) : 0, G.t);
       continue;
     }
     let roll = 0, pitch = 0;
     if (e.dead){ e.sinkT = (e.sinkT || 0) + dt; const p = sinkPose(e.sinkT, e.sinkSide || 1, e.spec.len); e.sinkY = p.depth; roll = p.roll; pitch = p.pitch;
-      e.obj.visible = !p.done; e.respawn -= dt; if (e.respawn <= 0) respawn(e); if (e.arena && p.done){ scene.remove(e.obj); enemies.splice(enemies.indexOf(e), 1); continue; } }
+      e.obj.visible = !p.done; e.respawn -= dt; if (e.respawn <= 0) respawn(e); if ((e.arena || e.temp) && p.done){ scene.remove(e.obj); enemies.splice(enemies.indexOf(e), 1); continue; } }
     else think(e, dt);
     e.hitT = Math.max(0, (e.hitT || 0) - dt);
     e.kick = Math.max(0, (e.kick || 0) - dt*.4); roll += Math.sin((e.kick || 0)*60)*e.kick + (e.dead ? 0 : e.heel || 0);
     placeOnWaves(e.obj, e.x, e.y, e.a, e.spec.len, G.t, e.sinkY, roll, pitch);
     e.obj.userData.firing = e.mode === 'chase' || e.mode === 'hunt';
     animateShip(e.obj, G.t, e.v);
-    updateFire(e.fire, dist(e, G.S) < 1600 && e.sinkY < 60 ? burn(e.hull, e.spec.hull) : 0, G.t);
+    updateFire(e.fire, dist(e, G.S) < 1600 && e.sinkY < 60 ? Math.max(burn(e.hull, e.spec.hull), e.burnT > 0 && !e.dead ? .6 : 0) : 0, G.t);
   }
+  // ships hit by fire arrows burn for a few seconds; so does your ship after a flaming volley
+  for (const e of enemies){ if (!(e.burnT > 0) || e.dead) continue; e.burnT -= dt; e.hull -= FIRE_ARROWS.dps(lvl('fire'))*dt; if (e.hull <= 0) sinkEnemy(e, true); }
+  if (G.burnT > 0 && !G.sinking){ G.burnT -= dt; G.S.hull -= BOSS.burnDps*dt; G.hurt = Math.max(G.hurt || 0, .4); if (G.S.hull <= 0){ G.burnT = 0; sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; } }
+  const gl = goal(); if (gl && gl.t === 'boss' && !boss.e) spawnBoss();
+  if (boss.e && !boss.e.dead){ bossThink(boss.e, dt); G.S.bossHull = Math.ceil(boss.e.hull); }
+  G.boss = boss.e && !boss.e.dead ? {x:boss.e.x, y:boss.e.y} : null;
+  // where the current chapter goal is, for the chart and the little map: the pirate fortresses, then the pirate king
+  G.goalMarks = gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
+  const bb = $('bossBar'), showB = !!G.boss && dist(boss.e, G.S) < 1600 && !G.sheetOpen; bb.hidden = !showB; if (showB) $('bossHull').style.width = Math.max(0, boss.e.hull/boss.e.spec.hull*100) + '%';
   playerCrew(dt);
   collide();
   witnesses(dt);

@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board'.
-import {FISH, GOALS, REQUESTS, BOTTLES} from './config.js?v=5b5d761';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=5b5d761';
-import {G, save, ship} from './state.js?v=5b5d761';
-import {scene} from './scene.js?v=5b5d761';
-import {mesh} from './models.js?v=5b5d761';
-import {toast} from './ui.js?v=5b5d761';
-import {sfx} from './audio.js?v=5b5d761';
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS} from './config.js?v=6731910';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=6731910';
+import {G, save, ship, lvl} from './state.js?v=6731910';
+import {scene} from './scene.js?v=6731910';
+import {mesh} from './models.js?v=6731910';
+import {toast} from './ui.js?v=6731910';
+import {sfx} from './audio.js?v=6731910';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -14,14 +14,17 @@ const pick = (R, a) => a[Math.floor(R()*a.length)];
 
 // ---- first voyages: one goal at a time ----
 export function goal(){
-  if (G.S.tier >= 1 && (G.S.goal || 0) < GOALS.length) G.S.goal = GOALS.length; // past the start already: no starter goals
-  return GOALS[G.S.goal || 0] || null;
+  const S = G.S;
+  if (S.tier >= 1 && (S.goal || 0) < STARTER_GOALS) S.goal = STARTER_GOALS; // past the rowboat already: no starter goals
+  // a ship you already own counts as built, an upgrade you already have as bought
+  for (let g = GOALS[S.goal || 0]; g && ((g.t === 'build' && g.kind && (S.owned || [...Array(S.tier + 1).keys()]).some(t => SHIPS[t].model === g.kind)) || (g.t === 'upgrade' && lvl(g.kind) > 0)); g = GOALS[S.goal]){ S.goal = (S.goal || 0) + 1; S.goalN = 0; }
+  return GOALS[S.goal || 0] || null;
 }
 function goalStep(type, kind, n){
   const g = goal(); if (!g || g.t !== type || (g.kind && g.kind !== kind)) return;
   G.S.goalN = (G.S.goalN || 0) + n;
   if (G.S.goalN >= g.n){ G.S.gold += g.gold; sfx('chime'); setTimeout(() => sfx('coins'), 500); G.S.goal = (G.S.goal || 0) + 1; G.S.goalN = 0;
-    const next = goal(); toast(`Goal done! +${g.gold} drachmae${next ? `. Next: ${next.text}` : '. You have the hang of it: the request boards always have work.'}`, 4.5); }
+    const next = goal(); toast(`Goal done! +${g.gold} drachmae${next ? `. Next: ${next.text}` : g.chapter ? '. The Aegean is yours.' : '. You have the hang of it: the request boards always have work.'}`, 4.5); }
 }
 
 // ---- requests ----

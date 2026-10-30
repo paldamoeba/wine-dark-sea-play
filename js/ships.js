@@ -16,6 +16,7 @@ export const PAINTS = {
   green:  {name:'Olive green',  top:'#71873f', panel:'#e0c162', bottom:'#3f4b27', deck:'#ddc48d', inner:'#5f7334', wale:'#e0c162'},
   oak:    {name:'Bare oak',     top:'#a3754a', panel:'#7a5230', bottom:'#5e3c22', deck:'#d2a873', inner:'#8c6337', wale:'#4f3119'},
   raider: {name:'Raider dark',  top:'#5e3628', panel:'#271b1b', bottom:'#3c2626', deck:'#8a5d3e', inner:'#4a2c22', wale:'#271b1b'},
+  king:   {name:'Pirate king',  top:'#1f1c24', panel:'#e3ad48', bottom:'#141217', deck:'#8a5d3e', inner:'#2a2630', wale:'#e3ad48', hidden:true}, // Polycrates' flagship: black and gold
 };
 export const SAILS = {
   bwr:    {name:'Blue, white, red', stripes:['#33589a','#f1ece0','#c64a3c','#f1ece0','#33589a']},

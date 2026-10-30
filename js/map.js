@@ -1,9 +1,9 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=5b5d761';
-import {ARENA} from './arena.js?v=5b5d761';
-import {enemies} from './combat.js?v=5b5d761';
-import {G, ship, isExplored, reveal, save} from './state.js?v=5b5d761';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=6731910';
+import {ARENA} from './arena.js?v=6731910';
+import {enemies} from './combat.js?v=6731910';
+import {G, ship, isExplored, reveal, save} from './state.js?v=6731910';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -88,6 +88,9 @@ function draw(){
   // the treasure map's X, and a dashed ring around islands your jobs send you to
   if (G.S.treasure){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); c.save(); c.strokeStyle = '#b8402f'; c.lineWidth = 4; c.lineCap = 'round';
     c.beginPath(); c.moveTo(x - 9, y - 9); c.lineTo(x + 9, y + 9); c.moveTo(x + 9, y - 9); c.lineTo(x - 9, y + 9); c.stroke(); c.restore(); }
+  // the chapter goal: a red ring with a name (pirate fortresses, the pirate king)
+  for (const m of G.goalMarks || []){ const [x, y] = toScreen(m.x, m.y); c.save(); c.strokeStyle = '#b8402f'; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
+    c.beginPath(); c.arc(x, y, 5, 0, Math.PI*2); c.fillStyle = '#b8402f'; c.fill(); c.font = '700 13px Nunito, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#5a1e14'; c.fillText(m.label, x, y - 20); c.restore(); }
   for (const r of G.S.reqs || []){ const is = (r.t === 'visit' || r.t === 'deliver') && ISLANDS.find(i => i.name === r.to); if (!is) continue;
     const [x, y] = toScreen(is.x, is.y); c.save(); c.setLineDash([6, 6]); c.strokeStyle = '#b8402f'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, Math.max(16, is.r*view.z + 12), 0, Math.PI*2); c.stroke(); c.restore(); }
   for (const is of ISLANDS){

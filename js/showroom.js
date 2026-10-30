@@ -1,10 +1,10 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=5b5d761';
-import {makePost} from './glow.js?v=5b5d761';
-import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=5b5d761';
-import {buildColossus, buildFortress} from './monuments.js?v=5b5d761';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=5b5d761';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=6731910';
+import {makePost} from './glow.js?v=6731910';
+import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=6731910';
+import {buildColossus, buildFortress} from './monuments.js?v=6731910';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, icebergModel, wreckModel, fishModel} from './models.js?v=6731910';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});

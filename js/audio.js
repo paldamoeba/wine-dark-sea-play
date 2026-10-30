@@ -37,7 +37,7 @@ export async function renderSound(name, secs = 3){
   const buf = await off.startRendering(); return buf;
 }
 // the first tap or key anywhere turns the sound on
-['pointerdown', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, () => startAudio(), {capture:true, passive:true}));
+['pointerdown', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, e => { if (e.isTrusted) startAudio(); }, {capture:true, passive:true}));
 export function applyVolumes(){
   if (!ctx) return; const t = ctx.currentTime, on = SND.on ? 1 : 0;
   musicBus.gain.setTargetAtTime(SND.music*.8*on, t, .3); sfxBus.gain.setTargetAtTime(SND.sfx*1.33*on, t, .1); seaBus.gain.setTargetAtTime(SND.sea*1.17*on, t, .3);

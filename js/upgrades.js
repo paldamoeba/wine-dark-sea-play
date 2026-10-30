@@ -1,12 +1,12 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM} from './config.js?v=5b5d761';
-import {G, lvl, ship, pay} from './state.js?v=5b5d761';
-import {SPECS, sailSizes} from './ships.js?v=5b5d761';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS} from './config.js?v=6731910';
+import {G, lvl, ship, pay} from './state.js?v=6731910';
+import {SPECS, sailSizes} from './ships.js?v=6731910';
 
 export const ramMax = () => UPGRADE_MAX*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
 // (the rowboat gets one small sail, the fishing boat and bireme two, the trireme three).
-export const upKeys = () => Object.keys(UPGRADES).filter(k => !(UPGRADES[k].crew && G.S.tier < 1) && !(k === 'sail' && !SPECS[ship().model].sailMax));
+export const upKeys = () => Object.keys(UPGRADES).filter(k => !(UPGRADES[k].crew && G.S.tier < 1) && !(UPGRADES[k].minTier && G.S.tier < UPGRADES[k].minTier) && !(k === 'sail' && !SPECS[ship().model].sailMax));
 export const maxOf = k => k === 'ram' ? ramMax() : k === 'sail' ? SPECS[ship().model].sailMax : UPGRADE_MAX;
 export const sailCount = (l = lvl('sail')) => sailSizes(SPECS[ship().model], l).filter(Boolean).length;
 // The ram's material and its level within that material (1-10). Level 0 = no ram.
@@ -30,6 +30,7 @@ export function costOf(k){
 export function effectText(k, l = lvl(k)){
   const u = UPGRADES[k];
   if (k === 'ram'){ const m = ramMat(l); return m ? `${m.name} ram, level ${m.sub}: ${ramDmg(l)} damage` : 'No ram'; }
+  if (k === 'fire') return l ? `${FIRE_ARROWS.dps(l).toFixed(1)} fire damage a second` : 'No fire arrows';
   if (k === 'seats') return `+${Math.floor(l/2)} seat${Math.floor(l/2) === 1 ? '' : 's'}`;
   if (k === 'sail'){ const n = sailCount(l); return n ? `${n} sail${n > 1 ? 's' : ''}, +${Math.round(u.each*l*100)}% speed` : 'No sail'; }
   return `+${Math.round(u.each*l*100)}% ${u.unit}`;

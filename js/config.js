@@ -13,7 +13,8 @@ export const SHIPS = [
     desc:'A sail, more speed, a second crew member, steadier in big waves'},
   {name:'Bireme',       model:'bireme',  speed:200, hull:170, hold:16, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, turn:1.04, cost:{wood:300, bronze:30, linen:20, gold:250},
     desc:'A warship. Four archers, a hull that shrugs off big waves, but a small hold'},
-  {name:'Trireme', model:'trireme', locked:true, hull:260, speed:212, hold:18, fighters:6, cost:{wood:600, bronze:80, linen:40, gold:600}, desc:'A long warship with an outrigger and a big bronze ram. Coming in a later build.'},
+  {name:'Trireme',      model:'trireme', speed:212, hull:260, hold:18, fishTime:2.6, woodTime:2.8, storm:0,   len:190, beam:34, fighters:6, turn:.9, cost:{wood:600, bronze:80, linen:40, gold:600},
+    desc:'The greatest warship of the Aegean: six archers, an outrigger and a big bronze ram'},
 ];
 
 // spin = needle speed (radians per second), green = size of the green part (degrees). Bigger fish: faster, smaller.
@@ -32,7 +33,7 @@ export const WILDLIFE = {whaleFirst:[50, 100], whaleEvery:[160, 300], whaleNear:
 // Founding your crew (needs your second ship), the gods' blessings, and sailors to hire.
 export const CREW = {
   foundCost:60, hireCost:30,
-  seats:[0, 3, 5],  // sailors you can hire, per ship (rowboat, fishing boat, bireme)
+  seats:[0, 3, 5, 7],  // sailors you can hire, per ship (rowboat, fishing boat, bireme, trireme)
   jobs:{
     archer:{label:'Archer', desc:'One more bow in every fight'},
     rower: {label:'Rower',  desc:'Your ship sails 5% faster', boost:.05},
@@ -58,7 +59,22 @@ export const GOALS = [
   {t:'catch', kind:'tuna', n:1, gold:8, text:'Catch a tuna in bubbling water'},
   {t:'board', n:1, gold:6, text:'Take a job from the request board in a harbor'},
   {t:'build', n:1, gold:25, text:'Build the fishing boat at Kallisto (150 wood, 10 linen, 60 drachmae)'},
+  // chapter one: from fishing boat to the pirate king (about an hour)
+  {t:'build', kind:'bireme', n:1, gold:100, text:'Build the bireme at Kallisto, your first warship', chapter:true},
+  {t:'sink', kind:'galley', n:3, gold:150, text:'Sink 3 raider galleys out in the Open Sea', chapter:true},
+  {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
+  {t:'fort', n:1, gold:300, text:'Knock down a pirate fortress, on Thasos or Kos', chapter:true},
+  {t:'build', kind:'trireme', n:1, gold:200, text:'Build the trireme, the greatest warship of the Aegean', chapter:true},
+  {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, off Kos', chapter:true},
 ];
+export const STARTER_GOALS = 7; // the first seven goals teach the basics; past the rowboat they are skipped
+// Polycrates, the pirate king: a huge black galley with a golden boar's head ram, waiting off his fortress with two skiffs.
+// fireEvery: seconds between his flaming volleys (they set your ship alight for burnSeconds). At half hull he calls two more skiffs.
+// He never heals, so you can always sail home, repair and come back.
+export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'raider', scale:1.35, hull:1000, speed:150, turn:.55, fighters:8, dmg:2.2, sight:900, leash:2600,
+  gold:[1200, 1200], wood:200, bronze:60, len:180, beam:38, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2};
+// Fire arrows: a ship hit by one burns for burnSeconds, losing dps(level) hull a second.
+export const FIRE_ARROWS = {burnSeconds:3, dps:l => l ? 1 + .3*l : 0};
 // The request board in every harbor.
 export const REQUESTS = {offers:3, max:2,
   who:['Old Pelagia, for her taverna', 'The temple priest', 'A worried mother', 'Kleon the net maker', 'The harbor master', 'Two hungry fishermen', 'A traveling poet', 'The potter\'s daughter']};
@@ -84,9 +100,10 @@ export const UPGRADES = {
   seats:  {label:'Crew quarters',   ship:true, crew:true, cost:{wood:25, gold:25}, desc:'Room for one more sailor every two levels'},
   arrows: {label:'Arrowheads',      each:.08, unit:'arrow damage', cost:{bronze:2, gold:18}, desc:'Bronze arrowheads for every archer'},
   ram:    {label:'Ram',             cost:{wood:20, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it'},
+  fire:   {label:'Fire arrows',     minTier:2, cost:{linen:4, gold:40}, desc:'Rags soaked in oil on every arrow. Ships you hit catch fire and keep burning for a few seconds'},
 };
 export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry
-export const SHIP_K = [.6, 1, 2];
+export const SHIP_K = [.6, 1, 2, 3];
 // The ram: wood levels 1-10, then bronze 1-10, then gold 1-10 (30 in all). The bronze levels are paid in bronze (pay), the gold ones in more drachmae. Damage when your bow hits a ship head-on at speed.
 export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Bronze', color:'#b07f3c', k:2.2, cost:2.5, pay:'bronze'}, {name:'Drachmae', color:'#e3b341', k:4, cost:6, pay:'gold'}],
   base:8, per:2, minSpeed:.45, cooldown:1.2, bump:3};

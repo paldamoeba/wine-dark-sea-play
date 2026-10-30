@@ -1,15 +1,15 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=5b5d761';
-import {G, isExplored} from './state.js?v=5b5d761';
-import {fogLayer, islandPath} from './map.js?v=5b5d761';
-import {view, project} from './scene.js?v=5b5d761';
-import {JOY_RADIUS} from './input.js?v=5b5d761';
-import {enemies, combatState, capture} from './combat.js?v=5b5d761';
-import {drawFish} from './fishing.js?v=5b5d761';
-import {whale} from './wildlife.js?v=5b5d761';
-import {SHORE_FISH} from './config.js?v=5b5d761';
-import {bottle} from './quests.js?v=5b5d761';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=5b5d761';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=6731910';
+import {G, isExplored} from './state.js?v=6731910';
+import {fogLayer, islandPath} from './map.js?v=6731910';
+import {view, project} from './scene.js?v=6731910';
+import {JOY_RADIUS} from './input.js?v=6731910';
+import {enemies, combatState, capture} from './combat.js?v=6731910';
+import {drawFish} from './fishing.js?v=6731910';
+import {whale} from './wildlife.js?v=6731910';
+import {SHORE_FISH} from './config.js?v=6731910';
+import {bottle} from './quests.js?v=6731910';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=6731910';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -153,6 +153,11 @@ export function drawOverlay(fps){
   if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
   c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
   c.strokeStyle = 'rgba(247,238,214,.75)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.stroke();
+  // the nearest chapter goal off the little map: a red arrow on its rim pointing the way
+  let gm = null, gd = Infinity; for (const m of G.goalMarks || []){ const d = Math.hypot(m.x - S.x, m.y - S.y); if (d < gd){ gd = d; gm = m; } }
+  if (gm && gd > MINI_RANGE*.9){ const a = Math.atan2(gm.y - S.y, gm.x - S.x) + Math.PI/4, r = ms/2 - 2, px = cx + Math.cos(a)*r, py = cy + Math.sin(a)*r, pulse = 1 + Math.sin(G.t*5)*.12;
+    c.save(); c.translate(px, py); c.rotate(a); c.scale(pulse, pulse); c.fillStyle = '#e0614d'; c.strokeStyle = '#2a1d17'; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(7, 0); c.lineTo(-5, -6); c.lineTo(-2, 0); c.lineTo(-5, 6); c.closePath(); c.fill(); c.stroke(); c.restore(); }
 
   if (G.settings.showFps){
     c.font = '800 12px Nunito, system-ui, sans-serif'; c.textAlign = 'left'; c.fillStyle = fps >= 50 ? '#cfe8c0' : fps >= 35 ? '#f2d58a' : '#f2a093';
@@ -177,6 +182,7 @@ function drawMini(c, cx, cy, ms, S){
   if (whale.state !== 'gone' && whale.state !== 'dive'){ c.fillStyle = '#bfe3f5'; c.beginPath(); c.ellipse(whale.x*k, whale.y*k, 5, 3, whale.a, 0, Math.PI*2); c.fill(); }
   if (bottle.on){ c.fillStyle = '#bfe8d2'; c.fillRect(bottle.x*k - 2, bottle.y*k - 2, 4, 4); }
   if (S.treasure){ const tx = S.treasure.x*k, ty = S.treasure.y*k; c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.moveTo(tx - 4, ty - 4); c.lineTo(tx + 4, ty + 4); c.moveTo(tx + 4, ty - 4); c.lineTo(tx - 4, ty + 4); c.stroke(); }
+  for (const m of G.goalMarks || []){ c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.arc(m.x*k, m.y*k, 4 + (G.t*2 % 1)*4, 0, Math.PI*2); c.stroke(); } // the chapter goal pulses
   c.fillStyle = '#fff'; c.beginPath(); c.arc(S.x*k, S.y*k, 3.5, 0, Math.PI*2); c.fill();
   c.restore();
 }
