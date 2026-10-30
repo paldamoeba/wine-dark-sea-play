@@ -1,6 +1,6 @@
 // The two "how to play" pages shown on a new game (and from Settings). Pictures are real renders of the game's boat with
 // drawn hints on top (a finger, arrows); if 3D can't draw, the old drawings are used.
-import {tutShot} from './portrait.js?v=fdeb845';
+import {tutShot} from './portrait.js?v=f3aa387';
 const C = {sea:'#2f7f9a', shallow:'#6cc3bd', sand:'#e6d29c', grass:'#76883c', hill:'#8a8a74', wood:'#a3754a', deck:'#d2a873',
   foam:'#f4fbff', ink:'#22283a', ochre:'#d48a2a', skin:'#e3b591', green:'#5f9c3a', ring:'#d9cba8', parch:'#f7eed6'};
 
@@ -10,13 +10,14 @@ const boat = (x, y, rot = 0, s = 1) => `<g transform="translate(${x} ${y}) rotat
   <path d="M-20 0 Q-17 -9 0 -9 L12 -6 Q24 0 12 6 L0 9 Q-17 9 -20 0Z" fill="${C.wood}"/>
   <path d="M-14 0 Q-12 -5 0 -5 L9 -3 Q16 0 9 3 L0 5 Q-12 5 -14 0Z" fill="${C.deck}"/>
   <circle cx="-2" cy="0" r="3.2" fill="${C.ink}" opacity=".75"/></g>`;
-const finger = (x, y) => `<g transform="translate(${x} ${y})"><ellipse cx="6" cy="10" rx="9" ry="13" fill="${C.skin}" stroke="${C.ink}" stroke-opacity=".25"/><ellipse cx="4" cy="2" rx="4" ry="3" fill="#f2d2b6"/></g>`;
+// a white pointing hand (fingertip at x, y), like the hints in mobile games
+const finger = (x, y) => `<g transform="translate(${x} ${y}) rotate(-18)"><path d="M-3.6 2 Q-3.6 -2.2 0 -2.2 Q3.6 -2.2 3.6 2 V13 L6 12 Q9.6 11.4 10.2 14.6 L13.2 13.6 Q16.6 13.2 17 16.6 V26 Q17 34 9 35 H1 Q-5 35 -7.4 29 L-11.6 19.4 Q-12.6 16 -9.6 15.4 Q-7.4 15 -5.8 17.6 L-3.6 21Z" fill="#fbfaf6" stroke="${C.ink}" stroke-opacity=".55" stroke-width="1.6" stroke-linejoin="round"/><path d="M3.6 13 V19 M10.2 14.6 V20" stroke="${C.ink}" stroke-opacity=".3" stroke-width="1.2"/></g>`;
 const fish = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-7 0 Q0 -6 7 0 Q0 6 -7 0Z M7 0 L12 -4 L12 4Z" fill="${C.sea}"/></g>`;
 const frame = body => `<svg viewBox="0 0 280 140" role="img" aria-hidden="true"><rect width="280" height="140" rx="14" fill="${C.sea}"/>${body}</svg>`;
 // a real render as the background; boats = [[model, x, y, rotation in degrees]], isle = [x, y, radius]
 const shot = (kind, boats, isle, hints, fallback) => { const u = tutShot(kind, boats, isle);
   return u ? `<svg viewBox="0 0 280 140" role="img" aria-hidden="true"><defs><clipPath id="r${kind}"><rect width="280" height="140" rx="14"/></clipPath></defs><image href="${u}" width="280" height="140" clip-path="url(#r${kind})"/>${hints}</svg>` : frame(fallback + hints); };
-const wake = (x, y, rot, s = 1) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})"><path d="M-18 -4 L-48 -14 M-18 4 L-48 14" stroke="${C.foam}" stroke-width="3" fill="none" opacity=".55" stroke-linecap="round"/></g>`;
+const wake = () => ''; // the 3D picture draws its own foam trail
 
 const PICS = {
   get drag(){ return shot('drag', [['rowboat', 92, 84, -28]], null, `${wake(92, 84, -28, 1.25)}
@@ -43,22 +44,32 @@ const PICS = {
     <path d="M206 70 L228 52" stroke="${C.ink}" stroke-width="3.5" stroke-linecap="round"/><circle cx="206" cy="70" r="4" fill="${C.ink}"/>`, boat(96, 74, 12, 1.15)); },
 };
 
+import {shipPortrait} from './portrait.js?v=f3aa387';
+import {IC} from './menus.js?v=f3aa387';
+const STEPS = [[IC.fish(), 'Fish and cut wood', 'on glinting water and by the trees'], [IC.coin, 'Sell at the harbors', 'and take jobs from the boards'],
+  [IC.ship, 'Build bigger ships', 'more speed, hold and archers'], [IC.swords, 'Fight pirates, loot, get rich', 'take forts and islands, rule the Aegean']];
+const ladder = () => [['rowboat', 'Rowboat'], ['fishing', 'Fishing boat'], ['bireme', 'Warship']].map(([m, n], i) => { const u = shipPortrait(m, {});
+  return `${i ? '<span class="arr">›</span>' : ''}<figure>${u ? `<img src="${u}" alt="">` : ''}<figcaption>${n}</figcaption></figure>`; }).join('');
 export const TUT_PAGES = [
+  {title:'Welcome, captain', intro:true},
   {title:'How to sail', cards:[
     ['drag', 'Press and drag', 'Steer the boat. It turns first, then picks up speed.'],
     ['tap', 'Double tap', 'Sail to that spot by itself.']],
-   foot:'Pinch to zoom. The chart button shows the map of the islands.'},
+   foot:'The chart button shows the map of the islands.'},
   {title:'How to earn', cards:[
-    ['shore', 'Glinting water near islands', 'A school of sardines. Stop on it and your crew fishes.'],
+    ['shore', 'Glinting water near islands', 'Stop on it and your crew fishes.'],
     ['spot', 'Bubbling water', 'Big fish. Tap when the needle is in the green.']],
-   foot:'Sell fish at Kallisto, cut wood by the cypress trees, and build bigger ships. Pirates attack outside the Shallows. Your crew shoots back over the sides, so turn side-on to them. Stay away from pirate ships much bigger than yours. The light water around Kallisto is always safe.'},
+   foot:'Pirates attack outside the light water around Kallisto. Turn side-on so your crew can shoot back.'},
 ];
 
 export function tutHTML(page){
   const p = TUT_PAGES[page], last = page === TUT_PAGES.length - 1;
-  return `<div class="mtop"><div class="mhead"><span class="xspace"></span><h1>${p.title}<small>Page ${page + 1} of ${TUT_PAGES.length}</small></h1><span class="xspace"></span></div></div>
-    <div class="mbody">${p.cards.map(([pic, h, t]) => `<div class="tut">${PICS[pic]}<b>${h}</b><span>${t}</span></div>`).join('')}
-    <p class="tutfoot">${p.foot}</p>
+  const body = p.intro ? `<p class="tutlead">Start with a little rowboat on Kallisto. Grow into a captain of warships.</p>
+      <div class="ladder">${ladder()}</div>
+      <ol class="steps">${STEPS.map(([ic, h, t]) => `<li><span class="sic">${ic}</span><div><b>${h}</b><small>${t}</small></div></li>`).join('')}</ol>`
+    : `${p.cards.map(([pic, h, t]) => `<div class="tut">${PICS[pic]}<b>${h}</b><span>${t}</span></div>`).join('')}<p class="tutfoot">${p.foot}</p>`;
+  return `<div class="mtop"><div class="mhead"><span class="xspace"></span><h1>${p.title}<small>${page + 1} of ${TUT_PAGES.length}</small></h1><span class="xspace"></span></div></div>
+    <div class="mbody tutbody">${body}
     <div class="foot">${page ? '<button class="btn" data-act="tutback">Back</button>' : '<button class="btn" data-act="close">Skip</button>'}
       <button class="btn gold" data-act="${last ? 'tutdone' : 'tutnext'}">${last ? 'Start sailing' : 'Next'}</button></div></div>`;
 }

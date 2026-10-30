@@ -1,8 +1,8 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=fdeb845';
-import {seaInfo, waveH, sstep, landDist} from './world.js?v=fdeb845';
-import {G} from './state.js?v=fdeb845';
-import {mat} from './ships.js?v=fdeb845';
+import {QUALITY} from './config.js?v=f3aa387';
+import {seaInfo, waveH, sstep, landDist} from './world.js?v=f3aa387';
+import {G} from './state.js?v=f3aa387';
+import {mat} from './ships.js?v=f3aa387';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -148,13 +148,13 @@ const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
   fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus; varying vec2 vUv;
     void main(){
-      float d = abs(vUv.y - focus), r = smoothstep(.1, .5, d)*16.0;
+      float d = abs(vUv.y - focus), r = smoothstep(.26, .5, d)*15.0; // only the outer edges blur
       // a soft round blur: 24 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
       vec4 c = texture2D(tex, vUv); float tot = 1., spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
       for (int i = 1; i <= 24; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/24.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; }
       vec3 col = c.rgb/tot; float l = dot(col, vec3(.299, .587, .114));
       col = mix(vec3(l), col, 1.15)*vec3(1.035, 1.0, .955);
-      col *= mix(.8, 1., smoothstep(.95, .3, length((vUv - .5)*vec2(1.1, 1.))));
+      col *= mix(.84, 1., smoothstep(.98, .45, length((vUv - .5)*vec2(1.1, 1.))));
       gl_FragColor = vec4(col, 1.);
     }`});
 const quad = new T.Mesh(new T.PlaneGeometry(2, 2), post); quad.frustumCulled = false;

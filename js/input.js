@@ -1,8 +1,8 @@
 // Touch, mouse and keyboard. Double tap = sail there (a single tap only marks the spot). Press and drag = joystick.
-import {G, ship, saveSettings} from './state.js?v=fdeb845';
-import {landDist} from './world.js?v=fdeb845';
-import {canvas, screenToSea} from './scene.js?v=fdeb845';
-import {hideHint, toast} from './ui.js?v=fdeb845';
+import {G, ship, saveSettings} from './state.js?v=f3aa387';
+import {landDist} from './world.js?v=f3aa387';
+import {canvas, screenToSea} from './scene.js?v=f3aa387';
+import {hideHint, toast} from './ui.js?v=f3aa387';
 
 export const JOY_RADIUS = 58;
 const keys = new Set();
@@ -12,6 +12,7 @@ let ptr = null, lastTap = null;
 export const ZOOM_MIN = .4, ZOOM_MAX = 3.5;
 let pinch = null, zoomSaveT = 0;
 export function setZoom(z){
+  if (!G.settings.builder) return; // players don't zoom: the camera is set for them
   G.settings.dev.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
   document.dispatchEvent(new Event('zoom'));
   clearTimeout(zoomSaveT); zoomSaveT = setTimeout(saveSettings, 400);

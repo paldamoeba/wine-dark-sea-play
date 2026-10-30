@@ -1,15 +1,15 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT} from './config.js?v=fdeb845';
-import {SPECS} from './ships.js?v=fdeb845';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=fdeb845';
-import {G, ship, holdUsed, save} from './state.js?v=fdeb845';
-import {steering} from './input.js?v=fdeb845';
-import {toast, showZone} from './ui.js?v=fdeb845';
-import {refreshTrees, spawnWake} from './entities.js?v=fdeb845';
-import {startFish, stopFish} from './fishing.js?v=fdeb845';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=fdeb845';
-import {progress} from './quests.js?v=fdeb845';
-import {startSink} from './sinking.js?v=fdeb845';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT} from './config.js?v=f3aa387';
+import {SPECS} from './ships.js?v=f3aa387';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=f3aa387';
+import {G, ship, holdUsed, save} from './state.js?v=f3aa387';
+import {steering} from './input.js?v=f3aa387';
+import {toast, showZone} from './ui.js?v=f3aa387';
+import {refreshTrees, spawnWake} from './entities.js?v=f3aa387';
+import {startFish, stopFish} from './fishing.js?v=f3aa387';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=f3aa387';
+import {progress} from './quests.js?v=f3aa387';
+import {startSink} from './sinking.js?v=f3aa387';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -40,6 +40,7 @@ function move(dt, sh){
   if (zoneAt(S.x, S.y) === 2){ px += Math.sin(G.t*1.7)*TUNING.stormDrift*dt; py += Math.cos(G.t*1.3)*TUNING.stormDrift*dt; }
   S.x += px; S.y += py;
   if (pushOut(S, sh.beam*.9)) G.v *= .6;
+  if (!G.dock && pierPush(S, sh.beam*.55)) G.v *= .6;
   S.x = Math.max(60, Math.min(WORLD-60, S.x)); S.y = Math.max(60, Math.min(WORLD-60, S.y));
 }
 
@@ -103,6 +104,13 @@ function berth(sh, P){
   const side = (S.x - px)*nx + (S.y - py)*ny >= 0 ? 1 : -1, off = 13 + sh.beam/2 + (SPECS[sh.model].oarCount > 1 ? 40 : 0); // oars stay clear of the pier
   const pa = Math.atan2(P.dy, P.dx), a0 = Math.cos(S.a - pa) >= 0 ? pa : pa + Math.PI, a = S.a + wrap(a0 - S.a); // line up with the pier the short way
   return {x:px + nx*side*off, y:py + ny*side*off, a, side, along};
+}
+// Piers are solid: the ship slides along them instead of sailing through.
+function pierPush(S, rad){ let hit = false;
+  for (const h of HARBORS){ const P = h.pier, nx = -P.dy, ny = P.dx, rx = S.x - P.x, ry = S.y - P.y, t = rx*P.dx + ry*P.dy, s = rx*nx + ry*ny, w = 9 + rad;
+    if (t < -5 || t > PIER_LEN + 6 || Math.abs(s) > w) continue;
+    const side = s < 0 ? -1 : 1; S.x += nx*(side*w - s); S.y += ny*(side*w - s); hit = true; }
+  return hit;
 }
 // How far the ship is from a pier (anywhere along it, plus a little past the end).
 function pierDist(P, x, y){

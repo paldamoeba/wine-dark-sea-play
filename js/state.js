@@ -1,6 +1,6 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=fdeb845';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=fdeb845';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=f3aa387';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=f3aa387';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -120,7 +120,7 @@ export function loadSettings(){
     get:(_, k) => (!G.settings.builder && k in PLAYER_DEV ? PLAYER_DEV : G.settings.tools)[k],
     set:(_, k, v) => { G.settings.tools[k] = v; return true; }})});
 }
-const PLAYER_DEV = {speed:1, teleport:false, markers:false, crew:true, raiders:true, fleet:false};
+const PLAYER_DEV = {zoom:1, speed:1, teleport:false, markers:false, crew:true, raiders:true, fleet:false};
 export function saveSettings(){ const {tools, ...rest} = G.settings; write(SETTINGS_KEY, {...rest, dev:tools}); }
 
 // Save on a timer and whenever the app goes to the background.

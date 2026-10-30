@@ -1,6 +1,6 @@
 // Portraits: real pictures of the 3D models for the menus. One small hidden renderer draws a model once and keeps the
 // picture, so the shipyard shows the same ships you sail, in their own paint, instead of drawings.
-import {buildShip, SPECS, mat} from './ships.js?v=fdeb845';
+import {buildShip, SPECS, mat} from './ships.js?v=f3aa387';
 
 const T = window.THREE;
 const W = 480, H = 300;
@@ -51,7 +51,7 @@ export const hasModel = m => !!SPECS[m];
 
 // ---- tutorial pictures: real renders of the game's boat on the sea, seen like in the game ----
 // The picture is 280 x 140 "screen units". Things are placed by screen position so the drawn hints (finger, arrows) line up.
-import {cypress} from './models.js?v=fdeb845';
+import {cypress} from './models.js?v=f3aa387';
 const TW = 560, TH = 280, K = .75, PITCH = 1.0; // world units per screen unit, camera tilt
 export function tutShot(kind, boats, isle){
   const key = 'tut' + kind; if (cache.has(key)) return cache.get(key);
@@ -64,11 +64,16 @@ export function tutShot(kind, boats, isle){
     const at = (sx, sy) => ({x:(sx - 140)*K, z:(sy - 70)*K/Math.sin(PITCH)});
     // the sea is the clear color, so every picture has the same blue
     if (isle){ const p = at(isle[0], isle[1]), r = isle[2]*K;
-      const sh = new T.Mesh(new T.CircleGeometry(r*1.6, 40), mat('#3f9c9e')); sh.rotation.x = -Math.PI/2; sh.position.set(p.x, .5, p.z); sh.scale.y = 1; sc.add(sh);
+      const sh = new T.Mesh(new T.CircleGeometry(r*1.6, 40), mat('#2c8088')); sh.rotation.x = -Math.PI/2; sh.position.set(p.x, .5, p.z); sh.scale.y = 1; sc.add(sh);
       const sand = new T.Mesh(new T.CylinderGeometry(r, r*1.08, 4, 32), mat('#d8c48c')); sand.position.set(p.x, 1, p.z); sc.add(sand);
       const grass = new T.Mesh(new T.CylinderGeometry(r*.72, r*.8, 7, 32), mat('#6d7d38')); grass.position.set(p.x, 3, p.z); sc.add(grass);
       for (const [dx, dz] of [[-.25, -.1], [.15, -.25], [.2, .15]]){ const c = cypress(); c.scale.setScalar(.8); c.position.set(p.x + dx*r, 6, p.z + dz*r); sc.add(c); } }
-    for (const [model, sx, sy, rot] of boats){ const b = buildShip(model, {}, true), p = at(sx, sy); b.position.set(p.x, 0, p.z); b.rotation.y = -rot*Math.PI/180; sc.add(b); }
+    const foam = new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.55, depthWrite:false});
+    for (const [model, sx, sy, rot] of boats){ const b = buildShip(model, {}, true), p = at(sx, sy), L = SPECS[model].L;
+      b.position.set(p.x, 0, p.z); b.rotation.y = -rot*Math.PI/180; sc.add(b);
+      // the wake: two foam trails spreading out behind the stern
+      for (const sg of [1, -1]){ const w = new T.Mesh(new T.PlaneGeometry(L*1.3, 2.4), foam); w.rotation.x = -Math.PI/2; w.rotation.z = sg*.2;
+        w.position.set(-L*.5 - L*.6, .6, sg*L*.14); b.add(w); } }
     const cam = new T.OrthographicCamera(-140*K, 140*K, 70*K, -70*K, 1, 3000);
     cam.position.set(0, Math.sin(PITCH)*800, Math.cos(PITCH)*800); cam.lookAt(0, 0, 0);
     R.setSize(TW, TH, false); R.setClearColor(0x2f86a0, 1); R.render(sc, cam); R.render(sc, cam);
