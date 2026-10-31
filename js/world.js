@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES} from './config.js?v=8abf047';
-import {MAPDATA} from './mapdata.js?v=8abf047';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES} from './config.js?v=08a29d0';
+import {MAPDATA} from './mapdata.js?v=08a29d0';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -260,10 +260,13 @@ export function seaInfo(x, z){
   const deep = Math.max(0, b.d - b.b1);
   return {k0, k1, amp: (1.6 + k0*2.6 + k1*(7 + Math.min(10, deep/90)))*WEATHER_WAVES.k};
 }
-export function waveH(x, z, amp, t){ return amp * (Math.sin(x*.011 + t*1.3) + Math.sin(z*.013 - t*1.1)*.8 + Math.sin((x+z)*.021 + t*2)*.4) / 2.2; }
+// The waves are bent by a slow, uneven warp so they never line up in a neat repeating grid (keep in step with swell() in scene.js).
+const warpX = (x, z) => x + 70*Math.sin(z*.0021 + 1.3) + 30*Math.sin(z*.0057 + x*.0013), warpZ = (x, z) => z + 70*Math.sin(x*.0017 - .7) + 30*Math.sin(x*.0049 - z*.0011);
+export function waveH(x0, z0, amp, t){ const x = warpX(x0, z0), z = warpZ(x0, z0); return amp * (Math.sin(x*.011 + t*1.3) + Math.sin(z*.013 - t*1.1)*.8 + Math.sin((x+z)*.021 + t*2)*.4) / 2.2; }
 export function waveAt(x, z, t){ return waveH(x, z, seaInfo(x, z).amp, t); }
 // The height of the water surface as drawn: the big swells plus the small chop on top (the same as swell() in scene.js).
 // Things lying on the water (wake foam) use this so they never sink under a little wave.
 export const shoreK = ld => Math.min(1, Math.max(0, (ld - 10)/150)); // calm water right by the shore (0) to full waves (1)
 export function waterY(x, z, t){ const k = shoreK(landDist(x, z)), A = seaInfo(x, z).amp*k, C = (1.8 + A*.15)*2*k;
-  return waveH(x, z, A, t) + (Math.sin(x*.034 - z*.021 + t*1.9)*.22 + Math.sin(x*.018 + z*.039 - t*1.6)*.18)*C; }
+  const wx = warpX(x, z), wz = warpZ(x, z);
+  return waveH(x, z, A, t) + (Math.sin(wx*.034 - wz*.021 + t*1.9)*.22 + Math.sin(wx*.018 + wz*.039 - t*1.6)*.18)*C; }

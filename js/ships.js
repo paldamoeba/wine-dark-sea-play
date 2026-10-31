@@ -255,8 +255,8 @@ function helmetOn(parent, y, kind){
   const neck = hm(cheekGeo, 'bronze'); neck.scale.set(.5, .9, 1.6); neck.position.set(-2.6, y - .9, 0); parent.add(neck);
   const capt = kind === 'captain';
   const st = hm(standGeo, 'bronze'); st.position.y = y + 3.6; parent.add(st);
-  const cr = hm(crestGeo, capt ? '#f1e6c8' : kind === 'attic' ? '#2f5f8a' : 'plume'); cr.scale.set(capt ? 1.2 : 1.05, capt ? 1.45 : 1, capt ? 1 : .9); cr.position.y = y + 2.6;
-  if (capt){ cr.rotation.y = Math.PI/2; const rim = hm(crestGeo, 'plume'); rim.scale.set(1.32, 1.58, .55); rim.rotation.y = Math.PI/2; rim.position.set(.1, y + 2.5, 0); parent.add(rim); }
+  const cr = hm(crestGeo, capt ? '#f1e6c8' : kind === 'attic' ? '#2f5f8a' : 'plume'); cr.scale.set(capt ? 1.2 : 1.05, capt ? 1.45 : 1, capt ? 1.3 : .9); cr.position.y = y + 2.6;
+  if (capt){ cr.rotation.y = Math.PI/2; const rim = hm(crestGeo, 'plume'); rim.scale.set(1.32, 1.58, .35); /* much thinner than the white crest, so their faces are well apart */ rim.rotation.y = Math.PI/2; rim.position.set(.1, y + 2.5, 0); parent.add(rim); }
   if (kind === 'attic') for (const sg of [1, -1]){ const f = hm(featherGeo, '#f4efe2'); f.position.set(-.2, y + 4.6, sg*2.9); f.rotation.x = -sg*.25; parent.add(f); }
   parent.add(cr);
 }
@@ -269,7 +269,7 @@ const hairGeo = (() => { const g = new T.SphereGeometry(1, 48, 32), p = g.attrib
     const hem = fr > 0 ? .34 + .1*(1 - fr) + .035*Math.cos(a*9) : .56 - .06*fr;
     // a solid round mass: thick hair down to the hairline, then it tucks into the head (hidden) with a rounded edge
     const k = sst(hem + .07, hem - .02, lat);
-    const r = 2.8 + k*(.62 + .28*Math.pow(1 - lat, 2) + .05*Math.sin(a*5 + lat*8)); // fuller at the crown, gentle waves
+    const r = 2.5 + k*(.92 + .28*Math.pow(1 - lat, 2) + .05*Math.sin(a*5 + lat*8)); // fuller at the crown, gentle waves
     v.multiplyScalar(r); p.setXYZ(i, v.x, v.y, v.z); }
   g.computeVertexNormals(); return g; })();
 // fine strands drawn on the hair, from the crown down (you liked the look of hair when the shadows striped them)

@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=8abf047';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=8abf047';
-import {G} from './state.js?v=8abf047';
-import {TOD, updateDayNight} from './daynight.js?v=8abf047';
-import {showGrass} from './grass.js?v=8abf047';
+import {QUALITY} from './config.js?v=08a29d0';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=08a29d0';
+import {G} from './state.js?v=08a29d0';
+import {TOD, updateDayNight} from './daynight.js?v=08a29d0';
+import {showGrass} from './grass.js?v=08a29d0';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -13,7 +13,7 @@ export const scene = new T.Scene();
 const SKY = new T.Color('#a9c9cf'), STORMSKY = new T.Color('#46525c'), MIST = new T.Color('#f1ede2');
 scene.background = SKY.clone();
 scene.fog = new T.Fog(SKY.clone(), 1000, 2300);
-export const camera = new T.PerspectiveCamera(38, 1, 10, 6000);
+export const camera = new T.PerspectiveCamera(38, 1, 80, 6000); // near 80: the camera is always 300+ away, and a far near plane keeps depth precise (no flickering stripes)
 const hemi = new T.HemisphereLight(0xe6f0f2, 0x7d8670, .62); scene.add(hemi);
 const sun = new T.DirectionalLight(0xffe6c4, .64);
 sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
@@ -63,7 +63,8 @@ const waterMat = new T.MeshPhongMaterial({color:'#ffffff', vertexColors:true, sp
 const foamU = {uNight:{value:0}, uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
 // the same swells as waveH() in world.js, written for the graphics card, with their slope (for the light) and smaller waves on top
 const WAVES_GLSL = `
-  vec3 swell(vec2 p, float A, float t, float shore){ // height, slope along x, slope along z (keep in step with waterY() in world.js)
+  vec3 swell(vec2 p0, float A, float t, float shore){ // height, slope along x, slope along z (keep in step with waterY() in world.js)
+    vec2 p = vec2(p0.x + 70.*sin(p0.y*.0021 + 1.3) + 30.*sin(p0.y*.0057 + p0.x*.0013), p0.y + 70.*sin(p0.x*.0017 - .7) + 30.*sin(p0.x*.0049 - p0.y*.0011)); // the same uneven warp
     float a = p.x*.011 + t*1.3, b = p.y*.013 - t*1.1, c = (p.x + p.y)*.021 + t*2.;
     vec3 big = vec3(sin(a) + sin(b)*.8 + sin(c)*.4, .011*cos(a) + .4*.021*cos(c), .8*.013*cos(b) + .4*.021*cos(c))/2.2*A;
     // smaller waves from other directions, there even in the calm shallows, so the sea always rolls a little
@@ -117,7 +118,7 @@ waterMat.onBeforeCompile = sh => {
       float fres = pow(1. - max(dot(Vv, nW), 0.), 3.);
       gl_FragColor.rgb = mix(gl_FragColor.rgb, uSky, fres*.4);
       // sunlight glinting off the little waves: a soft sheen toward the sun and bright twinkles inside it
-      vec2 w = vWorld.xz;
+      vec2 w = vWorld.xz + 40.*vec2(sin(vWorld.z*.013), sin(vWorld.x*.011)); // warped, so the sparkles don't sit in rows
       vec3 nrm = normalize(vec3(sin(w.x*.045 + uTime*1.7)*.16 + sin((w.x + w.y)*.11 - uTime*2.3)*.08 - rp.x, 1., cos(w.y*.05 - uTime*1.4)*.16 + sin((w.x - w.y)*.09 + uTime*2.1)*.08 - rp.y));
       vec3 Rf = reflect(-uSun, nrm);
       float sp = max(dot(Rf, Vv), 0.), sheen = pow(sp, 24.)*.12, twinkle = pow(sp, 260.)*.45;

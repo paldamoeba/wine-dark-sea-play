@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=8abf047';
-import {makePost} from './glow.js?v=8abf047';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=8abf047';
-import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=8abf047';
-import {makeFire, updateFire} from './fire.js?v=8abf047';
-import {updateSmoke} from './smoke.js?v=8abf047';
-import {addGrass, updateGrass} from './grass.js?v=8abf047';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=8abf047';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=08a29d0';
+import {makePost} from './glow.js?v=08a29d0';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=08a29d0';
+import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=08a29d0';
+import {makeFire, updateFire} from './fire.js?v=08a29d0';
+import {updateSmoke} from './smoke.js?v=08a29d0';
+import {addGrass, updateGrass} from './grass.js?v=08a29d0';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=08a29d0';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -25,9 +25,11 @@ const sea = new T.Mesh(new T.CircleGeometry(6000, 64), seaMat); sea.rotation.x =
 // The same wave sum runs here in JavaScript (wv) so ships ride on it. uCalm flattens it around islands and towns.
 const waveU = {uTime:{value:0}, uAmp:{value:.5}, uStorm:{value:0}, uGlint:{value:1}, uSky:{value:new T.Color()}, uSun:{value:new T.Vector3(0, 1, 0)}, uCalm:{value:new T.Vector3(0, 0, 0)}};
 const WV = `uniform float uTime, uAmp; uniform vec3 uCalm;
-  float wv(vec2 p){ float k = uAmp*smoothstep(uCalm.z, uCalm.z + 160., length(p - uCalm.xy));
+  float wv(vec2 p0){ float k = uAmp*smoothstep(uCalm.z, uCalm.z + 160., length(p0 - uCalm.xy));
+    vec2 p = vec2(p0.x + 70.*sin(p0.y*.0021 + 1.3) + 30.*sin(p0.y*.0057 + p0.x*.0013), p0.y + 70.*sin(p0.x*.0017 - .7) + 30.*sin(p0.x*.0049 - p0.y*.0011));
     return k*(sin(p.x*.012 + uTime*1.1)*3.2 + sin(p.y*.017 - uTime*1.3)*2.4 + sin((p.x + p.y)*.03 + uTime*1.9)*1.1 + sin((p.x - p.y)*.05 - uTime*2.4)*.5); }`;
-function wv(x, z, t){ const k = waveU.uAmp.value*Math.min(1, Math.max(0, (Math.hypot(x - waveU.uCalm.value.x, z - waveU.uCalm.value.y) - waveU.uCalm.value.z)/160));
+function wv(x0, z0, t){ const k = waveU.uAmp.value*Math.min(1, Math.max(0, (Math.hypot(x0 - waveU.uCalm.value.x, z0 - waveU.uCalm.value.y) - waveU.uCalm.value.z)/160));
+  const x = x0 + 70*Math.sin(z0*.0021 + 1.3) + 30*Math.sin(z0*.0057 + x0*.0013), z = z0 + 70*Math.sin(x0*.0017 - .7) + 30*Math.sin(x0*.0049 - z0*.0011);
   return k*(Math.sin(x*.012 + t*1.1)*3.2 + Math.sin(z*.017 - t*1.3)*2.4 + Math.sin((x + z)*.03 + t*1.9)*1.1 + Math.sin((x - z)*.05 - t*2.4)*.5); }
 const waveMat = new T.MeshLambertMaterial({color:'#2b7f93'});
 waveMat.onBeforeCompile = sh => {
@@ -49,7 +51,7 @@ waveMat.onBeforeCompile = sh => {
       gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, line*.75*fade*(1. - .45*uStorm));
       float crest = smoothstep(.55, .9, vWorld.y/max(.01, 7.2*uAmp)); gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, crest*.45);
       vec3 V = normalize(cameraPosition - vWorld); gl_FragColor.rgb = mix(gl_FragColor.rgb, uSky, pow(1. - max(V.y, 0.), 3.)*.35);
-      vec2 w = vWorld.xz;
+      vec2 w = vWorld.xz + 40.*vec2(sin(vWorld.z*.013), sin(vWorld.x*.011));
       vec3 nrm = normalize(vec3(sin(w.x*.045 + uTime*1.7)*.16 + sin((w.x + w.y)*.11 - uTime*2.3)*.08, 1., cos(w.y*.05 - uTime*1.4)*.16 + sin((w.x - w.y)*.09 + uTime*2.1)*.08));
       float sp = max(dot(reflect(-uSun, nrm), V), 0.); gl_FragColor.rgb += vec3(1., .96, .86)*(pow(sp, 24.)*.1 + pow(sp, 260.)*.75)*uGlint;`);
 };
@@ -327,7 +329,7 @@ const GROUPS = {
 function show(){
   if (obj) scene.remove(obj); hoppers.length = 0;
   const item = GROUPS[group].items[idx];
-  obj = item.make(); if (CEL.on) inkify(obj); obj.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = !o.userData.ns; } });
+  obj = item.make(); if (CEL.on) inkify(obj); obj.traverse(o => { if (o.isMesh){ o.castShadow = !(o.material && o.material.transparent); o.receiveShadow = !o.userData.ns; } }); /* see-through things (foam rings, the kraken's dark shape) cast no shadows */
   scene.add(obj);
   // frame the models, not the ground they stand on; fit the sun's shadow to them so shadows stay crisp
   const ground = obj.children.filter(o => o.userData.ground); ground.forEach(o => obj.remove(o));
@@ -428,6 +430,9 @@ function frame(now){
     r.o.position.y = r.y + h*.8; r.o.rotation.z = full ? (wv(p.x + 20, p.z, t) - wv(p.x - 20, p.z, t))*.012 : 0; r.o.rotation.x = full ? (wv(p.x, p.z - 12, t) - wv(p.x, p.z + 12, t))*.02 : 0; }
   focus.x += fx; focus.y += fy;
   camera.position.set(focus.x + Math.cos(yaw)*Math.cos(pitch)*dist, focus.y + Math.sin(pitch)*dist, focus.z + Math.sin(yaw)*Math.cos(pitch)*dist);
+  // the near edge of what the camera sees moves with the distance: depth precision stays high, so close surfaces never flicker
+  // into stripes (it was 2 for every view, too small when looking at a whole town from far away)
+  const nr = Math.max(2, dist*.05); if (Math.abs(camera.near - nr) > .5){ camera.near = nr; camera.updateProjectionMatrix(); }
   camera.lookAt(focus); focus.x -= fx; focus.y -= fy;
   post(scene, camera, {glow:glowOn ? 1.5 : 0, tilt:full}); requestAnimationFrame(frame);
 }
