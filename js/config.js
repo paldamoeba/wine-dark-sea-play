@@ -10,13 +10,24 @@ export const SETTINGS_KEY = 'wine-dark-sea-settings';
 export const SHIPS = [
 // speed and turn are lower than before P48 and heavy = how slowly the ship gets going and stops (bigger = heavier).
 // hold = fish; cap = how much wood, bronze and trade goods it can carry (wood and bronze go to the warehouse when you dock).
-  {name:'Rowboat',      model:'rowboat', speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, goods:3}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:1, turn:1.6},
-  {name:'Fishing Boat', model:'fishing', speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, goods:6}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:2, turn:1.3, cost:{wood:150, linen:10, gold:60},
-    desc:'A sail, more speed, a second crew member, steadier in big waves'},
-  {name:'Bireme',       model:'bireme',  speed:150, hull:170, hold:16, cap:{wood:140, bronze:40, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, turn:.75, cost:{wood:300, bronze:30, linen:20, gold:250},
-    desc:'A warship. Four archers, a hull that shrugs off big waves, but a small hold'},
-  {name:'Trireme',      model:'trireme', speed:178, hull:260, hold:18, cap:{wood:200, bronze:60, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:190, beam:34, fighters:6, turn:.62, cost:{wood:600, bronze:80, linen:40, gold:600},
-    desc:'The greatest warship of the Aegean: six archers, an outrigger and a big bronze ram'},
+// rank = its size class (0 small boat .. 3 big warship): captured bandit ships slot in by rank.
+// men = [start, most]: the crew it comes with and the most it can carry (the Crew upgrade adds the rest). On oared ships
+// speed is with every bench filled; with few rowers they're much slower (crew.js rowBoost). fighters = archers with a full crew.
+// plans = needs a blueprint (won from a bandit camp or a pirate fortress) before you can build it.
+  {name:'Rowboat',      model:'rowboat', rank:0, speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, goods:3}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:2, men:[1, 2], turn:1.6},
+  {name:'Fishing Boat', model:'fishing', rank:1, speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, goods:6}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:4, men:[1, 4], turn:1.3, cost:{wood:150, linen:10, gold:60}, plans:true,
+    desc:'A sail, more speed, room for a crew of four, steadier in big waves'},
+  {name:'Bireme',       model:'bireme',  rank:2, speed:165, hull:170, hold:16, cap:{wood:140, bronze:40, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, men:[6, 33], turn:.75, cost:{wood:300, bronze:30, linen:20, gold:250}, plans:true,
+    desc:'A warship. Benches for 28 rowers and four archers, a hull that shrugs off big waves, but a small hold'},
+  {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:190, beam:34, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, linen:40, gold:600}, plans:true,
+    desc:'The greatest warship of the Aegean: benches for 32 rowers, six archers, an outrigger and a big bronze ram'},
+  // bandit ships you capture (combat.js): never built, only taken
+  {name:'Bandit boat',   model:'dinghy', rank:0, captured:true, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, goods:2}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
+    desc:'A quick little raider boat with a blood-red sail'},
+  {name:'Bandit skiff',  model:'skiff',  rank:1, captured:true, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, goods:4}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
+    desc:'A raider skiff with a ram: three archers and a small hold'},
+  {name:'Bandit galley', model:'raider', rank:2, captured:true, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, goods:6}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
+    desc:'A black pirate galley with a boar\'s head ram: six archers when its benches are full'},
 ];
 
 // spin = needle speed (radians per second), green = size of the green part (degrees). Bigger fish: faster, smaller.
@@ -61,23 +72,25 @@ export const GOALS = [
   {t:'salvage', n:10, gold:8, text:'Salvage 10 wood from a wreck'},
   {t:'catch', kind:'tuna', n:1, gold:8, text:'Catch a tuna in bubbling water'},
   {t:'board', n:1, gold:6, text:'Take a job from the request board in a harbor'},
+  {t:'camp', kind:'Ios', n:1, gold:20, text:'Burn the bandit camp on Ios and win the fishing boat\'s plans'},
   {t:'build', n:1, gold:25, text:'Build the fishing boat at Kallisto (150 wood, 10 linen, 60 drachmae)'},
   // chapter one: from fishing boat to the pirate king (about an hour)
+  {t:'camp', kind:'Amorgos', n:1, gold:60, text:'Burn the bandit camp on Amorgos and win the bireme\'s plans', chapter:true},
   {t:'build', kind:'bireme', n:1, gold:100, text:'Build the bireme at Kallisto, your first warship', chapter:true},
   {t:'sink', kind:'galley', n:3, gold:150, text:'Sink 3 raider galleys out in the Open Sea', chapter:true},
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
-  {t:'fort', n:1, gold:300, text:'Knock down a pirate fortress, on Thasos or Kos', chapter:true},
+  {t:'fort', n:1, gold:300, text:'Knock down a pirate fortress on Thasos or Kos and win the trireme\'s plans', chapter:true},
   {t:'build', kind:'trireme', n:1, gold:200, text:'Build the trireme, the greatest warship of the Aegean', chapter:true},
   {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, off Kos', chapter:true},
 ];
-export const STARTER_GOALS = 7; // the first seven goals teach the basics; past the rowboat they are skipped
+export const STARTER_GOALS = 8; // the first eight goals teach the basics; past the rowboat they are skipped
 // Polycrates, the pirate king: a huge black galley with a golden boar's head ram, waiting off his fortress with two skiffs.
 // fireEvery: seconds between his flaming volleys (they set your ship alight for burnSeconds). At half hull he calls two more skiffs.
 // He never heals, so you can always sail home, repair and come back.
-export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'raider', scale:1.35, hull:1000, speed:125, turn:.42, fighters:8, dmg:2.2, sight:900, leash:2600,
+export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'raider', scale:1.35, hull:1300, speed:125, turn:.42, fighters:8, dmg:2.2, sight:900, leash:2600,
   gold:[1200, 1200], wood:200, bronze:60, len:180, beam:38, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2};
 // Fire arrows: a ship hit by one burns for burnSeconds, losing dps(level) hull a second.
-export const FIRE_ARROWS = {burnSeconds:3, dps:l => l ? 1 + .3*l : 0};
+export const FIRE_ARROWS = {burnSeconds:2.5, dps:l => l ? .6 + .18*l : 0}; // P49: weaker, so fire no longer sinks ships at once
 // The request board in every harbor.
 export const REQUESTS = {offers:3, max:2,
   who:['Old Pelagia, for her taverna', 'The temple priest', 'A worried mother', 'Kleon the net maker', 'The harbor master', 'Two hungry fishermen', 'A traveling poet', 'The potter\'s daughter']};
@@ -97,10 +110,10 @@ export const BOTTLES = {first:40, every:[90, 170], life:100, dist:[260, 420], co
 // Level n costs base × n, times the ship's size (shipK) for ship parts.
 export const UPGRADES = {
   hull:   {label:'Planking',        ship:true, each:.08, unit:'hull',  cost:{wood:20, gold:15}, desc:'Thicker planks: more hull'},
-  oars:   {label:'Oars and benches', ship:true, each:.03, unit:'speed', cost:{wood:15, gold:18}, desc:'More rowers pulling: faster'},
+  oars:   {label:'Oars and benches', ship:true, each:.03, unit:'speed', cost:{wood:15, gold:18}, desc:'Lighter oars and better benches: faster'},
   sail:   {label:'Sails',           ship:true, each:.05, unit:'speed', cost:{wood:5, linen:4, gold:14}, desc:'Linen from the sailmaker and wood for the yards. Every level makes the newest sail bigger; every 5 levels a new sail goes up'},
   helm:   {label:'Steering oars',   ship:true, each:.07, unit:'turning', cost:{wood:15, gold:16}, desc:'Longer steering oars: turns quicker'},
-  seats:  {label:'Crew quarters',   ship:true, crew:true, cost:{wood:25, gold:25}, desc:'Room for one more sailor every two levels'},
+  seats:  {label:'Crew',            ship:true, cost:{gold:9}, desc:'Hire hands for this ship. More rowers make it faster, more archers hit harder, more hands fish quicker'}, // (kept as "seats" so old crew quarters levels carry over)
   arrows: {label:'Arrowheads',      each:.08, unit:'arrow damage', cost:{bronze:2, gold:18}, desc:'Bronze arrowheads for every archer'},
   ram:    {label:'Ram',             cost:{wood:20, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it'},
   fire:   {label:'Fire arrows',     minTier:2, cost:{linen:4, gold:40}, desc:'Rags soaked in oil on every arrow. Ships you hit catch fire and keep burning for a few seconds'},
@@ -119,6 +132,17 @@ export const CAPTAIN = {cost:60, grow:2.5, // 60, 150, 380, 940...
 
 // Forts on island shores: Spartan, Athenian or pirate. They shoot at you when hostile (pirates always; a city's fort once you
 // attack it or its city hunts you), have a big hull, and drop their treasury when they fall. Rebuilt after `rebuild` seconds.
+// Bandit camps on the wild islands near Kallisto: a palisade with archers and one mothership guarding it. Easier than a
+// fortress, no catapults. Burn one and it stays burnt; some give ship blueprints (plans = SHIPS index).
+export const CAMPS = [
+  {isle:'Ios',     hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[50, 70],   wood:30,  bronze:2,  plans:1},
+  {isle:'Amorgos', hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[110, 150], wood:70,  bronze:8,  plans:2},
+  {isle:'Paros',   hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
+  {isle:'Sifnos',  hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
+];
+export const PIRATE_PLANS = 3; // a pirate fortress gives the trireme's blueprint
+// Athens and Sparta keep their fortresses and navies this far from Kallisto: the start is neutral (P49).
+export const NEUTRAL_R = 6500;
 export const FORTS = {pirates:['Thasos', 'Kos'], // every city island except the capitals has a fortress too
   hull:{city:900, pirate:700}, fighters:7, dmg:2.5, range:560, every:3.4, gold:[320, 520], wood:150, bronze:25, rebuild:600, guards:2,
   stoneEvery:5.2, stoneRange:950, stoneFlight:2.6, stoneDmg:14, stoneHit:58, heal:4, healAfter:30};
@@ -190,8 +214,8 @@ export const COMBAT = {
   arrowDmg: 3,          // damage per arrow from your crew
   hitChance: .85,
   arrowSpeed: 300,
-  volleyCooldown: 14,   // the special button
-  volleyArrows: 3,      // arrows per fighter in a volley
+  volleyCooldown: 16,   // the special button
+  volleyArrows: 2,      // arrows per fighter in a volley
   sideArc: .5,          // archers shoot over the sides: no shots within about 30° of dead ahead or dead astern
   respawn: 120,         // seconds until a sunk raider is replaced
   lootLife: 75,         // seconds floating loot stays before it sinks
@@ -199,13 +223,13 @@ export const COMBAT = {
 };
 export const ENEMIES = {
   dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:64,  turn:1.5, fighters:1, dmg:1.5, sight:420, leash:800, gold:[5, 10], wood:10, len:44, beam:17},
-  skiff:  {name:'Raider skiff',  model:'skiff',  hull:70,  speed:80,  turn:1.05, fighters:3, dmg:2, sight:500, leash:900,  gold:[12, 24], wood:25, bronze:1, len:72,  beam:22},
-  galley: {name:'Raider galley', model:'raider', hull:150, speed:120, turn:.45, fighters:6, dmg:3, sight:600, leash:1100, gold:[60, 90], wood:60, bronze:6, len:135, beam:28},
+  skiff:  {name:'Raider skiff',  model:'skiff',  hull:90,  speed:80,  turn:1.05, fighters:3, dmg:2, sight:500, leash:900,  gold:[12, 24], wood:25, bronze:1, len:72,  beam:22},
+  galley: {name:'Raider galley', model:'raider', hull:220, speed:120, turn:.45, fighters:6, dmg:3, sight:600, leash:1100, gold:[60, 90], wood:60, bronze:6, len:135, beam:28},
   // side: pirate (always hostile), merchant (peaceful, flees), navy (hunts pirates; hunts you only if one of them saw you raid)
   merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:64, turn:.5, fighters:0, dmg:0, sight:450, gold:[45, 75], wood:30, len:110, beam:44},
   // navies: one kind per city. A patrol switches city when its island changes hands.
-  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:150, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:190, beam:34},
-  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:150, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:160, beam:30},
+  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:190, beam:34},
+  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:160, beam:30},
 };
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 export const WITNESS = {

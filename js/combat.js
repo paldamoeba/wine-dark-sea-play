@@ -1,20 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS} from './config.js?v=c50fa36';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=c50fa36';
-import {G, ship, holdUsed, save, gain, lvl, putAboard} from './state.js?v=c50fa36';
-import {scene} from './scene.js?v=c50fa36';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=c50fa36';
-import {makeFire, updateFire, burn} from './fire.js?v=c50fa36';
-import {blessing, fighters} from './crew.js?v=c50fa36';
-import {progress, goal} from './quests.js?v=c50fa36';
-import {arrowK, ramDmg} from './upgrades.js?v=c50fa36';
-import {toast} from './ui.js?v=c50fa36';
-import {sink} from './player.js?v=c50fa36';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=c50fa36';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=c50fa36';
-import {sfx} from './audio.js?v=c50fa36';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS} from './config.js?v=5a6bfb2';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=5a6bfb2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank} from './state.js?v=5a6bfb2';
+import {scene} from './scene.js?v=5a6bfb2';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=5a6bfb2';
+import {makeFire, updateFire, burn} from './fire.js?v=5a6bfb2';
+import {blessing, fighters} from './crew.js?v=5a6bfb2';
+import {progress, goal} from './quests.js?v=5a6bfb2';
+import {arrowK, ramDmg} from './upgrades.js?v=5a6bfb2';
+import {toast} from './ui.js?v=5a6bfb2';
+import {sink} from './player.js?v=5a6bfb2';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=5a6bfb2';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=5a6bfb2';
+import {sfx} from './audio.js?v=5a6bfb2';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -68,7 +68,29 @@ for (const is of ISLANDS){
     const rr = 230 + g*150, route = [0, 1, 2, 3, 4].map(k => { const a = site.a + (g ? -1 : 1)*k*Math.PI*2/5 + g*.6, q = {x:site.sea.x + Math.cos(a)*rr, y:site.sea.y + Math.sin(a)*rr}; pushOut(q, 180); return q; });
     const e = makeEnemy({kind:owner === 'pirate' ? 'skiff' : owner, home:p, guard:true, isle:is, route}); enemies.push(e); f.guards.push(e); }
 }
+// ---- bandit camps (P49): a palisade on the wild islands near Kallisto, with a few archers and one mothership guarding it ----
+// Bandits fight in the Shallows too (everything else leaves you alone there). A burnt camp stays burnt; some hold ship plans.
+const campSpec = c => ({name:`${c.isle} bandit camp`, side:'fort', city:null, hull:c.hull, fighters:c.fighters, dmg:c.dmg, sight:c.sight, gold:c.gold, wood:c.wood, bronze:c.bronze, len:160, beam:160, speed:0, turn:0});
+for (const c of CAMPS){
+  const is = ISLANDS.find(i => i.name === c.isle); if (!is || is.fort) continue;
+  const site = fortSite(is); if (!site) continue;
+  const spec = campSpec(c);
+  const f = {kind:'fort', fort:true, owner:'bandit', camp:c, bandit:true, isle:is, spec, city:null, x:site.x, y:site.y, a:site.a, sea:site.sea, home:{x:site.x, y:site.y}, v:0, hull:spec.hull, cool:2, stoneT:[],
+    mode:'patrol', dead:false, sinkY:0, respawn:0, obj:null, angry:false, attacked:false, lost:0, calm:0, quiet:0, guards:[]};
+  enemies.push(f); is.fort = f; is.camp = f;
+  const route = [0, 1, 2, 3].map(k => { const a = site.a + k*Math.PI/2, q = {x:site.sea.x + Math.cos(a)*200, y:site.sea.y + Math.sin(a)*200}; pushOut(q, 120); return q; });
+  const m = makeEnemy({kind:c.mother, home:{...route[0]}, guard:true, isle:is, route});
+  Object.assign(m, {bandit:true, mother:true, hull:c.motherHull, spec:{...ENEMIES[c.mother], name:'Bandit mothership', hull:c.motherHull, dmg:c.motherDmg || ENEMIES[c.mother].dmg, leash:900}}); enemies.push(m); f.guards.push(m);
+}
+// Burnt camps stay down (their mothership too), from the save.
+const campDone = is => (G.S.camps || []).includes(is.name);
+function burnCamp(f){ f.dead = true; f.respawn = 1e9; f.sinkT = 99; for (const g of f.guards) if (g.dead) g.respawn = 1e9; }
+for (const e of enemies) if (e.camp && campDone(e.isle)){ burnCamp(e); e.guards.forEach(g => { g.dead = true; g.respawn = 1e9; }); }
+// The camp's goal marker and the plans it holds, for the chart and the shipyard.
+export const camps = () => enemies.filter(e => e.camp);
+
 function buildFort(e){
+  if (e.camp){ const g = buildCamp(); g.rotation.y = -e.a; if (CEL.on) inkify(g); return g; }
   const g = buildFortress(e.owner, e.owner === 'pirate' ? '#231d1d' : e.owner === 'you' ? '#d48a2a' : CITIES[e.owner].color);
   g.rotation.y = -e.a; if (CEL.on) inkify(g); return g;
 }
@@ -99,7 +121,7 @@ document.addEventListener('spawnraider', () => spawnNear('skiff'));
 // (Danger also grows by area: the Shallows are safe, galleys and fortresses wait far out from the start.)
 function growPirate(e){
   if (side(e) !== 'pirate' || e.guard || e.arena) return;
-  e.kind0 = e.kind0 || e.kind; const t = G.S.tier, r = Math.random();
+  e.kind0 = e.kind0 || e.kind; const t = rank(), r = Math.random();
   const k = e.kind0 === 'dinghy' && t >= 1 && r < .5 ? 'skiff' : e.kind0 === 'skiff' && t >= 2 && r < .35 ? 'galley' : e.kind0;
   if (k !== e.kind){ e.kind = k; e.spec = ENEMIES[k]; buildEnemy(e); }
 }
@@ -173,7 +195,7 @@ function steer(e, tx, ty, speed, dt){
   let moved = false;
   for (const turn of [0, .5, -.5, 1, -1, 1.6, -1.6]){
     const h = e.a + turn, nx = e.x + Math.cos(h)*e.v*dt, ny = e.y + Math.sin(h)*e.v*dt;
-    if (side(e) === 'merchant' || zoneAt(nx, ny) !== 0){ e.x = nx; e.y = ny; if (turn) e.a += Math.sign(turn)*Math.min(Math.abs(turn), e.spec.turn*1.2*dt); moved = true; break; }
+    if (side(e) === 'merchant' || e.bandit || zoneAt(nx, ny) !== 0){ e.x = nx; e.y = ny; if (turn) e.a += Math.sign(turn)*Math.min(Math.abs(turn), e.spec.turn*1.2*dt); moved = true; break; }
   }
   if (!moved) e.v *= .9;
   if (e.shx || e.shy){ const k = Math.exp(-dt*1.6); e.x += e.shx*dt; e.y += e.shy*dt; e.a += (e.spin || 0)*dt; e.shx *= k; e.shy *= k; e.spin = (e.spin || 0)*k; pushOut(e, e.spec.beam*.6);
@@ -187,7 +209,8 @@ function steer(e, tx, ty, speed, dt){
   e.x = Math.max(60, Math.min(WORLD-60, e.x)); e.y = Math.max(60, Math.min(WORLD-60, e.y));
 }
 
-const playerSafe = () => zoneAt(G.S.x, G.S.y) === 0 || G.sheetOpen || !!G.dock || !G.settings.dev.raiders;
+// The Shallows are safe, except from bandits near their camps
+const playerSafe = (e) => (zoneAt(G.S.x, G.S.y) === 0 && !(e && e.bandit)) || G.sheetOpen || !!G.dock || !G.settings.dev.raiders;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // Fighting: close in from the side, then keep moving. Every few seconds a ship picks a new move:
@@ -228,7 +251,7 @@ function sail(e, dt, speed, pause){
 }
 
 function pirate(e, dt){
-  const S = G.S, d = dist(e, S), fromHome = dist(e, e.home), safe = playerSafe();
+  const S = G.S, d = dist(e, S), fromHome = dist(e, e.home), safe = playerSafe(e);
   if (e.foe && (e.foe.dead || dist(e, e.foe) > 800)) e.foe = null;
   if (e.mode === 'chase' && !e.foe && (safe || fromHome > e.spec.leash || d > e.spec.sight*1.6)) e.mode = 'return';
   else if (e.mode !== 'chase' && !safe && d < e.spec.sight && fromHome < e.spec.leash*.8){
@@ -269,7 +292,7 @@ function merchant(e, dt){
 }
 
 function navy(e, dt){
-  const S = G.S, d = dist(e, S), safe = playerSafe();
+  const S = G.S, d = dist(e, S), safe = playerSafe(e);
   if (e.angry){
     e.lost = d > e.spec.sight*1.6 || safe ? e.lost + dt : 0;
     if (e.lost > WITNESS.forget){ e.angry = false; e.lost = 0; if (d < 2000) toast(`The ${adj(e.city)} ship lost you and turned back.`, 3); }
@@ -300,12 +323,13 @@ function navy(e, dt){
 function fortThink(e, dt){
   e.cool -= dt; e.quiet = (e.quiet || 0) + dt;
   if (e.quiet > FORTS.healAfter && e.hull < e.spec.hull) e.hull = Math.min(e.spec.hull, e.hull + FORTS.heal*dt);
-  if (!hostile(e) || playerSafe() || G.sinking) return;
+  if (!hostile(e) || playerSafe(e) || G.sinking) return;
   const d = dist(e, G.S);
-  if (d < FORTS.stoneRange) e.stoneT.forEach((t, i) => { e.stoneT[i] = t - dt; if (e.stoneT[i] <= 0){ e.stoneT[i] = FORTS.stoneEvery*(.85 + Math.random()*.3); throwStone(e, i); } });
+  if (d < FORTS.stoneRange && !e.camp) e.stoneT.forEach((t, i) => { e.stoneT[i] = t - dt; if (e.stoneT[i] <= 0){ e.stoneT[i] = FORTS.stoneEvery*(.85 + Math.random()*.3); throwStone(e, i); } });
   if (d > e.spec.sight || e.cool > 0) return;
   e.cool = FORTS.every*(.8 + Math.random()*.4); salvo(e, null, e.spec.fighters, e.spec.dmg, 110);
-  if (!G.S.fortTip){ G.S.fortTip = true; toast(`The ${e.spec.name.toLowerCase()} is shooting! Its catapults throw stones: steer out of the red rings.`, 5); }
+  if (e.camp){ if (!G.S.campTip){ G.S.campTip = true; toast(`The bandits are shooting! Turn side-on so your crew shoots back, and sink the mothership too.`, 5); } }
+  else if (!G.S.fortTip){ G.S.fortTip = true; toast(`The ${e.spec.name.toLowerCase()} is shooting! Its catapults throw stones: steer out of the red rings.`, 5); }
 }
 
 // ---- catapult stones: thrown high at where you're heading. A red ring on the water shows where each one will land ----
@@ -423,18 +447,24 @@ function land(a){
   if (G.S.hull <= 0){ sink(); enemies.forEach(e => { if (e.mode === 'chase') e.mode = 'return'; e.angry = false; e.attacked = false; }); crimeT = 0; }
 }
 
+// Ship plans (blueprints): you need them before the shipyard can build that ship.
+function givePlans(t){ const S = G.S; if ((S.plans || []).includes(t)) return; S.plans = [...(S.plans || [0]), t];
+  setTimeout(() => { toast(`You found the plans for the ${SHIPS[t].name.toLowerCase()}! Now the Kallisto shipyard can build it.`, 5); sfx('fanfare'); }, 2500); save(); }
+
 // ---- loot ----
 const LOOT = [];
 function sinkEnemy(e, byPlayer){
   if (byPlayer) progress('sink', e.kind);
-  if (byPlayer && e.fort && !e.city) progress('fort');
+  if (byPlayer && e.fort && e.owner === 'pirate'){ progress('fort'); givePlans(PIRATE_PLANS); }
+  if (e.camp){ const S = G.S; S.camps = [...new Set([...(S.camps || []), e.isle.name])]; if (byPlayer) progress('camp', e.isle.name); if (e.camp.plans) givePlans(e.camp.plans); }
   if (e.boss) bossDown(e);
   const w = G.S.war; // a war contract from a fortress
   if (byPlayer && w && w.got < w.n && e.city === w.foe && (w.t === 'fort' ? e.fort : side(e) === 'navy')){ w.got++;
     setTimeout(() => toast(w.got >= w.n ? `War contract done! Hand it in at any ${adj(w.city)} fortress for ${w.gold} drachmae.` : `War contract: ${w.got} of ${w.n}`, 3.5), 1800); }
   // the other city pays a bounty for each enemy warship you sink
   if (byPlayer && side(e) === 'navy'){ const pay = rival(e.city); G.S.gold += ISLES.bounty; setTimeout(() => toast(`${cityName(pay)} pays you ${ISLES.bounty} drachmae for sinking an ${adj(e.city)} ship.`.replace('an Spartan', 'a Spartan'), 3.5), 3600); }
-  e.dead = true; e.respawn = e.fort ? FORTS.rebuild : COMBAT.respawn; e.mode = 'patrol'; e.sinkT = 0; e.sinkSide = Math.random() < .5 ? 1 : -1;
+  e.dead = true; e.respawn = e.camp || (e.mother && campDone(e.isle)) ? 1e9 : e.fort ? FORTS.rebuild : COMBAT.respawn; e.mode = 'patrol'; e.sinkT = 0; e.sinkSide = Math.random() < .5 ? 1 : -1;
+  if (e.camp) e.guards.forEach(g => { if (g.dead) g.respawn = 1e9; });
   if (!e.fort) startSink(e.x, e.y, e.spec.len);
   const [g0, g1] = e.spec.gold, gold = g0 + Math.floor(Math.random()*(g1 - g0 + 1));
   const crate = new T.Group();
@@ -448,6 +478,7 @@ function sinkEnemy(e, byPlayer){
   // a merchant's cargo spills out with it: a few of its trade goods
   const goods = side(e) === 'merchant' ? {k:['wine', 'oil', 'pottery', 'obsidian'][Math.floor(Math.random()*4)], n:2 + Math.floor(Math.random()*4)} : null;
   LOOT.push({x:at.x, y:at.y, gold, wood:e.spec.wood, bronze:e.spec.bronze || 0, goods, life:COMBAT.lootLife*(e.fort ? 2 : 1), obj:crate});
+  if (e.camp){ toast(`The ${e.isle.name} bandit camp burns! Its loot floats out in front of the beach.`, 4.5); e.angry = false; return; }
   if (e.fort){ toast(e.city ? `The ${e.spec.name.toLowerCase()} falls! Grab its treasury, sink the guard ships, then hold the bay to take ${e.isle.name}.` : `The ${e.spec.name.toLowerCase()} falls! Its treasury floats out in front of the walls.`, 5.5); e.angry = false; return; }
   if (dist(e, G.S) < 1500) toast(`The ${e.spec.name.toLowerCase()} is sinking. Sail over its cargo to collect it.`, 3.5);
 }
@@ -593,6 +624,26 @@ function volley(){
 }
 $('volleyBtn').addEventListener('click', volley);
 document.addEventListener('volley', volley); // a tap with a second finger, or a double tap on your own ship (input.js)
+// ---- capturing bandit ships (P49) ----
+// Beat a raider ship down below a quarter of its hull and come close: its crew gives up. Capture it and a prize crew sails it
+// home to Kallisto, where it joins your fleet (one of each kind). The pirate king's flagship can't be taken.
+const PRIZE_SHIP = {dinghy:4, skiff:5, galley:6};
+let prize = null;
+function prizeNear(){
+  if (G.dock || G.sinking) return null;
+  return enemies.find(e => !e.dead && !e.fort && !e.boss && !e.arena && side(e) === 'pirate' && PRIZE_SHIP[e.kind] != null && e.hull < e.spec.hull*.25 && dist(e, G.S) < 260) || null;
+}
+$('captureBtn').addEventListener('click', () => {
+  const e = prize; if (!e || e.dead) return;
+  const S = G.S, t = PRIZE_SHIP[e.kind];
+  e.dead = true; e.respawn = e.mother && campDone(e.isle) ? 1e9 : COMBAT.respawn; e.sinkT = 99; e.obj.visible = false; e.burnT = 0; sfx('horn'); progress('sink', e.kind);
+  if ((S.owned || []).includes(t)){ const g = Math.round(e.spec.gold[1]*1.5); S.gold += g; gain('coin', g); toast(`You already have a ${SHIPS[t].name.toLowerCase()}. Its crew pays ${g} drachmae to be let go.`, 4); save(); return; }
+  S.owned = [...new Set([...(S.owned || [S.tier]), t])].sort(); S.hulls = {...(S.hulls || {}), [t]:Math.round(SHIPS[t].hull*.5)};
+  S.looks = {...(S.looks || {}), [t]:{paint:'raider', sail:'blood'}};
+  setTimeout(() => sfx('fanfare'), 400);
+  toast(`Captured! A prize crew sails the ${SHIPS[t].name.toLowerCase()} home to Kallisto. Switch to it at the shipyard.`, 5); save();
+});
+
 // Raid: attack the nearest merchant or navy ship on purpose. Your crew opens fire, and any navy ship watching will come for you.
 $('raidBtn').addEventListener('click', () => {
   const e = combatState.prey; if (!e) return;
@@ -629,7 +680,7 @@ export function updateCombat(dt){
   if (boss.e && !boss.e.dead){ bossThink(boss.e, dt); G.S.bossHull = Math.ceil(boss.e.hull); }
   G.boss = boss.e && !boss.e.dead ? {x:boss.e.x, y:boss.e.y} : null;
   // where the current chapter goal is, for the chart and the little map: the pirate fortresses, then the pirate king
-  G.goalMarks = gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
+  G.goalMarks = gl && gl.t === 'camp' ? enemies.filter(o => o.camp && o.isle.name === gl.kind && !o.dead).map(o => ({x:o.x, y:o.y, label:`${o.isle.name} bandit camp`})) : gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
   const bb = $('bossBar'), showB = !!G.boss && dist(boss.e, G.S) < 1600 && !G.sheetOpen; bb.hidden = !showB; if (showB) $('bossHull').style.width = Math.max(0, boss.e.hull/boss.e.spec.hull*100) + '%';
   playerCrew(dt);
   collide();
@@ -646,11 +697,13 @@ export function updateCombat(dt){
   combatState.threat = enemies.some(e => !e.dead && hostile(e) && e.mode === 'chase' && dist(e, G.S) < e.spec.sight*1.6);
   const show = !!combatState.target && !G.sheetOpen && !G.sinking, btn = $('volleyBtn');
   btn.hidden = !show;
-  if (show && !G.S.volleyTip && G.S.tier >= 1){ G.S.volleyTip = true; toast('Volley: tap anywhere with a second finger while you steer, or double tap your ship.', 5); }
+  if (show && !G.S.volleyTip && rank() >= 1){ G.S.volleyTip = true; toast('Volley: tap anywhere with a second finger while you steer, or double tap your ship.', 5); }
   if (show){ btn.disabled = volleyT > 0; btn.classList.toggle('turn', !combatState.side); btn.style.setProperty('--cd', (volleyT/(COMBAT.volleyCooldown*(blessing().volley || 1))*360) + 'deg'); }
   const cf = nearCouncil(), cb = $('councilBtn'); if (!G.sheetOpen) G.council = cf; cb.hidden = !cf || !!combatState.target;
   if (cf) cb.textContent = `${adj(cf.city)} war council`;
   const prey = combatState.prey, raid = $('raidBtn');
-  raid.hidden = !prey;
+  raid.hidden = !prey || !!prize;
+  const pz = prize = prizeNear(), pb = $('captureBtn'); pb.hidden = !pz || G.sheetOpen;
+  if (pz){ pb.textContent = `Capture the ${pz.spec.name.toLowerCase()}`; if (!G.S.captureTip){ G.S.captureTip = true; toast('Its crew is ready to give up! Tap Capture to take the ship for your fleet.', 4.5); } }
   if (prey) raid.textContent = side(prey) === 'fort' ? `Attack the ${adj(prey.city)} fort` : side(prey) === 'navy' ? `Attack the ${adj(prey.city)} ship` : `Raid the ${prey.city ? adj(prey.city) + ' ' : ''}merchant`;
 }

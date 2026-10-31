@@ -309,7 +309,7 @@ function oars(s, info, col){
       const shaft = mesh(new T.CylinderGeometry(.7, .8, len, 5), col); shaft.rotation.x = Math.PI/2; shaft.position.z = sg*len/2; piv.add(shaft);
       const blade = mesh(new T.BoxGeometry(4.4, .8, 7), col); blade.position.z = sg*(len - 2.5); piv.add(blade);
       piv.rotation.x = sg*(.55 + r*.07);
-      g.add(piv); list.push({piv, sg, ph:i*.12 + r*.4, x, r});
+      g.add(piv); list.push({piv, sg, ph:i*.12 + r*.4, x, r, i});
       if (r > 0){ const hole = mesh(new T.CircleGeometry(1.6, 8), '#1c1712', {side:T.DoubleSide}); hole.position.set(x, piv.position.y, sg*(info.W(a) + .15)); hole.rotation.y = Math.PI/2; hole.castShadow = false; g.add(hole); }
     }
   }
@@ -404,13 +404,28 @@ export function flicker(root, t){
   for (const tc of root.userData.torches || []) if (tc.visible){ const f = tc.userData.flame, k = 1 + Math.sin(t*13 + tc.userData.ph)*.08 + Math.sin(t*23 + tc.userData.ph*2)*.06;
     f.scale.set(1/k, k, 1/k); f.rotation.y = t*2; if (tc.userData.light) tc.userData.light.intensity = tc.userData.light.userData.base*(.85 + .15*k); }
 }
-// Build a ship. look = {paint, sail, flag, helm (the archers' helmet), sailLv (the player's sail upgrades)}; crew = show the crew.
+// Who is aboard a ship with m men (the player's ships, P49): a helmsman, archers and rowers, one rower per oar.
+// The rowboat: you row, and a second hand sits at the stern. Sail boats: everyone works the deck.
+// Warships: about one in three becomes an archer until the bows are all taken, the rest fill the benches.
+export function crewLayout(s, m){
+  const count = kind => (s.crew || []).filter(c => c[0] === kind).reduce((a, c) => a + c[1], 0), A = count('archer'), O = s.oarRows ? s.oarCount : 0;
+  if (O === 1) return {stand:Math.max(0, m - 1), archers:0, rowers:1, pairs:1};
+  if (!O) return {stand:m, archers:0, rowers:0, pairs:0};
+  const helm = count('stand') ? Math.min(1, m) : 0, rest = m - helm;
+  let a = Math.min(A, Math.ceil(rest/3)); const r = Math.min(2*O, rest - a); a = Math.min(A, rest - r);
+  return {stand:helm, archers:a, rowers:r, pairs:Math.ceil(r/2)};
+}
+// Build a ship. look = {paint, sail, flag, helm (the archers' helmet), sailLv (the player's sail upgrades), men (crew size; all benches full if not given)}; crew = show the crew.
 export function buildShip(key, look = {}, crew = true){
   const s = SPECS[key], lk = {...s.look, ...look}, root = new T.Group(), body = new T.Group(); root.add(body);
   const h = hull(s, lk.paint), info = h.userData; body.add(h);
   const pc = PAINTS[lk.paint] || PAINTS.gold;
   root.userData = {oars:[], flags:[], spec:s, body};
-  if (s.oarRows){ const o = oars(s, info, s.raider ? 'rOar' : 'oar'); body.add(o); root.userData.oars = o.userData.list; }
+  const lay = lk.men != null ? crewLayout(s, lk.men) : null;
+  if (s.oarRows){ const o = oars(s, info, s.raider ? 'rOar' : 'oar'); body.add(o); root.userData.oars = o.userData.list;
+    // a short crew mans only some of the benches, spread along the ship; the other oars are shipped (not shown)
+    if (lay && s.oarCount > 1 && lay.pairs < s.oarCount){ const keep = new Set(Array.from({length:lay.pairs}, (_, k) => Math.round((k + .5)*s.oarCount/lay.pairs - .5)));
+      root.userData.oars = o.userData.list.filter(q => { const on = keep.has(q.i); q.piv.visible = on; return on; }); } }
   if (s.oarCount !== 1) body.add(steeringOars(s, info)); // the rowboat steers with its oars
   if (s.outrigger) for (const sg of [1, -1]){ const box = mesh(new T.BoxGeometry(s.L*.62, s.H*.2, 5), pc.top); box.position.set(-s.L*.02, info.deckLevel + s.H*.2, sg*(info.W(.3) + 2.5)); body.add(box);
     const lip = mesh(new T.BoxGeometry(s.L*.63, 1.2, 6), pc.wale); lip.position.set(-s.L*.02, info.deckLevel + s.H*.31, sg*(info.W(.3) + 2.5)); body.add(lip); }
@@ -485,12 +500,14 @@ export function buildShip(key, look = {}, crew = true){
     const tunics = s.raider ? ['rTunic', 'rTunic', '#2c1f1f'] : ['tunic1', 'tunic2', 'tunic3'];
     const add = (p, x, y, z, ph = 0) => { p.position.set(x, y, z); body.add(p); root.userData.crew.push({p, ph}); };
     // One rower per top-row oar, sitting facing the stern as real oarsmen did, pulling in time with that oar.
+    let seated = 0;
     root.userData.oars.filter(o => o.r === 0).forEach((o, i) => {
       if (s.oarCount === 1 && o.sg < 0) return; // the rowboat: one rower works both oars
+      if (lay && seated >= lay.rowers) return; seated++;
       const p = person(tunics[i % 3], 'row'); p.rotation.y = Math.PI; p.traverse(m => m.castShadow = false);
       add(p, o.x, info.deckLevel, s.oarCount === 1 ? 0 : o.sg*info.W(Math.abs(o.x/(s.L/2)))*.5, o.ph);
     });
-    for (const [kind, n] of s.crew){
+    for (const [kind, n] of lay ? [['stand', lay.stand], ['archer', lay.archers]].filter(c => c[1]) : s.crew){
       if (kind === 'archer'){
         // On long oared warships the archers stand on a gangway down the middle, clear of the rowers on both sides
         // (and of the mast); on small boats they stand at the rails. Half face each side.
@@ -505,7 +522,7 @@ export function buildShip(key, look = {}, crew = true){
       } else for (let i=0;i<n;i++){
         // First standing crew takes the helm at the stern; the rest work the deck.
         // crewAt (fractions of length and width) keeps them clear of cargo and cabins on ships that carry them
-        const helm = i === 0, at = s.crewAt && s.crewAt[i], x = at ? at[0]*s.L : helm ? -s.L*.36 : [s.L*.18, -s.L*.05][(i-1) % 2];
+        const helm = i === 0, at = s.crewAt && s.crewAt[i], x = at ? at[0]*s.L : helm ? -s.L*.36 : [s.L*.18, -s.L*.05, s.L*.3][(i-1) % 3];
         const p = person(tunics[(i+1) % 3], helm ? 'helm' : 'stand', helm && (s.ram || s.raider) ? (s.raider ? 'pirate' : 'captain') : s.hats && i % 2 === 1 ? 'petasos' : false); if (i === 2) p.rotation.y = 1.2;
         add(p, x, info.deckLevel + (helm ? 1 : 0), at ? at[1]*s.B : i === 2 ? 4 : 0);
       }

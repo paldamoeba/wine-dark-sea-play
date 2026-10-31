@@ -1,10 +1,10 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=c50fa36';
-import {FORTS} from './config.js?v=c50fa36';
-import {CITIES} from './world.js?v=c50fa36';
-import {enemies, hostile} from './combat.js?v=c50fa36';
-import {sfx} from './audio.js?v=c50fa36';
+import {G} from './state.js?v=5a6bfb2';
+import {FORTS} from './config.js?v=5a6bfb2';
+import {CITIES} from './world.js?v=5a6bfb2';
+import {enemies, hostile} from './combat.js?v=5a6bfb2';
+import {sfx} from './audio.js?v=5a6bfb2';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
@@ -15,9 +15,10 @@ export function updateFortWatch(dt){
   if (!G.dock && !G.sheetOpen && !G.mapOpen) for (const f of enemies){ if (!f.fort) continue;
     // a standing hostile fort, or a fallen pirate fort whose guards still sail
     const live = !f.dead && hostile(f), siege = f.dead && f.owner === 'pirate' && f.guards.some(g => !g.dead); if (!live && !siege) continue;
-    const d = Math.hypot(f.x - G.S.x, f.y - G.S.y); if (d < bd){ bd = d; best = f; } }
+    const d = Math.hypot(f.x - G.S.x, f.y - G.S.y) - (f.camp ? WARN - 900 : 0); if (d < bd){ bd = d; best = f; } } // camps have no catapults: the warning comes closer
   if (best && best !== inside && !best.dead){ // just sailed into its waters
     const who = best.city ? CITIES[best.city].name : 'Pirate';
+    if (best.camp) $('cautionText').innerHTML = `<b>Caution: bandits</b>The ${best.isle.name} bandit camp and its mothership will shoot at you, even in the Shallows.${best.camp.plans ? ' It holds ship plans.' : ''}`; else
     $('cautionText').innerHTML = `<b>Caution: ${who === 'Pirate' ? 'pirate' : who + "'s"} waters</b>Sail closer to the ${best.isle.name} fortress and its catapults and guard ships will attack you.`;
     $('caution').hidden = false; cautionT = 5; sfx('warn');
   }
@@ -28,8 +29,8 @@ export function updateFortWatch(dt){
   const f = best, sunk = f.guards.filter(g => g.dead).length, n = f.guards.length, wall = f.dead ? 0 : Math.max(0, f.hull/f.spec.hull);
   const key = f.isle.name + sunk + Math.round(wall*20) + f.dead;
   if (key !== last){ last = key;
-    m.innerHTML = `<b class="mt">${f.city ? CITIES[f.city].name + "'s" : 'Pirate'} fortress · ${f.isle.name}</b>
-      <div class="mrow"><span>Walls</span>${f.dead ? '<em class="done">Fallen</em>' : `<div class="mbar"><i style="width:${wall*100}%"></i></div>`}</div>
-      <div class="mrow"><span>Guard ships</span><span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span><em>${sunk} of ${n} sunk</em></div>`; }
+    m.innerHTML = `<b class="mt">${f.camp ? 'Bandit camp' : (f.city ? CITIES[f.city].name + "'s" : 'Pirate') + ' fortress'} · ${f.isle.name}</b>
+      <div class="mrow"><span>${f.camp ? 'Palisade' : 'Walls'}</span>${f.dead ? `<em class="done">${f.camp ? 'Burnt' : 'Fallen'}</em>` : `<div class="mbar"><i style="width:${wall*100}%"></i></div>`}</div>
+      <div class="mrow"><span>${f.camp ? 'Mothership' : 'Guard ships'}</span><span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span><em>${sunk} of ${n} sunk</em></div>`; }
   m.hidden = false;
 }

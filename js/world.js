@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES} from './config.js?v=c50fa36';
-import {MAPDATA} from './mapdata.js?v=c50fa36';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R} from './config.js?v=5a6bfb2';
+import {MAPDATA} from './mapdata.js?v=5a6bfb2';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -181,6 +181,8 @@ for (const is of ISLANDS) if (PIRATE_ISLES.includes(is.name)) is.pirate = true;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.wild && !i.pirate); // wild islets near Kallisto belong to nobody
 for (const is of named){ is.city = is.port ? null : SPARTAN.includes(is.name) ? 'sparta' : 'athens'; is.capital = CAPITALS.includes(is.name); is.home0 = is.city; }
 if (MAP.id === 'old') named.forEach((is, i) => { if (!is.port) is.city = is.home0 = i % 3 ? 'athens' : 'sparta'; });
+// The islands near Kallisto belong to nobody (P49): no fortresses or navies there, so the war stays out of the beginner waters.
+for (const is of named) if (!is.capital && Math.hypot(is.x - HOME.x, is.y - HOME.y) < NEUTRAL_R){ is.city = is.home0 = null; is.neutral = true; }
 // Which city rules the sea at (x, y): the owner of the nearest island.
 export function seaOwner(x, y){ let best = null, bd = Infinity;
   for (const is of named){ if (!is.city) continue; const d = Math.hypot(is.x - x, is.y - y) - is.r; if (d < bd){ bd = d; best = is; } } return best ? best.city : null; }

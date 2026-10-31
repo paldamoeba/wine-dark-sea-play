@@ -1,23 +1,25 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
-// Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board'.
-import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS} from './config.js?v=c50fa36';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=c50fa36';
-import {G, save, ship, lvl} from './state.js?v=c50fa36';
-import {scene} from './scene.js?v=c50fa36';
-import {mesh} from './models.js?v=c50fa36';
-import {toast} from './ui.js?v=c50fa36';
-import {sfx} from './audio.js?v=c50fa36';
+// Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board', 'camp', 'fort'.
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS} from './config.js?v=5a6bfb2';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=5a6bfb2';
+import {G, save, ship, lvl, rank} from './state.js?v=5a6bfb2';
+import {scene} from './scene.js?v=5a6bfb2';
+import {mesh} from './models.js?v=5a6bfb2';
+import {toast} from './ui.js?v=5a6bfb2';
+import {sfx} from './audio.js?v=5a6bfb2';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
 const pick = (R, a) => a[Math.floor(R()*a.length)];
 
 // ---- first voyages: one goal at a time ----
+// a camp goal is met once that camp is burnt, or once you already hold the plans it would give
+const campMet = (S, isle) => { const c = CAMPS.find(c => c.isle === isle); return (S.camps || []).includes(isle) || !!(c && c.plans && (S.plans || []).includes(c.plans)); };
 export function goal(){
   const S = G.S;
-  if (S.tier >= 1 && (S.goal || 0) < STARTER_GOALS) S.goal = STARTER_GOALS; // past the rowboat already: no starter goals
+  if (rank() >= 1 && (S.goal || 0) < STARTER_GOALS) S.goal = STARTER_GOALS; // past the rowboat already: no starter goals
   // a ship you already own counts as built, an upgrade you already have as bought
-  for (let g = GOALS[S.goal || 0]; g && ((g.t === 'build' && g.kind && (S.owned || [...Array(S.tier + 1).keys()]).some(t => SHIPS[t].model === g.kind)) || (g.t === 'upgrade' && lvl(g.kind) > 0)); g = GOALS[S.goal]){ S.goal = (S.goal || 0) + 1; S.goalN = 0; }
+  for (let g = GOALS[S.goal || 0]; g && ((g.t === 'build' && g.kind && (S.owned || [...Array(S.tier + 1).keys()]).some(t => SHIPS[t].model === g.kind)) || (g.t === 'upgrade' && lvl(g.kind) > 0) || (g.t === 'camp' && campMet(S, g.kind))); g = GOALS[S.goal]){ S.goal = (S.goal || 0) + 1; S.goalN = 0; }
   return GOALS[S.goal || 0] || null;
 }
 function goalStep(type, kind, n){
@@ -32,11 +34,11 @@ function goalStep(type, kind, n){
 let seed = 1;
 function makeOffer(){
   const S = G.S, R = rng((S.reqSeed = (S.reqSeed || 7) + 1)*7919 + seed++), who = pick(R, REQUESTS.who);
-  const types = ['catch', 'catch', 'deliver', 'salvage', 'wood', 'visit', ...(S.tier >= 1 ? ['sink', 'deliver'] : [])], t = pick(R, types);
-  const fish = S.tier >= 1 && R() < .4 ? 'swordfish' : R() < .55 ? 'sardine' : 'tuna', fn = n => n > 1 ? FISH[fish].label.toLowerCase() + (fish === 'tuna' || fish === 'swordfish' ? '' : 's') : FISH[fish].label.toLowerCase();
+  const types = ['catch', 'catch', 'deliver', 'salvage', 'wood', 'visit', ...(rank() >= 1 ? ['sink', 'deliver'] : [])], t = pick(R, types);
+  const fish = rank() >= 1 && R() < .4 ? 'swordfish' : R() < .55 ? 'sardine' : 'tuna', fn = n => n > 1 ? FISH[fish].label.toLowerCase() + (fish === 'tuna' || fish === 'swordfish' ? '' : 's') : FISH[fish].label.toLowerCase();
   if (t === 'catch'){ const n = fish === 'sardine' ? 3 + Math.floor(R()*4) : 1 + Math.floor(R()*3);
     return {t, kind:fish, n, got:0, gold:Math.round(n*FISH[fish].price*1.5 + 6), text:`Catch ${n} ${fn(n)}`, who}; }
-  const reach = S.tier >= 1 ? Infinity : 6500, close = o => Math.hypot(o.x - S.x, o.y - S.y) < reach; // the rowboat gets jobs near home
+  const reach = rank() >= 1 ? Infinity : 6500, close = o => Math.hypot(o.x - S.x, o.y - S.y) < reach; // the rowboat gets jobs near home
   if (t === 'deliver'){ const hs = HARBORS.filter(h => (!G.dock || h !== G.dock.h) && close(h.dock)), h = hs.length ? pick(R, hs) : HARBORS[0], n = fish === 'sardine' ? 3 + Math.floor(R()*3) : 1 + Math.floor(R()*2);
     return {t, kind:fish, n, to:h.is.name, gold:Math.round(n*FISH[fish].price*2 + 12), text:`Bring ${n} ${fn(n)} to ${h.is.name}`, who}; }
   if (t === 'salvage'){ const n = 2 + Math.floor(R()*3); return {t, n:n*5, got:0, gold:n*5 + 6, text:`Salvage ${n*5} wood from wrecks`, who}; }

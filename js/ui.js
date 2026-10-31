@@ -1,22 +1,22 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=c50fa36';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=c50fa36';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=c50fa36';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=c50fa36';
-import {swapBoat, refreshAllTrees} from './entities.js?v=c50fa36';
-import {setZoom} from './input.js?v=c50fa36';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=c50fa36';
-import {tutHTML} from './tutorial.js?v=c50fa36';
-import {founded, blessing, seats, candidates} from './crew.js?v=c50fa36';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=c50fa36';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=c50fa36';
-import {effectText, buy} from './upgrades.js?v=c50fa36';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=c50fa36';
-import {GOODS, WAR} from './config.js?v=c50fa36';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=c50fa36';
-import {W, KINDS} from './weather.js?v=c50fa36';
-import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=c50fa36';
-import {setTimeOfDay} from './daynight.js?v=c50fa36';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=5a6bfb2';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=5a6bfb2';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=5a6bfb2';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=5a6bfb2';
+import {swapBoat, refreshAllTrees} from './entities.js?v=5a6bfb2';
+import {setZoom} from './input.js?v=5a6bfb2';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=5a6bfb2';
+import {tutHTML} from './tutorial.js?v=5a6bfb2';
+import {founded, blessing} from './crew.js?v=5a6bfb2';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=5a6bfb2';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=5a6bfb2';
+import {effectText, buy} from './upgrades.js?v=5a6bfb2';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=5a6bfb2';
+import {GOODS, WAR} from './config.js?v=5a6bfb2';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=5a6bfb2';
+import {W, KINDS} from './weather.js?v=5a6bfb2';
+import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=5a6bfb2';
+import {setTimeOfDay} from './daynight.js?v=5a6bfb2';
 
 const $ = id => document.getElementById(id);
 
@@ -26,7 +26,7 @@ export function toast(msg, dur=1.8){ toastEl.textContent = msg; toastEl.hidden =
 let zoneT = 0;
 export function showZone(z){
   $('zoneName').textContent = ZONES[z].name;
-  $('zoneSub').textContent = z === 2 && G.S.tier >= 2 ? `Your ${ship().name.toLowerCase()} can take it.` : ZONES[z].sub;
+  $('zoneSub').textContent = z === 2 && SHIPS[G.S.tier].rank >= 2 ? `Your ${ship().name.toLowerCase()} can take it.` : ZONES[z].sub;
   $('zone').style.opacity = 1; zoneT = 3; sfx('zone');
 }
 export function hideHint(){ if (G.S.hint){ G.S.hint = false; $('hint').hidden = true; } }
@@ -63,7 +63,7 @@ export function updateUI(dt, nearDock){
 // What the ship carries: one short bar for each kind, stacked under the hull bar. Bronze and goods show once you have some.
 const LOAD_IC = {fish:() => IC.fish(), wood:() => IC.wood, bronze:() => IC.bronze, goods:() => GOOD_IC('wine')};
 function drawLoads(){
-  const S = G.S, rows = LOADS.filter(k => k === 'fish' || k === 'wood' || used(k) > 0 || (k === 'bronze' && S.tier >= 2));
+  const S = G.S, rows = LOADS.filter(k => k === 'fish' || k === 'wood' || used(k) > 0 || (k === 'bronze' && SHIPS[S.tier].rank >= 2));
   $('loads').innerHTML = rows.map(k => { const u = used(k), c = capOf(k), p = Math.min(100, u/c*100);
     return `<div class="ld ${u >= c ? 'full' : ''}" title="${k}"><i class="ic">${LOAD_IC[k]()}</i><span class="bar"><i style="width:${p}%"></i></span><b>${u}/${c}</b></div>`; }).join('');
 }
@@ -86,7 +86,7 @@ function placeNearBoat(){
   const z = G.uik || 1;
   if (!toastEl.hidden){ toastEl.classList.add('near'); toastEl.style.left = x/z + 'px'; toastEl.style.top = Math.max(busy ? 150 : 200, by - (busy ? 235 : 118)*z)/z + 'px'; }
   const below = Math.min(view.H - 150*z, by + 62*z);
-  for (const id of ['dockbar', 'raidBtn', 'councilBtn', 'arenaBtn']){ const el = id === 'dockbar' ? document.querySelector('.dockbar') : $(id); if (!el) continue;
+  for (const id of ['dockbar', 'raidBtn', 'captureBtn', 'councilBtn', 'arenaBtn']){ const el = id === 'dockbar' ? document.querySelector('.dockbar') : $(id); if (!el) continue;
     el.classList.add('near'); el.style.left = x/z + 'px'; el.style.top = (below + (id === 'councilBtn' || id === 'arenaBtn' ? 54*z : 0))/z + 'px'; }
 }
 // ---- sheets (harbor, settings) ----
@@ -167,7 +167,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 48</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 49</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -219,16 +219,11 @@ sheetEl.addEventListener('click', e => {
     S.crewName = ($('crewName').value.trim() || 'The Sea Swallows').slice(0, 24); S.gold -= CREW.foundCost;
     S.look = {...S.look, flag:$('crewGod').value}; S.crew = []; swapBoat(); sfx('fanfare'); toast(`${S.crewName} sail under the flag of ${GODS[S.look.flag].name}!`, 3.5);
   }
-  if (a === 'hire' && S.gold >= CREW.hireCost && (S.crew || []).length < seats()){
-    const c = candidates()[+b.dataset.i]; S.gold -= CREW.hireCost; sfx('buy'); S.crew = [...(S.crew || []), c]; S.hireSeed = (S.hireSeed || 1) + 3;
-    toast(`${c.n} joins the crew as a ${CREW.jobs[c.job].label.toLowerCase()}`, 2.6);
-  }
-  if (a === 'letgo'){ const c = S.crew[+b.dataset.i]; S.crew = S.crew.filter((_, i) => i !== +b.dataset.i); toast(`${c.n} goes ashore`); }
   if (a === 'toss'){ const k = b.dataset.k; if (S.cargo[k] > 0){ S.cargo[k]--; toast(`Threw 1 ${FISH[k] ? FISH[k].label.toLowerCase() : GOODS[k].label.toLowerCase()} overboard`); } }
   if (a === 'tutnext' || a === 'tutback'){ tutPage += a === 'tutnext' ? 1 : -1; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'tutdone'){ closeSheet(); toast('Fair winds!', 2); return; }
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
-  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); progress('upgrade', k); if (k === 'ram' || k === 'hull' || k === 'sail') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
+  if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); progress('upgrade', k); if (k === 'ram' || k === 'hull' || k === 'sail' || k === 'seats') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   if (a === 'buymat'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k, n = +b.dataset.n, p = matPrice(h, k), cost = n/matStep(k)*p;
     if (p !== null && S.gold >= cost){ sfx('buy'); S.gold -= cost; addMat(k, n); toast(`Bought ${n} ${k} for the warehouse`, 2); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k;
@@ -236,7 +231,7 @@ sheetEl.addEventListener('click', e => {
     if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; sfx('coins'); toast(`Sold ${S.cargo[k]} ${GOODS[k].label.toLowerCase()} for ${g} drachmae`, 2.4); S.cargo[k] = 0; progress('trade'); } }
   if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]); S.gold += g; if (g) sfx('coins'); for (const k in FISH) S.cargo[k] = 0; toast(`Sold the catch for ${g} drachmae`); progress('sell'); }
   if (a === 'repair'){ const cost = Math.min(Math.ceil((sh.hull - S.hull)/TUNING.repairPerGold), S.gold); S.gold -= cost; S.hull = Math.min(sh.hull, S.hull + cost*TUNING.repairPerGold); if (cost) sfx('hammer'); }
-  if (a === 'build'){ const t = +b.dataset.t, n = SHIPS[t]; if (pay(n.cost)){ launch(t); progress('build', n.model); swapBoat(); sfx('fanfare'); toast(`Your ${n.name} is ready${lvl('ram') || lvl('arrows') ? '. Your ram and arrowheads came along' : ''}`, 3); } }
+  if (a === 'build'){ const t = +b.dataset.t, n = SHIPS[t]; if ((S.plans || [0]).includes(t) && pay(n.cost)){ launch(t); progress('build', n.model); swapBoat(); sfx('fanfare'); toast(`Your ${n.name} is ready${lvl('ram') || lvl('arrows') ? '. Your ram and arrowheads came along' : ''}`, 3); } }
   if (a === 'captain'){ const n = hireCaptain(+b.dataset.t); if (n){ toast(`${n} takes your ${SHIPS[+b.dataset.t].name.toLowerCase()} out fishing`, 3); document.dispatchEvent(new Event('fleetmoved')); } }
   if (a === 'collect'){ sfx('coins'); toast(`+${S.purse} drachmae from your captains`, 2.5); S.gold += S.purse; S.purse = 0; }
   if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(`You go aboard your ${SHIPS[t].name.toLowerCase()}`, 2.4); } }
@@ -280,8 +275,6 @@ sheetEl.addEventListener('click', e => {
   save(); render();
 });
 sheetEl.addEventListener('change', e => {
-  const ci = e.target.dataset && e.target.dataset.crew;
-  if (ci !== undefined){ const c = G.S.crew[+ci]; c.job = e.target.value; toast(`${c.n} is now a ${CREW.jobs[c.job].label.toLowerCase()}`, 2); save(); render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'mstyle'){ SND.style = e.target.value; saveSound(); playNow(); render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'daynight'){ G.settings.daynight = e.target.value; saveSettings(); return; }
   const sk = e.target.dataset && e.target.dataset.snd; if (sk){ SND[sk] = +e.target.value; saveSound(); sfx(sk === 'sea' ? 'gull' : 'coin'); return; }
@@ -300,6 +293,8 @@ $('dockBtn').addEventListener('click', () => {
   else if (G.dock.mode === 'moored') document.dispatchEvent(new Event('undock'));
 });
 $('harborBtn').addEventListener('click', openPort);
+// P49: hired sailors became each ship's own crew; say so once to players who had some
+setTimeout(() => { const S = G.S; if (S && S.crewRefund){ toast(`Crews now belong to each ship: hire hands with the Crew upgrade at the shipyard. Your ${S.crewRefund} sailor${S.crewRefund > 1 ? 's were' : ' was'} paid back in drachmae.`, 7); delete S.crewRefund; save(); } }, 4000);
 // docking: wood and bronze aboard go to the warehouse first, so the shipyard can use them
 document.addEventListener('docked', () => { const [w, b] = unload(); if (w || b){ toast(`Unloaded ${[w && w + ' wood', b && b + ' bronze'].filter(Boolean).join(' and ')} for the Kallisto warehouse`, 2.6); save(); } openPort(); });
 $('goalPill').addEventListener('click', () => { if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });

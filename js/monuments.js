@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue} from './ships.js?v=c50fa36';
+import {mat, statue} from './ships.js?v=5a6bfb2';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -202,5 +202,32 @@ export function buildGladiator(stone = 'marble'){
   const shield = M(new T.LatheGeometry([[0, 2.6], [7, 2.2], [12, 1.1], [14, .5], [14.2, -.4], [12.6, -.6], [0, -.2]].map(([x, y]) => new T.Vector2(x, y)), 48), metal);
   shield.rotation.z = -Math.PI/2; shield.position.set(14, S + 38, -15); g.add(shield);
   const boss = ball(V(16.6, S + 38, -15), 3, white ? skin : bronzeMat('#9e2a22', {}), .45, 1, 1); g.add(boss);
+  return g;
+}
+
+// A bandit camp (P49): a ring of sharpened log stakes on the beach with a gap toward the sea, three patched tents,
+// a wooden lookout tower with a black flag, a campfire and some barrels. Built facing +x (the sea side). About 170 across.
+export function buildCamp(){
+  const g = new T.Group(), log = mat('#7a5230'), dark = mat('#4d3320'), tent = [mat('#b49a72'), mat('#8f6b4a'), mat('#a6845e')], patch = mat('#6d4f3a');
+  const put = (o, x, y, z) => { o.position.set(x, y, z); g.add(o); return o; };
+  // the palisade: leaning stakes, open on the sea side
+  for (let k=0;k<44;k++){ const a = k/44*Math.PI*2; if (Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < .42) continue;
+    const h = 26 + (k*7 % 5)*2.4, st = M(new T.CylinderGeometry(2.2, 2.8, h, 6), k % 3 ? log : dark); put(st, Math.cos(a)*78, h/2, Math.sin(a)*78);
+    const tip = M(new T.ConeGeometry(2.3, 6, 6), dark); put(tip, Math.cos(a)*78, h + 3, Math.sin(a)*78); }
+  // tents: cones of patched cloth with a dark doorway
+  [[-30, -32, 22], [-40, 26, 19], [6, 44, 17]].forEach(([x, z, r], i) => { const t = M(new T.ConeGeometry(r, r*1.5, 7), tent[i]); put(t, x, r*.75, z); t.rotation.y = i;
+    const door = M(new T.ConeGeometry(r*.42, r*.95, 3), patch, false); put(door, x + r*.62, r*.48, z); door.rotation.y = Math.PI; });
+  // lookout tower with a black flag
+  for (const [x, z] of [[-6, -6], [6, -6], [-6, 6], [6, 6]]) put(M(new T.CylinderGeometry(1.6, 2, 54, 6), log), -50 + x, 27, -4 + z);
+  put(M(new T.BoxGeometry(20, 3, 20), dark), -50, 54, -4);
+  for (const [x, z, w, d] of [[-9, 0, 2, 20], [9, 0, 2, 20], [0, -9, 20, 2], [0, 9, 20, 2]]) put(M(new T.BoxGeometry(w, 6, d), log), -50 + x, 58, -4 + z);
+  put(M(new T.CylinderGeometry(.8, .8, 28, 5), dark), -50, 69, -4);
+  const flag = M(new T.BoxGeometry(1, 11, 17), mat('#1f1a1a')); put(flag, -50, 77, 4.5);
+  const skull = M(new T.SphereGeometry(2.4, 10, 8), mat('#e9dcc0'), false); put(skull, -49.3, 77.5, 4.5); skull.scale.set(.3, 1, 1);
+  // campfire with stones around it, and barrels
+  for (let k=0;k<8;k++){ const a = k/8*Math.PI*2; put(M(new T.DodecahedronGeometry(3, 0), mat('#8c8478')), 22 + Math.cos(a)*9, 1.5, -6 + Math.sin(a)*9); }
+  const fire = M(new T.ConeGeometry(5, 12, 7), mat('#f2b247'), false); put(fire, 22, 6, -6);
+  const fire2 = M(new T.ConeGeometry(3, 8, 6), mat('#e0614d'), false); put(fire2, 22, 5, -6);
+  for (const [x, z] of [[40, 30], [46, 24], [-10, -52]]) put(M(new T.CylinderGeometry(5, 5, 11, 10), dark), x, 5.5, z);
   return g;
 }

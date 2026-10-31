@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=c50fa36';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=c50fa36';
-import {G} from './state.js?v=c50fa36';
-import {TOD, updateDayNight} from './daynight.js?v=c50fa36';
-import {showGrass} from './grass.js?v=c50fa36';
+import {QUALITY, SHIPS} from './config.js?v=5a6bfb2';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=5a6bfb2';
+import {G} from './state.js?v=5a6bfb2';
+import {TOD, updateDayNight} from './daynight.js?v=5a6bfb2';
+import {showGrass} from './grass.js?v=5a6bfb2';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -106,10 +106,13 @@ waterMat.onBeforeCompile = sh => {
       vec3 foamC = mix(vec3(.94, .98, 1.), vec3(.32, .62, .68), uStorm);
       foamC = mix(foamC, vec3(.42, .55, .78), uNight*.7); // moonlit foam: softer and bluer
       float fade = smoothstep(2300., 500., dist);
-      // a faint, soft net of light on the water (it was thin white lines before), broken up so it reads as shimmer
-      vec2 q = vWorld.xz/150.; q += .32*vec2(sin(q.y*1.3 + uTime*.4), cos(q.x*1.1 - uTime*.3));
-      float e = cells(q), glow = (1. - smoothstep(.0, .32, e))*smoothstep(.35, .75, vnoise(vWorld.xz/240. - uTime*.03));
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, glow*uFoam*.12*fade*(1. - .5*uStorm)*(1. - .45*uNight));
+      // cartoon sea (like a certain sailing Zelda): crisp white wavy lines drifting on the water in broken patches, with a soft glow around them
+      vec2 q = vWorld.xz/120.; q += .55*vec2(sin(q.y*1.7 + uTime*.4) + .5*sin(q.x*3.1 + uTime*.7), cos(q.x*1.5 - uTime*.3) + .5*cos(q.y*2.9 - uTime*.6)); // strong bends: wavy, not a grid
+      float e = cells(q), patchK = smoothstep(.15, .42, vnoise(vWorld.xz/300. - uTime*.03));
+      float bits = smoothstep(.36, .5, vnoise(vWorld.xz/38. + vec2(uTime*.25, -uTime*.15))); // cut the lines into short squiggles
+      float line = (1. - smoothstep(.04, .085, e))*patchK*bits, glow = (1. - smoothstep(.0, .28, e))*patchK*(.4 + .6*bits);
+      float fk = uFoam*fade*(1. - .5*uStorm)*(1. - .45*uNight);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, (glow*.14 + line*.6)*fk);
       // white caps: soft foam on the highest crests, in patches, more in rough weather
       float cap = smoothstep(.55, .95, hk)*smoothstep(.45, .8, vnoise(vWorld.xz/70. + vec2(uTime*.2, 0.)))*clamp(uWave - .3, 0., 1.4);
       gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, cap*.55*smoothstep(2600., 700., dist));
@@ -151,6 +154,8 @@ const zoomBucket = z => Math.ceil(Math.max(1, z)*2)/2; // rebuild the water only
 let lastZoom = 1, depthK = 1;
 // The camera pulls back in deeper water: more sea to see out there. Builder zoom multiplies on top.
 const DEPTH_ZOOM = [1, 1.3, 1.5];
+// bigger ships get a camera further out, so a trireme isn't crammed into the screen (P49)
+const SHIP_ZOOM = [1, 1.12, 1.3, 1.42];
 const viewZoom = () => G.settings.dev.zoom*depthK;
 export function applyZoom(){
   const z = viewZoom(), s = 520*Math.max(1, z);
@@ -176,7 +181,7 @@ const V = new T.Vector3();
 let camK = 1; // 1 at sea, closer while tied up at the pier
 export function updateCamera(){
   camK += ((G.dock && G.dock.mode !== 'out' ? .5 : 1) - camK) * .04;
-  const dk = DEPTH_ZOOM[Math.max(0, G.curZone)] || 1;
+  const dk = Math.min(1.85, (DEPTH_ZOOM[Math.max(0, G.curZone)] || 1)*(SHIP_ZOOM[SHIPS[G.S.tier].rank] || 1));
   if (Math.abs(dk - depthK) > .002){ depthK += (dk - depthK)*.012; if (zoomBucket(viewZoom()) !== zoomBucket(lastZoom)) applyZoom(); }
   const dist = (view.H > view.W ? 740 : 600) * viewZoom() * camK;
   // camera angle (a setting): high looks down more, low sees further toward the horizon

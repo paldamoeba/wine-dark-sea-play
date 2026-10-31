@@ -660,3 +660,5 @@ body.big .mapbtn{width:168px;height:168px}
 body.big .sheet{zoom:1.3}
 body.big .mapview .maphead,body.big .mapview .mapbtns,body.big .mapview .legend{zoom:1.4}
 body.big .sheet{overflow-x:hidden}
+.raid.capture{background:linear-gradient(#e0b04a,#b8822a)!important;color:#2a1d17!important}
+body.big .raid.capture{zoom:1.5}

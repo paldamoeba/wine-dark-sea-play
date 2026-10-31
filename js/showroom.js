@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=c50fa36';
-import {makePost} from './glow.js?v=c50fa36';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=c50fa36';
-import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=c50fa36';
-import {makeFire, updateFire} from './fire.js?v=c50fa36';
-import {updateSmoke} from './smoke.js?v=c50fa36';
-import {addGrass, updateGrass} from './grass.js?v=c50fa36';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=c50fa36';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=5a6bfb2';
+import {makePost} from './glow.js?v=5a6bfb2';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=5a6bfb2';
+import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=5a6bfb2';
+import {makeFire, updateFire} from './fire.js?v=5a6bfb2';
+import {updateSmoke} from './smoke.js?v=5a6bfb2';
+import {addGrass, updateGrass} from './grass.js?v=5a6bfb2';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=5a6bfb2';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
