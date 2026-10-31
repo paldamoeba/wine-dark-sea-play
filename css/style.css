@@ -633,3 +633,12 @@ body.sheeton .mission,body.sheeton .caution{visibility:hidden}
 .medal span{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(#e0533e,#b0301f);color:#fff;font:800 9px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;
   padding:3px 8px 4px;clip-path:polygon(0 0,100% 0,92% 50%,100% 100%,0 100%,8% 50%);box-shadow:0 1px 0 #5a160c;white-space:nowrap}
 .sheet.menu input,.sheet.menu select{box-sizing:border-box;max-width:100%}
+/* P45: a simpler HUD. No rank medal, no wooden trays: the hull bar and each chip (coins, cargo, weather) stand on their own,
+   like the toolbar tiles, with an outline and a soft shadow */
+.hud{padding-left:0;gap:8px}
+.hudbar,.lifebar{background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+.hudbar{gap:8px}
+.lifebar .bar{width:min(46vw,190px)!important;height:14px!important;border-radius:8px!important;background:#e9dcc0!important;border:2px solid #fff6e2!important;
+  box-shadow:0 0 0 1.5px #4a2e17,0 3px 0 1.5px #4a2e17,0 6px 10px rgba(30,18,8,.3)!important}
+.hi,#wxChip{border-radius:12px;padding:4px 10px 4px 5px;background:#fffaf0;box-shadow:0 0 0 1.5px #4a2e17,0 3px 0 1.5px #4a2e17,0 6px 10px rgba(30,18,8,.3),inset 0 2px 0 rgba(255,255,255,.8)!important}
+#goldChip{background:linear-gradient(#ffe9a3,#f5c24e);box-shadow:0 0 0 1.5px #6a4210,0 3px 0 1.5px #6a4210,0 6px 10px rgba(30,18,8,.3),inset 0 2px 0 rgba(255,255,255,.7)!important}

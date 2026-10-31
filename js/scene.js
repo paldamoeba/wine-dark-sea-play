@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=7eda492';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=7eda492';
-import {G} from './state.js?v=7eda492';
-import {TOD, updateDayNight} from './daynight.js?v=7eda492';
-import {showGrass} from './grass.js?v=7eda492';
+import {QUALITY} from './config.js?v=3e2b27c';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=3e2b27c';
+import {G} from './state.js?v=3e2b27c';
+import {TOD, updateDayNight} from './daynight.js?v=3e2b27c';
+import {showGrass} from './grass.js?v=3e2b27c';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -242,5 +242,6 @@ export function renderFrame(on){
   if (!rt || rt.width !== w || rt.height !== h){ if (rt) rt.dispose();
     rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); }
   renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
-  post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .15 + TOD.night*3.2; // a hint by day, strong at night around flames and windows renderer.render(postScene, postCam);
+  post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .15 + TOD.night*3.2; // a hint by day, strong at night around flames and windows
+  renderer.render(postScene, postCam);
 }
