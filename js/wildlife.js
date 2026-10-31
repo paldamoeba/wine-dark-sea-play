@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that jump beside the boat.
-import {WILDLIFE} from './config.js?v=3e2b27c';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=3e2b27c';
-import {G, save} from './state.js?v=3e2b27c';
-import {scene} from './scene.js?v=3e2b27c';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=3e2b27c';
-import {toast} from './ui.js?v=3e2b27c';
-import {combatState} from './combat.js?v=3e2b27c';
-import {sfx} from './audio.js?v=3e2b27c';
+import {WILDLIFE} from './config.js?v=8abf047';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=8abf047';
+import {G, save} from './state.js?v=8abf047';
+import {scene} from './scene.js?v=8abf047';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=8abf047';
+import {toast} from './ui.js?v=8abf047';
+import {combatState} from './combat.js?v=8abf047';
+import {sfx} from './audio.js?v=8abf047';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -103,7 +103,7 @@ function updateKraken(dt){
   if (K.state === 'gone'){
     if (G.sheetOpen || G.dock || combatState.threat || zoneAt(S.x, S.y) !== 2) return; // only far out in the Open Sea
     if ((K.wait -= dt) > 0) return;
-    for (let k=0;k<20;k++){ const a = S.a + (Math.random() - .5)*1.2, d = 700 + Math.random()*120, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
+    for (let k=0;k<20;k++){ const a = S.a + (Math.random() - .5)*1.2, d = 600 + Math.random()*80, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
       if (!openSea(x, y, 600)) continue;
       Object.assign(K, {state:'rise', x, y, t:0}); K.obj.visible = true; K.obj.rotation.y = -Math.atan2(S.y - y, S.x - x); // it faces you
       toast('Something huge stirs in the water ahead...', 3.5); sfx('kraken', K); return; }
@@ -120,7 +120,7 @@ function updateKraken(dt){
   K.obj.userData.tents.forEach(tn => { const r = Math.min(1, Math.max(0, K.rise*1.6 - tn.delay*.6)), e = r*r*(3 - 2*r);
     tn.piv.position.y = -4 - (1 - e)*230; tn.piv.rotation.z = Math.sin(G.t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(G.t*.9 + tn.ph*2)*.15;
     tn.ring.material.opacity = .7*e*(.75 + .25*Math.sin(G.t*3 + tn.ph)); tn.ring.scale.setScalar(1 + .12*Math.sin(G.t*2 + tn.ph)); });
-  K.obj.userData.body.rotation.z = Math.sin(G.t*.7)*.04;
+  K.obj.userData.shadow.material.opacity = Math.min(1, K.rise*1.4); K.obj.userData.shadow.scale.set(520 + Math.sin(G.t*.6)*20, 440 + Math.cos(G.t*.5)*20, 1);
 }
 document.addEventListener('kraken', () => { K.wait = 0; });
 export const kraken = K;

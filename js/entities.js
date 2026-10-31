@@ -1,16 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=3e2b27c';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=3e2b27c';
-import {G, ship, lvl} from './state.js?v=3e2b27c';
-import {scene} from './scene.js?v=3e2b27c';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=3e2b27c';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=3e2b27c';
-import {addTown, figure} from './town.js?v=3e2b27c';
-import {makeFire, updateFire, burn} from './fire.js?v=3e2b27c';
-import {addGrass} from './grass.js?v=3e2b27c';
-import {sinkPose} from './sinking.js?v=3e2b27c';
-import {moored} from './fleet.js?v=3e2b27c';
-import {placeOnWaves} from './combat.js?v=3e2b27c';
+import {SHIPS} from './config.js?v=8abf047';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=8abf047';
+import {G, ship, lvl} from './state.js?v=8abf047';
+import {scene} from './scene.js?v=8abf047';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=8abf047';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=8abf047';
+import {addTown, figure} from './town.js?v=8abf047';
+import {makeFire, updateFire, burn} from './fire.js?v=8abf047';
+import {addGrass} from './grass.js?v=8abf047';
+import {sinkPose} from './sinking.js?v=8abf047';
+import {moored} from './fleet.js?v=8abf047';
+import {placeOnWaves} from './combat.js?v=8abf047';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -288,7 +288,7 @@ export function animateEntities(dt){
     w.gulls.forEach((gl, k) => { const u = gl.userData; u.a += u.sp*dt; gl.visible = w.stock > 0;
       gl.position.set(w.x + Math.cos(u.a)*u.R, u.h + Math.sin(t*1.3 + k)*4, w.y + Math.sin(u.a)*u.R);
       gl.rotation.y = -u.a - Math.sign(u.sp)*Math.PI/2; gl.rotation.x = -Math.sign(u.sp)*.35;
-      u.wings.forEach(({p, s}) => p.rotation.x = s*(Math.sin(t*2.4 + k*2)*.16 + .04)); }); // gliding, with slow soft wingbeats
+      u.flap(Math.sin(t*2.4 + k*2)*.45 + .1); }); // gliding, with slow soft wingbeats
   }
   for (const w of WAKE){ if (!w.m.visible) continue; w.life -= dt*.55; if (w.life <= 0){ w.m.visible = false; continue; }
     w.m.scale.setScalar(4 + (1-w.life)*14); w.m.material.opacity = w.life*.45; w.m.position.y = waveAt(w.m.position.x, w.m.position.z, t) + .8; }

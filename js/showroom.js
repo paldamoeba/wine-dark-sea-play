@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=3e2b27c';
-import {makePost} from './glow.js?v=3e2b27c';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=3e2b27c';
-import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=3e2b27c';
-import {makeFire, updateFire} from './fire.js?v=3e2b27c';
-import {updateSmoke} from './smoke.js?v=3e2b27c';
-import {addGrass, updateGrass} from './grass.js?v=3e2b27c';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=3e2b27c';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=8abf047';
+import {makePost} from './glow.js?v=8abf047';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=8abf047';
+import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=8abf047';
+import {makeFire, updateFire} from './fire.js?v=8abf047';
+import {updateSmoke} from './smoke.js?v=8abf047';
+import {addGrass, updateGrass} from './grass.js?v=8abf047';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=8abf047';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -359,6 +359,12 @@ $('glow').addEventListener('click', () => setGlow(!glowOn));
 // the cel-shaded test look: hard bands and ink outlines
 $('cel').addEventListener('click', () => { setCel(!CEL.on); $('cel').setAttribute('aria-pressed', CEL.on); show(); });
 $('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true, it.style); });
+// Download the model as a .glb file, to open and edit in Blender (or any 3D program). Edited models can come back into the game.
+$('dl').addEventListener('click', () => {
+  if (!T.GLTFExporter || !obj) return;
+  const name = GROUPS[group].items[idx].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  new T.GLTFExporter().parse(obj, glb => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([glb], {type:'model/gltf-binary'})); a.download = `wine-dark-${name}.glb`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }, {binary:true, onlyVisible:true});
+});
 $('spin').addEventListener('click', () => { spin = !spin; $('spin').setAttribute('aria-pressed', spin); });
 const fold = on => { $('bar').classList.toggle('folded', on); $('unfold').hidden = !on; $('fold').setAttribute('aria-expanded', !on); resize(); };
 $('fold').addEventListener('click', () => fold(true)); $('unfold').addEventListener('click', () => fold(false));
@@ -401,9 +407,9 @@ function animate(t){
   if (a === 'fire') updateFire(obj.userData.fire, .9, t);
   updateSmoke(t, lightKey === 'night' ? .6 : 0, -.8, .35); updateGrass(t);
   if (a === 'whale'){ obj.userData.tail.rotation.z = Math.sin(t*1.4)*.25; obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
-  if (a === 'kraken'){ obj.userData.tents.forEach(tn => { tn.piv.rotation.z = Math.sin(t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(t*.9 + tn.ph*2)*.15; }); obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
+  if (a === 'kraken'){ obj.userData.shadow.material.opacity = 1; obj.userData.tents.forEach(tn => { tn.piv.rotation.z = Math.sin(t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(t*.9 + tn.ph*2)*.15; }); obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
   if (a === 'dolphins') obj.children.forEach(d => { const p = (t*.9 + d.userData.ph) % (Math.PI*2); d.position.y = 6 + Math.max(0, Math.sin(p))*26 - 8; d.rotation.z = Math.cos(p)*.7; });
-  if (a === 'gulls') obj.children.forEach((b, i) => { b.userData.wings.forEach(w => w.p.rotation.x = w.s*(Math.sin(t*2.4 + i)*.16 + .04)); b.position.y = 34 + Math.sin(t*1.5 + i)*4; });
+  if (a === 'gulls') obj.children.forEach((b, i) => { b.userData.flap(Math.sin(t*2.4 + i)*.45 + .1); b.position.y = 34 + Math.sin(t*1.5 + i)*4; });
   if (a === 'wiggle') obj.children.forEach(f => { f.rotation.y = Math.sin(t*3 + f.userData.ph)*.18; f.position.y = 10 + Math.sin(t*1.4 + f.userData.ph)*1.5; });
   if (a === 'spot'){ // the same as at sea: rings spread out, fish leap in arcs and dive back in
     obj.userData.rings.forEach((r, k) => { const p = (t*.45 + k/3) % 1; r.scale.setScalar(1 + p*2.6); r.material.opacity = .55*(1 - p); });

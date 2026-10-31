@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=3e2b27c';
+import {hash} from './world.js?v=8abf047';
 
-import {smokeColumn} from './smoke.js?v=3e2b27c';
+import {smokeColumn} from './smoke.js?v=8abf047';
 const T = window.THREE;
-import {mat} from './ships.js?v=3e2b27c';
+import {mat} from './ships.js?v=8abf047';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -172,19 +172,34 @@ function blade(len, w, th, taper = .6, sweep = 0, lift = 0, color = '#ffffff', v
   if (vc){ const col = new Float32Array(p.count*3), c = new T.Color(); for (let i=0;i<p.count;i++){ vc(c, p.getX(i)/len, p.getY(i), p.getZ(i)); col.set([c.r, c.g, c.b], i*3); } geo.setAttribute('color', new T.BufferAttribute(col, 3)); }
   const m = new T.Mesh(geo, softMat(vc ? '#ffffff' : color, !!vc)); m.castShadow = m.receiveShadow = true; return m;
 }
-// A gull, simple and smooth like a bird in a Ghibli film: a soft white body like a teardrop, and broad wings in one smooth
-// piece each, swept back, bending up from the body and drooping at the tips, with grey ends.
+// A gull in one smooth piece, like the birds in Spirited Away: the body swells out into the wings with no seam, broad at the
+// root and tapering to swept-back tips, white with grey ends and a small yellow beak. The wingbeat is a shape blend
+// (morph target): userData.flap(v) with v from -1 (down) to 1 (up).
+let gullGeo = null;
+function makeGullGeo(){
+  const geo = new T.SphereGeometry(1, 64, 32), p = geo.attributes.position, up = new Float32Array(p.count*3), col = new Float32Array(p.count*3);
+  const W = new T.Color('#f3f2ee'), M = new T.Color('#9ba6b0'), G = new T.Color('#2f3338'), c = new T.Color(); // white body, grey back and wings, dark tips
+  for (let i=0;i<p.count;i++){ const u = p.getX(i), y = p.getY(i), w = p.getZ(i), aw = Math.abs(w);
+    const chord = 7.5*(1 - .72*Math.pow(aw, 1.15)) + .6;        // long body in the middle, narrow wing tips
+    let X = u*chord - 5.5*Math.pow(aw, 2) + Math.max(0, u - .4)*2.2*Math.max(0, 1 - aw*5); // tips swept back, a little head in front
+    const Z = w*16;
+    const th = 2.5*Math.pow(Math.max(0, 1 - aw*1.6), 1.6) + .32*(1 - aw*.6); // a plump body that thins into the wings
+    let Y = y*th + 2.4*Math.sin(Math.min(aw/.42, 1)*Math.PI/2) - 3.2*Math.pow(Math.max(0, aw - .42), 1.3); // bent like an M
+    p.setXYZ(i, X, Y, Z);
+    const fl = 7*Math.pow(aw, 1.4); up[i*3] = X - 1.2*aw; up[i*3 + 1] = Y + fl; up[i*3 + 2] = Z*(1 - .12*aw); // wings raised
+    const back = Math.min(1, Math.max(0, (aw - .12)/.18))*Math.min(1, Math.max(0, y*3 + .4)); // the grey reaches over the top of the wings
+    c.copy(W).lerp(M, back*.9).lerp(G, Math.min(1, Math.max(0, (aw - .8)/.12))); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  geo.morphAttributes.position = [new T.BufferAttribute(up, 3)];
+  geo.computeVertexNormals(); return geo;
+}
+const gullMat = new T.MeshPhongMaterial({color:'#e8e8e8', vertexColors:true, shininess:12, specular:new T.Color('#2a3036'), morphTargets:true, morphNormals:false});
 export function gull(){ const g = new T.Group();
-  g.add(latheBody([[-7, 0], [-5.5, 1.3], [-2.5, 2.4], [1, 2.7], [4, 2.3], [6.4, 1.6], [7.6, 1], [8.4, 0]], '#eeeeea', '#ffffff', .95, .95, 24, .3));
-  const beak = soft(new T.ConeGeometry(.5, 2.4, 14), '#e0a030'); beak.rotation.z = -Math.PI/2 - .12; beak.position.set(9.1, -.1, 0); g.add(beak);
-  for (const sd of [-1, 1]){ const t = blade(5.5, 1.6, .35, .1, 0, 0, '#e6e6e0'); t.rotation.set(Math.PI/2, 0, Math.PI + sd*.22); t.position.set(-5.5, .3, 0); g.add(t); } // a short forked tail
-  const W = new T.Color('#f1f0ec'), G = new T.Color('#5c6168');
-  const wings = [1, -1].map(sd => { const p = new T.Group(); p.position.set(.6, 1.2, sd*1.2); p.scale.z = sd; g.add(p);
-    const w = blade(16, 5.6, .55, .62, .12, .0, '#ffffff', (c, u) => c.copy(W).lerp(G, Math.min(1, Math.max(0, (u - .78)/.15))));
-    // bend it like an M: up from the body, then gently down toward the tip
-    const q = w.geometry.attributes.position; for (let i=0;i<q.count;i++){ const x = q.getX(i), u = x/16; q.setZ(i, q.getZ(i) + 2.2*Math.sin(Math.min(u/.4, 1)*Math.PI/2) - Math.pow(Math.max(0, u - .4), 1.4)*4); }
-    w.geometry.computeVertexNormals(); w.rotation.set(-Math.PI/2, 0, -Math.PI/2); w.position.x = 1; p.add(w); return {p, s:sd}; });
-  g.userData.wings = wings; return g; }
+  gullGeo = gullGeo || makeGullGeo();
+  const m = new T.Mesh(gullGeo, gullMat); m.castShadow = m.receiveShadow = true; m.morphTargetInfluences = [0]; g.add(m);
+  const beak = soft(new T.ConeGeometry(.42, 2, 14), '#e0a030'); beak.rotation.z = -Math.PI/2 - .12; beak.position.set(9.4, .7, 0); g.add(beak);
+  g.userData.flap = v => { m.morphTargetInfluences[0] = Math.max(-.5, v); };
+  g.userData.wings = []; return g; }
 // The whale: one long smooth body, dark blue-grey on top and pale underneath, long soft flippers and wide flukes that grow
 // out of the body without seams.
 export function whaleModel(){
@@ -214,7 +229,7 @@ export function krakenModel(){
   // Each rises from its own ring of foam; the body stays hidden in the deep.
   const g = new T.Group(), body = new T.Group(); g.add(body);
   g.userData.tents = [];
-  const spots = [[0, 0], [70, 105], [-65, 120], [150, 20], [-150, 35], [95, -95], [-90, -105]];
+  const spots = [[20, 0], [110, 150], [-120, 140], [200, -30], [-190, -20], [10, -170]]; // six, far apart
   spots.forEach(([x, z], i) => { const piv = new T.Group(), len = 82 + (i*37 % 4)*12, a = Math.atan2(-z, -x) + (i % 2 ? .6 : -.6);
     piv.position.set(x, -4, z); piv.rotation.y = a; body.add(piv);
     const t = soft(tentacleGeo(len, 9 + (i % 3)*1.5), i % 2 ? '#8e3a63' : '#7d3157'); piv.add(t);
@@ -224,6 +239,11 @@ export function krakenModel(){
     const ring = new T.Mesh(new T.RingGeometry(11, 20, 28), new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.7, depthWrite:false}));
     ring.rotation.x = -Math.PI/2; ring.position.set(x, 4, z); body.add(ring);
     g.userData.tents.push({piv, ph:i*1.7, ring, delay:(i*.37) % 1}); });
+  // the beast's dark shape just under the surface, much bigger than the ring of tentacles
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 6, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(8,10,24,.75)'); gr.addColorStop(.55, 'rgba(8,10,24,.5)'); gr.addColorStop(1, 'rgba(8,10,24,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  const shadow = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({map:new T.CanvasTexture(c), transparent:true, depthWrite:false, opacity:0}));
+  shadow.rotation.x = -Math.PI/2; shadow.scale.set(520, 440, 1); shadow.position.y = 1.5; shadow.renderOrder = 1; body.add(shadow); g.userData.shadow = shadow;
   g.userData.body = body; return g;
 }
 // A dolphin: a slim smooth body with a short beak, and soft fins that grow out of it: a curved fin on the back, two

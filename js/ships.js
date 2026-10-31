@@ -262,13 +262,15 @@ function helmetOn(parent, y, kind){
 }
 // The hair has a shape of its own: fuller on top and at the back, a wavy fringe in front with a few soft locks, and it
 // comes lower over the ears and the back of the neck. (Hats sit over the plain cap below.)
-const hairGeo = (() => { const g = new T.SphereGeometry(3.3, 32, 16, 0, Math.PI*2, 0, Math.PI*.62), p = g.attributes.position, v = new T.Vector3();
-  for (let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i); const a = Math.atan2(v.z, v.x), fr = Math.cos(a), lat = Math.acos(Math.min(1, v.y/3.3))/(Math.PI*.62);
-    // the hem: high over the forehead with scallops (locks of hair), low at the back
-    const hem = fr > .2 ? .55 + .12*Math.abs(Math.sin(a*7)) : 1, k = lat > hem ? 1 : 1;
-    let r = 1 + .07*Math.max(0, 1 - lat*1.6) - .05*fr*Math.max(0, lat - .5) + .04*Math.sin(a*5 + v.y)*lat; // a fuller crown, a little puff
-    if (lat > hem) v.y = Math.max(v.y, 3.3*Math.cos(hem*Math.PI*.62)); // trim the front up into a fringe
-    v.x *= r; v.z *= r; v.y = v.y*(1 + .04*(1 - lat)) - (fr < -.2 ? .5*lat*lat : 0); p.setXYZ(i, v.x, v.y, v.z); }
+const hairGeo = (() => { const g = new T.SphereGeometry(1, 48, 32), p = g.attributes.position, v = new T.Vector3();
+  const sst = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a)/(b - a))); return t*t*(3 - 2*t); };
+  for (let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i); const a = Math.atan2(v.z, v.x), fr = Math.cos(a), lat = Math.acos(Math.max(-1, Math.min(1, v.y)))/Math.PI; // 0 top, 1 bottom
+    // the hairline: high over the forehead with soft locks (bangs), lower over the ears, lowest at the back of the neck
+    const hem = fr > 0 ? .34 + .1*(1 - fr) + .035*Math.cos(a*9) : .56 - .06*fr;
+    // a solid round mass: thick hair down to the hairline, then it tucks into the head (hidden) with a rounded edge
+    const k = sst(hem + .07, hem - .02, lat);
+    const r = 2.8 + k*(.62 + .28*Math.pow(1 - lat, 2) + .05*Math.sin(a*5 + lat*8)); // fuller at the crown, gentle waves
+    v.multiplyScalar(r); p.setXYZ(i, v.x, v.y, v.z); }
   g.computeVertexNormals(); return g; })();
 // fine strands drawn on the hair, from the crown down (you liked the look of hair when the shadows striped them)
 let hairT = null;
@@ -280,7 +282,7 @@ function hairTex(){ if (hairT) return hairT; const c = document.createElement('c
 export function cuteHead(parent, y, hairColor = 'hair', helmet = false){ const n0 = parent.children.length;
   const head = mesh(headGeo, 'skin', SM); head.position.y = y; parent.add(head);
   const kind = helmet === true ? 'hoplite' : helmet;
-  if (!kind){ const hair = mesh(hairGeo, hairColor, {...SM, map:hairTex()}); hair.position.set(-.2, y + .1, 0); hair.rotation.z = .12; parent.add(hair); }
+  if (!kind){ const hair = mesh(hairGeo, hairColor, SM); hair.position.set(-.15, y + .05, 0); hair.rotation.z = .1; parent.add(hair); }
   else if (HATS.includes(kind)){ const hair = mesh(capGeo, hairColor, {...SM, map:hairTex()}); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
   if (kind) helmetOn(parent, y, kind);
   parent.children.slice(n0).forEach(m => { m.receiveShadow = false; m.userData.ns = true; }); // no shadow blotches sliding over heads and helmets as people move
