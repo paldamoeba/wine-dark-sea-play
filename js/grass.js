@@ -1,12 +1,12 @@
 // Grass: little tufts in soft patches on the green islands, swaying in the wind. Each island's grass is one instanced mesh
 // (a few hundred tufts drawn in one go), and islands off screen are skipped. Only on High graphics; Low leaves it out.
-import {inPoly} from './world.js?v=ef9eba3';
+import {inPoly} from './world.js?v=7eda492';
 const T = window.THREE;
 
-// one tuft: five thin blades leaning out a little, dark at the root and sunny at the tip
+// one tuft: three soft blades leaning out a little, dark at the root and sunny at the tip
 function tuftGeo(){
-  const pos = [], col = [], nor = [], dark = new T.Color('#5f7a2e'), tip = new T.Color('#c8db78');
-  for (let b=0;b<5;b++){ const a = b/5*Math.PI*2 + .4, lean = .35 + (b % 2)*.25, h = 10 + (b*37 % 5)*1.2, w = 1.5;
+  const pos = [], col = [], nor = [], dark = new T.Color('#6f8a36'), tip = new T.Color('#a9c260');
+  for (let b=0;b<3;b++){ const a = b/3*Math.PI*2 + .4, lean = .3 + (b % 2)*.15, h = 7.5 + b*1.2, w = 1.9;
     const ca = Math.cos(a), sa = Math.sin(a), px = -sa*w, pz = ca*w;
     pos.push(-px, 0, -pz, px, 0, pz, ca*lean*h*.5, h, sa*lean*h*.5);
     col.push(dark.r, dark.g, dark.b, dark.r, dark.g, dark.b, tip.r, tip.g, tip.b);
@@ -21,7 +21,7 @@ const mat = new T.MeshLambertMaterial({vertexColors:true, side:T.DoubleSide});
 mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, U);
   sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
     // the tips sway; neighbors move together, like wind passing over a field
-    float hk = position.y/13.; hk *= hk; vec3 ip = vec3(instanceMatrix[3][0], 0., instanceMatrix[3][2]);
+    float hk = position.y/10.; hk *= hk; vec3 ip = vec3(instanceMatrix[3][0], 0., instanceMatrix[3][2]);
     transformed.x += sin(uTime*1.7 + ip.x*.045 + ip.z*.03)*2.4*hk; transformed.z += cos(uTime*1.3 + ip.x*.03 - ip.z*.04)*1.6*hk;`); };
 
 const fields = [];
@@ -31,7 +31,7 @@ const patch = (x, z) => { const a = Math.sin(x*.021 + Math.sin(z*.017)*1.7) + Ma
 // free(x, z) = false on streets, houses and farms. R = the island's own random numbers.
 export function addGrass(g, pts, hill, top, R, free, tint){
   const xs = pts.map(p => p[0]), zs = pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
-  const area = (x1 - x0)*(z1 - z0), want = Math.min(6000, Math.floor(area/140)); if (want < 10) return;
+  const area = (x1 - x0)*(z1 - z0), want = Math.min(2500, Math.floor(area/450)); if (want < 10) return;
   const m = new T.InstancedMesh(geo.clone(), mat, want), M = new T.Matrix4(), q = new T.Quaternion(), s = new T.Vector3(), p = new T.Vector3(), up = new T.Vector3(0, 1, 0), c = new T.Color();
   let n = 0;
   for (let k=0;k<want*3 && n<want;k++){

@@ -325,7 +325,7 @@ const SONGS = {
           prog:[[0, 7, 14, 16], [2, 6, 9, 14], [0, 7, 11, 16], [-3, 4, 7, 12], [5, 9, 12, 16], [2, 6, 9, 14], [0, 7, 14, 16], [0, 7, 14, 16]]},
   harbor:{root:55, bpm:76, scale:[0, 2, 4, 7, 9], lh:[{0:0, 2:2, 3:1, 4:3, 6:2}, {0:0, 2:1, 4:2, 5:3, 6:1}],
           prog:[[0, 7, 12, 16], [5, 9, 12, 16], [0, 7, 12, 16], [7, 11, 14, 19], [-3, 4, 7, 12], [5, 9, 12, 16], [7, 11, 14, 19], [0, 7, 12, 16]]},
-  battle:{root:50, bpm:84, scale:[0, 3, 5, 7, 10], pulse:true, lh:[{0:2, 4:3}],
+  battle:{root:50, bpm:92, scale:[0, 3, 5, 7, 10], lh:[{0:2, 4:3}],
           prog:[[0, 7, 12, 15], [-4, 3, 8, 12], [3, 7, 10, 15], [-2, 5, 10, 14], [0, 7, 12, 15], [-4, 3, 8, 12], [5, 8, 12, 17], [7, 11, 14, 19]]},
 };
 // tune rhythms for two bars (16 eighth notes): [start, length]
@@ -370,12 +370,22 @@ function updateMusic(dt, a){
         M.idx = best; }
       INST[S.mel](root + 12 + lad(M.idx) - (S.mel === 'cello' ? 12 : 0), nt, n.l*beat, w, (M.mood === 'night' ? .26 : .32)*(strong ? 1 : .85));
     }
-    if (M.mood === 'battle' && (s === 0 || s === 3 || s === 6)) softDrum(nt, w, s === 0);
+    if (M.mood === 'battle') battleBeat(s, nt, w, tones[0]);
     M.next += beat; M.step++; if (M.step % 8 === 0){ M.bar++; M.playing++; }
     if (M.mood !== 'battle' && !M.noRest && M.playing >= 24 && M.step % 8 === 0){ M.playing = 0; M.rest = 20 + Math.random()*30; break; }
   }
 }
 function softDrum(t, d, low){ const g = ctx.createGain(); g.gain.value = low ? .5 : .3; g.connect(d); drum(t, g, low); }
+// The fight: still calm, but with a heartbeat under it. Low frame drums (boom, boom, tak), plucked strings repeating a short
+// figure, and a soft shaker on the off-beats.
+const PIZZ = [0, 0, 7, 0, 12, 0, 7, 3];
+function battleBeat(s, t, d, bass){
+  const boom = s === 0 || s === 3, tak = s === 4 || s === 6 || (s === 7 && Math.random() < .4);
+  if (boom){ osc('sine', 72, t, .4, d, .34, .003, 46); noise(t, .09, d, {type:'lowpass', f:420, peak:.16}); }
+  if (tak){ osc('triangle', 190, t, .09, d, .1, .002, 140); noise(t, .06, d, {f:1500, q:1.2, peak:.12}); }
+  if (s % 2) noise(t, .05, d, {type:'highpass', f:6500, peak:.035, a:.01}); // the shaker
+  pluck(midi(bass + PIZZ[s]), t, d, .26, .3); // plucked strings
+}
 
 // ---- the old music: a lyre, a soft drone and now and then a flute ----
 // Day plays in a warm Greek mode (D Dorian), night slower and softer, battle with a frame drum and a darker mode.

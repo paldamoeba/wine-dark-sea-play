@@ -1,22 +1,22 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=ef9eba3';
-import {makePost} from './glow.js?v=ef9eba3';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=ef9eba3';
-import {buildColossus, buildFortress} from './monuments.js?v=ef9eba3';
-import {makeFire, updateFire} from './fire.js?v=ef9eba3';
-import {updateSmoke} from './smoke.js?v=ef9eba3';
-import {addGrass, updateGrass} from './grass.js?v=ef9eba3';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=ef9eba3';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=7eda492';
+import {makePost} from './glow.js?v=7eda492';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=7eda492';
+import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=7eda492';
+import {makeFire, updateFire} from './fire.js?v=7eda492';
+import {updateSmoke} from './smoke.js?v=7eda492';
+import {addGrass, updateGrass} from './grass.js?v=7eda492';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=7eda492';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
-renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFShadowMap;
 const scene = new T.Scene(); scene.fog = new T.Fog('#c9e3e8', 2200, 5200);
 const hemi = new T.HemisphereLight(0xeaf3f5, 0x8c927c, .8); scene.add(hemi);
 const sun = new T.DirectionalLight(0xffeccc, .65); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, {left:-700, right:700, top:700, bottom:-700, far:2500}); scene.add(sun);
-sun.shadow.bias = -.0008; sun.shadow.normalBias = .6;
+sun.shadow.bias = -.0006; sun.shadow.normalBias = 1.4; sun.shadow.radius = 3;
 const sunDir = new T.Vector3(-400, 700, 400);
 const fill = new T.DirectionalLight(0xcfe3ff, .28); fill.position.set(300, 200, -300); scene.add(fill);
 const seaMat = new T.MeshLambertMaterial({color:'#2b7f93'});
@@ -134,19 +134,25 @@ function hopper(o, ph){ hoppers.push({o, ph}); return o; }
 
 // A harbor town, put together like the game does: a main street up from the pier, houses facing it, a square with the
 // temple and the city's god at the top, trees in the gaps and people walking about.
-function harborTown(god = 'poseidon'){
+function harborTown(god = 'poseidon', style = null){
   const g = new T.Group(), stone = '#e2d3ae';
   const sand = new T.Mesh(new T.CylinderGeometry(330, 350, 8, 48), mat('#e2cf98')); sand.position.y = -2; sand.receiveShadow = true; g.add(sand);
   const grass = new T.Mesh(new T.CylinderGeometry(290, 305, 10, 48), mat('#5f7433')); grass.position.y = 1; grass.receiveShadow = true; g.add(grass);
   const top = 6;
   const road = (x, z, l, w, rot) => { const r = new T.Mesh(new T.BoxGeometry(l, 1, w), mat(stone)); r.position.set(x, top + .4, z); r.rotation.y = rot; r.receiveShadow = true; g.add(r); };
-  road(40, 0, 340, 16, 0); road(-10, 0, 220, 12, Math.PI/2); road(100, 0, 200, 12, Math.PI/2);
+  road(40, 0, 340, 16, 0); if (style !== 'sparta'){ road(-10, 0, 220, 12, Math.PI/2); road(100, 0, 200, 12, Math.PI/2); }
   const kinds = [0, 1, 2, 3, 0, 1, 2, 0, 3, 1, 2, 0, 1, 3, 2, 0, 1, 3];
   let k = 0;
-  const put = (x, z, rot) => { const h = house(kinds[k % kinds.length]); h.position.set(x, top, z); h.rotation.y = rot; h.scale.y = .9 + (k % 3)*.12; g.add(h); k++; };
+  const put = (x, z, rot) => { const h = house(kinds[k % kinds.length], style); h.position.set(x, top, z); h.rotation.y = rot; h.scale.y = .9 + (k % 3)*.12; g.add(h); k++; };
   // doors face the street: along the main street, then along the two side streets
-  for (const x of [210, 170, 130, 60, 20]) for (const sg of [1, -1]) put(x, sg*30, sg*Math.PI/2);
-  for (const sx of [100, -10]) for (const z of [62, 100, -62, -100]) for (const side of [1, -1]) put(sx + side*22, z, side > 0 ? Math.PI : 0);
+  if (style === 'sparta'){ // Spartan towns: houses in rings around a round market square, the main street running through
+    for (let i=0;i<14;i++){ const a = i/14*Math.PI*2 + .2; if (Math.abs(Math.sin(a)) < .2) continue; put(60 + Math.cos(a)*92, Math.sin(a)*92, -a + Math.PI/2); }
+    for (let i=0;i<10;i++){ const a = i/10*Math.PI*2; if (Math.abs(Math.sin(a)) < .3) continue; put(60 + Math.cos(a)*48, Math.sin(a)*48, -a - Math.PI/2); }
+    const ag = new T.Mesh(new T.CylinderGeometry(26, 26, 1, 24), mat(stone)); ag.position.set(60, top + .5, 0); g.add(ag);
+  } else {
+    for (const x of [210, 170, 130, 60, 20]) for (const sg of [1, -1]) put(x, sg*30, sg*Math.PI/2);
+    for (const sx of [100, -10]) for (const z of [62, 100, -62, -100]) for (const side of [1, -1]) put(sx + side*22, z, side > 0 ? Math.PI : 0);
+    if (style === 'athens') for (const z of [140, -140]) for (const x of [150, 80]) put(x, z, z > 0 ? Math.PI/2 : -Math.PI/2); }
   const sq = new T.Mesh(new T.CylinderGeometry(42, 42, 1, 24), mat(stone)); sq.position.set(-140, top + .5, 0); g.add(sq);
   const t = temple(); t.position.set(-150, top, 0); t.scale.setScalar(.8); g.add(t);
   const st = statue(god, 'painted'); st.scale.setScalar(.45); st.position.set(-112, top, 0); g.add(st);
@@ -247,6 +253,9 @@ const GROUPS = {
     {name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
     {name:'Spartan fortress', desc:'The same plan in warmer stone, with red banners.', make:() => buildFortress('sparta', '#9e2a22')},
     {name:'Pirate fortress', desc:'Dark stone on Thasos and Kos, with black banners.', make:() => buildFortress('pirate', '#231d1d')},
+    {name:'Spartacus, in marble', desc:'The champion of the games, as a cartoony gladiator: a huge chest, a crested helmet, his sword raised and his shield up. He stands in white marble in the middle of the Arena of Rhodes.', make:() => buildGladiator('marble')},
+    {name:'Spartacus, in bronze', desc:'The same champion cast in polished bronze, with a red crest.', make:() => buildGladiator('bronze')},
+    {name:'Statue of Athena, in marble', desc:'Some towns keep their statues plain white marble instead of painting them.', make:() => statue('athena', 'marble')},
     {name:'Statue of Poseidon', desc:'With his trident, a wave at his feet. Stands at harbors and pirate fortresses. Try the Night light: the fire bowls at the corners burn.', make:() => statue('poseidon', 'painted')},
     {name:'Statue of Athena', desc:'Helmet, spear and shield. On Athenian fortresses and harbors. Fire bowls at the corners burn at night.', make:() => statue('athena', 'painted')},
     {name:'Statue of Zeus', desc:'A thunderbolt and a golden wreath. On Spartan fortresses. Fire bowls at the corners burn at night.', make:() => statue('zeus', 'painted')},
@@ -256,7 +265,8 @@ const GROUPS = {
   ]},
   cities:{name:'Cities', items:[
     {name:'Harbor town', desc:'A town like Kallisto: a main street up from the pier, side streets, houses facing the street, the temple and Poseidon on the square, trees and townspeople.', make:() => harborTown('poseidon')},
-    {name:'Athenian town', desc:'City harbors are built the same way, with Athena in front of the temple.', make:() => harborTown('athena')},
+    {name:'Athenian town', desc:'Athens\' towns are whitewashed, with blue shutters and blue domes, and Athena in front of the temple.', make:() => harborTown('athena', 'athens')},
+    {name:'Spartan town', desc:'Sparta\'s towns are warm sandstone with dark red shutters and terracotta roofs, built in rings around a round market square, with Zeus by the temple.', make:() => harborTown('zeus', 'sparta')},
     {name:'Snowy northern town', desc:'In the cold north the islands, roofs and trees are covered in snow, and icebergs float offshore.', make:() => snowyTown()},
     {name:'Farms', desc:'Little farms just outside the towns, inside low stone walls: a vineyard with grapes, an olive grove, a wheat field and a vegetable garden with melons.', make:() => { const g = row([0, 1, 2, 3].map(i => farm(i)), 14); g.add(grassDisc(120)); return g; }},
     {name:'Houses', desc:'The four kinds of house: white with a flat roof, a blue dome, a red tile roof, and two floors with a terrace. Most have a chimney, and many have white smoke curling up from the cooking fire.', make:() => { const g = row([0, 1, 2, 3].map(k => house(k)), 18); g.add(grassDisc(90)); return g; }},
@@ -324,7 +334,7 @@ function show(){
   const box = new T.Box3().setFromObject(obj), size = box.getSize(new T.Vector3()); box.getCenter(focus); ground.forEach(o => obj.add(o));
   const big = Math.max(size.x, size.y, size.z); dist = big*1.45 + 40;
   const sc = sun.shadow.camera, half = Math.max(80, big*.9); Object.assign(sc, {left:-half, right:half, top:half, bottom:-half}); sc.updateProjectionMatrix();
-  sun.shadow.normalBias = Math.max(.6, half*.01); // big scenes have coarser shadow pixels: lift the shadow off surfaces more, so no stripes
+  sun.shadow.normalBias = Math.max(1.4, half*.02); // big scenes have coarser shadow pixels: lift the shadow off surfaces more, so no stripes
   sun.target.position.copy(focus); sun.position.copy(focus).add(sunDir); scene.add(sun.target); $('desc').textContent = item.desc;
   // the waves stay calm over islands and towns; ships ride them
   const land = ground.length || group === 'cities' || group === 'monuments' || group === 'nature' || group === 'people';
@@ -337,7 +347,7 @@ function show(){
 let riders = [];
 function ridersOf(){ riders = []; obj.traverse(o => { if (o.userData.body && o.userData.spec) riders.push({o, y:o.position.y}); }); }
 function setGlow(on){ glowOn = on; $('glow').setAttribute('aria-pressed', on); }
-function setFull(on){ full = on; $('gfx').value = on ? 'full' : 'simple'; renderer.shadowMap.type = on ? T.PCFSoftShadowMap : T.PCFShadowMap; setWaves(); }
+function setFull(on){ full = on; $('gfx').value = on ? 'full' : 'simple'; setWaves(); } // (soft shadows the same way in both looks: PCF with a radius)
 function fillPick(){ $('pick').innerHTML = GROUPS[group].items.map((it, i) => `<option value="${i}">${it.name}</option>`).join(''); $('pick').value = idx; }
 $('group').innerHTML = Object.entries(GROUPS).map(([k, g]) => `<option value="${k}">${g.name}</option>`).join('');
 $('light').innerHTML = Object.entries(LIGHTS).map(([k, l]) => `<option value="${k}">${l.name}</option>`).join('');

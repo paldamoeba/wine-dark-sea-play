@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that jump beside the boat.
-import {WILDLIFE} from './config.js?v=ef9eba3';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=ef9eba3';
-import {G, save} from './state.js?v=ef9eba3';
-import {scene} from './scene.js?v=ef9eba3';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=ef9eba3';
-import {toast} from './ui.js?v=ef9eba3';
-import {combatState} from './combat.js?v=ef9eba3';
-import {sfx} from './audio.js?v=ef9eba3';
+import {WILDLIFE} from './config.js?v=7eda492';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=7eda492';
+import {G, save} from './state.js?v=7eda492';
+import {scene} from './scene.js?v=7eda492';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=7eda492';
+import {toast} from './ui.js?v=7eda492';
+import {combatState} from './combat.js?v=7eda492';
+import {sfx} from './audio.js?v=7eda492';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -97,14 +97,14 @@ document.addEventListener('dolphins', () => { P.wait = 0; });
 
 // ---- the kraken: out in the Open Sea, now and then, tentacles rise from the water ahead. Sail close and it slips away ----
 const K = {obj:krakenModel(), state:'gone', wait:rand(WILDLIFE.krakenFirst), x:0, y:0, t:0, rise:0};
-K.obj.visible = false; K.obj.scale.setScalar(2.3); scene.add(K.obj); // huge: its head is bigger than a warship is wide
+K.obj.visible = false; K.obj.scale.setScalar(2.3); scene.add(K.obj); // huge: its tentacles stand far apart, across a stretch of sea wider than a harbor
 function updateKraken(dt){
   const S = G.S;
   if (K.state === 'gone'){
     if (G.sheetOpen || G.dock || combatState.threat || zoneAt(S.x, S.y) !== 2) return; // only far out in the Open Sea
     if ((K.wait -= dt) > 0) return;
-    for (let k=0;k<20;k++){ const a = S.a + (Math.random() - .5)*1.2, d = 400 + Math.random()*60, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
-      if (!openSea(x, y, 400)) continue;
+    for (let k=0;k<20;k++){ const a = S.a + (Math.random() - .5)*1.2, d = 700 + Math.random()*120, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
+      if (!openSea(x, y, 600)) continue;
       Object.assign(K, {state:'rise', x, y, t:0}); K.obj.visible = true; K.obj.rotation.y = -Math.atan2(S.y - y, S.x - x); // it faces you
       toast('Something huge stirs in the water ahead...', 3.5); sfx('kraken', K); return; }
     K.wait = 10; return;
@@ -115,8 +115,11 @@ function updateKraken(dt){
     if (d < WILDLIFE.krakenNear){ S.kraken = (S.kraken || 0) + 1; S.gold += WILDLIFE.krakenGold; save();
       toast(S.kraken === 1 ? `The kraken slips back into the deep! Few sailors have ever seen it. Your story earns you ${WILDLIFE.krakenGold} drachmae in the harbors.` : `The kraken dives again! +${WILDLIFE.krakenGold} drachmae for the story.`, 5); } }
   else if (K.state === 'dive'){ K.rise = Math.max(0, 1 - K.t/2); if (K.rise <= 0){ K.state = 'gone'; K.obj.visible = false; K.wait = rand(WILDLIFE.krakenEvery); } }
-  K.obj.position.set(K.x, waveAt(K.x, K.y, G.t) - 165 + K.rise*160, K.y);
-  K.obj.userData.tents.forEach(tn => { tn.piv.rotation.z = Math.sin(G.t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(G.t*.9 + tn.ph*2)*.15; });
+  K.obj.position.set(K.x, waveAt(K.x, K.y, G.t), K.y);
+  // each tentacle rises (and sinks) a moment after the last, and sways on its own
+  K.obj.userData.tents.forEach(tn => { const r = Math.min(1, Math.max(0, K.rise*1.6 - tn.delay*.6)), e = r*r*(3 - 2*r);
+    tn.piv.position.y = -4 - (1 - e)*230; tn.piv.rotation.z = Math.sin(G.t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(G.t*.9 + tn.ph*2)*.15;
+    tn.ring.material.opacity = .7*e*(.75 + .25*Math.sin(G.t*3 + tn.ph)); tn.ring.scale.setScalar(1 + .12*Math.sin(G.t*2 + tn.ph)); });
   K.obj.userData.body.rotation.z = Math.sin(G.t*.7)*.04;
 }
 document.addEventListener('kraken', () => { K.wait = 0; });

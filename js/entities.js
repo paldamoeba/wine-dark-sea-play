@@ -1,16 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=ef9eba3';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=ef9eba3';
-import {G, ship, lvl} from './state.js?v=ef9eba3';
-import {scene} from './scene.js?v=ef9eba3';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=ef9eba3';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=ef9eba3';
-import {addTown, figure} from './town.js?v=ef9eba3';
-import {makeFire, updateFire, burn} from './fire.js?v=ef9eba3';
-import {addGrass} from './grass.js?v=ef9eba3';
-import {sinkPose} from './sinking.js?v=ef9eba3';
-import {moored} from './fleet.js?v=ef9eba3';
-import {placeOnWaves} from './combat.js?v=ef9eba3';
+import {SHIPS} from './config.js?v=7eda492';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=7eda492';
+import {G, ship, lvl} from './state.js?v=7eda492';
+import {scene} from './scene.js?v=7eda492';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=7eda492';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=7eda492';
+import {addTown, figure} from './town.js?v=7eda492';
+import {makeFire, updateFire, burn} from './fire.js?v=7eda492';
+import {addGrass} from './grass.js?v=7eda492';
+import {sinkPose} from './sinking.js?v=7eda492';
+import {moored} from './fleet.js?v=7eda492';
+import {placeOnWaves} from './combat.js?v=7eda492';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -107,7 +107,7 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   const placed = [];
   for (const h of houses){ if (!flat([h.x, h.z], 12) || placed.some(([hx, hz]) => Math.hypot(hx - h.x, hz - h.z) < 26) || Math.hypot(h.x - px, h.z - pz) < 40) continue;
     if (placed.length >= (is.port ? 22 : 16)) break;
-    const k = placed.length, o = house([0, 1, 0, 2, 3, 0, 1, 2][Math.floor(R()*8)]); o.position.set(h.x, top, h.z); o.rotation.y = -h.face; o.scale.set(1, .9 + R()*.25, 1); g.add(o); popIn(o); placed.push([h.x, h.z]); }
+    const k = placed.length, o = house([0, 1, 0, 2, 3, 0, 1, 2][Math.floor(R()*8)], is.port ? null : is.city === 'sparta' ? 'sparta' : is.city === 'athens' ? 'athens' : null); o.position.set(h.x, top, h.z); o.rotation.y = -h.face; o.scale.set(1, .9 + R()*.25, 1); g.add(o); popIn(o); placed.push([h.x, h.z]); }
   keep.push(...placed);
   // the square, temple and god at the top of the main street
   const tp0 = [x0 + ux*(len + 30), z0 + uz*(len + 30)];
@@ -116,7 +116,7 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   if (tp){ const sq = mesh(new T.CylinderGeometry(40, 40, 1, 20), stone, {}, false); sq.position.set(tp[0], top + .5, tp[1]); g.add(sq);
     const t = temple(); t.position.set(tp[0], top, tp[1]); t.scale.setScalar(.8); t.rotation.y = -ang; g.add(t); keep.push(tp, [tp[0] + 18, tp[1]], [tp[0] - 18, tp[1]]);
     // the city's god in front of its temple: Athena for Athens, Apollo for Sparta, Poseidon at Kallisto
-    const gd = statue(is.port ? 'poseidon' : is.city === 'sparta' ? 'apollo' : 'athena', 'painted'), sx = tp[0] - ux*34, sz = tp[1] - uz*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.45); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); }
+    const gd = statue(is.port ? 'poseidon' : is.city === 'sparta' ? 'apollo' : 'athena', !is.port && R() < .5 ? 'marble' : 'painted'), sx = tp[0] - ux*34, sz = tp[1] - uz*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.45); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); }
   // trees in the gaps between houses and along the edge of town
   const tree = () => R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
   for (let k=0, n=0;k<120 && n<(is.port ? 14 : 10);k++){ const p = spotIn(R, ground, 10, cx, cz, 200);

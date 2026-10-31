@@ -565,3 +565,71 @@ body.sheeton .hud,body.sheeton .toolbar,body.sheeton .mapbtn,body.sheeton #ov,bo
 .slot svg{width:40px;height:40px}
 .slot .slab{font-size:10.5px;font-weight:800;color:var(--ink);line-height:1}
 .slot .badge{bottom:auto;top:-7px;left:-7px}
+/* P44: the left buttons are just their colored tiles now, no wooden tray around them */
+.tool{background:none!important;border:0!important;box-shadow:none!important;width:56px;height:56px;padding:0}
+.tool .ic{width:54px;height:54px;border-radius:15px;box-shadow:0 0 0 2px rgba(74,46,23,.85),0 4px 0 2px rgba(74,46,23,.85),0 8px 14px rgba(30,18,8,.35),inset 0 2px 0 rgba(255,255,255,.7),inset 0 -4px 0 rgba(0,0,0,.12)!important}
+.tool .ic svg{width:38px;height:38px}
+.tool:active .ic{transform:translateY(3px);box-shadow:0 0 0 2px rgba(74,46,23,.85),0 1px 0 2px rgba(74,46,23,.85),inset 0 2px 0 rgba(255,255,255,.7)!important}
+.tool:active{transform:none}
+.toolbar{gap:14px}
+@media (max-height:560px){.tool .ic{width:46px;height:46px}.tool .ic svg{width:32px;height:32px}}
+/* P44: fortress waters. A warning card in the middle of the screen as you sail in, and a mission bar at the top center */
+.mission{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:3;min-width:min(250px,calc(100vw - 280px));max-width:calc(100vw - 280px);box-sizing:border-box;
+  border:4px solid transparent;background:var(--woodframe);background-repeat:no-repeat;box-shadow:var(--woodshadow);border-radius:14px;padding:6px 10px 7px;color:var(--ink2);display:grid;gap:3px;pointer-events:none}
+.mission .mt{font-family:var(--display);font-weight:400;font-size:15px;text-align:center;color:#7a2a1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800}
+.mrow>span:first-child{width:72px;flex:none;color:var(--muted)}
+.mbar{flex:1;height:9px;border-radius:5px;background:#d9c49c;border:1.5px solid #9c7348;overflow:hidden}.mbar i{display:block;height:100%;background:linear-gradient(#e0614d,#a8321f)}
+.mships{display:flex;gap:3px;flex:1}.mships svg{width:24px;height:16px}
+.mrow em{font-style:normal;color:#5a3a1e;white-space:nowrap}.mrow em.done{color:#4d6a1e}
+@media (max-width:560px){.mission{top:calc(108px + env(safe-area-inset-top,0px));max-width:calc(100vw - 100px);min-width:0;left:calc(50% + 34px)}}
+.caution{position:fixed;left:50%;top:auto;bottom:24%;transform:translate(-50%,-50%);z-index:4;width:min(340px,calc(100vw - 48px));display:flex;gap:10px;align-items:center;
+  background:linear-gradient(#fff3d8,#f3d9a4);border:3px solid #b8402f;border-radius:16px;padding:10px 14px;box-shadow:0 0 0 1.5px #5a1e14,0 4px 0 1.5px #5a1e14,0 10px 24px rgba(40,10,5,.4);animation:cautionIn .4s ease-out}
+.caution[hidden]{display:none}
+.caution .cic{flex:none;width:38px;height:38px;border-radius:50%;background:#c4473b;color:#fff;font:400 26px/38px var(--display);text-align:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.caution p{margin:0;font-size:13px;font-weight:700;color:#4a2a14;line-height:1.3}.caution b{display:block;font-family:var(--display);font-weight:400;font-size:18px;color:#8a2a1a}
+@keyframes cautionIn{from{opacity:0;transform:translate(-50%,-40%) scale(.9)}}
+.caution{transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.caution{animation:none}}
+body.sheeton .mission,body.sheeton .caution{visibility:hidden}
+.mission[hidden]{display:none}
+
+/* ---- P44: menus in the style of a wooden noticeboard: the title on a nailed plank, a red square close button,
+   resources as little bars with their picture on the end, and chunky buttons with a bevel ---- */
+.sheet.menu .mtop{padding:0 10px 0;background:linear-gradient(#f7ecd4,#f1e2c3)}
+.mhead{display:flex;align-items:center;gap:8px;margin:0 -10px;padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px;position:relative;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 2px,transparent 2px 9px),linear-gradient(#a0683a,#7d4d27 60%,#6a3f1f);box-shadow:inset 0 2px 0 rgba(255,220,170,.35),inset 0 -3px 0 rgba(0,0,0,.25),0 3px 6px rgba(40,22,8,.35)}
+.mhead::before,.mhead::after{content:'';position:absolute;top:calc(50% + env(safe-area-inset-top,0px)/2 - 4px);width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e9d2a6,#7a5a35 60%,#3a2510);box-shadow:0 1px 1px rgba(0,0,0,.4)}
+.mhead::before{left:6px}.mhead::after{right:6px}
+.plank{flex:1;min-width:0;order:1;text-align:center}
+.sheet.menu .mhead h1{color:#fff7e6;font-family:var(--body);font-weight:800;font-size:22px;letter-spacing:.02em;text-shadow:0 2px 0 #3a2210,0 0 6px rgba(0,0,0,.25);text-transform:none;margin:0}
+.sheet.menu .mhead h1 small{color:#f3dcb0;font-weight:700;text-shadow:0 1px 0 #3a2210}
+.mhead .xbtn{order:2}.mhead .mright{order:0}
+.sheet.menu .xbtn{width:40px;height:40px;border-radius:9px;background:linear-gradient(#ef5a45,#c3321f);border:2px solid #fff3e0;color:#fff;box-shadow:0 0 0 1.5px #5a160c,0 3px 0 1.5px #5a160c,inset 0 2px 0 rgba(255,255,255,.4)}
+.sheet.menu .xbtn svg{width:20px;height:20px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.4))}
+.mhead .btn.gold{padding:8px 14px}
+.res{gap:10px 12px;margin:10px 0 6px}
+.rb{display:inline-flex;align-items:center;position:relative;padding-left:14px}
+.rbi{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:1;width:30px;height:30px;display:grid;place-items:center;filter:drop-shadow(0 2px 1px rgba(40,22,8,.4))}
+.rbi svg{width:28px;height:28px}
+.rbv{position:relative;min-width:44px;height:22px;padding:0 10px 0 20px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;
+  background:linear-gradient(#3f8fbd,#2a6f9a);border:2px solid #fff6e2;border-radius:6px 12px 12px 6px;box-shadow:0 0 0 1.5px #1f3f55,0 2px 0 1.5px #1f3f55}
+.rbv i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#7fcf6a,#4aa548)}
+.rbv b{position:relative;color:#fff;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;text-shadow:0 1px 0 rgba(0,0,0,.45)}
+.rb.gold .rbv{background:linear-gradient(#f6c453,#d9902b);box-shadow:0 0 0 1.5px #6a4210,0 2px 0 1.5px #6a4210}
+.rb.full .rbv i{background:linear-gradient(#f0846f,#c64a3c)}
+/* chunky beveled buttons */
+.sheet.menu .btn{border:2px solid rgba(255,246,226,.75);border-radius:10px;box-shadow:0 0 0 1.5px #3e240f,0 3px 0 1.5px #3e240f,inset 0 2px 0 rgba(255,255,255,.3)!important;text-shadow:0 1px 0 rgba(0,0,0,.35)}
+.sheet.menu .btn.gold{color:#3a240c;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:0 0 0 1.5px #6a4210,0 3px 0 1.5px #6a4210,inset 0 2px 0 rgba(255,255,255,.5)!important}
+.sheet.menu .btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 1.5px #3e240f,0 1px 0 1.5px #3e240f!important}
+.sheet.menu .btn:disabled{filter:grayscale(.7)}
+.res{gap:6px 8px}.rb{padding-left:12px}.rbi{width:26px;height:26px}.rbi svg{width:25px;height:25px}
+.rbv{min-width:0;height:20px;padding:0 7px 0 17px}.rbv b{font-size:13px}
+/* the rank medal: a gold disc with your ship's rank on a little red pennant, beside the hull bar and resources */
+.hud{padding-left:58px}
+.medal{position:absolute;left:0;top:0;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 40% 35%,#ffe9a0,#f0b43c 55%,#b8761c);box-shadow:0 0 0 2px #fff4d6,0 0 0 3.5px #5a3810,0 4px 0 3.5px #5a3810,0 7px 12px rgba(40,22,8,.35)}
+.medal b{font:800 24px/1 var(--body);color:#5a3410;text-shadow:0 1px 0 rgba(255,255,255,.7);margin-top:-6px}
+.medal span{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(#e0533e,#b0301f);color:#fff;font:800 9px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px 4px;clip-path:polygon(0 0,100% 0,92% 50%,100% 100%,0 100%,8% 50%);box-shadow:0 1px 0 #5a160c;white-space:nowrap}
+.sheet.menu input,.sheet.menu select{box-sizing:border-box;max-width:100%}

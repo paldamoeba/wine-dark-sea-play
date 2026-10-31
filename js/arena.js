@@ -2,15 +2,15 @@
 // The landward side of the ring runs up onto the island; the gate faces the open sea, and the Colossus stands astride it,
 // facing out. You sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round won.
 // The crowd on the walls cheers. The Colossus turns see-through while you're inside so he never blocks the fight.
-import {ISLANDS, landDist} from './world.js?v=ef9eba3';
-import {G, save} from './state.js?v=ef9eba3';
-import {scene} from './scene.js?v=ef9eba3';
-import {mat} from './ships.js?v=ef9eba3';
-import {figure} from './town.js?v=ef9eba3';
-import {buildColossus} from './monuments.js?v=ef9eba3';
-import {spawnArena, clearArena, enemies} from './combat.js?v=ef9eba3';
-import {toast} from './ui.js?v=ef9eba3';
-import {sfx} from './audio.js?v=ef9eba3';
+import {ISLANDS, landDist} from './world.js?v=7eda492';
+import {G, save} from './state.js?v=7eda492';
+import {scene} from './scene.js?v=7eda492';
+import {mat} from './ships.js?v=7eda492';
+import {figure} from './town.js?v=7eda492';
+import {buildColossus, buildGladiator} from './monuments.js?v=7eda492';
+import {spawnArena, clearArena, enemies} from './combat.js?v=7eda492';
+import {toast} from './ui.js?v=7eda492';
+import {sfx} from './audio.js?v=7eda492';
 
 const T = window.THREE;
 const R = 780, WALL_H = 58, WALL_T = 26, N = 72, GATE = .17; // radius, wall height and thickness, wall pieces, half the gate's opening (radians)
@@ -80,6 +80,8 @@ if (ARENA){
       for (const s2 of [-1, 1]){ const c = new T.Mesh(col, marble); c.scale.y = 70; c.position.set(0, 30, s2*26); c.castShadow = true; arch.add(c); }
       const lin = new T.Mesh(new T.BoxGeometry(16, 10, 70), marble); lin.position.y = 68; lin.castShadow = true; arch.add(lin);
       const ped = new T.Mesh(new T.CylinderGeometry(.01, 14, 70, 3), marble); ped.rotation.x = Math.PI/2; ped.rotation.y = Math.PI/2; ped.scale.set(1, 1, .5); ped.position.y = 80; arch.add(ped); } }
+  // Spartacus, the champion of the games, in white marble in the middle of the ring
+  { const sp = buildGladiator('marble'); sp.scale.setScalar(1.3); sp.rotation.y = Math.atan2(-Math.sin(ARENA.gate), Math.cos(ARENA.gate)); g.add(sp); }
   // end towers where the ring runs up onto Rhodes
   for (let i=0;i<N;i++) if (solid[i] && !solid[(i + 1) % N] && !inGate((i + 1)/N*Math.PI*2 + .001)) tower((i + 1)/N*Math.PI*2, WALL_H + 18, 24);
   for (let i=0;i<N;i++) if (solid[i] && !solid[(i + N - 1) % N] && !inGate(i/N*Math.PI*2 - .001)) tower(i/N*Math.PI*2, WALL_H + 18, 24);

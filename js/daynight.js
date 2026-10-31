@@ -2,9 +2,9 @@
 // (bright enough to sail), then dawn again. At dusk every ship lights its torches, statues light their fire bowls
 // and town windows glow. The time of day is kept in the save (G.S.clock), so it carries on where you left it.
 // Settings can keep it always day or always night.
-import {G} from './state.js?v=ef9eba3';
-import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=ef9eba3';
-import {WIN_MAT} from './models.js?v=ef9eba3';
+import {G} from './state.js?v=7eda492';
+import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=7eda492';
+import {WIN_MAT} from './models.js?v=7eda492';
 
 const T = window.THREE;
 export const CYCLE = 600; // seconds for a whole day
@@ -16,8 +16,8 @@ const KEYS = [
   {t:.70,  sky:null,      sun:['#ffe6c4', .64], hemi:['#e6f0f2', '#7d8670', .62], dir:[-420, 900, 160],  water:'#ffffff', glint:1,  night:0},
   {t:.78,  sky:'#f4bf98', sun:['#ffb866', .8],  hemi:['#ffd8be', '#7a6a66', .58], dir:[-800, 380, 200],  water:'#f2d4ea', glint:1.1, night:0},
   {t:.835, sky:'#dc8e8c', sun:['#ff9466', .58], hemi:['#eaa8b0', '#5e5068', .55], dir:[-900, 200, 0],    water:'#d9c2e2', glint:.9, night:.2},
-  {t:.875, sky:'#1f2c4d', sun:['#b4c4ff', .34], hemi:['#7289c2', '#283249', .52], dir:[300, 700, -300],  water:'#7486b4', glint:.45, night:1},
-  {t:.965, sky:'#1f2c4d', sun:['#b4c4ff', .34], hemi:['#7289c2', '#283249', .52], dir:[300, 700, -300],  water:'#7486b4', glint:.45, night:1},
+  {t:.875, sky:'#2a3a62', sun:['#bccbff', .46], hemi:['#8299d0', '#34405c', .7], dir:[300, 700, -300],  water:'#6f7fa8', glint:.5, night:1},
+  {t:.965, sky:'#2a3a62', sun:['#bccbff', .46], hemi:['#8299d0', '#34405c', .7], dir:[300, 700, -300],  water:'#6f7fa8', glint:.5, night:1},
   {t:1,    sky:'#e6c9bd', sun:['#ffc49a', .5],  hemi:['#e4d6e2', '#6f6a70', .56], dir:[600, 260, 200],   water:'#d6d8ea', glint:.6, night:.25},
 ];
 KEYS.forEach(k => { k.skyC = k.sky ? new T.Color(k.sky) : null; k.sunC = new T.Color(k.sun[0]); k.hemiS = new T.Color(k.hemi[0]); k.hemiG = new T.Color(k.hemi[1]); k.waterC = new T.Color(k.water); });
@@ -46,13 +46,13 @@ function sample(p, daySky){
 let halo = null; // a soft round glow drawn around each flame at night
 function haloTex(){
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gr.addColorStop(0, 'rgba(255,214,140,.9)'); gr.addColorStop(.35, 'rgba(255,160,70,.35)'); gr.addColorStop(1, 'rgba(255,140,50,0)');
+  gr.addColorStop(0, 'rgba(255,226,160,1)'); gr.addColorStop(.18, 'rgba(255,190,100,.7)'); gr.addColorStop(.45, 'rgba(255,150,60,.25)'); gr.addColorStop(1, 'rgba(255,140,50,0)');
   g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new T.CanvasTexture(c);
 }
 function addHalos(root){
   if (!halo) halo = new T.SpriteMaterial({map:haloTex(), blending:T.AdditiveBlending, depthWrite:false, transparent:true, fog:true});
   for (const t of root.userData.torches){ if (t.userData.halo) continue;
-    const s = new T.Sprite(halo), f = t.userData.flame || t; s.scale.setScalar(t.userData.flame ? 34 : 22); s.position.y = t.userData.flame ? 3 : 4; s.renderOrder = 2; f.add(s); t.userData.halo = s; }
+    const s = new T.Sprite(halo), f = t.userData.flame || t; s.scale.setScalar(t.userData.flame ? 58 : 36); s.position.y = t.userData.flame ? 3 : 4; s.renderOrder = 2; f.add(s); t.userData.halo = s; }
 }
 const inScene = o => { while (o.parent) o = o.parent; return o.isScene; };
 const DAY_WIN = new T.Color('#33414f'), NIGHT_WIN = new T.Color('#ffc865');

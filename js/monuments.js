@@ -1,15 +1,26 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue} from './ships.js?v=ef9eba3';
+import {mat, statue} from './ships.js?v=7eda492';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
+// a smooth limb through several joints: one tube, its radius from r(t) (t = 0 at the first joint, 1 at the last), so arms and
+// legs flow without seams at the elbow and knee
+function flow(pts, r, m, seg = 40, rad = 24){
+  const curve = new T.CatmullRomCurve3(pts), fr = curve.computeFrenetFrames(seg, false), pos = [], idx = [];
+  for (let i=0;i<=seg;i++){ const t = i/seg, c = curve.getPointAt(t), rr = r(t), N = fr.normals[i], B = fr.binormals[i];
+    for (let j=0;j<=rad;j++){ const a = j/rad*Math.PI*2; pos.push(c.x + (N.x*Math.cos(a) + B.x*Math.sin(a))*rr, c.y + (N.y*Math.cos(a) + B.y*Math.sin(a))*rr, c.z + (N.z*Math.cos(a) + B.z*Math.sin(a))*rr); } }
+  for (let i=0;i<seg;i++) for (let j=0;j<rad;j++){ const a = i*(rad + 1) + j, b = a + rad + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return M(g, m);
+}
+// smooth polished bronze for the Colossus (instead of the banded look of boats and houses)
+const bronzeMat = (c, o) => new T.MeshPhongMaterial({color:c, specular:'#6a4f2a', shininess:38, ...o});
 // a tapered round limb from point a to point b
-function limb(a, b, r1, r2, m, seg = 8){
+function limb(a, b, r1, r2, m, seg = 28){
   const v = b.clone().sub(a), len = v.length(), o = M(new T.CylinderGeometry(r2, r1, len, seg), m);
   o.position.copy(a).addScaledVector(v, .5); o.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), v.normalize()); return o;
 }
-const ball = (p, r, m, sx = 1, sy = 1, sz = 1) => { const o = M(new T.SphereGeometry(r, 12, 9), m); o.position.copy(p); o.scale.set(sx, sy, sz); return o; };
+const ball = (p, r, m, sx = 1, sy = 1, sz = 1) => { const o = M(new T.SphereGeometry(r, 36, 24), m); o.position.copy(p); o.scale.set(sx, sy, sz); return o; };
 const V = (x, y, z) => new T.Vector3(x, y, z);
 
 // ---- the Colossus of Rhodes ----
@@ -28,33 +39,34 @@ export const GODS_LOOK = {
 export function buildColossus(height = 480, stance = 260, fade = false, look = GODS_LOOK.helios){
   const g = new T.Group(), u = height/8, F = stance/2, L = look;
   const o = fade ? {transparent:true, opacity:1} : {};
-  const skin = mat('#b98a4a', o), dark = mat('#94683a', o), cloth = mat('#7d5a33', o), fire = mat('#f2b247', o), wood = mat('#6e4a2a', o);
+  const skin = bronzeMat('#b58848', o), dark = bronzeMat('#8f6534', o), cloth = bronzeMat('#7d5a33', o), fire = mat('#f2b247', o), wood = bronzeMat('#6e4a2a', o);
   g.userData.mats = [skin, dark, cloth, fire, wood];
   // legs: foot, ankle, knee, hip on each side
   for (const s of [-1, 1]){
     const foot = V(.15*u, .2*u, s*F), ankle = V(0, .45*u, s*F*.97), knee = V(.12*u, 2.25*u, s*(F*.6 + .45*u)), hip = V(0, 4.05*u, s*.55*u);
-    const f = M(new T.BoxGeometry(1.2*u, .4*u, .5*u), dark); f.position.copy(foot); g.add(f);
-    g.add(limb(ankle, knee, .2*u, .34*u, skin)); g.add(ball(knee, .3*u, skin));
-    g.add(limb(knee, hip, .3*u, .5*u, skin)); g.add(ball(V(.05*u, 1.7*u, s*(F*.7 + .3*u)), .3*u, skin, 1, 1.4, 1)); // calf
+    const f = ball(V(.3*u, .18*u, s*F), .32*u, skin, 2, .62, 1); g.add(f); g.add(ball(ankle, .19*u, skin)); // a rounded foot, and the ankle closing the leg
+    // one smooth tube from ankle to hip: slim ankle, a round calf, the knee, a strong thigh
+    g.add(flow([ankle, V(.06*u, 1.35*u, s*(F*.8 + .22*u)), knee, V(.06*u, 3.2*u, s*(F*.3 + .5*u)), hip], t => (t < .5 ? .19 + .13*Math.sin(t/.5*Math.PI)*.9 + .1*t : .28 + .22*Math.pow((t - .5)/.5, .7))*u, skin));
   }
   // hips and the cloth around them
   g.add(ball(V(0, 4.15*u, 0), .78*u, skin, .8, .7, 1.05));
-  const wrap = M(new T.CylinderGeometry(.82*u, .92*u, .75*u, 10), cloth); wrap.position.set(0, 4.25*u, 0); wrap.scale.z = 1.12; g.add(wrap);
+  const wrap = M(new T.CylinderGeometry(.82*u, .95*u, .8*u, 36), cloth); wrap.position.set(0, 4.25*u, 0); wrap.scale.z = 1.12; g.add(wrap);
   const flap = M(new T.BoxGeometry(.12*u, 1.1*u, .55*u), cloth); flap.position.set(.75*u, 3.75*u, 0); flap.rotation.z = .12; g.add(flap);
   // a strong torso: narrow waist up to broad shoulders, chest and belly muscles
-  const torso = M(new T.CylinderGeometry(1.05*u, .7*u, 2.3*u, 10), skin); torso.position.set(0, 5.75*u, 0); torso.scale.x = .62; g.add(torso);
-  for (const s of [-1, 1]){ g.add(ball(V(.4*u, 6.3*u, s*.42*u), .42*u, skin, .55, .7, 1)); g.add(ball(V(.38*u, 5.2*u, s*.2*u), .25*u, skin, .5, .55, .7)); }
+  const torso = M(new T.LatheGeometry(new T.SplineCurve([[.72, 0], [.68, .4], [.78, .95], [.98, 1.5], [1.08, 1.95], [.96, 2.25], [.5, 2.45], [.01, 2.5]].map(([r, y]) => new T.Vector2(r*u, y*u))).getPoints(40), 40), skin);
+  torso.position.set(0, 4.55*u, 0); torso.scale.x = .62; g.add(torso); // a smooth torso: narrow waist, broad chest, round shoulders
+  for (const s of [-1, 1]) g.add(ball(V(.36*u, 6.2*u, s*.4*u), .44*u, skin, .32, .62, 1)); // chest muscles, kept flat so they read as shape, not bumps
   // the quiver strap across the chest, the quiver and arrows on his back
-  if (L.quiver){ const strap = M(new T.BoxGeometry(.1*u, 3*u, .2*u), wood); strap.position.set(.45*u, 5.8*u, 0); strap.rotation.x = .75; g.add(strap);
-  const quiver = M(new T.CylinderGeometry(.22*u, .18*u, 1.6*u, 8), wood); quiver.position.set(-.55*u, 6.1*u, .35*u); quiver.rotation.x = -.5; g.add(quiver);
+  if (L.quiver){ g.add(flow([V(.52*u, 6.95*u, -.75*u), V(.66*u, 6*u, 0), V(.52*u, 5*u, .7*u), V(0, 4.8*u, .82*u)], () => .05*u, wood, 24, 10)); // the strap across the chest
+  const quiver = M(new T.CylinderGeometry(.22*u, .18*u, 1.6*u, 24), wood); quiver.position.set(-.55*u, 6.1*u, .35*u); quiver.rotation.x = -.5; g.add(quiver);
   for (let i=0;i<4;i++){ const ar = M(new T.CylinderGeometry(.03*u, .03*u, .6*u, 4), dark); ar.position.set(-.55*u + (i - 1.5)*.06*u, 7*u, .85*u); ar.rotation.x = -.5; g.add(ar); } }
   // neck, head, curls and the crown of sun rays
   g.add(limb(V(0, 6.8*u, 0), V(0, 7.15*u, 0), .3*u, .28*u, skin));
   g.add(ball(V(.05*u, 7.5*u, 0), .46*u, skin, .95, 1.08, .9));
   g.add(ball(V(-.16*u, 7.72*u, 0), .44*u, dark, .85, .62, .98)); // hair, swept back
-  const nose = M(new T.BoxGeometry(.16*u, .22*u, .12*u), skin); nose.position.set(.48*u, 7.45*u, 0); nose.rotation.z = -.3; g.add(nose); // a strong nose and brow
-  const brow = M(new T.BoxGeometry(.1*u, .08*u, .5*u), dark); brow.position.set(.44*u, 7.62*u, 0); g.add(brow);
-  if (L.crown === 'rays'){ const ray = new T.ConeGeometry(.1*u, .75*u, 4);
+  const nose = ball(V(0, 0, 0), .1*u, skin, 1, 1.5, .9); nose.position.set(.48*u, 7.45*u, 0); nose.rotation.z = -.3; g.add(nose); // a strong nose and brow
+  const brow = ball(V(0, 0, 0), .07*u, skin, .8, .6, 3.4); brow.position.set(.44*u, 7.62*u, 0); g.add(brow);
+  if (L.crown === 'rays'){ const ray = new T.ConeGeometry(.1*u, .75*u, 16);
     for (let i=0;i<11;i++){ const a = -Math.PI*.6 + i/10*Math.PI*1.2, r = M(ray, fire);
       r.position.set(-.05*u, 7.55*u + Math.cos(a)*.65*u, Math.sin(a)*.65*u); r.rotation.x = a; g.add(r); } }
   if (L.crown === 'helmet'){ const hm = M(new T.SphereGeometry(.52*u, 12, 6, 0, Math.PI*2, 0, Math.PI/1.8), dark); hm.position.set(0, 7.6*u, 0); g.add(hm);
@@ -63,9 +75,9 @@ export function buildColossus(height = 480, stance = 260, fade = false, look = G
   if (L.beard){ const b = ball(V(.3*u, 7.1*u, 0), .3*u, dark, .8, 1, 1.1); g.add(b); }
   // torch arm (right, +z): up and out, the torch cup and its flame above his head
   const shR = V(0, 6.6*u, 1.08*u), elR = V(.2*u, 7.55*u, 1.65*u), haR = V(.3*u, 8.6*u, 1.45*u);
-  g.add(ball(shR, .38*u, skin)); g.add(limb(shR, elR, .3*u, .24*u, skin)); g.add(limb(elR, haR, .24*u, .18*u, skin)); g.add(ball(haR, .2*u, skin));
-  if (L.up === 'torch'){ const cup = M(new T.CylinderGeometry(.32*u, .12*u, .55*u, 8), dark); cup.position.set(.3*u, 8.95*u, 1.45*u); g.add(cup);
-    const flame = M(new T.ConeGeometry(.34*u, 1.1*u, 7), fire, false); flame.position.set(.3*u, 9.7*u, 1.45*u); g.add(flame); g.userData.flame = flame; }
+  g.add(ball(shR, .36*u, skin, 1, .95, 1)); g.add(flow([shR, elR, haR], t => (.3 - .1*t + .05*Math.sin(Math.min(1, t*2)*Math.PI))*u, skin)); g.add(ball(haR, .2*u, skin, 1, 1.15, .9));
+  if (L.up === 'torch'){ const cup = M(new T.CylinderGeometry(.32*u, .12*u, .55*u, 28), dark); cup.position.set(.3*u, 8.95*u, 1.45*u); g.add(cup);
+    const flame = M(new T.ConeGeometry(.34*u, 1.1*u, 20), fire, false); flame.position.set(.3*u, 9.7*u, 1.45*u); g.add(flame); g.userData.flame = flame; }
   if (L.up === 'trident' || L.up === 'spear'){ // a long shaft held upright, three prongs or a bronze point on top
     const sh = M(new T.CylinderGeometry(.06*u, .06*u, 5.4*u, 5), L.up === 'spear' ? wood : dark); sh.position.set(.3*u, 7.6*u, 1.45*u); g.add(sh);
     if (L.up === 'spear'){ const tip = M(new T.ConeGeometry(.16*u, .6*u, 5), fire); tip.position.set(.3*u, 10.6*u, 1.45*u); g.add(tip); }
@@ -74,8 +86,8 @@ export function buildColossus(height = 480, stance = 260, fade = false, look = G
   if (L.up === 'bolt') [[0, 9.1, 0, .5], [.12, 9.75, .1, -.5], [0, 10.4, 0, .5]].forEach(([x, y, z, r]) => { const b = M(new T.BoxGeometry(.14*u, .8*u, .18*u), fire); b.position.set((.3 + x)*u, y*u, (1.45 + z)*u); b.rotation.x = r; g.add(b); });
   // bow arm (left, -z): down along his side, holding a tall bow
   const shL = V(0, 6.6*u, -1.08*u), elL = V(.15*u, 5.35*u, -1.45*u), haL = V(.55*u, 4.5*u, -1.4*u);
-  g.add(ball(shL, .38*u, skin)); g.add(limb(shL, elL, .3*u, .24*u, skin)); g.add(limb(elL, haL, .24*u, .18*u, skin)); g.add(ball(haL, .2*u, skin));
-  if (L.low === 'bow'){ const bow = M(new T.TorusGeometry(1.6*u, .07*u, 5, 16, Math.PI*.9), wood); bow.position.set(.4*u, 4.5*u, -1.5*u); bow.rotation.set(0, Math.PI/2, Math.PI/2 + Math.PI*.05); g.add(bow);
+  g.add(ball(shL, .36*u, skin, 1, .95, 1)); g.add(flow([shL, elL, haL], t => (.3 - .1*t + .05*Math.sin(Math.min(1, t*2)*Math.PI))*u, skin)); g.add(ball(haL, .2*u, skin, 1, 1.15, .9));
+  if (L.low === 'bow'){ const bow = M(new T.TorusGeometry(1.6*u, .07*u, 10, 40, Math.PI*.9), wood); bow.position.set(.4*u, 4.5*u, -1.5*u); bow.rotation.set(0, Math.PI/2, Math.PI/2 + Math.PI*.05); g.add(bow);
     const str = M(new T.CylinderGeometry(.015*u, .015*u, 3.1*u, 3), mat('#e9dcc0', o)); str.position.set(.4*u, 4.5*u, -1.5*u); g.add(str); }
   if (L.low === 'shield'){ const sd = M(new T.CylinderGeometry(1.05*u, 1.05*u, .12*u, 16), dark); sd.rotation.z = Math.PI/2; sd.position.set(.75*u, 4.9*u, -1.5*u); g.add(sd);
     const boss = M(new T.SphereGeometry(.3*u, 8, 6), fire); boss.position.set(.82*u, 4.9*u, -1.5*u); boss.scale.x = .4; g.add(boss); }
@@ -151,4 +163,44 @@ export function buildStatue(god = 'poseidon', stone = 'marble'){
   const s = buildColossus(44, 8, false, GODS_LOOK[god] || GODS_LOOK.poseidon);
   const keep = new Set([s.userData.mats[3]]); s.traverse(o => { if (o.isMesh && !keep.has(o.material)) o.material = marble; });
   s.position.y = 12; g.add(s); return g;
+}
+
+// ---- Spartacus, the champion of the games: a cartoony gladiator statue ----
+// Huge chest and shoulders, a narrow waist, short sturdy legs, big hands; a crested helmet, a short sword raised high and a
+// round shield. marble = all white stone; otherwise polished bronze. About 120 tall with its pedestal. Faces +x.
+export function buildGladiator(stone = 'marble'){
+  const g = new T.Group(), white = stone === 'marble';
+  const skin = white ? new T.MeshPhongMaterial({color:'#efe9de', specular:'#2a2824', shininess:12}) : bronzeMat('#b58848', {});
+  const metal = white ? skin : bronzeMat('#d6a64e', {}), dark = white ? new T.MeshPhongMaterial({color:'#ddd5c6', shininess:10}) : bronzeMat('#7d5a33', {});
+  const stoneM = mat('#e2dbcb'), capM = mat('#ece6d8');
+  [[56, 6, 3, '#d3cab6'], [46, 18, 15, '#e2dbcb'], [52, 4, 26, '#ece6d8']].forEach(([w, h, y, c]) => { const b = M(new T.BoxGeometry(w, h, w), mat(c)); b.position.y = y; g.add(b); });
+  const S = 28; // top of the pedestal
+  // legs: short and thick, set wide; sandals
+  for (const s of [-1, 1]){ const hip = V(0, S + 26, s*7), knee = V(3, S + 13, s*10), ank = V(0, S + 3, s*11);
+    g.add(flow([hip, knee, ank], t => 4.6 - 1.6*t + .9*Math.sin(Math.min(1, t*1.6)*Math.PI), skin, 30, 20));
+    g.add(ball(V(2.4, S + 1.6, s*11), 3.4, dark, 1.6, .55, 1)); }
+  // a kilt with a thick belt
+  const kilt = M(new T.CylinderGeometry(9.5, 12, 9, 36), dark); kilt.position.y = S + 25; g.add(kilt);
+  const belt = M(new T.TorusGeometry(9.6, 1.4, 12, 40), metal); belt.rotation.x = Math.PI/2; belt.position.y = S + 29.5; g.add(belt);
+  // the torso: a big upside-down pear, broad chest and shoulders
+  const torso = M(new T.LatheGeometry(new T.SplineCurve([[8.5, 0], [8.8, 4], [11.5, 11], [14.5, 17], [15, 20], [12, 23.5], [6, 25.5], [.01, 26]].map(([r, y]) => new T.Vector2(r, y))).getPoints(40), 44), skin);
+  torso.scale.x = .62; torso.position.y = S + 29; g.add(torso);
+  for (const s of [-1, 1]) g.add(ball(V(7.4, S + 45, s*5.6), 5.4, skin, .38, .62, 1)); // chest
+  // head: a small head under a big crested helmet with a visor
+  g.add(ball(V(1, S + 59, 0), 5.2, skin, 1, 1.05, .95));
+  const helm = M(new T.SphereGeometry(6.2, 36, 18, 0, Math.PI*2, 0, Math.PI/1.7), metal); helm.position.set(0, S + 60, 0); g.add(helm);
+  const brim = M(new T.TorusGeometry(6.4, .9, 10, 40), metal); brim.rotation.x = Math.PI/2; brim.position.set(0, S + 58.6, 0); brim.scale.set(1.08, 1, 1); g.add(brim);
+  const crest = M(new T.CylinderGeometry(8, 8, 2.2, 36, 1, false, Math.PI/2, Math.PI), white ? skin : bronzeMat('#9e2a22', {})); crest.rotation.x = Math.PI/2; crest.position.set(-1, S + 63, 0); crest.scale.set(1, 1, 1); g.add(crest);
+  // arms: big shoulders, thick arms, the sword arm up, the shield arm forward
+  const shR = V(0, S + 49, 13.5), shL = V(0, S + 49, -13.5);
+  for (const sh of [shR, shL]) g.add(ball(sh, 5.6, skin, 1, .95, 1));
+  const handR = V(4, S + 72, 17); g.add(flow([shR, V(-1, S + 59, 19), handR], t => 4.4 - 1.4*t + .8*Math.sin(Math.min(1, t*2)*Math.PI), skin)); g.add(ball(handR, 3.4, skin));
+  const blade = M(new T.BoxGeometry(1.2, 22, 3.4), metal); blade.position.set(4.6, S + 84, 17); g.add(blade);
+  const tip = M(new T.ConeGeometry(2.4, 4, 4), metal); tip.scale.z = .35; tip.position.set(4.6, S + 97, 17); g.add(tip);
+  const guard = M(new T.BoxGeometry(2, 1.6, 8), dark); guard.position.set(4.4, S + 74.5, 17); g.add(guard);
+  const handL = V(11, S + 38, -15); g.add(flow([shL, V(4, S + 40, -20), handL], t => 4.4 - 1.4*t + .8*Math.sin(Math.min(1, t*2)*Math.PI), skin)); g.add(ball(handL, 3.4, skin));
+  const shield = M(new T.LatheGeometry([[0, 2.6], [7, 2.2], [12, 1.1], [14, .5], [14.2, -.4], [12.6, -.6], [0, -.2]].map(([x, y]) => new T.Vector2(x, y)), 48), metal);
+  shield.rotation.z = -Math.PI/2; shield.position.set(14, S + 38, -15); g.add(shield);
+  const boss = ball(V(16.6, S + 38, -15), 3, white ? skin : bronzeMat('#9e2a22', {}), .45, 1, 1); g.add(boss);
+  return g;
 }

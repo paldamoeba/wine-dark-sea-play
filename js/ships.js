@@ -66,7 +66,8 @@ export function setCel(on){ CEL.on = on; GRAD.image.data.set(on ? [118, 118, 118
   GRAD.minFilter = GRAD.magFilter = on ? T.NearestFilter : T.LinearFilter; GRAD.needsUpdate = true; } // the normal look shades smoothly; cel has hard bands
 setCel(CEL.on);
 const inkMat = new T.MeshBasicMaterial({color:'#1d1a22', side:T.BackSide});
-inkMat.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = position + normal * 0.9;'); };
+// the rim stays the same thickness however much a part is scaled up (tree crowns are small balls blown up 10 times)
+inkMat.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'float inkS = max(.001, length(vec3(modelMatrix[0][0], modelMatrix[0][1], modelMatrix[0][2])));\nvec3 transformed = position + normal * (0.9 / inkS);'); };
 // Outlines: a slightly fatter dark copy of every solid mesh, drawn inside out so only its rim shows.
 export function inkify(obj){
   const add = []; obj.traverse(o => { if (o.isMesh && !o.userData.ink && o.material && !o.material.map && !o.material.transparent && o.geometry.attributes.normal) add.push(o); });
@@ -259,6 +260,16 @@ function helmetOn(parent, y, kind){
   if (kind === 'attic') for (const sg of [1, -1]){ const f = hm(featherGeo, '#f4efe2'); f.position.set(-.2, y + 4.6, sg*2.9); f.rotation.x = -sg*.25; parent.add(f); }
   parent.add(cr);
 }
+// The hair has a shape of its own: fuller on top and at the back, a wavy fringe in front with a few soft locks, and it
+// comes lower over the ears and the back of the neck. (Hats sit over the plain cap below.)
+const hairGeo = (() => { const g = new T.SphereGeometry(3.3, 32, 16, 0, Math.PI*2, 0, Math.PI*.62), p = g.attributes.position, v = new T.Vector3();
+  for (let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i); const a = Math.atan2(v.z, v.x), fr = Math.cos(a), lat = Math.acos(Math.min(1, v.y/3.3))/(Math.PI*.62);
+    // the hem: high over the forehead with scallops (locks of hair), low at the back
+    const hem = fr > .2 ? .55 + .12*Math.abs(Math.sin(a*7)) : 1, k = lat > hem ? 1 : 1;
+    let r = 1 + .07*Math.max(0, 1 - lat*1.6) - .05*fr*Math.max(0, lat - .5) + .04*Math.sin(a*5 + v.y)*lat; // a fuller crown, a little puff
+    if (lat > hem) v.y = Math.max(v.y, 3.3*Math.cos(hem*Math.PI*.62)); // trim the front up into a fringe
+    v.x *= r; v.z *= r; v.y = v.y*(1 + .04*(1 - lat)) - (fr < -.2 ? .5*lat*lat : 0); p.setXYZ(i, v.x, v.y, v.z); }
+  g.computeVertexNormals(); return g; })();
 // fine strands drawn on the hair, from the crown down (you liked the look of hair when the shadows striped them)
 let hairT = null;
 function hairTex(){ if (hairT) return hairT; const c = document.createElement('canvas'); c.width = 128; c.height = 32; const g = c.getContext('2d');
@@ -269,7 +280,8 @@ function hairTex(){ if (hairT) return hairT; const c = document.createElement('c
 export function cuteHead(parent, y, hairColor = 'hair', helmet = false){ const n0 = parent.children.length;
   const head = mesh(headGeo, 'skin', SM); head.position.y = y; parent.add(head);
   const kind = helmet === true ? 'hoplite' : helmet;
-  if (!kind || HATS.includes(kind)){ const hair = mesh(capGeo, hairColor, {...SM, map:hairTex()}); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
+  if (!kind){ const hair = mesh(hairGeo, hairColor, {...SM, map:hairTex()}); hair.position.set(-.2, y + .1, 0); hair.rotation.z = .12; parent.add(hair); }
+  else if (HATS.includes(kind)){ const hair = mesh(capGeo, hairColor, {...SM, map:hairTex()}); hair.position.set(-.35, y + .45, 0); hair.rotation.z = .3; parent.add(hair); }
   if (kind) helmetOn(parent, y, kind);
   parent.children.slice(n0).forEach(m => { m.receiveShadow = false; m.userData.ns = true; }); // no shadow blotches sliding over heads and helmets as people move
 }
@@ -523,7 +535,7 @@ export function animateShip(root, t, speed){
 const smats = {};
 const smat = (c, shine = 10) => smats[c + shine] || (smats[c + shine] = new T.MeshPhongMaterial({color:c === 'vc' ? '#ffffff' : P[c] || c, vertexColors:c === 'vc', shininess:shine, specular:new T.Color(shine > 20 ? '#6a5030' : '#262626')}));
 function sm(geo, c, shine){ const m = new T.Mesh(geo, smat(c, shine)); m.castShadow = m.receiveShadow = true; return m; }
-const sphere = (r, c, shine, sx = 1, sy = 1, sz = 1) => { const m = sm(new T.SphereGeometry(r, 24, 16), c, shine); m.scale.set(sx, sy, sz); return m; };
+const sphere = (r, c, shine, sx = 1, sy = 1, sz = 1) => { const m = sm(new T.SphereGeometry(r, 40, 28), c, shine); m.scale.set(sx, sy, sz); return m; };
 // the body from the hem of the robe to the neck, turned on a lathe; colorAt(x, y, z) paints it (robe, bare skin, a drape)
 function statueBody(colorAt, shine){
   const prof = new T.SplineCurve([[11.5, 0], [10.6, 3], [9.2, 10], [8.2, 18], [7.4, 26], [7.3, 30], [8.1, 35], [8.8, 39], [8.7, 42], [7.6, 45], [5, 47], [3, 48.4], [2.7, 51]].map(([r, y]) => new T.Vector2(r, y))).getPoints(64);
@@ -580,9 +592,9 @@ export function statue(god, stone = 'painted'){
     crest.scale.z = .6; g.add(crest); }
   // arms: rounded tubes from the shoulder through the elbow to a round hand; sleeves for the robed gods
   const shL = [0, S + 43, -9.4], shR = [0, S + 43, 9.4];
-  const arm = (sh, el, hand) => { g.add(sm(taper([sh, el, hand], t => 2.6 - .7*t, 20, 12), skinC, shine));
-    const top = sphere(3.1, bare && sh[2] > 0 ? skinC : robeC, shine); top.position.set(...sh); g.add(top);
-    const f = sphere(2.2, skinC, shine); f.position.set(...hand); g.add(f); };
+  const arm = (sh, el, hand) => { g.add(sm(taper([sh, el, hand], t => 2.55 - .75*t + .2*Math.sin(t*Math.PI), 32, 20), skinC, shine));
+    const top = sphere(2.9, bare && sh[2] > 0 ? skinC : robeC, shine, 1.15, .9, 1); top.position.set(sh[0], sh[1] - .4, sh[2]*.96); g.add(top);
+    const f = sphere(1.85, skinC, shine, 1, 1.1, .9); f.position.set(...hand); g.add(f); };
   const staff = (x, z, top) => { const s = sm(new T.CylinderGeometry(.85, .85, top - S + 2, 12), goldC, shine + 25); s.position.set(x, (top + S)/2, z); g.add(s); return top; };
   if (god === 'poseidon'){
     arm(shR, [3, S + 38, 15], [3, S + 48, 15.5]); const top = staff(3, 15.5, S + 84);
@@ -618,7 +630,7 @@ export function statue(god, stone = 'painted'){
   }
   // fire bowls at the four corners, lit at night (setTorches)
   g.userData.torches = [];
-  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]){ const b = brazier(); b.g.position.set(x*20.5, 5, z*20.5); g.add(b.g); g.userData.torches.push(b.flame); }
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]){ const b = brazier(); b.g.position.set(x*21.8, 5, z*21.8); b.g.scale.setScalar(.85); g.add(b.g); g.userData.torches.push(b.flame); }
   TORCH_ROOTS.add(g);
   return g;
 }

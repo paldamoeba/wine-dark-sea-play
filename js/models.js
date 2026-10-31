@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=ef9eba3';
+import {hash} from './world.js?v=7eda492';
 
-import {smokeColumn} from './smoke.js?v=ef9eba3';
+import {smokeColumn} from './smoke.js?v=7eda492';
 const T = window.THREE;
-import {mat} from './ships.js?v=ef9eba3';
+import {mat} from './ships.js?v=7eda492';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -64,21 +64,26 @@ function panes(kind){ if (paneGeos[kind]) return paneGeos[kind];
   for (const sg of [1, -1]){ win(-3, 10, sg*10.1, Math.PI/2); win(4, 10, sg*10.1, Math.PI/2); }
   if (kind === 3){ win(2.55, 22, 0, 0, 1.15); for (const sg of [1, -1]) win(-4, 22, sg*7.1, Math.PI/2, 1.15); }
   return paneGeos[kind] = mergeParts(P); }
-export function house(kind = 0){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
-  const wall = kind === 2 ? '#efe2c4' : '#f4f1e8', trim = kind === 2 ? '#3f7a52' : '#2c5fa8';
+// style: 'athens' = whitewashed walls, blue shutters and blue domes; 'sparta' = warm sandstone walls, dark red shutters and
+// terracotta tile roofs (no domes); anything else = Kallisto's island mix.
+export function house(kind = 0, style = null){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
+  if (style === 'sparta' && kind === 1) kind = 2; if (style === 'athens' && kind === 2) kind = 1;
+  const wall = style === 'sparta' ? (kind === 3 ? '#e2c592' : '#ead3a6') : style === 'athens' ? '#f7f5ee' : kind === 2 ? '#efe2c4' : '#f4f1e8';
+  const trim = style === 'sparta' ? '#8e2a22' : style === 'athens' ? '#2c5fa8' : kind === 2 ? '#3f7a52' : '#2c5fa8';
   const b = mesh(new T.BoxGeometry(22, 16, 20), wall); b.position.y = 8; g.add(b);
   const door = mesh(new T.BoxGeometry(.6, 8, 5), trim, {}, false); door.position.set(11.2, 4, 0); g.add(door);
   for (const z of [-6.5, 6.5]){ const w = mesh(new T.BoxGeometry(.6, 3.6, 3.2), trim, {}, false); w.position.set(11.2, 10, z); g.add(w); }
   g.add(new T.Mesh(panes(kind), WIN_MAT));
   if (kind === 1){ const d = mesh(new T.SphereGeometry(8, 10, 5, 0, Math.PI*2, 0, Math.PI/2), '#2c5fa8'); d.position.y = 16; g.add(d); }
+  if (style === 'sparta' && kind !== 2){ const r = mesh(new T.CylinderGeometry(.01, 15.5, 6, 4, 1), '#b5562f'); r.rotation.y = Math.PI/4; r.scale.set(1, 1, .9); r.position.y = (kind === 3 ? 29 : 19); if (kind === 3){ r.scale.set(.6, 1, .7); r.position.x = -4; } g.add(r); }
   if (kind === 2){ const r = mesh(new T.CylinderGeometry(.01, 15.5, 7, 4, 1), '#c4643a'); r.rotation.y = Math.PI/4; r.scale.set(1, 1, .9); r.position.y = 19.5; g.add(r); }
   if (kind === 3){ const up = mesh(new T.BoxGeometry(12, 10, 14), wall); up.position.set(-4, 21, 0); g.add(up);
     const rail = mesh(new T.BoxGeometry(9, 2, 20), '#e4dccb'); rail.position.set(6.5, 17, 0); g.add(rail);
     const w2 = mesh(new T.BoxGeometry(.6, 4, 3.4), trim, {}, false); w2.position.set(2.2, 22, 0); g.add(w2); }
-  // a chimney on most houses, and on two out of three of those a column of white smoke from the cooking fire
+  // a chimney on most houses, and on about one in four of those a column of white smoke from the cooking fire
   const ch = {0:[-6, 16, 5], 2:[-5, 19, -4.5], 3:[-7.5, 26, 4]}[kind];
   if (ch){ const c = mesh(new T.BoxGeometry(3.4, kind === 2 ? 9 : 6, 3.4), kind === 2 ? '#d8ccb0' : wall); c.position.set(ch[0], ch[1] + (kind === 2 ? 4.5 : 3), ch[2]); g.add(c);
-    if (Math.random() < .67){ const sm = smokeColumn({h:66, r0:2.4, r1:10, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); } }
+    if (Math.random() < .25){ const sm = smokeColumn({h:56 + Math.random()*24, r0:2.2, r1:8 + Math.random()*4, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); } }
   return g; }
 export function temple(){ const g = new T.Group();
   const base = mesh(new T.BoxGeometry(44, 4, 30), '#e9e2cf'); base.position.y = 2; g.add(base);
@@ -155,41 +160,47 @@ function fin(pts, d, color){
   const geo = new T.ExtrudeGeometry(sh, {depth:d, bevelEnabled:true, bevelThickness:d*.45, bevelSize:d*.45, bevelSegments:3, curveSegments:10}); geo.translate(0, 0, -d/2);
   return soft(geo, color);
 }
-// A gull, kept simple and smooth like the birds in a Ghibli film: a white body, and long wings each made in one piece,
-// bent up then gently down like an M, with grey tips.
-function wingGeo(){
-  const out = smooth([[0, -2.3], [6, -2.1], [11, -1], [14.6, 1], [16.4, 3.2], [12.6, 2.4], [7.5, 2], [3, 2.2], [0, 2.2]], 36);
-  const geo = new T.ExtrudeGeometry(new T.Shape(out.map(([x, y]) => new T.Vector2(x, y))), {depth:.22, bevelEnabled:true, bevelThickness:.14, bevelSize:.14, bevelSegments:2, curveSegments:4});
-  geo.translate(0, 0, -.11); geo.rotateX(Math.PI/2); geo.rotateY(-Math.PI/2);
-  const p = geo.attributes.position, col = new Float32Array(p.count*3), W = new T.Color('#f1f0ec'), G = new T.Color('#5a5f66'), c = new T.Color();
-  for (let i=0;i<p.count;i++){ const z = p.getZ(i); p.setY(i, p.getY(i) + 1.9*Math.sin(Math.min(z/6.5, 1)*Math.PI/2) - Math.pow(Math.max(0, z - 6.5), 1.3)*.13);
-    const k = Math.min(1, Math.max(0, (z - 11.8)/1.4)); c.copy(W).lerp(G, k); col.set([c.r, c.g, c.b], i*3); }
-  geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.computeVertexNormals(); return geo; }
-let wingG = null;
+// A soft blade for fins, flippers, flukes and wings: a squashed egg shape stretched out and tapered, so it has no hard edges
+// and its root can sink into the body without a seam. It points along +x from x = 0 (the root) to x = len.
+// w, th = width and thickness at the root; taper = how much thinner at the tip (0 to 1); sweep = bends the tip back (-y);
+// lift = bends the tip up (+z).
+function blade(len, w, th, taper = .6, sweep = 0, lift = 0, color = '#ffffff', vc = null){
+  const geo = new T.SphereGeometry(1, 28, 16), p = geo.attributes.position;
+  for (let i=0;i<p.count;i++){ const x = p.getX(i), u = (x + 1)/2, k = 1 - taper*Math.pow(u, 1.2);
+    p.setXYZ(i, u*len, p.getY(i)*w*k - sweep*u*u*len, p.getZ(i)*th*(1 - taper*.6*u) + lift*u*u*len); }
+  geo.computeVertexNormals();
+  if (vc){ const col = new Float32Array(p.count*3), c = new T.Color(); for (let i=0;i<p.count;i++){ vc(c, p.getX(i)/len, p.getY(i), p.getZ(i)); col.set([c.r, c.g, c.b], i*3); } geo.setAttribute('color', new T.BufferAttribute(col, 3)); }
+  const m = new T.Mesh(geo, softMat(vc ? '#ffffff' : color, !!vc)); m.castShadow = m.receiveShadow = true; return m;
+}
+// A gull, simple and smooth like a bird in a Ghibli film: a soft white body like a teardrop, and broad wings in one smooth
+// piece each, swept back, bending up from the body and drooping at the tips, with grey ends.
 export function gull(){ const g = new T.Group();
-  g.add(latheBody([[-8, 0], [-6.5, .9], [-3.5, 1.9], [0, 2.3], [3, 2.1], [5, 1.7], [6.4, 1.75], [7.6, 1.5], [8.5, .9], [8.9, 0]], '#f0f0ec', '#ffffff', .95, .95, 20, .3));
-  const beak = soft(new T.ConeGeometry(.45, 2.2, 12), '#e0a030'); beak.rotation.z = -Math.PI/2 - .1; beak.position.set(9.6, .1, 0); g.add(beak);
-  const tail = fin(smooth([[0, -1.5], [-3.4, -2], [-4, 0], [-3.4, 2], [0, 1.5]], 10), .25, '#e8e8e2'); tail.rotation.x = Math.PI/2; tail.position.x = -7; g.add(tail);
-  wingG = wingG || wingGeo();
-  const wings = [1, -1].map(sd => { const p = new T.Group(); p.position.set(.6, .9, sd*1.1); p.scale.z = sd; g.add(p);
-    const w = new T.Mesh(wingG, softMat('#ffffff', true)); w.castShadow = w.receiveShadow = true; p.add(w); return {p, s:sd}; });
+  g.add(latheBody([[-7, 0], [-5.5, 1.3], [-2.5, 2.4], [1, 2.7], [4, 2.3], [6.4, 1.6], [7.6, 1], [8.4, 0]], '#eeeeea', '#ffffff', .95, .95, 24, .3));
+  const beak = soft(new T.ConeGeometry(.5, 2.4, 14), '#e0a030'); beak.rotation.z = -Math.PI/2 - .12; beak.position.set(9.1, -.1, 0); g.add(beak);
+  for (const sd of [-1, 1]){ const t = blade(5.5, 1.6, .35, .1, 0, 0, '#e6e6e0'); t.rotation.set(Math.PI/2, 0, Math.PI + sd*.22); t.position.set(-5.5, .3, 0); g.add(t); } // a short forked tail
+  const W = new T.Color('#f1f0ec'), G = new T.Color('#5c6168');
+  const wings = [1, -1].map(sd => { const p = new T.Group(); p.position.set(.6, 1.2, sd*1.2); p.scale.z = sd; g.add(p);
+    const w = blade(16, 5.6, .55, .62, .12, .0, '#ffffff', (c, u) => c.copy(W).lerp(G, Math.min(1, Math.max(0, (u - .78)/.15))));
+    // bend it like an M: up from the body, then gently down toward the tip
+    const q = w.geometry.attributes.position; for (let i=0;i<q.count;i++){ const x = q.getX(i), u = x/16; q.setZ(i, q.getZ(i) + 2.2*Math.sin(Math.min(u/.4, 1)*Math.PI/2) - Math.pow(Math.max(0, u - .4), 1.4)*4); }
+    w.geometry.computeVertexNormals(); w.rotation.set(-Math.PI/2, 0, -Math.PI/2); w.position.x = 1; p.add(w); return {p, s:sd}; });
   g.userData.wings = wings; return g; }
-// The whale: one long smooth body, dark blue-grey on top and pale underneath, long flippers and wide flukes.
+// The whale: one long smooth body, dark blue-grey on top and pale underneath, long soft flippers and wide flukes that grow
+// out of the body without seams.
 export function whaleModel(){
   const g = new T.Group(), body = new T.Group(); g.add(body);
   body.add(latheBody([[-56, 0], [-54, 3.5], [-44, 7], [-28, 12], [-8, 16.5], [12, 18], [30, 17.5], [44, 15.5], [54, 11.5], [60, 6], [62, 0]], '#4d6d86', '#d3dcdf', .82, 1.08, 30, -.1));
-  for (const sd of [-1, 1]){ const f = fin(smooth([[0, -2.5], [12, -4], [24, -6], [26, -3], [14, 1.5], [0, 2.5]], 18), 1.6, '#3f5d74'); f.geometry.rotateX(Math.PI/2); f.geometry.rotateY(-Math.PI/2 - .5); // a long flipper pointing out and back
-    const piv = new T.Group(); piv.position.set(22, -8, sd*15); piv.scale.z = sd; piv.rotation.x = sd*.5; piv.add(f); body.add(piv);
-    const eye = soft(new T.SphereGeometry(1.4, 10, 8), '#1d2633'); eye.position.set(46, -1, sd*14.8); body.add(eye); }
-  const hump = fin(smooth([[4, 0], [-2, 3.2], [-7, 4], [-10, 0]], 12), 2.2, '#456580'); hump.position.set(-24, 10.5, 0); body.add(hump); // a low fin on the back, near the tail
+  for (const sd of [-1, 1]){ const f = blade(36, 7.5, 1.8, .7, .35, 0, '#3f5d74'); // a long flipper, root sunk into the body, pointing out, down and back
+    f.rotation.set(sd*-.6, sd*(Math.PI/2 + .55), 0); f.position.set(24, -8, sd*9); body.add(f);
+    const eye = soft(new T.SphereGeometry(1.4, 12, 10), '#1d2633'); eye.position.set(46, -1, sd*14.8); body.add(eye); }
+  const hump = blade(9, 3.2, 1.4, .8, -.3, 0, '#456580'); hump.rotation.z = Math.PI/2 + .9; hump.position.set(-22, 8.5, 0); body.add(hump); // a low fin on the back, near the tail
   const tail = new T.Group(); tail.position.set(-52, 1, 0); body.add(tail);
-  const fl = fin(smooth([[4, 0], [-4, -6], [-14, -18], [-18, -24], [-11, -16], [-7, -6], [-9, 0], [-7, 6], [-11, 16], [-18, 24], [-14, 18], [-4, 6], [4, 0]], 30), 1.6, '#3f5d74');
-  fl.rotation.x = Math.PI/2; tail.add(fl);
+  for (const sd of [-1, 1]){ const fl = blade(30, 9, 1.6, .7, -.3*sd, 0, '#3f5d74'); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*.95); fl.position.x = 2; tail.add(fl); }
   const spout = []; for (let k=0;k<7;k++){ const p = mesh(new T.SphereGeometry(5, 10, 8), '#f4fbff', {transparent:true, opacity:.8, flatShading:false}, false); p.material = p.material.clone(); p.visible = false; g.add(p); spout.push(p); }
   g.userData = {body, tail, spout};
   return g;
 }
-// The kraken: a huge plum-colored sea monster. Only its round head, two big eyes and six curling tentacles show above the water.
+// The kraken: a huge plum-colored sea monster. Only its curling tentacles show above the water, spread far apart.
 // userData.tents = [{piv, ph}] so they can sway; the group's y is how far it has risen out of the sea.
 function tentacleGeo(len, r0){
   const pts = []; for (let i=0;i<=10;i++){ const u = i/10; pts.push(new T.Vector3(len*.32*Math.sin(u*Math.PI*1.15), len*.9*Math.sin(u*Math.PI*.5), 0)); } // up and curling over at the tip
@@ -199,35 +210,41 @@ function tentacleGeo(len, r0){
   geo.computeVertexNormals(); return geo;
 }
 export function krakenModel(){
+  // only its tentacles break the surface, far apart from each other, so you can only guess how big the beast below must be.
+  // Each rises from its own ring of foam; the body stays hidden in the deep.
   const g = new T.Group(), body = new T.Group(); g.add(body);
-  const head = soft(new T.SphereGeometry(26, 28, 20), '#7d3157'); head.scale.set(1, 1.2, 1); head.position.y = 4; body.add(head);
-  for (const [x, y, z, r] of [[-8, 26, 12, 4], [6, 30, -10, 3.2], [-14, 16, -16, 3.6], [12, 18, 15, 2.8]]){ const sp = soft(new T.SphereGeometry(r, 12, 8), '#a5527c'); sp.scale.y = .5; sp.position.set(x, y, z); sp.lookAt(0, 4, 0); body.add(sp); } // pale spots
-  for (const sd of [-1, 1]){ const eye = soft(new T.SphereGeometry(6.5, 16, 12), '#f3d36a'); eye.position.set(21, 12, sd*11); body.add(eye);
-    const pupil = soft(new T.SphereGeometry(3.4, 12, 10), '#1d1420'); pupil.position.set(26.5, 12, sd*11.5); body.add(pupil); }
   g.userData.tents = [];
-  for (let i=0;i<6;i++){ const a = i/6*Math.PI*2 + .3, piv = new T.Group(), len = 70 + (i % 3)*14;
-    piv.position.set(Math.cos(a)*34, -6, Math.sin(a)*34); piv.rotation.y = -a; body.add(piv);
-    const t = soft(tentacleGeo(len, 7.5), '#8e3a63'); piv.add(t); g.userData.tents.push({piv, ph:i*1.7}); }
+  const spots = [[0, 0], [70, 105], [-65, 120], [150, 20], [-150, 35], [95, -95], [-90, -105]];
+  spots.forEach(([x, z], i) => { const piv = new T.Group(), len = 82 + (i*37 % 4)*12, a = Math.atan2(-z, -x) + (i % 2 ? .6 : -.6);
+    piv.position.set(x, -4, z); piv.rotation.y = a; body.add(piv);
+    const t = soft(tentacleGeo(len, 9 + (i % 3)*1.5), i % 2 ? '#8e3a63' : '#7d3157'); piv.add(t);
+    // pale suckers along the inside of the curl
+    for (let k=1;k<6;k++){ const u = k/7, sk = soft(new T.SphereGeometry(1.6*(1 - u*.6), 10, 8), '#d891b0'); sk.scale.set(1, .45, 1);
+      sk.position.set(len*.32*Math.sin(u*Math.PI*1.15) + 6.5*(1 - u*.8), len*.9*Math.sin(u*Math.PI*.5), 0); t.add(sk); }
+    const ring = new T.Mesh(new T.RingGeometry(11, 20, 28), new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.7, depthWrite:false}));
+    ring.rotation.x = -Math.PI/2; ring.position.set(x, 4, z); body.add(ring);
+    g.userData.tents.push({piv, ph:i*1.7, ring, delay:(i*.37) % 1}); });
   g.userData.body = body; return g;
 }
-// A dolphin: a slim smooth body with a short beak, a curved fin on its back, flippers and flukes.
+// A dolphin: a slim smooth body with a short beak, and soft fins that grow out of it: a curved fin on the back, two
+// flippers and the flukes.
 export function dolphinModel(){
-  const g = new T.Group();
-  g.add(latheBody([[-17, 0], [-15, 1.2], [-10, 2.6], [-3, 4.3], [3, 4.8], [8, 4.2], [11.5, 3.2], [13.5, 2.1], [14.5, 1.3], [17.5, .95], [18.6, 0]], '#7f94a6', '#eef2f3', .9, .85, 24, -.05));
-  const df = fin(smooth([[-3, 0], [1, 2.4], [-1.5, 6.2], [-4.2, 7.4], [-4.6, 5], [-6.5, 0]], 18), .7, '#6b8194'); df.position.set(1, 3.4, 0); g.add(df);
-  for (const sd of [-1, 1]){ const pf = fin(smooth([[0, 0], [-2.5, -1.5], [-6, -2.2], [-3.5, .8], [0, 1.2]], 12), .5, '#6b8194'); pf.rotation.x = Math.PI/2 + sd*.5; pf.position.set(8, -2.4, sd*3.2); g.add(pf); }
-  const fl = fin(smooth([[2, 0], [-2, -2.5], [-5, -6.5], [-3.6, -2.6], [-3.4, 0], [-3.6, 2.6], [-5, 6.5], [-2, 2.5], [2, 0]], 22), .55, '#6b8194');
-  fl.rotation.x = Math.PI/2; fl.position.set(-16, .2, 0); g.add(fl);
+  const g = new T.Group(), C = '#6b8194';
+  g.add(latheBody([[-17, 0], [-15, 1.2], [-10, 2.6], [-3, 4.3], [3, 4.8], [8, 4.2], [11.5, 3.2], [13.5, 2.1], [14.5, 1.3], [17.5, .95], [18.6, 0]], '#7f94a6', '#eef2f3', .9, .85, 28, -.05));
+  const df = blade(8, 3.4, .8, .85, -.5, 0, C); df.rotation.z = Math.PI/2 + .55; df.position.set(1, 2.6, 0); g.add(df);
+  for (const sd of [-1, 1]){ const pf = blade(6.5, 1.8, .5, .7, .4, 0, C); pf.rotation.set(sd*-.7, sd*(Math.PI/2 + .7), 0); pf.position.set(7.5, -2.2, sd*2); g.add(pf);
+    const fl = blade(7, 2.2, .5, .75, -.35*sd, 0, C); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*.95); fl.position.set(-15.5, .2, 0); g.add(fl); }
   return g;
 }
-// A fish: a smooth, slim body, dark on the back and silver underneath, a forked tail and a fin on top. The swordfish has its sword.
+// A fish: a small, smooth, slim body, dark on the back and silver underneath, a soft forked tail and a fin on top.
+// The swordfish has its sword.
 export function fishModel(kind = 'tuna'){
   const g = new T.Group(), sw = kind === 'swordfish', top = kind === 'sardine' ? '#5f8fa8' : sw ? '#3f5f86' : '#33507a';
-  g.add(latheBody([[-4.6, 0], [-4, .4], [-2.2, 1.5], [0, 2.1], [2.2, 1.9], [3.8, 1.2], [4.6, 0]], top, '#e6eef2', 1, .55, 24, .05));
-  const tail = fin(smooth([[.6, 0], [-1.4, -1.4], [-3, -2.6], [-2.2, -.4], [-2.2, .4], [-3, 2.6], [-1.4, 1.4], [.6, 0]], 16), .2, top); tail.position.x = -4.2; g.add(tail);
-  const df = fin(smooth([[1.2, 0], [-.4, 1.8], [-1.6, 2], [-2, 0]], 10), .18, top); df.position.set(.6, 1.8, 0); g.add(df);
-  if (sw){ const bill = soft(new T.ConeGeometry(.35, 6, 10), '#2f3f55'); bill.rotation.z = -Math.PI/2; bill.position.x = 7.4; g.add(bill); }
-  g.scale.setScalar(1.2); return g;
+  g.add(latheBody([[-4.6, 0], [-4, .45], [-2.2, 1.5], [0, 2.1], [2.2, 1.9], [3.8, 1.2], [4.6, 0]], top, '#e6eef2', 1, .58, 28, .05));
+  for (const sd of [-1, 1]){ const t = blade(3, 1, .22, .5, -.25*sd, 0, top); t.rotation.set(Math.PI/2, 0, Math.PI - sd*.6); t.position.x = -3.9; g.add(t); }
+  const df = blade(2.6, 1, .2, .8, -.4, 0, top); df.rotation.z = Math.PI/2 + .6; df.position.set(.6, 1.4, 0); g.add(df);
+  if (sw){ const bill = soft(new T.ConeGeometry(.35, 6, 12), '#2f3f55'); bill.rotation.z = -Math.PI/2; bill.position.x = 7.4; g.add(bill); }
+  g.scale.setScalar(.85); return g;
 }
 
 // An iceberg: chunks of ice with sharp facets, a wide flat-topped slab, a tall cracked peak and a smaller chunk at its side.

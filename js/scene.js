@@ -1,14 +1,14 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=ef9eba3';
-import {seaInfo, sstep, landDist, WEATHER_WAVES, WORLD} from './world.js?v=ef9eba3';
-import {G} from './state.js?v=ef9eba3';
-import {TOD, updateDayNight} from './daynight.js?v=ef9eba3';
-import {showGrass} from './grass.js?v=ef9eba3';
+import {QUALITY} from './config.js?v=7eda492';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=7eda492';
+import {G} from './state.js?v=7eda492';
+import {TOD, updateDayNight} from './daynight.js?v=7eda492';
+import {showGrass} from './grass.js?v=7eda492';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
 export const renderer = new T.WebGLRenderer({canvas, antialias:true});
-renderer.shadowMap.type = T.PCFSoftShadowMap;
+renderer.shadowMap.type = T.PCFShadowMap; // PCF with a radius: soft edges (PCFSoft ignores the radius in this three.js)
 export const scene = new T.Scene();
 const SKY = new T.Color('#a9c9cf'), STORMSKY = new T.Color('#46525c'), MIST = new T.Color('#f1ede2');
 scene.background = SKY.clone();
@@ -18,7 +18,8 @@ const hemi = new T.HemisphereLight(0xe6f0f2, 0x7d8670, .62); scene.add(hemi);
 const sun = new T.DirectionalLight(0xffe6c4, .64);
 sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
 Object.assign(sun.shadow.camera, {left:-520, right:520, top:520, bottom:-520, near:10, far:2200});
-sun.shadow.bias = -.0015; scene.add(sun, sun.target);
+// the bias and normal bias lift shadows off the surface that casts them: without enough, some phones draw stripes on flat ground and helmets
+sun.shadow.bias = -.0006; sun.shadow.normalBias = 2.2; sun.shadow.radius = 3; scene.add(sun, sun.target);
 
 export const view = {W:innerWidth, H:innerHeight, DPR:1};
 let quality = QUALITY.high;
@@ -43,29 +44,37 @@ function buildWater(seg){
   const n = wgeo.attributes.position.count;
   wgeo.setAttribute('color', new T.BufferAttribute(new Float32Array(n*3), 3));
   wgeo.setAttribute('aAmp', new T.BufferAttribute(new Float32Array(n), 1));
+  wgeo.setAttribute('aShore', new T.BufferAttribute(new Float32Array(n), 1)); // 0 at the shore (flat water), 1 out at sea
   wgeo.boundingSphere = new T.Sphere(new T.Vector3(), waterSize); // the waves move in the shader
   water = new T.Mesh(wgeo, waterMat);
   water.receiveShadow = true; water.frustumCulled = false; scene.add(water);
+  // the sea floor: a darker copy of the water's colors a little way down. The water is slightly see-through, so sand under the
+  // shallows, the island bases and the hulls below the waterline show through softly.
+  if (bed){ scene.remove(bed); bed.geometry.dispose(); }
+  const bg = new T.PlaneGeometry(waterSize, waterSize, WN, WN); bg.rotateX(-Math.PI/2); bg.setAttribute('color', wgeo.attributes.color);
+  bed = new T.Mesh(bg, bedMat); bed.frustumCulled = false; scene.add(bed);
 }
+let bed = null;
+const bedMat = new T.MeshBasicMaterial({vertexColors:true, color:'#8fa6b8', fog:true});
 // Two looks for the sea. Classic: deep teal. Bright (a setting, on by default): clear blue with soft white foam, like a cartoon sea.
 const LOOKS = {classic:['#2b8e8f', '#175c7c', '#1b4a63', '#5cc2b2'], bright:['#35a6d8', '#1d72cc', '#1a5fb4', '#7fd3e2']};
 const CCOLD = new T.Color('#3d6f8f'), CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
-const waterMat = new T.MeshPhongMaterial({color:'#ffffff', vertexColors:true, specular:'#000000', shininess:1});
+const waterMat = new T.MeshPhongMaterial({color:'#ffffff', vertexColors:true, specular:'#000000', shininess:1, transparent:true, opacity:.8});
 const foamU = {uNight:{value:0}, uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
 // the same swells as waveH() in world.js, written for the graphics card, with their slope (for the light) and smaller waves on top
 const WAVES_GLSL = `
-  vec3 swell(vec2 p, float A, float t){ // height, slope along x, slope along z (keep in step with waterY() in world.js)
+  vec3 swell(vec2 p, float A, float t, float shore){ // height, slope along x, slope along z (keep in step with waterY() in world.js)
     float a = p.x*.011 + t*1.3, b = p.y*.013 - t*1.1, c = (p.x + p.y)*.021 + t*2.;
     vec3 big = vec3(sin(a) + sin(b)*.8 + sin(c)*.4, .011*cos(a) + .4*.021*cos(c), .8*.013*cos(b) + .4*.021*cos(c))/2.2*A;
     // smaller waves from other directions, there even in the calm shallows, so the sea always rolls a little
-    float d = p.x*.034 - p.y*.021 + t*1.9, e = p.x*.018 + p.y*.039 - t*1.6, C = 1.8 + A*.15;
+    float d = p.x*.034 - p.y*.021 + t*1.9, e = p.x*.018 + p.y*.039 - t*1.6, C = (1.8 + A*.15)*shore;
     vec3 chop = vec3(sin(d)*.22 + sin(e)*.18, .22*.034*cos(d) + .18*.018*cos(e), -.22*.021*cos(d) + .18*.039*cos(e))*C*2.;
     return big + chop;
   }`;
 waterMat.onBeforeCompile = sh => {
   Object.assign(sh.uniforms, foamU);
-  sh.vertexShader = `attribute float aAmp; uniform float uTime, uWave; varying vec3 vWorld; varying float vH, vAmp;` + WAVES_GLSL + "\n" + sh.vertexShader
-    .replace('#include <beginnormal_vertex>', `vec3 wp0 = (modelMatrix*vec4(position, 1.0)).xyz; float A = aAmp*uWave; vec3 sw = swell(wp0.xz, A, uTime);
+  sh.vertexShader = `attribute float aAmp, aShore; uniform float uTime, uWave; varying vec3 vWorld; varying float vH, vAmp;` + WAVES_GLSL + "\n" + sh.vertexShader
+    .replace('#include <beginnormal_vertex>', `vec3 wp0 = (modelMatrix*vec4(position, 1.0)).xyz; float A = aAmp*uWave; vec3 sw = swell(wp0.xz, A, uTime, aShore);
       vec3 objectNormal = normalize(vec3(-sw.y, 1., -sw.z));`)
     .replace('#include <begin_vertex>', `vec3 transformed = position; transformed.y += sw.x; vH = sw.x; vAmp = max(A, .5);
       vWorld = (modelMatrix*vec4(transformed, 1.0)).xyz;`);
@@ -91,7 +100,7 @@ waterMat.onBeforeCompile = sh => {
       float hk = clamp(vH/vAmp, -1., 1.);
       diffuseColor.rgb *= .8*mix(.8, 1.14, smoothstep(-1., 1., hk)); // (the light here is smooth, not banded, so a little darker to match the old look)
       diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*vec3(.92, 1.06, 1.04), smoothstep(.3, 1., hk)*.6);
-      diffuseColor.rgb *= (.93 + .12*vnoise(vWorld.xz/520. + uTime*.01))*(1. + uNight*.3); // a touch brighter at night so you can still read the water`)
+      diffuseColor.rgb *= (.93 + .12*vnoise(vWorld.xz/520. + uTime*.01))*(1. + uNight*.08); // a touch brighter at night so you can still read the water`)
     .replace('#include <dithering_fragment>', `#include <dithering_fragment>
       vec3 foamC = mix(vec3(.94, .98, 1.), vec3(.32, .62, .68), uStorm);
       foamC = mix(foamC, vec3(.42, .55, .78), uNight*.7); // moonlit foam: softer and bluer
@@ -122,18 +131,18 @@ let wKey = '';
 export function updateWater(){
   foamU.uTime.value = G.t; foamU.uWave.value = WEATHER_WAVES.k;
   const step = waterSize/WN*Math.max(1, Math.round(100/(waterSize/WN))), ox = Math.round(G.cam.x/step)*step, oz = Math.round(G.cam.y/step)*step;
-  water.position.set(ox, 0, oz);
-  const p = wbase, c = wgeo.attributes.color.array, amp = wgeo.attributes.aAmp.array, key = ox + ',' + oz + ',' + CSEA.getHex() + ',' + wgeo.uuid; // a rebuilt water tile (zoom, graphics) always gets its colors again
+  water.position.set(ox, 0, oz); bed.position.set(ox, -24, oz);
+  const p = wbase, c = wgeo.attributes.color.array, amp = wgeo.attributes.aAmp.array, shore = wgeo.attributes.aShore.array, key = ox + ',' + oz + ',' + CSEA.getHex() + ',' + wgeo.uuid; // a rebuilt water tile (zoom, graphics) always gets its colors again
   if (key === wKey) return; wKey = key;
   for (let i=0, v=0;i<p.length;i+=3, v++){
     const x = p[i] + ox, z = p[i+2] + oz, s = seaInfo(x, z);
-    amp[v] = s.amp/(WEATHER_WAVES.k || 1);
-    tmpC.copy(CSH).lerp(CSEA, s.k0).lerp(CST, s.k1);
-    const ld = landDist(x, z); if (ld < 170) tmpC.lerp(CLAG, sstep(170, 0, ld)*.85); // light lagoon water near every shore: the crew fishes here
+    const ld = landDist(x, z), sk = shoreK(ld); shore[v] = sk;
+    amp[v] = s.amp/(WEATHER_WAVES.k || 1)*sk; // the waves die down right at the shore, so they never wash over the sand in jagged steps
+    tmpC.copy(CSH).lerp(CSEA, s.k0).lerp(CST, s.k1); if (ld < 170) tmpC.lerp(CLAG, sstep(170, 0, ld)*.85); // light lagoon water near every shore: the crew fishes here
     tmpC.lerp(CCOLD, sstep(WORLD*.36, WORLD*.2, z)*.6); // colder, greyer water in the far north
     c[i] = tmpC.r; c[i+1] = tmpC.g; c[i+2] = tmpC.b;
   }
-  wgeo.attributes.color.needsUpdate = true; wgeo.attributes.aAmp.needsUpdate = true;
+  wgeo.attributes.color.needsUpdate = true; wgeo.attributes.aAmp.needsUpdate = true; wgeo.attributes.aShore.needsUpdate = true;
 }
 
 // Builder zoom: grows the water tile, fog and shadow area to match how far out the camera is.
@@ -206,15 +215,20 @@ export function screenToSea(sx, sy){
 // ---- the "tiny world" look (a setting): tilt-shift blur at the top and bottom of the screen, a little more color and warmth,
 // and a soft vignette, so the sea looks like a miniature model, like Tiny Glade. The middle band, where your ship is, stays sharp.
 let rt = null;
-const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.Vector2(1, 1)}, focus:{value:.5}}, depthTest:false, depthWrite:false,
+const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.Vector2(1, 1)}, focus:{value:.5}, bloom:{value:0}}, depthTest:false, depthWrite:false,
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
-  fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus; varying vec2 vUv;
+  fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom; varying vec2 vUv;
     void main(){
       float d = abs(vUv.y - focus), r = smoothstep(.26, .5, d)*15.0; // only the outer edges blur
       // a soft round blur: 24 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
       vec4 c = texture2D(tex, vUv); float tot = 1., spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
       if (r > .4) for (int i = 1; i <= 16; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/16.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; } // the sharp middle skips the blur
-      vec3 col = c.rgb/tot; float l = dot(col, vec3(.299, .587, .114));
+      vec3 col = c.rgb/tot;
+      // bloom: a wide ring of samples, only the bright parts, added back as a warm glow
+      if (bloom > .01){ vec3 b = vec3(0.); for (int i = 0; i < 16; i++){ float k = float(i), a = k*.7854 + (i >= 8 ? .39 : 0.), rr = (i >= 8 ? 15. : 7.)*res.y/900.; // two fixed rings: smooth, no grain
+          vec3 sc = texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res).rgb; b += max(sc - .6, 0.)*(i >= 8 ? .6 : 1.); }
+        col += b/12.*bloom*vec3(1.25, 1.05, .8); }
+      float l = dot(col, vec3(.299, .587, .114));
       col = mix(vec3(l), col, 1.15)*vec3(1.035, 1.0, .955);
       col *= mix(.84, 1., smoothstep(.98, .45, length((vUv - .5)*vec2(1.1, 1.))));
       gl_FragColor = vec4(col, 1.);
@@ -228,5 +242,5 @@ export function renderFrame(on){
   if (!rt || rt.width !== w || rt.height !== h){ if (rt) rt.dispose();
     rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); }
   renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
-  post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); renderer.render(postScene, postCam);
+  post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .15 + TOD.night*3.2; // a hint by day, strong at night around flames and windows renderer.render(postScene, postCam);
 }

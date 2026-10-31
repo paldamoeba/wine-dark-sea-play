@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=ef9eba3">
+<link rel="stylesheet" href="css/style.css?v=7eda492">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -11,6 +11,7 @@
 <canvas id="cv" aria-label="The sea"></canvas>
 <canvas id="ov"></canvas>
 <div class="hud" aria-live="polite">
+  <div class="medal" id="medal" title="Your ship's rank"><b id="rank">1</b><span>Rank</span></div>
   <div class="lifebar" title="Hull"><i class="ic" data-ic="hull"></i><div class="bar"><i id="hullbar"></i></div></div>
   <div class="hudbar">
     <div class="hi" id="goldChip" title="Drachmae"><i class="ic" data-ic="coin"></i><b id="gold">0</b></div>
@@ -49,6 +50,8 @@
     <p>Tap the chart to set a course. Drag to look around, pinch to zoom.</p>
   </footer>
 </div>
+<div class="mission" id="mission" hidden></div>
+<div class="caution" id="caution" hidden><span class="cic">!</span><p id="cautionText"></p></div>
 <div class="zone" id="zone"><h2 id="zoneName">The Shallows</h2><p id="zoneSub">Calm water around Kallisto</p></div>
 <div class="toast" id="toast" hidden></div>
 <div class="hint" id="hint" hidden>Double tap the sea to sail there, or press and drag to steer.<br>Stop on glinting water near islands and your crew fishes. Bubbling water holds big fish.</div>
@@ -64,4 +67,4 @@
 <script>
   if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
 </script>
-<script type="module" src="js/main.js?v=ef9eba3"></script>
+<script type="module" src="js/main.js?v=7eda492"></script>

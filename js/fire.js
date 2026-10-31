@@ -1,5 +1,5 @@
 // Fire and smoke on badly damaged ships. Starts below FIRE_AT of the hull and grows as the hull drops.
-import {smokeColumn} from './smoke.js?v=ef9eba3';
+import {smokeColumn} from './smoke.js?v=7eda492';
 const T = window.THREE;
 export const FIRE_AT = .4;
 
@@ -20,8 +20,9 @@ export function makeFire(len, beam, deck){
     f.userData = {s, ph:i*1.7}; g.add(f); flames.push(f);
   }
   // one thick, swaying column of smoke per flame: dark at the bottom, turning soft grey as it rises and spreads
-  for (let i=0;i<n;i++){
-    const m = smokeColumn({h:110 + len*.35, r0:2.5 + beam*.08, r1:13 + beam*.35, sway:11, base:'#3b393d', top:'#a9a6a8', alpha:.88, speed:1.25, lean:1.3});
+  const SIZES = [1, .62, 1.3, .8]; // one big column, smaller ones beside it
+  for (let i=0;i<n;i++){ const k = SIZES[i % SIZES.length];
+    const m = smokeColumn({h:(110 + len*.35)*(.7 + k*.3), r0:(2.5 + beam*.08)*k, r1:(13 + beam*.35)*k, sway:8 + k*4, base:'#3b393d', top:'#a9a6a8', alpha:.88, speed:1.1 + (1 - k)*.5, lean:1.3});
     m.userData.from = flames[i]; g.add(m); smoke.push(m);
   }
   const embers = []; for (let i=0;i<n*3;i++){ const e = new T.Mesh(emberGeo, EMBER); e.userData = {ph:Math.random(), from:flames[i % n], dx:(Math.random() - .5)*20, dz:(Math.random() - .5)*20}; g.add(e); embers.push(e); }

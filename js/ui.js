@@ -1,22 +1,22 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=ef9eba3';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=ef9eba3';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=ef9eba3';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=ef9eba3';
-import {swapBoat, refreshAllTrees} from './entities.js?v=ef9eba3';
-import {setZoom} from './input.js?v=ef9eba3';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=ef9eba3';
-import {tutHTML} from './tutorial.js?v=ef9eba3';
-import {founded, blessing, seats, candidates} from './crew.js?v=ef9eba3';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=ef9eba3';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=ef9eba3';
-import {effectText, buy} from './upgrades.js?v=ef9eba3';
-import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=ef9eba3';
-import {GOODS, WAR} from './config.js?v=ef9eba3';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=ef9eba3';
-import {W, KINDS} from './weather.js?v=ef9eba3';
-import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=ef9eba3';
-import {setTimeOfDay} from './daynight.js?v=ef9eba3';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=7eda492';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=7eda492';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=7eda492';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=7eda492';
+import {swapBoat, refreshAllTrees} from './entities.js?v=7eda492';
+import {setZoom} from './input.js?v=7eda492';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=7eda492';
+import {tutHTML} from './tutorial.js?v=7eda492';
+import {founded, blessing, seats, candidates} from './crew.js?v=7eda492';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=7eda492';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=7eda492';
+import {effectText, buy} from './upgrades.js?v=7eda492';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=7eda492';
+import {GOODS, WAR} from './config.js?v=7eda492';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=7eda492';
+import {W, KINDS} from './weather.js?v=7eda492';
+import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=7eda492';
+import {setTimeOfDay} from './daynight.js?v=7eda492';
 
 const $ = id => document.getElementById(id);
 
@@ -37,7 +37,7 @@ export function updateUI(dt, nearDock){
   const sh = ship(), used = holdUsed(), key = [G.S.gold, used, sh.hold, Math.ceil(G.S.hull)].join('|');
   if (key !== lastHud){
     lastHud = key;
-    $('gold').textContent = G.S.gold; $('hold').textContent = used + '/' + sh.hold;
+    $('rank').textContent = G.S.tier + 1; $('gold').textContent = G.S.gold; $('hold').textContent = used + '/' + sh.hold;
     $('holdChip').classList.toggle('full', used >= sh.hold);
     const pct = Math.max(0, G.S.hull/sh.hull*100); $('hullbar').style.width = pct + '%'; $('hullbar').classList.toggle('low', pct < 35);
   }
@@ -88,7 +88,7 @@ function render(){ const st = sheetEl.scrollTop;
 // The end of chapter one.
 function endHTML(){
   const S = G.S, mins = Math.round((S.playSeconds || 0)/60), ships = (S.owned || []).length || S.tier + 1;
-  return `<div class="mtop">${top('Chapter one complete', '<span class="xspace"></span>')}</div><div class="mbody">
+  return `<div class="mtop">${top('Chapter one complete')}</div><div class="mbody">
     ${card('The pirate king is beaten', `<div class="endpic">${IC.ship}${IC.swords}${IC.star}</div>
       <p class="endtxt">Polycrates' black and gold galley lies at the bottom of the sea, and the merchants of the Aegean sail safe again. From one little rowboat you built a fleet${S.crewName ? ` and the ${S.crewName}` : ''}.</p>
       <div class="stats big">${IC.ship} ${ships} ships · ${IC.coin} ${S.gold} drachmae · ${mins} min at sea</div>`)}
@@ -148,7 +148,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 43</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 44</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -179,7 +179,7 @@ function settingsHTML(){
       ${row('Reveal the whole chart', '', '<button class="btn" data-act="revealall">Reveal</button>')}
       ${row('Add drachmae and materials', '100 drachmae, 200 wood, 20 bronze, 20 linen.', '<button class="btn" data-act="givestuff">Add</button>')}` : ''}
       ${row('Model showroom', 'Every ship, fortress and statue in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')}`, 'dev');
-  return `<div class="mtop">${top('Settings', '<span class="xspace"></span>')}${tabBar(list, tabs.set, 'set')}</div><div class="mbody">${tabs.set === 'gfx' ? gfx : tabs.set === 'dev' ? dev : game}</div>`;
+  return `<div class="mtop">${top('Settings')}${tabBar(list, tabs.set, 'set')}</div><div class="mbody">${tabs.set === 'gfx' ? gfx : tabs.set === 'dev' ? dev : game}</div>`;
 }
 
 // every button gives a soft tap
