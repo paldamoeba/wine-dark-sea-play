@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS} from './config.js?v=5a6bfb2';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=5a6bfb2';
-import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=5a6bfb2';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5a6bfb2';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=5a6bfb2';
-import {board, active, canDeliver, goal} from './quests.js?v=5a6bfb2';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=5a6bfb2';
-import {shipPortrait} from './portrait.js?v=5a6bfb2';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=5a6bfb2';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS} from './config.js?v=f11df90';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=f11df90';
+import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=f11df90';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=f11df90';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=f11df90';
+import {board, active, canDeliver, goal} from './quests.js?v=f11df90';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=f11df90';
+import {shipPortrait} from './portrait.js?v=f11df90';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=f11df90';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -32,6 +32,7 @@ export const IC = {
   world: svg(`<circle cx="12" cy="12" r="9" fill="${SEA}"/><path d="M7 9 Q9 6 12 8 Q11 11 8 11Z M13 14 Q16 12 17 15 Q15 18 13 16Z" fill="#76883c"/>`),
   hull: svg(`<path d="M12 3 L20 6 V12 Q20 18 12 21 Q4 18 4 12 V6Z" fill="${WOOD}"/><path d="M5 9h14M4.5 13h15M6 17h12" stroke="#6e4a2a" stroke-width="1.3"/>`),
   speed: svg(`<path d="M4 20 L17 5" stroke="${WOOD}" stroke-width="2.4" stroke-linecap="round"/><path d="M15 3 L21 3 L21 9 L17 7Z" fill="${WOOD}"/><path d="M3 12h5M2 16h4" stroke="${SEA}" stroke-width="2" stroke-linecap="round"/>`),
+  chain: svg(`<circle cx="6" cy="17" r="4" fill="#4a525c"/><circle cx="18" cy="7" r="4" fill="#4a525c"/><circle cx="4.8" cy="15.8" r="1.2" fill="#8a96a3"/><circle cx="16.8" cy="5.8" r="1.2" fill="#8a96a3"/><path d="M9 14.5 Q11 11 12.5 12 Q14 13 15 10" stroke="#6b5a48" stroke-width="2" fill="none" stroke-dasharray="2.4 1.4"/>`),
   seats: svg(`<circle cx="7" cy="7" r="2.6" fill="#e3b591"/><path d="M4 18 L5 10 H9 L10 18Z" fill="#3f6c94"/><circle cx="17" cy="7" r="2.6" fill="#e3b591"/><path d="M14 18 L15 10 H19 L20 18Z" fill="#cf9035"/><path d="M12 9v6M9 12h6" stroke="${INK}" stroke-width="1.8" stroke-linecap="round"/>`),
   arrows: svg(`<path d="M4 20 L18 6" stroke="#6e4a2a" stroke-width="2"/><path d="M15 4 L21 3 L20 9Z" fill="#9aa1a8"/><path d="M4 20 l-1-4 M4 20 l4 1" stroke="#c64a3c" stroke-width="2" stroke-linecap="round"/>`),
   ram: (c = '#b07f3c') => svg(`<path d="M2 9 H14 L22 12 L14 15 H2Z" fill="${c}"/><path d="M5 9 V15 M9 9 V15" stroke="rgba(0,0,0,.25)" stroke-width="1.4"/>`),
@@ -100,8 +101,8 @@ export const goodPrice = (h, k) => Math.round(GOODS[k].base*(h.free ? FREEPORT.g
 export const canBuyGood = (h, k) => !GOODS[k].rare || !!h.free;
 export const goodSell = (h, k) => Math.round(goodPrice(h, k)*TRADE.sellK);
 const JOB_IC = {catch:() => IC.fish(), deliver:() => IC.hold, salvage:() => IC.wreck, wood:() => IC.wood, visit:() => IC.letter, sink:() => IC.swords};
-const UP_NAME = {hull:'Hull', oars:'Oars', sail:'Sail', helm:'Helm', seats:'Crew', arrows:'Arrows', ram:'Ram', fire:'Fire'}; // short names under the upgrade pictures
-const UP_IC = {fire:() => IC.flame, sail:() => IC.sail, helm:() => IC.helm, hull:() => IC.hull, oars:() => IC.rower, seats:() => IC.seats, arrows:() => IC.arrows, ram:() => IC.ram((ramMat(lvl('ram') + 1) || ramMat(lvl('ram')) || {color:'#8a5a30'}).color)};
+const UP_NAME = {hull:'Hull', oars:'Oars', sail:'Sail', helm:'Helm', seats:'Crew', arrows:'Arrows', ram:'Ram', fire:'Fire', chain:'Chains'}; // short names under the upgrade pictures
+const UP_IC = {chain:() => IC.chain, fire:() => IC.flame, sail:() => IC.sail, helm:() => IC.helm, hull:() => IC.hull, oars:() => IC.rower, seats:() => IC.seats, arrows:() => IC.arrows, ram:() => IC.ram((ramMat(lvl('ram') + 1) || ramMat(lvl('ram')) || {color:'#8a5a30'}).color)};
 export const FISH_COLOR = {sardine:'#9fb8c8', tuna:'#4f7fa3', swordfish:'#2f5f8a'};
 // cost chips: "12 [log] 40 [coin]", red when you're short
 const chip = (icon, n, ok = true) => `<span class="chipc ${ok ? '' : 'short'}">${icon}${n}</span>`;

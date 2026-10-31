@@ -662,3 +662,96 @@ body.big .mapview .maphead,body.big .mapview .mapbtns,body.big .mapview .legend{
 body.big .sheet{overflow-x:hidden}
 .raid.capture{background:linear-gradient(#e0b04a,#b8822a)!important;color:#2a1d17!important}
 body.big .raid.capture{zoom:1.5}
+
+/* ==== P50: cozy and clean. One soft cream card top-left (hull, loads, coins, weather), round soft buttons, thin rounded bars,
+   no wood frames. Everything below overrides the older layers above. ==== */
+:root{--cz-card:rgba(255,251,243,.94);--cz-solid:#fffbf3;--cz-ink:#3d3229;--cz-muted:#8b7b6b;--cz-line:#ece2d0;--cz-track:#ebe3d3;
+  --cz-teal:#2f8f9d;--cz-teal2:#257784;--cz-coral:#e2725b;--cz-coral2:#c95a44;--cz-gold:#e8ad3c;--cz-green:#6cbf6a;
+  --cz-shadow:0 6px 18px rgba(35,30,25,.16),0 1px 3px rgba(35,30,25,.12)}
+/* the card */
+.hud{background:var(--cz-card)!important;border-radius:18px;padding:9px 11px 8px!important;gap:7px!important;box-shadow:var(--cz-shadow);
+  width:max-content;min-width:150px;max-width:calc(100% - 170px)!important;right:auto!important;align-items:stretch!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hudbar,.lifebar,.loads{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+/* hull: a thin rounded bar */
+.lifebar .bar{width:auto!important;min-width:0!important;flex:1;height:9px!important;border-radius:6px!important;background:var(--cz-track)!important;border:0!important;box-shadow:none!important}
+.lifebar .bar i{background:var(--cz-green)!important;border-radius:6px!important}
+.lifebar .bar i.low{background:var(--cz-coral)!important}
+/* loads: small icon, slim bar, number */
+.loads{gap:4px!important}
+.ld{color:var(--cz-ink)!important;font-size:12px;gap:7px}
+.ld .ic{background:none!important;width:18px;height:18px}.ld .ic svg{width:17px;height:17px}
+.ld .bar{width:74px;height:6px;border-radius:4px;background:var(--cz-track)!important}
+.ld .bar i{background:var(--cz-teal)!important;border-radius:4px}
+.ld.full .bar i{background:var(--cz-coral)!important}.ld.full b{color:var(--cz-coral2)!important}
+.ld b{min-width:38px;text-align:right;font-weight:800}
+/* coins and weather: plain inline, a hairline above them */
+.hudbar{gap:12px!important;border-top:1px solid var(--cz-line)!important;padding-top:6px!important;flex-wrap:nowrap!important}
+.hi,#wxChip,#goldChip{background:none!important;box-shadow:none!important;border:0!important;padding:0!important;color:var(--cz-ink)!important;border-radius:0!important;font-size:14px}
+.hi .ic,#goldChip .ic{background:none!important;box-shadow:none!important;width:20px;height:20px}.hi .ic svg,#goldChip .ic svg{width:19px;height:19px;filter:none}
+#goldChip b{font-size:15px;text-shadow:none}
+.hi.wx span{background:none!important;width:20px;height:20px}
+#wxChip b{color:var(--cz-muted);font-weight:700;font-size:13px}
+.hi.bless{color:var(--cz-teal2)!important}
+/* toolbar: soft round buttons, pictures only */
+.tool{width:54px!important;height:54px!important;border-radius:50%!important;border:0!important;background:var(--cz-card)!important;box-shadow:var(--cz-shadow)!important}
+.tool .ic{background:none!important;box-shadow:none!important;width:34px!important;height:34px!important}.tool .ic svg{width:30px!important;height:30px!important}
+.tool:active{transform:scale(.94)}
+.tool .dot{border-color:var(--cz-solid);background:var(--cz-coral);top:-2px;right:-2px}
+/* buttons by the boat: pills */
+.dock{background:var(--cz-teal)!important;color:#fff!important;border:0!important;border-radius:999px!important;font-family:var(--body);font-weight:800;font-size:16px;padding:11px 22px!important;
+  box-shadow:0 4px 0 var(--cz-teal2),var(--cz-shadow)!important;text-shadow:none}
+.dock.alt,.raid.council{background:var(--cz-solid)!important;color:var(--cz-ink)!important;box-shadow:0 4px 0 #d9ccb4,var(--cz-shadow)!important}
+.raid{border-radius:999px!important;border:0!important;font-family:var(--body);font-weight:800;background:var(--cz-coral)!important;color:#fff!important;box-shadow:0 4px 0 var(--cz-coral2),var(--cz-shadow)!important}
+.raid.capture{background:var(--cz-gold)!important;color:#3d2a0c!important;box-shadow:0 4px 0 #b98222,var(--cz-shadow)!important}
+.volley{background:var(--cz-coral)!important;color:#fff!important;box-shadow:0 5px 0 var(--cz-coral2),var(--cz-shadow)!important;font-family:var(--body);font-weight:800;border:0!important}
+/* messages, warnings, the mission bar, the boss bar */
+.toast{background:var(--cz-solid)!important;color:var(--cz-ink)!important;border:0!important;box-shadow:var(--cz-shadow)!important;border-radius:16px!important;font-weight:700}
+.mission,.caution,.bossbar{background:var(--cz-card)!important;border:0!important;box-shadow:var(--cz-shadow)!important;border-radius:16px!important;color:var(--cz-ink)!important}
+.zone{color:#fff;text-shadow:0 2px 10px rgba(20,40,60,.45)}
+/* menus: cream, no planks; a clean title row with a round close button */
+.sheet.menu{background:#fbf6ec!important;border:0!important;box-shadow:none!important}
+.sheet.menu .mtop{background:#fbf6ec!important;box-shadow:0 1px 0 var(--cz-line)!important}
+.sheet.menu .mtop::after{opacity:0}
+.mhead{background:none!important;box-shadow:none!important}
+.mhead::before,.mhead::after{display:none}
+.sheet.menu .mhead h1{color:var(--cz-ink)!important;text-shadow:none!important;font-size:21px}
+.sheet.menu .mhead h1 small{color:var(--cz-muted)!important;text-shadow:none!important}
+.sheet.menu .xbtn{border-radius:50%!important;background:var(--cz-track)!important;color:var(--cz-ink)!important;border:0!important;box-shadow:none!important}
+.sheet.menu .xbtn svg{filter:none!important}
+.sheet.menu .card{background:#fff!important;border:0!important;border-radius:16px;box-shadow:0 1px 3px rgba(35,30,25,.08),0 4px 12px rgba(35,30,25,.05)!important}
+.sheet.menu .card h3{color:var(--cz-teal2)!important}
+.sheet.menu .tile,.sheet.menu .job,.sheet.menu .sailor,.sheet.menu .fship,.sheet.menu .upc,.sheet.menu .updetail,.sheet.menu .tut,.steps li{background:#f8f3ea!important;border:0!important;border-radius:12px}
+.sheet.menu .btn{border:0!important;border-radius:999px!important;background:var(--cz-teal)!important;color:#fff!important;text-shadow:none!important;box-shadow:0 3px 0 var(--cz-teal2)!important}
+.sheet.menu .btn.gold{background:var(--cz-gold)!important;color:#3d2a0c!important;box-shadow:0 3px 0 #b98222!important}
+.sheet.menu .btn.ghostdark{background:transparent!important;color:var(--cz-ink)!important;box-shadow:inset 0 0 0 1.5px #d8ccb6!important}
+.sheet.menu .btn.danger{background:var(--cz-coral)!important;box-shadow:0 3px 0 var(--cz-coral2)!important}
+.sheet.menu .btn:active:not(:disabled){transform:translateY(2px);box-shadow:none!important}
+.sheet.menu .btn:disabled{filter:none;opacity:.45}
+.rbv{background:var(--cz-teal)!important;border:0!important;border-radius:999px!important;box-shadow:none!important}
+.rb.gold .rbv{background:var(--cz-gold)!important;box-shadow:none!important}.rb.gold .rbv b{color:#3d2a0c;text-shadow:none}
+.rbv b{text-shadow:none!important}
+.slot{background:#fff!important;border:0!important;border-radius:14px!important;box-shadow:0 1px 3px rgba(35,30,25,.12)!important}
+.slot.on{box-shadow:0 0 0 2px var(--cz-teal),0 1px 3px rgba(35,30,25,.12)!important}
+.slot .badge{background:var(--cz-teal)!important;border-color:#fff!important}
+.sheet.menu .tab.on span{color:var(--cz-teal2)!important}
+.sheet.menu .tab.on svg{border-color:var(--cz-teal)!important;box-shadow:0 0 0 3px rgba(47,143,157,.18)!important}
+.sheet.menu .seg.on{background:var(--cz-teal)!important;color:#fff!important;border-color:var(--cz-teal)!important}
+.sheet.menu select,.sheet.menu input{background:#fff!important;border:1.5px solid var(--cz-line)!important;border-radius:10px}
+.legend{background:var(--cz-solid)!important;border:0!important;box-shadow:var(--cz-shadow)!important}
+.maphead .btn,.mapbtns .btn{background:var(--cz-teal)!important;box-shadow:0 3px 0 var(--cz-teal2)!important;border-radius:999px!important}
+/* ---- P50: the ability bar: round buttons at the bottom middle, only in a fight. The dark wedge is the cooldown. ---- */
+.abilities{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:14px;z-index:3;pointer-events:none}
+.abilities[hidden]{display:none}
+.ab{pointer-events:auto;position:relative;width:66px;height:66px;border-radius:50%;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;
+  background:conic-gradient(rgba(30,24,20,.5) var(--cd,0deg),transparent 0),var(--c,#e2725b);box-shadow:0 4px 0 var(--c2,#c95a44),0 6px 16px rgba(35,30,25,.22);color:#fff;
+  font:800 10.5px/1 var(--body);touch-action:manipulation;animation:none!important}
+.ab[hidden]{display:none}
+.ab svg{width:28px;height:28px}
+.ab.fire{--c:#ef8a3a;--c2:#c46a22}.ab.chain{--c:#5b6b7a;--c2:#3f4c58}
+.ab:disabled{cursor:default}
+.ab:not(:disabled){box-shadow:0 4px 0 var(--c2),0 0 0 5px rgba(255,255,255,.35),0 6px 16px rgba(35,30,25,.22)}
+.ab:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--c2)}
+.ab.on{box-shadow:0 4px 0 var(--c2),0 0 0 5px #ffd27a,0 0 18px #ffb347}
+.ab.turn{filter:saturate(.3) brightness(.95)}
+.ab.turn span{font-size:0}.ab.turn span::after{content:'Side-on';font-size:10px}
+body.big .abilities{zoom:1.5}

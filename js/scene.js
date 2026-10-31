@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=5a6bfb2';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=5a6bfb2';
-import {G} from './state.js?v=5a6bfb2';
-import {TOD, updateDayNight} from './daynight.js?v=5a6bfb2';
-import {showGrass} from './grass.js?v=5a6bfb2';
+import {QUALITY, SHIPS} from './config.js?v=f11df90';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=f11df90';
+import {G} from './state.js?v=f11df90';
+import {TOD, updateDayNight} from './daynight.js?v=f11df90';
+import {showGrass} from './grass.js?v=f11df90';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -105,7 +105,7 @@ waterMat.onBeforeCompile = sh => {
     .replace('#include <dithering_fragment>', `#include <dithering_fragment>
       vec3 foamC = mix(vec3(.94, .98, 1.), vec3(.32, .62, .68), uStorm);
       foamC = mix(foamC, vec3(.42, .55, .78), uNight*.7); // moonlit foam: softer and bluer
-      float fade = smoothstep(2300., 500., dist);
+      float fade = smoothstep(1500., 400., dist); // lines fade out sooner: far away they smear into streaks
       // cartoon sea (like a certain sailing Zelda): crisp white wavy lines drifting on the water in broken patches, with a soft glow around them
       vec2 q = vWorld.xz/120.; q += .55*vec2(sin(q.y*1.7 + uTime*.4) + .5*sin(q.x*3.1 + uTime*.7), cos(q.x*1.5 - uTime*.3) + .5*cos(q.y*2.9 - uTime*.6)); // strong bends: wavy, not a grid
       float e = cells(q), patchK = smoothstep(.15, .42, vnoise(vWorld.xz/300. - uTime*.03));
@@ -156,7 +156,7 @@ let lastZoom = 1, depthK = 1;
 const DEPTH_ZOOM = [1, 1.3, 1.5];
 // bigger ships get a camera further out, so a trireme isn't crammed into the screen (P49)
 const SHIP_ZOOM = [1, 1.12, 1.3, 1.42];
-const viewZoom = () => G.settings.dev.zoom*depthK;
+const viewZoom = () => (G.settings.builder ? G.settings.dev.zoom : (G.settings.pzoom || 1))*depthK; // players zoom a little (input.js PZOOM)
 export function applyZoom(){
   const z = viewZoom(), s = 520*Math.max(1, z);
   Object.assign(sun.shadow.camera, {left:-s, right:s, top:s, bottom:-s, far:2200*Math.max(1, z)}); sun.shadow.camera.updateProjectionMatrix();
@@ -225,7 +225,7 @@ const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
   fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom; varying vec2 vUv;
     void main(){
-      float d = abs(vUv.y - focus), r = smoothstep(.26, .5, d)*15.0; // only the outer edges blur
+      float d = abs(vUv.y - focus), r = smoothstep(.32, .52, d)*7.0; // only the outer edges blur, gently (P50: was 15)
       // a soft round blur: 24 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
       vec4 c = texture2D(tex, vUv); float tot = 1., spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
       if (r > .4) for (int i = 1; i <= 16; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/16.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; } // the sharp middle skips the blur

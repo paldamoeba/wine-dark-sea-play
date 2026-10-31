@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=5a6bfb2';
-import {G, isExplored} from './state.js?v=5a6bfb2';
-import {fogLayer, islandPath} from './map.js?v=5a6bfb2';
-import {view, project, screenToSea} from './scene.js?v=5a6bfb2';
-import {JOY_RADIUS} from './input.js?v=5a6bfb2';
-import {enemies, combatState, capture} from './combat.js?v=5a6bfb2';
-import {drawFish} from './fishing.js?v=5a6bfb2';
-import {whale} from './wildlife.js?v=5a6bfb2';
-import {SHORE_FISH} from './config.js?v=5a6bfb2';
-import {W as WIND} from './weather.js?v=5a6bfb2';
-import {bottle} from './quests.js?v=5a6bfb2';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=5a6bfb2';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=f11df90';
+import {G, isExplored} from './state.js?v=f11df90';
+import {fogLayer, islandPath} from './map.js?v=f11df90';
+import {view, project, screenToSea} from './scene.js?v=f11df90';
+import {JOY_RADIUS} from './input.js?v=f11df90';
+import {enemies, combatState, capture} from './combat.js?v=f11df90';
+import {drawFish} from './fishing.js?v=f11df90';
+import {whale} from './wildlife.js?v=f11df90';
+import {SHORE_FISH} from './config.js?v=f11df90';
+import {W as WIND} from './weather.js?v=f11df90';
+import {bottle} from './quests.js?v=f11df90';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=f11df90';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -103,8 +103,8 @@ const STREAKS = Array.from({length:10}, (_, i) => ({life:i/10, x:0, y:0, len:0, 
 // a little curl at the tip, like wind in a picture book.
 const GUST_N = 18, gustPts = Array.from({length:GUST_N + 1}, () => [0, 0, 0]);
 function drawWind(t, dt){
-  const k = WIND.windK; if (k < .3 || G.mapOpen) return;
-  const n = Math.round(STREAKS.length*Math.min(1, (k - .2)*1.1)), wa = WIND.windA, sp = 60 + 120*k;
+  const k = WIND.windK; if (k < .45 || G.mapOpen) return; // P50: only in real wind, and fewer gusts
+  const n = Math.round(STREAKS.length*.5*Math.min(1, (k - .3)*1.2)), wa = WIND.windA, sp = 60 + 120*k;
   c.lineCap = 'round';
   for (let i=0;i<n;i++){ const s = STREAKS[i]; s.life += dt/(2.2 + (i % 3)*.5);
     if (s.life >= 1 || !s.len){ s.life = s.len ? 0 : Math.random(); const r = 150 + Math.random()*520, a = Math.random()*6.28;
@@ -169,7 +169,7 @@ export function drawOverlay(fps){
   }
   for (const {is} of HARBORS){ if (Math.hypot(is.x - S.x, is.y - S.y) > 2500) continue; // harbor town names
     const [hx, hy, hz] = project(is.x, is.ht + 60, is.y);
-    const dd = Math.hypot(is.x - S.x, is.y - S.y); if (hz < 1) banner(is.name, hx, hy, Math.min(1, (2500 - dd)/500), is.city && CITIES[is.city]); }
+    const dd = Math.hypot(is.x - S.x, is.y - S.y); if (hz < 1 && dd < 1700) banner(is.name, hx, hy, Math.min(1, (1700 - dd)/400), is.city && CITIES[is.city]); } // only nearby towns
   if (G.dest){
     const [dx, dy, dz] = project(G.dest.x, 0, G.dest.y), p = (t*1.5) % 1, r = 9 + p*12, M = 46;
     const onScreen = dz < 1 && dx > M && dx < W-M && dy > M+60 && dy < H-M;
@@ -220,15 +220,12 @@ export function drawOverlay(fps){
   if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
   c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
   // a round wooden frame, with a little N where north is (the map is turned like the camera, so north is up and to the right)
-  c.save(); const wg = c.createLinearGradient(cx - ms/2, cy - ms/2, cx + ms/2, cy + ms/2); wg.addColorStop(0, '#c99560'); wg.addColorStop(.55, '#8c5b33'); wg.addColorStop(1, '#5e3a1e');
-  c.shadowColor = 'rgba(45,28,12,.35)'; c.shadowBlur = 10; c.shadowOffsetY = 3;
-  c.strokeStyle = wg; c.lineWidth = 7; c.beginPath(); c.arc(cx, cy, ms/2 + 2, 0, Math.PI*2); c.stroke(); c.shadowColor = 'transparent';
-  c.strokeStyle = 'rgba(255,240,210,.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(cx, cy, ms/2 - 1.2, 0, Math.PI*2); c.stroke();
-  c.strokeStyle = 'rgba(60,35,15,.5)'; c.beginPath(); c.arc(cx, cy, ms/2 + 5.6, 0, Math.PI*2); c.stroke();
-  for (let i=0;i<4;i++){ const a = i*Math.PI/2 + Math.PI/4; c.fillStyle = '#4a2e17'; c.beginPath(); c.arc(cx + Math.cos(a)*(ms/2 + 2), cy + Math.sin(a)*(ms/2 + 2), 2.2, 0, Math.PI*2); c.fill(); }
+  // P50: a soft cream ring with a gentle shadow (the wooden frame is gone), and a small N
+  c.save(); c.shadowColor = 'rgba(35,30,25,.22)'; c.shadowBlur = 14; c.shadowOffsetY = 4;
+  c.strokeStyle = '#fffbf3'; c.lineWidth = 7; c.beginPath(); c.arc(cx, cy, ms/2 + 2.5, 0, Math.PI*2); c.stroke(); c.shadowColor = 'transparent';
   const na = -Math.PI/2, nx = cx + Math.cos(na)*(ms/2 + 2), ny = cy + Math.sin(na)*(ms/2 + 2);
-  c.fillStyle = '#fbf3e0'; c.strokeStyle = '#6a4224'; c.lineWidth = 2; c.beginPath(); c.arc(nx, ny, 9, 0, Math.PI*2); c.fill(); c.stroke();
-  c.fillStyle = '#b8402f'; c.font = '400 11px Marcellus, Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('N', nx, ny + .5); c.restore();
+  c.fillStyle = '#fffbf3'; c.beginPath(); c.arc(nx, ny, 9, 0, Math.PI*2); c.fill();
+  c.fillStyle = '#e2725b'; c.font = '800 11px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('N', nx, ny + .5); c.restore();
   // which way the wind blows: a white arrow across the little map, stronger wind = more solid
   if (WIND.windK > .2){ const a = WIND.windA, al = Math.min(.85, WIND.windK);
     c.save(); c.translate(cx, cy); c.rotate(a); c.globalAlpha = al; c.strokeStyle = '#f4fbff'; c.fillStyle = '#f4fbff'; c.lineWidth = 2.2; c.lineCap = 'round';

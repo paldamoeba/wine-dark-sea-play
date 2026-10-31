@@ -149,39 +149,46 @@ function buildGeo(tris){
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setAttribute('color', new T.BufferAttribute(col, 3)); g.computeVertexNormals(); return g;
 }
 const keelAt = (s, a) => -s.H*.5 + s.rise*.5*Math.pow(a, 4);
+// P50: the hull is one smooth curved shell (soft shading, no facets): a round belly, sheer rising to bow and stern,
+// a darker bottom below the waterline, a painted stripe under the rail, and faint plank rows. The inside and deck stay simple.
 function hull(s, paint){
-  const {L, B, H, rise} = s, C = PAINTS[paint] || PAINTS.gold, N = 30;
+  const {L, B, H, rise} = s, C = PAINTS[paint] || PAINTS.gold, N = 56, K = 18;
   const W = a => B/2 * Math.pow(Math.max(0, 1 - Math.pow(a, 2.4)), .55);
   const deckY = a => H*.5 + rise*Math.pow(a, 3.2);
-  const deckLevel = H*.5 - H*.3, phis = [0, .32, .64, .95, 1.25, Math.PI/2];
+  const deckLevel = H*.5 - H*.3;
   const st = [];
   for (let i=0;i<=N;i++){
     const t = -1 + 2*i/N, a = Math.abs(t), x = t*L/2, w = W(a), dy = deckY(a), ky = keelAt(s, a);
-    const side = sg => phis.map(p => [x, dy - (dy-ky)*Math.sin(p), sg*w*Math.pow(Math.cos(p), .7)]);
-    st.push({x, a, w, dy, ring:[...side(-1), ...side(1).reverse().slice(1)], inL:[x, Math.min(dy, deckLevel), -w*.84], inR:[x, Math.min(dy, deckLevel), w*.84]});
+    st.push({x, a, w, dy, ky, inL:[x, Math.min(dy, deckLevel), -w*.84], inR:[x, Math.min(dy, deckLevel), w*.84]});
   }
-  const tris = [], M = st[0].ring.length;
+  // the shell: K+1 points round each cross-section, from the left rail down under the keel and up to the right rail
+  const pos = [], col = [], idx = [], c0 = new T.Color(), cTop = new T.Color(C.top), cBot = new T.Color(C.bottom), cPan = new T.Color(C.panel);
+  st.forEach((p, i) => { for (let k=0;k<=K;k++){
+    const th = k/K*Math.PI, c = Math.cos(th), d = Math.sin(th); // th 0 = left rail, half = keel, PI = right rail
+    const z = -Math.sign(c)*p.w*Math.pow(Math.abs(c), .7), y = p.dy - (p.dy - p.ky)*d;
+    pos.push(p.x, y, z);
+    const h = (y - p.ky)/Math.max(1, p.dy - p.ky), strake = Math.floor(h*9);
+    if (y < -H*.12 + rise*.3*Math.pow(p.a, 3)) c0.copy(cBot);
+    else if (h > .74 && h < .86 && p.a < .78) c0.copy(cPan);
+    else c0.copy(cTop).multiplyScalar(strake % 2 ? .95 : 1.03); // plank rows
+    col.push(c0.r, c0.g, c0.b);
+  } });
+  for (let i=0;i<N;i++) for (let k=0;k<K;k++){ const a0 = i*(K+1) + k, b0 = a0 + K + 1; idx.push(a0, b0, b0 + 1, a0, b0 + 1, a0 + 1); }
+  const sg = new T.BufferGeometry(); sg.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); sg.setAttribute('color', new T.Float32BufferAttribute(col, 3)); sg.setIndex(idx); sg.computeVertexNormals();
+  const tris = [];
   for (let i=0;i<N;i++){
-    const A = st[i], Bs = st[i+1], amid = (A.a + Bs.a)/2;
-    for (let k=0;k<M-1;k++){
-      const p1 = A.ring[k], p2 = Bs.ring[k], p3 = Bs.ring[k+1], p4 = A.ring[k+1];
-      const cy = (p1[1]+p2[1]+p3[1]+p4[1])/4, band = Math.min(k, M-2-k);
-      let c = C.top;
-      if (cy < -H*.12 + rise*.3*Math.pow(amid, 3)) c = C.bottom;
-      else if (band === 1 && i % 2 === 0 && amid < .72) c = C.panel;
-      tris.push([p1, p2, p3, c], [p1, p3, p4, c]);
-    }
-    const gl = A.ring[0], gl2 = Bs.ring[0], gr = A.ring[M-1], gr2 = Bs.ring[M-1];
+    const A = st[i], Bs = st[i+1], gl = [A.x, A.dy, -A.w], gl2 = [Bs.x, Bs.dy, -Bs.w], gr = [A.x, A.dy, A.w], gr2 = [Bs.x, Bs.dy, Bs.w];
     tris.push([gl, A.inL, Bs.inL, C.inner], [gl, Bs.inL, gl2, C.inner], [gr, Bs.inR, A.inR, C.inner], [gr, gr2, Bs.inR, C.inner]);
     tris.push([A.inL, A.inR, Bs.inR, C.deck], [A.inL, Bs.inR, Bs.inL, C.deck]);
   }
   const g = new T.Group();
+  const shell = new T.Mesh(sg, mat('#ffffff', {vertexColors:true, side:T.DoubleSide, flatShading:false})); shell.castShadow = shell.receiveShadow = true; g.add(shell);
   const m = new T.Mesh(buildGeo(tris), mat('#ffffff', {vertexColors:true, side:T.DoubleSide})); m.castShadow = m.receiveShadow = true; g.add(m);
   const railR = Math.max(.9, B*.045), waleR = Math.max(.7, B*.035);
-  g.add(tube(loop(st, (p, sg) => [p.x, p.dy + railR*.3, sg*p.w]), railR, C.wale, 7, true));
-  g.add(tube(loop(st, (p, sg) => { const r = p.ring[sg < 0 ? 2 : M-3]; return [r[0], r[1], r[2]*1.04]; }), waleR, C.wale, 6, true));
-  if (H > 11) g.add(tube(loop(st, (p, sg) => { const r = p.ring[sg < 0 ? 3 : M-4]; return [r[0], r[1] - .5, r[2]*1.05]; }), waleR*.8, C.wale, 6, true));
-  g.add(tube(st.map(p => p.ring[5]).map(([x, y]) => [x, y - .6, 0]), Math.max(1, B*.04), C.bottom));
+  const at = (p, sgn, f) => { const th = f*Math.PI; return [p.x, p.dy - (p.dy - p.ky)*Math.sin(th), sgn*p.w*Math.pow(Math.cos(th), .7)*1.04]; }; // a line along the side, f down from the rail
+  g.add(tube(loop(st, (p, sgn) => [p.x, p.dy + railR*.3, sgn*p.w]), railR, C.wale, 8, true));
+  g.add(tube(loop(st, (p, sgn) => at(p, sgn, 2/K)), waleR, C.wale, 8, true));
+  g.add(tube(st.map(p => [p.x, p.ky - .6, 0]), Math.max(1, B*.04), C.bottom, 8));
   for (let k=-2;k<=2;k++){ const p = mesh(new T.BoxGeometry(L*.6, .35, .5), C.inner); p.position.set(0, deckLevel + .2, k*B*.12); g.add(p); }
   for (let k=0;k<6;k++){ const x = (-.3 + k*.12)*L, w = W(Math.abs(x/(L/2)))*1.7; const bm = mesh(new T.BoxGeometry(1.6, 1.2, w), C.wale); bm.position.set(x, deckLevel + .6, 0); g.add(bm); }
   g.userData = {W, deckY, deckLevel};

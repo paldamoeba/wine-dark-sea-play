@@ -1,17 +1,17 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=5a6bfb2';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=5a6bfb2';
-import {G, ship, lvl} from './state.js?v=5a6bfb2';
-import {men} from './crew.js?v=5a6bfb2';
-import {scene} from './scene.js?v=5a6bfb2';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=5a6bfb2';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=5a6bfb2';
-import {addTown, figure} from './town.js?v=5a6bfb2';
-import {makeFire, updateFire, burn} from './fire.js?v=5a6bfb2';
-import {addGrass} from './grass.js?v=5a6bfb2';
-import {sinkPose} from './sinking.js?v=5a6bfb2';
-import {moored} from './fleet.js?v=5a6bfb2';
-import {placeOnWaves} from './combat.js?v=5a6bfb2';
+import {SHIPS} from './config.js?v=f11df90';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=f11df90';
+import {G, ship, lvl} from './state.js?v=f11df90';
+import {men} from './crew.js?v=f11df90';
+import {scene} from './scene.js?v=f11df90';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=f11df90';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=f11df90';
+import {addTown, figure} from './town.js?v=f11df90';
+import {makeFire, updateFire, burn} from './fire.js?v=f11df90';
+import {addGrass} from './grass.js?v=f11df90';
+import {sinkPose} from './sinking.js?v=f11df90';
+import {moored} from './fleet.js?v=f11df90';
+import {placeOnWaves} from './combat.js?v=f11df90';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -219,7 +219,24 @@ const ropeGeo = new T.CylinderGeometry(.7, .7, 1, 4); ropeGeo.translate(0, .5, 0
 const UP = new T.Vector3(0, 1, 0), tmpV = new T.Vector3();
 const hands = ['#3f6c94', '#c64a3c'].map(c => { const f = figure(c), rope = mesh(ropeGeo, '#d9c49a'); rope.castShadow = false; rope.visible = false; scene.add(f, rope); return {f, rope, k:0}; });
 let lastPier = PIER;
+// P50: the harbor rings: a soft golden circle on the water past each pier that pulses gently. Sailing into one docks you (player.js).
+const RING_R = 70;
+const ringMat = new T.MeshBasicMaterial({color:'#ffd77a', transparent:true, opacity:.6, depthWrite:false, fog:false});
+const fillMat = new T.MeshBasicMaterial({color:'#ffe9b0', transparent:true, opacity:.08, depthWrite:false, fog:false});
+const RINGS = HARBORS.map(h => { const g = new T.Group(), x = h.pier.x + h.pier.dx*(PIER_LEN + 75), y = h.pier.y + h.pier.dy*(PIER_LEN + 75);
+  const ring = new T.Mesh(new T.RingGeometry(RING_R - 3.5, RING_R, 64), ringMat), fill = new T.Mesh(new T.CircleGeometry(RING_R - 7, 48), fillMat);
+  const halo = new T.Mesh(new T.RingGeometry(RING_R - 12, RING_R + 10, 64), new T.MeshBasicMaterial({color:'#ffe08a', transparent:true, opacity:.18, depthWrite:false, fog:false}));
+  for (const m of [ring, fill, halo]){ m.rotation.x = -Math.PI/2; m.renderOrder = 2; g.add(m); }
+  g.position.set(x, 3, y); g.userData = {x, y, halo}; scene.add(g); return g; });
+function animateRings(t){
+  const pulse = .5 + .5*Math.sin(t*2.4);
+  ringMat.opacity = .45 + .35*pulse; fillMat.opacity = .05 + .06*pulse;
+  for (const g of RINGS){ const u = g.userData, near = Math.hypot(u.x - G.S.x, u.y - G.S.y) < 2600;
+    g.visible = near && !G.dock; if (!g.visible) continue;
+    g.position.y = waveAt(u.x, u.y, t) + 2.5; u.halo.scale.setScalar(1 + .08*pulse); u.halo.material.opacity = .2*(1 - pulse*.5); }
+}
 function animateDock(dt, t){
+  animateRings(t);
   // waiting: you're sailing up to a harbor (and it will let you in), so they stand ready on the pier and wave
   const w = !G.dock && G.nearPier && !(G.nearPier.is.city && (G.hunted || {})[G.nearPier.is.city]) ? G.nearPier : null;
   const d = G.dock, sh = ship(), on = (!!d && d.mode !== 'out') || !!w, PIER = d ? (lastPier = d.h.pier) : w ? (lastPier = w.pier) : lastPier;

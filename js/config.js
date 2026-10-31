@@ -90,6 +90,9 @@ export const STARTER_GOALS = 8; // the first eight goals teach the basics; past 
 export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'raider', scale:1.35, hull:1300, speed:125, turn:.42, fighters:8, dmg:2.2, sight:900, leash:2600,
   gold:[1200, 1200], wood:200, bronze:60, len:180, beam:38, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2};
 // Fire arrows: a ship hit by one burns for burnSeconds, losing dps(level) hull a second.
+// P50: abilities in the bar at the bottom of the screen. fire: seconds of flaming arrows, then a cooldown.
+// chain: how long a ship stays dismasted (grows with the Chain shot level) and how slow it goes meanwhile.
+export const ABILITIES = {fire:{secs:8, cd:28}, chain:{cd:22, secs:l => 4 + .6*l, slow:.25}};
 export const FIRE_ARROWS = {burnSeconds:2.5, dps:l => l ? .6 + .18*l : 0}; // P49: weaker, so fire no longer sinks ships at once
 // The request board in every harbor.
 export const REQUESTS = {offers:3, max:2,
@@ -116,7 +119,8 @@ export const UPGRADES = {
   seats:  {label:'Crew',            ship:true, cost:{gold:9}, desc:'Hire hands for this ship. More rowers make it faster, more archers hit harder, more hands fish quicker'}, // (kept as "seats" so old crew quarters levels carry over)
   arrows: {label:'Arrowheads',      each:.08, unit:'arrow damage', cost:{bronze:2, gold:18}, desc:'Bronze arrowheads for every archer'},
   ram:    {label:'Ram',             cost:{wood:20, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it'},
-  fire:   {label:'Fire arrows',     minTier:2, cost:{linen:4, gold:40}, desc:'Rags soaked in oil on every arrow. Ships you hit catch fire and keep burning for a few seconds'},
+  fire:   {label:'Fire arrows',     minTier:2, cost:{linen:4, gold:40}, desc:'Rags soaked in oil. Tap Fire in a fight and for a few seconds every arrow sets ships alight'},
+  chain:  {label:'Chain shot',      minTier:1, cost:{bronze:3, gold:30}, desc:'Iron balls joined by a chain. Tap Chains in a fight to tear down a ship\'s sail: it can barely move for a while'},
 };
 export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry
 export const SHIP_K = [.6, 1, 2, 3];

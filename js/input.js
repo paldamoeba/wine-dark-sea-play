@@ -1,9 +1,10 @@
 // Touch, mouse and keyboard. Double tap = sail there (a single tap only marks the spot). Press and drag = joystick.
 // Volley: while one thumb steers, a quick tap with another finger anywhere; or a double tap on your own ship.
-import {G, ship, saveSettings} from './state.js?v=5a6bfb2';
-import {landDist} from './world.js?v=5a6bfb2';
-import {canvas, screenToSea} from './scene.js?v=5a6bfb2';
-import {hideHint, toast} from './ui.js?v=5a6bfb2';
+// Two fingers moving apart or together: zoom in and out a little.
+import {G, ship, saveSettings} from './state.js?v=f11df90';
+import {landDist} from './world.js?v=f11df90';
+import {canvas, screenToSea} from './scene.js?v=f11df90';
+import {hideHint, toast} from './ui.js?v=f11df90';
 
 export const JOY_RADIUS = 58;
 const keys = new Set();
@@ -12,14 +13,17 @@ let ptr = null, lastTap = null;
 // ---- builder zoom: pinch with two fingers, or the mouse wheel ----
 export const ZOOM_MIN = .4, ZOOM_MAX = 3.5;
 let pinch = null, zoomSaveT = 0;
+// P50: players can zoom a little too (PZOOM range, saved as settings.pzoom); builder tools zoom much further.
+export const PZOOM = [.75, 1.4];
+export const curZoom = () => G.settings.builder ? G.settings.dev.zoom : (G.settings.pzoom || 1);
 export function setZoom(z){
-  if (!G.settings.builder) return; // players don't zoom: the camera is set for them
-  G.settings.dev.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  if (!G.settings.builder) G.settings.pzoom = Math.max(PZOOM[0], Math.min(PZOOM[1], z));
+  else G.settings.dev.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
   document.dispatchEvent(new Event('zoom'));
   clearTimeout(zoomSaveT); zoomSaveT = setTimeout(saveSettings, 400);
 }
 const others = new Map();
-canvas.addEventListener('wheel', e => { e.preventDefault(); if (!G.sheetOpen) setZoom(G.settings.dev.zoom * Math.exp(e.deltaY*.001)); }, {passive:false});
+canvas.addEventListener('wheel', e => { e.preventDefault(); if (!G.sheetOpen) setZoom(curZoom() * Math.exp(e.deltaY*.001)); }, {passive:false});
 
 canvas.addEventListener('pointerdown', e => {
   if (ptr && e.pointerId !== ptr.id && !G.sheetOpen){ // second finger: a quick tap fires the volley; in builder mode, moving it pinches to zoom
@@ -33,7 +37,7 @@ canvas.addEventListener('pointerdown', e => {
 });
 canvas.addEventListener('pointermove', e => {
   if (others.has(e.pointerId)){ const o = others.get(e.pointerId); o.x = e.clientX; o.y = e.clientY;
-    if (!pinch && G.settings.builder && ptr && Math.hypot(o.x - o.sx, o.y - o.sy) > 20){ pinch = {d: Math.hypot(o.x - ptr.cx, o.y - ptr.cy) || 1, z: G.settings.dev.zoom}; ptr.moved = true; G.joy = null; G.dest = null; } }
+    if (!pinch && ptr && Math.hypot(o.x - o.sx, o.y - o.sy) > 20){ pinch = {d: Math.hypot(o.x - ptr.cx, o.y - ptr.cy) || 1, z: curZoom()}; ptr.moved = true; G.joy = null; G.dest = null; } }
   if (ptr && e.pointerId === ptr.id){ ptr.cx = e.clientX; ptr.cy = e.clientY; }
   if (pinch && ptr){ const o = [...others.values()][0]; if (o) setZoom(pinch.z * pinch.d / (Math.hypot(o.x - ptr.cx, o.y - ptr.cy) || 1)); return; }
   if (!ptr || e.pointerId !== ptr.id) return;

@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=5a6bfb2';
-import {SPECS} from './ships.js?v=5a6bfb2';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=5a6bfb2';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=5a6bfb2';
-import {W} from './weather.js?v=5a6bfb2';
-import {steering} from './input.js?v=5a6bfb2';
-import {toast, showZone} from './ui.js?v=5a6bfb2';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=5a6bfb2';
-import {startFish, stopFish} from './fishing.js?v=5a6bfb2';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=5a6bfb2';
-import {progress} from './quests.js?v=5a6bfb2';
-import {startSink} from './sinking.js?v=5a6bfb2';
-import {sfx} from './audio.js?v=5a6bfb2';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=f11df90';
+import {SPECS} from './ships.js?v=f11df90';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=f11df90';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=f11df90';
+import {W} from './weather.js?v=f11df90';
+import {steering} from './input.js?v=f11df90';
+import {toast, showZone} from './ui.js?v=f11df90';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=f11df90';
+import {startFish, stopFish} from './fishing.js?v=f11df90';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=f11df90';
+import {progress} from './quests.js?v=f11df90';
+import {startSink} from './sinking.js?v=f11df90';
+import {sfx} from './audio.js?v=f11df90';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -23,7 +23,7 @@ const SINK_SECONDS = 4.5;
 function washUp(){
   const S = G.S, name = ship().name.toLowerCase(); G.sinking = null;
   for (const k in S.cargo) S.cargo[k] = 0; S.bless = 0; S.hull = Math.round(ship().hull*COMBAT.washUpHull); S.x = START.x; S.y = START.y; S.a = START.a;
-  G.v = 0; G.dest = null; G.flash = 0; G.cam = {x:S.x, y:S.y};
+  G.v = 0; G.dest = null; G.flash = 0; G.cam = {x:S.x, y:S.y}; ringArmed = false;
   toast(`Your ${name} broke apart. You were towed home to Kallisto without your cargo, the hull badly patched. Repair it at the shipyard.`, 4.5); save();
 }
 
@@ -165,7 +165,23 @@ function docking(dt){
   }
 }
 
-// Returns the harbor the boat can dock at (near a pier and slow enough), or null.
+// P50: every harbor has a glowing ring in the water just past the end of its pier. Sail into it and the dockhands bring you in.
+// It only works again once you've sailed out of it (so leaving the harbor doesn't pull you straight back in).
+export const RING_R = 70;
+export const harborRing = h => ({x:h.pier.x + h.pier.dx*(PIER_LEN + 75), y:h.pier.y + h.pier.dy*(PIER_LEN + 75)});
+let ringArmed = false;
+function harborRings(){
+  const S = G.S; let near = Infinity, hit = null;
+  for (const h of HARBORS){ const r = harborRing(h), d = Math.hypot(S.x - r.x, S.y - r.y); if (d < near){ near = d; hit = h; } }
+  if (near > RING_R + 50){ ringArmed = true; return; }
+  if (near > RING_R || !ringArmed || G.sheetOpen) return;
+  ringArmed = false;
+  const banned = hit.is.city && (G.hunted || {})[hit.is.city];
+  if (banned){ toast(`${hit.is.city === 'athens' ? 'Athens' : 'Sparta'} won't let you dock while they hunt you`, 3); return; }
+  document.dispatchEvent(new CustomEvent('dock', {detail:hit}));
+}
+
+// Returns null (harbors are entered through their rings now, see harborRings()).
 export function updatePlayer(dt){
   const S = G.S, sh = ship();
   G.t += dt;
@@ -191,6 +207,6 @@ export function updatePlayer(dt){
   const k = Math.min(1, dt*3.5); G.cam.x += (S.x - G.cam.x)*k; G.cam.y += (S.y - G.cam.y)*k;
   // dockhands come out on the pier as you sail up, before you ask to dock
   G.nearPier = HARBORS.find(h => pierDist(h.pier, S.x, S.y) < TUNING.dockRange*3) || null;
-  if (G.v >= TUNING.slowSpeed*2 || G.sheetOpen) return null;
-  return HARBORS.find(h => pierDist(h.pier, S.x, S.y) < TUNING.dockRange) || null;
+  harborRings();
+  return null;
 }
