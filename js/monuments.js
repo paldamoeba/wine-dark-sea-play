@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue, person} from './ships.js?v=341cce2';
+import {mat, statue, person} from './ships.js?v=769a00d';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -233,6 +233,7 @@ export function buildCamp(){
   put(M(new T.SphereGeometry(2.5, 10, 8), mat('#e9dcc0'), false), -19.3, 40.5, 9.5).scale.set(.3, 1, 1);
   // bandits with bows on the beach, facing the sea
   g.userData.archers = [];
-  [[46, -26], [52, -6], [50, 16], [44, 34]].forEach(([x, z], i) => { const p = person(['rTunic', '#2c1f1f', 'rTunic', '#5a2a22'][i], 'archer', 'pirate'); p.scale.setScalar(1.6); p.rotation.y = 0; put(p, x, 0, z); g.userData.archers.push(p); });
+  g.children.forEach(o => { o.position.x -= 30; }); // the camp sits back from the water; the bandits stand at the shoreline
+  [[14, -30], [20, -9], [19, 12], [13, 32]].forEach(([x, z], i) => { const p = person(['rTunic', '#2c1f1f', 'rTunic', '#5a2a22'][i], 'archer', 'pirate'); p.scale.setScalar(1.6); p.rotation.y = 0; put(p, x, 0, z); g.userData.archers.push(p); });
   return g;
 }

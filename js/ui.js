@@ -1,22 +1,22 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=341cce2';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=341cce2';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=341cce2';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=341cce2';
-import {swapBoat, refreshAllTrees} from './entities.js?v=341cce2';
-import {setZoom} from './input.js?v=341cce2';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=341cce2';
-import {tutHTML} from './tutorial.js?v=341cce2';
-import {founded, blessing} from './crew.js?v=341cce2';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=341cce2';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=341cce2';
-import {effectText, buy} from './upgrades.js?v=341cce2';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=341cce2';
-import {GOODS, WAR} from './config.js?v=341cce2';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=341cce2';
-import {W, KINDS} from './weather.js?v=341cce2';
-import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=341cce2';
-import {setTimeOfDay} from './daynight.js?v=341cce2';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=769a00d';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=769a00d';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=769a00d';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=769a00d';
+import {swapBoat, refreshAllTrees} from './entities.js?v=769a00d';
+import {setZoom} from './input.js?v=769a00d';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=769a00d';
+import {tutHTML} from './tutorial.js?v=769a00d';
+import {founded, blessing} from './crew.js?v=769a00d';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=769a00d';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=769a00d';
+import {effectText, buy} from './upgrades.js?v=769a00d';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=769a00d';
+import {GOODS, WAR} from './config.js?v=769a00d';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=769a00d';
+import {W, KINDS} from './weather.js?v=769a00d';
+import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=769a00d';
+import {setTimeOfDay} from './daynight.js?v=769a00d';
 
 const $ = id => document.getElementById(id);
 
@@ -167,7 +167,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 51</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 52</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}

@@ -1,9 +1,10 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=341cce2';
-import {ARENA} from './arena.js?v=341cce2';
-import {enemies} from './combat.js?v=341cce2';
-import {G, ship, isExplored, reveal, save} from './state.js?v=341cce2';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=769a00d';
+import {ARENA} from './arena.js?v=769a00d';
+import {enemies} from './combat.js?v=769a00d';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=769a00d';
+import {G, ship, isExplored, reveal, save} from './state.js?v=769a00d';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -148,6 +149,9 @@ function draw(){
   for (const s of SPOTS){ if (!marks || !s.stock || !isExplored(s.x, s.y)) continue; const [x, y] = toScreen(s.x, s.y); c.fillStyle = '#3d7d93'; fishGlyph(x, y); }
   c.strokeStyle = INK; c.lineWidth = 1.8;
   for (const w of WRECKS){ if (!marks || !w.stock || !isExplored(w.x, w.y)) continue; const [x, y] = toScreen(w.x, w.y); wreckGlyph(x, y); }
+  // buried treasure on the small islands (P52): a little gold X where a chest is waiting
+  for (const t of TREASURE_ISLES){ if (!isExplored(t.x, t.y) || !chestReady(t)) continue; const [x, y] = toScreen(t.x, t.y);
+    c.save(); c.strokeStyle = '#d9a23a'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - 5, y - 5); c.lineTo(x + 5, y + 5); c.moveTo(x + 5, y - 5); c.lineTo(x - 5, y + 5); c.stroke(); c.restore(); }
   // the treasure map's X, and a dashed ring around islands your jobs send you to
   if (G.S.treasure){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); c.save(); c.strokeStyle = COURSE; c.lineWidth = 4; c.lineCap = 'round';
     c.beginPath(); c.moveTo(x - 9, y - 9); c.lineTo(x + 9, y + 9); c.moveTo(x + 9, y - 9); c.lineTo(x - 9, y + 9); c.stroke(); c.restore(); }

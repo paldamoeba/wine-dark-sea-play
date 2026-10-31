@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=341cce2';
-import {G, isExplored} from './state.js?v=341cce2';
-import {fogLayer, islandPath} from './map.js?v=341cce2';
-import {view, project, screenToSea} from './scene.js?v=341cce2';
-import {JOY_RADIUS} from './input.js?v=341cce2';
-import {enemies, combatState, capture} from './combat.js?v=341cce2';
-import {drawFish} from './fishing.js?v=341cce2';
-import {whale} from './wildlife.js?v=341cce2';
-import {SHORE_FISH} from './config.js?v=341cce2';
-import {W as WIND} from './weather.js?v=341cce2';
-import {bottle} from './quests.js?v=341cce2';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=341cce2';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=769a00d';
+import {G, isExplored} from './state.js?v=769a00d';
+import {fogLayer, islandPath} from './map.js?v=769a00d';
+import {view, project, screenToSea} from './scene.js?v=769a00d';
+import {JOY_RADIUS} from './input.js?v=769a00d';
+import {enemies, combatState, capture} from './combat.js?v=769a00d';
+import {drawFish} from './fishing.js?v=769a00d';
+import {whale} from './wildlife.js?v=769a00d';
+import {SHORE_FISH} from './config.js?v=769a00d';
+import {W as WIND} from './weather.js?v=769a00d';
+import {bottle} from './quests.js?v=769a00d';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=769a00d';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -31,7 +31,7 @@ function iconImg(k){ if (icons[k]) return icons[k];
   const svg = k === 'wood' || k === 'bronze' || k === 'linen' ? IC[k] : k === 'coin' ? IC.coin : FISH_COLOR[k] ? IC.fish(FISH_COLOR[k]) : k === 'fish' ? IC.fish(FISH_COLOR.sardine) : GOOD_IC(k);
   const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" ')); return icons[k] = im; }
 
-const MINI_RANGE = 2600, SIDE_COLOR = {pirate:'#e0614d', merchant:'#e8dcc0'};
+const MINI_RANGE = 2600, SIDE_COLOR = {pirate:'#e0614d', merchant:'#e8dcc0', ally:'#5fd06a'}; // your own ships at sea are green
 const shipColor = e => (e.spec.side === 'navy' || e.spec.side === 'fort') && e.city ? CITIES[e.city].color : SIDE_COLOR[e.spec.side === 'fort' ? 'pirate' : e.spec.side];
 const ov = document.getElementById('ov'), c = ov.getContext('2d');
 export function resizeOverlay(){ ov.width = view.W*view.DPR; ov.height = view.H*view.DPR; }

@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board', 'camp', 'fort'.
-import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS} from './config.js?v=341cce2';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=341cce2';
-import {G, save, ship, lvl, rank} from './state.js?v=341cce2';
-import {scene} from './scene.js?v=341cce2';
-import {mesh} from './models.js?v=341cce2';
-import {toast} from './ui.js?v=341cce2';
-import {sfx} from './audio.js?v=341cce2';
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS} from './config.js?v=769a00d';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=769a00d';
+import {G, save, ship, lvl, rank, gain, putAboard} from './state.js?v=769a00d';
+import {scene} from './scene.js?v=769a00d';
+import {mesh} from './models.js?v=769a00d';
+import {toast} from './ui.js?v=769a00d';
+import {sfx} from './audio.js?v=769a00d';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -130,6 +130,27 @@ function chestModel(){
 }
 const chest = chestModel(); chest.visible = false; scene.add(chest);
 
+// ---- treasure islands (P52): every small wild island in the Shallows without a bandit camp has a chest buried on its beach,
+// a red X in the sand. Sail up close to dig it out; a new one is buried there 15 minutes (of play) later. S.dug[name] = when.
+const REBURY = 900;
+function islandBeach(is, seed){ const R = rng(seed);
+  for (let k=0;k<40;k++){ const a = R()*6.28, c = Math.cos(a), s = Math.sin(a); let r = 0; while (r < is.r*2 && landDist(is.x + c*r, is.y + s*r) < 0) r += 6;
+    const x = is.x + c*(r - 26), y = is.y + s*(r - 26); if (r >= is.r*2 || landDist(x, y) > -12 || landDist(is.x + c*(r + 120), is.y + s*(r + 120)) < 60) continue; return {x, y}; }
+  return null; }
+export const TREASURE_ISLES = ISLANDS.filter(is => is.wild && zoneAt(is.x, is.y) === 0 && !CAMPS.some(c => c.isle === is.name))
+  .map((is, i) => { const p = islandBeach(is, 900 + i*17); return p && {is, ...p, m:(() => { const m = chestModel(); m.visible = false; scene.add(m); return m; })()}; }).filter(Boolean);
+export const chestReady = t => { const d = (G.S.dug || {})[t.is.name]; return d == null || (G.S.playSeconds || 0) - d > REBURY; };
+function updateIsleChests(){
+  const S = G.S, reach = 75 + ship().beam*1.5;
+  for (const t of TREASURE_ISLES){ const d = Math.hypot(t.x - S.x, t.y - S.y), ready = chestReady(t);
+    t.m.visible = ready && d < 1500; if (!t.m.visible) continue;
+    t.m.position.set(t.x, 3.5, t.y);
+    if (d < reach && !G.dock && !G.sinking){ const gold = 25 + Math.floor(Math.random()*30), bronze = Math.random() < .35 ? 2 + Math.floor(Math.random()*3) : 0;
+      S.gold += gold; S.dug = {...(S.dug || {}), [t.is.name]:S.playSeconds || 0}; sfx('treasure'); gain('coin', gold);
+      const b = bronze ? putAboard('bronze', bronze) : 0; if (b) gain('bronze', b);
+      toast(`Buried treasure on ${t.is.name}: ${gold} drachmae${b ? ` and ${b} bronze` : ''}!`, 3.5); save(); } }
+}
+
 let checkT = 0;
 export function updateQuests(dt){
   const S = G.S;
@@ -147,6 +168,7 @@ export function updateQuests(dt){
     if (tr.land){ chest.position.set(tr.x, 3.5, tr.y); chest.userData.x.visible = true; } // half buried on the beach; sail up close to dig it out
     else { chest.position.set(tr.x, waveAt(tr.x, tr.y, G.t) + 1, tr.y); chest.rotation.y += dt*.5; chest.userData.x.visible = false; }
     if (near < (tr.land ? 75 + ship().beam*1.5 : 70)){ S.gold += tr.gold; sfx('treasure'); toast(`You found the treasure: ${tr.gold} drachmae!`, 4); S.treasure = null; chest.visible = false; save(); } }
+  updateIsleChests();
   // visits
   checkT += dt; if (checkT < .5) return; checkT = 0;
   for (const r of [...active()]) if (r.t === 'visit'){ const is = ISLANDS.find(i => i.name === r.to); if (is && Math.hypot(is.x - S.x, is.y - S.y) < is.r + 450) finish(r); }

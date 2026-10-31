@@ -1,6 +1,6 @@
 // Portraits: real pictures of the 3D models for the menus. One small hidden renderer draws a model once and keeps the
 // picture, so the shipyard shows the same ships you sail, in their own paint, instead of drawings.
-import {buildShip, SPECS, mat} from './ships.js?v=341cce2';
+import {buildShip, SPECS, mat} from './ships.js?v=769a00d';
 
 const T = window.THREE;
 const W = 480, H = 300;
@@ -51,7 +51,7 @@ export const hasModel = m => !!SPECS[m];
 
 // ---- tutorial pictures: real renders of the game's boat on the sea, seen like in the game ----
 // The picture is 280 x 140 "screen units". Things are placed by screen position so the drawn hints (finger, arrows) line up.
-import {cypress} from './models.js?v=341cce2';
+import {cypress} from './models.js?v=769a00d';
 const TW = 560, TH = 280, K = .75, PITCH = 1.0; // world units per screen unit, camera tilt
 export function tutShot(kind, boats, isle){
   const key = 'tut' + kind; if (cache.has(key)) return cache.get(key);

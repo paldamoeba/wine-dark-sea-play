@@ -72,10 +72,10 @@ export const GOALS = [
   {t:'salvage', n:10, gold:8, text:'Salvage 10 wood from a wreck'},
   {t:'catch', kind:'tuna', n:1, gold:8, text:'Catch a tuna in bubbling water'},
   {t:'board', n:1, gold:6, text:'Take a job from the request board in a harbor'},
-  {t:'camp', kind:'Ios', n:1, gold:20, text:'Burn the bandit camp on Ios and win the fishing boat\'s plans'},
+  {t:'camp', kind:'Ikaria', n:1, gold:20, text:'Burn the bandit camp on Ikaria and win the fishing boat\'s plans'},
   {t:'build', n:1, gold:25, text:'Build the fishing boat at Kallisto (150 wood, 10 linen, 60 drachmae)'},
   // chapter one: from fishing boat to the pirate king (about an hour)
-  {t:'camp', kind:'Amorgos', n:1, gold:60, text:'Burn the bandit camp on Amorgos and win the bireme\'s plans', chapter:true},
+  {t:'camp', kind:'Tinos', n:1, gold:60, text:'Burn the bandit camp on Tinos and win the bireme\'s plans', chapter:true},
   {t:'build', kind:'bireme', n:1, gold:100, text:'Build the bireme at Kallisto, your first warship', chapter:true},
   {t:'sink', kind:'galley', n:3, gold:150, text:'Sink 3 raider galleys out in the Open Sea', chapter:true},
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
@@ -145,14 +145,14 @@ export const CAPTAIN = {cost:60, grow:2.5, // 60, 150, 380, 940...
 // Bandit camps on the wild islands near Kallisto: a palisade with archers and one mothership guarding it. Easier than a
 // fortress, no catapults. Burn one and it stays burnt; some give ship blueprints (plans = SHIPS index).
 export const CAMPS = [
-  {isle:'Ios',     hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[50, 70],   wood:30,  bronze:2,  plans:1},
-  {isle:'Amorgos', hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[110, 150], wood:70,  bronze:8,  plans:2},
-  {isle:'Paros',   hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
-  {isle:'Sifnos',  hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
+  {isle:'Ikaria',  hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[50, 70],   wood:30,  bronze:2,  plans:1},
+  {isle:'Tinos',   hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[110, 150], wood:70,  bronze:8,  plans:2},
+  {isle:'Syros',   hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
+  {isle:'Ios',     hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
 ];
 export const PIRATE_PLANS = 3; // a pirate fortress gives the trireme's blueprint
 // Athens and Sparta keep their fortresses and navies this far from Kallisto: the start is neutral (P49).
-export const NEUTRAL_R = 6500;
+export const NEUTRAL_R = 8000; // P52: the fortresses stand far out
 export const FORTS = {pirates:['Thasos', 'Kos'], // every city island except the capitals has a fortress too
   hull:{city:900, pirate:700}, fighters:7, dmg:2.5, range:560, every:3.4, gold:[320, 520], wood:150, bronze:25, rebuild:600, guards:2,
   stoneEvery:5.2, stoneRange:950, stoneFlight:2.6, stoneDmg:14, stoneHit:58, heal:4, healAfter:30};

@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=341cce2';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=341cce2';
-import {G} from './state.js?v=341cce2';
-import {TOD, updateDayNight} from './daynight.js?v=341cce2';
-import {showGrass} from './grass.js?v=341cce2';
+import {QUALITY, SHIPS} from './config.js?v=769a00d';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=769a00d';
+import {G} from './state.js?v=769a00d';
+import {TOD, updateDayNight} from './daynight.js?v=769a00d';
+import {showGrass} from './grass.js?v=769a00d';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -108,8 +108,8 @@ waterMat.onBeforeCompile = sh => {
       float fade = smoothstep(1500., 400., dist); // lines fade out sooner: far away they smear into streaks
       // cartoon sea (like a certain sailing Zelda): crisp white wavy lines drifting on the water in broken patches, with a soft glow around them
       vec2 q = vWorld.xz/120.; q += .55*vec2(sin(q.y*1.7 + uTime*.4) + .5*sin(q.x*3.1 + uTime*.7), cos(q.x*1.5 - uTime*.3) + .5*cos(q.y*2.9 - uTime*.6)); // strong bends: wavy, not a grid
-      float e = cells(q), patchK = smoothstep(.15, .42, vnoise(vWorld.xz/300. - uTime*.03));
-      float bits = smoothstep(.36, .5, vnoise(vWorld.xz/38. + vec2(uTime*.25, -uTime*.15))); // cut the lines into short squiggles
+      float e = cells(q), patchK = smoothstep(.3, .56, vnoise(vWorld.xz/300. - uTime*.03));
+      float bits = smoothstep(.47, .6, vnoise(vWorld.xz/38. + vec2(uTime*.25, -uTime*.15))); // cut the lines into short squiggles
       float line = (1. - smoothstep(.04, .085, e))*patchK*bits, glow = (1. - smoothstep(.0, .28, e))*patchK*(.4 + .6*bits);
       float fk = uFoam*fade*(1. - .5*uStorm)*(1. - .45*uNight);
       gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, (glow*.14 + line*.6)*fk);
