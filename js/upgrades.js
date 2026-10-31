@@ -1,7 +1,7 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES} from './config.js?v=f11df90';
-import {G, lvl, ship, pay, rank} from './state.js?v=f11df90';
-import {SPECS, sailSizes, crewLayout} from './ships.js?v=f11df90';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES} from './config.js?v=341cce2';
+import {G, lvl, ship, pay, rank} from './state.js?v=341cce2';
+import {SPECS, sailSizes, crewLayout} from './ships.js?v=341cce2';
 
 export const ramMax = () => UPGRADE_MAX*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
@@ -37,6 +37,7 @@ export function effectText(k, l = lvl(k)){
   const u = UPGRADES[k];
   if (k === 'ram'){ const m = ramMat(l); return m ? `${m.name} ram, level ${m.sub}: ${ramDmg(l)} damage` : 'No ram'; }
   if (k === 'fire') return l ? `${FIRE_ARROWS.dps(l).toFixed(1)} fire damage a second` : 'No fire arrows';
+  if (k === 'catapult') return l ? `${ABILITIES.catapult.dmg(l)} damage, sets ships alight` : 'No catapult';
   if (k === 'chain') return l ? `${ABILITIES.chain.secs(l).toFixed(1)} seconds without a sail` : 'No chain shot';
   if (k === 'seats') return crewText(l);
   if (k === 'sail'){ const n = sailCount(l); return n ? `${n} sail${n > 1 ? 's' : ''}, +${Math.round(u.each*l*100)}% speed` : 'No sail'; }

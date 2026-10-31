@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=f11df90';
-import {G, isExplored} from './state.js?v=f11df90';
-import {fogLayer, islandPath} from './map.js?v=f11df90';
-import {view, project, screenToSea} from './scene.js?v=f11df90';
-import {JOY_RADIUS} from './input.js?v=f11df90';
-import {enemies, combatState, capture} from './combat.js?v=f11df90';
-import {drawFish} from './fishing.js?v=f11df90';
-import {whale} from './wildlife.js?v=f11df90';
-import {SHORE_FISH} from './config.js?v=f11df90';
-import {W as WIND} from './weather.js?v=f11df90';
-import {bottle} from './quests.js?v=f11df90';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=f11df90';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=341cce2';
+import {G, isExplored} from './state.js?v=341cce2';
+import {fogLayer, islandPath} from './map.js?v=341cce2';
+import {view, project, screenToSea} from './scene.js?v=341cce2';
+import {JOY_RADIUS} from './input.js?v=341cce2';
+import {enemies, combatState, capture} from './combat.js?v=341cce2';
+import {drawFish} from './fishing.js?v=341cce2';
+import {whale} from './wildlife.js?v=341cce2';
+import {SHORE_FISH} from './config.js?v=341cce2';
+import {W as WIND} from './weather.js?v=341cce2';
+import {bottle} from './quests.js?v=341cce2';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=341cce2';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -152,6 +152,15 @@ export function drawOverlay(fps){
     drawDrops(t);
     drawSplashes(W, H, t);
   }
+  // aiming a power (P51): a faint ring for its range around your ship, a dashed arc to the spot, and the circle where it will land
+  if (G.aim){ const A = G.aim, col = A.k === 'catapult' ? '255,150,70' : A.k === 'chain' ? '190,205,220' : '255,240,200';
+    const ring = (x, y, r, w, a, dash) => { c.save(); c.setLineDash(dash || []); c.lineWidth = w; c.strokeStyle = `rgba(${col},${a})`; c.beginPath();
+      for (let i=0;i<=40;i++){ const t = i/40*Math.PI*2, p = project(x + Math.cos(t)*r, 2, y + Math.sin(t)*r); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); } c.stroke(); c.restore(); };
+    ring(S.x, S.y, A.range, 2, .25, [6, 8]);
+    ring(A.x, A.y, A.r, 3, .9); c.fillStyle = `rgba(${col},.18)`; c.fill();
+    c.save(); c.setLineDash([8, 8]); c.lineWidth = 2.5; c.strokeStyle = `rgba(${col},.75)`; c.beginPath();
+    for (let i=0;i<=24;i++){ const k = i/24, p = project(S.x + (A.x - S.x)*k, 20 + Math.sin(k*Math.PI)*Math.min(260, Math.hypot(A.x - S.x, A.y - S.y)*.5), S.y + (A.y - S.y)*k); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }
+    c.stroke(); c.restore(); }
   if (G.flash){ c.fillStyle = `rgba(240,245,255,${G.flash*.4})`; c.fillRect(0,0,W,H); }
 
   // red edges when an arrow hits you

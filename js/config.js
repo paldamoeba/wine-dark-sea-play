@@ -92,7 +92,12 @@ export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'raid
 // Fire arrows: a ship hit by one burns for burnSeconds, losing dps(level) hull a second.
 // P50: abilities in the bar at the bottom of the screen. fire: seconds of flaming arrows, then a cooldown.
 // chain: how long a ship stays dismasted (grows with the Chain shot level) and how slow it goes meanwhile.
-export const ABILITIES = {fire:{secs:8, cd:28}, chain:{cd:22, secs:l => 4 + .6*l, slow:.25}};
+// P51: shower, chain and catapult are aimed: drag the button onto the sea (range = how far from your ship, r = how wide it lands,
+// flight = seconds in the air, so you aim where the ship is going to be). A tap fires at where the target is right now.
+export const ABILITIES = {fire:{secs:8, cd:28},
+  shower:{cd:16, range:420, r:70, flight:1.7},
+  chain:{cd:22, secs:l => 4 + .6*l, slow:.25, range:380, r:45, flight:1.3},
+  catapult:{cd:20, range:540, r:60, flight:2.4, dmg:l => 26 + 6*l}};
 export const FIRE_ARROWS = {burnSeconds:2.5, dps:l => l ? .6 + .18*l : 0}; // P49: weaker, so fire no longer sinks ships at once
 // The request board in every harbor.
 export const REQUESTS = {offers:3, max:2,
@@ -120,6 +125,7 @@ export const UPGRADES = {
   arrows: {label:'Arrowheads',      each:.08, unit:'arrow damage', cost:{bronze:2, gold:18}, desc:'Bronze arrowheads for every archer'},
   ram:    {label:'Ram',             cost:{wood:20, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it'},
   fire:   {label:'Fire arrows',     minTier:2, cost:{linen:4, gold:40}, desc:'Rags soaked in oil. Tap Fire in a fight and for a few seconds every arrow sets ships alight'},
+  catapult:{label:'Catapult',      minTier:2, cost:{bronze:8, gold:70}, desc:'A catapult on deck that throws a ball of fire high into the air. Drag the Catapult button to where the enemy will be'},
   chain:  {label:'Chain shot',      minTier:1, cost:{bronze:3, gold:30}, desc:'Iron balls joined by a chain. Tap Chains in a fight to tear down a ship\'s sail: it can barely move for a while'},
 };
 export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry

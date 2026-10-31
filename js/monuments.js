@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue} from './ships.js?v=f11df90';
+import {mat, statue, person} from './ships.js?v=341cce2';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -205,29 +205,34 @@ export function buildGladiator(stone = 'marble'){
   return g;
 }
 
-// A bandit camp (P49): a ring of sharpened log stakes on the beach with a gap toward the sea, three patched tents,
-// a wooden lookout tower with a black flag, a campfire and some barrels. Built facing +x (the sea side). About 170 across.
+// A bandit camp (P51: no wall): two log cabins with plank roofs, a patched tent, a campfire with stones and a cooking pot,
+// barrels and crates, a black flag on a pole, and four bandits with bows down on the beach facing the sea (+x).
+// g.userData.archers holds them (combat.js shoots arrows from them and makes them lean in to shoot).
 export function buildCamp(){
-  const g = new T.Group(), log = mat('#7a5230'), dark = mat('#4d3320'), tent = [mat('#b49a72'), mat('#8f6b4a'), mat('#a6845e')], patch = mat('#6d4f3a');
+  const g = new T.Group(), log = mat('#7a5230'), dark = mat('#4d3320'), roof = mat('#5e4027'), cloth = mat('#a6845e');
   const put = (o, x, y, z) => { o.position.set(x, y, z); g.add(o); return o; };
-  // the palisade: leaning stakes, open on the sea side
-  for (let k=0;k<44;k++){ const a = k/44*Math.PI*2; if (Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < .42) continue;
-    const h = 26 + (k*7 % 5)*2.4, st = M(new T.CylinderGeometry(2.2, 2.8, h, 6), k % 3 ? log : dark); put(st, Math.cos(a)*78, h/2, Math.sin(a)*78);
-    const tip = M(new T.ConeGeometry(2.3, 6, 6), dark); put(tip, Math.cos(a)*78, h + 3, Math.sin(a)*78); }
-  // tents: cones of patched cloth with a dark doorway
-  [[-30, -32, 22], [-40, 26, 19], [6, 44, 17]].forEach(([x, z, r], i) => { const t = M(new T.ConeGeometry(r, r*1.5, 7), tent[i]); put(t, x, r*.75, z); t.rotation.y = i;
-    const door = M(new T.ConeGeometry(r*.42, r*.95, 3), patch, false); put(door, x + r*.62, r*.48, z); door.rotation.y = Math.PI; });
-  // lookout tower with a black flag
-  for (const [x, z] of [[-6, -6], [6, -6], [-6, 6], [6, 6]]) put(M(new T.CylinderGeometry(1.6, 2, 54, 6), log), -50 + x, 27, -4 + z);
-  put(M(new T.BoxGeometry(20, 3, 20), dark), -50, 54, -4);
-  for (const [x, z, w, d] of [[-9, 0, 2, 20], [9, 0, 2, 20], [0, -9, 20, 2], [0, 9, 20, 2]]) put(M(new T.BoxGeometry(w, 6, d), log), -50 + x, 58, -4 + z);
-  put(M(new T.CylinderGeometry(.8, .8, 28, 5), dark), -50, 69, -4);
-  const flag = M(new T.BoxGeometry(1, 11, 17), mat('#1f1a1a')); put(flag, -50, 77, 4.5);
-  const skull = M(new T.SphereGeometry(2.4, 10, 8), mat('#e9dcc0'), false); put(skull, -49.3, 77.5, 4.5); skull.scale.set(.3, 1, 1);
-  // campfire with stones around it, and barrels
-  for (let k=0;k<8;k++){ const a = k/8*Math.PI*2; put(M(new T.DodecahedronGeometry(3, 0), mat('#8c8478')), 22 + Math.cos(a)*9, 1.5, -6 + Math.sin(a)*9); }
-  const fire = M(new T.ConeGeometry(5, 12, 7), mat('#f2b247'), false); put(fire, 22, 6, -6);
-  const fire2 = M(new T.ConeGeometry(3, 8, 6), mat('#e0614d'), false); put(fire2, 22, 5, -6);
-  for (const [x, z] of [[40, 30], [46, 24], [-10, -52]]) put(M(new T.CylinderGeometry(5, 5, 11, 10), dark), x, 5.5, z);
+  // log cabins: stacked log walls, a sloped plank roof, a dark doorway
+  for (const [x, z, ry] of [[-45, -30, .3], [-40, 34, -.4]]){ const c = new T.Group(); c.position.set(x, 0, z); c.rotation.y = ry; g.add(c);
+    for (let k=0;k<5;k++){ for (const [w, d, ox, oz] of [[30, 3, 0, -11], [30, 3, 0, 11], [3, 22, -14, 0], [3, 22, 14, 0]]){ const l = M(new T.CylinderGeometry(1.6, 1.6, Math.max(w, d), 6), k % 2 ? log : dark); l.rotation.set(w > d ? 0 : Math.PI/2, 0, w > d ? Math.PI/2 : 0); l.position.set(ox, 2 + k*3.2, oz); c.add(l); } }
+    for (const sg of [1, -1]){ const r = M(new T.BoxGeometry(34, 1.4, 15), roof); r.position.set(0, 21, sg*6.5); r.rotation.x = sg*.55; c.add(r); }
+    const door = M(new T.BoxGeometry(1, 10, 7), mat('#2a1d14'), false); door.position.set(15, 5, 0); c.add(door); }
+  // a patched tent
+  const t = M(new T.ConeGeometry(17, 26, 7), cloth); put(t, -8, 13, -52); t.rotation.y = .4;
+  // the campfire: a ring of stones, crossed logs, flames and a pot on a tripod
+  for (let k=0;k<9;k++){ const a = k/9*Math.PI*2; put(M(new T.DodecahedronGeometry(3, 0), mat('#8c8478')), 6 + Math.cos(a)*10, 1.5, 4 + Math.sin(a)*10); }
+  for (const r of [.5, -.6]){ const l = M(new T.CylinderGeometry(1.2, 1.2, 14, 6), dark); l.rotation.set(Math.PI/2, r, 0); put(l, 6, 2, 4); }
+  const f1 = M(new T.ConeGeometry(5.5, 13, 7), mat('#f2b247'), false); put(f1, 6, 7, 4); const f2 = M(new T.ConeGeometry(3.2, 9, 6), mat('#e0614d'), false); put(f2, 6, 6, 4);
+  g.userData.flames = [f1, f2];
+  for (const a of [0, 2.1, 4.2]){ const p = M(new T.CylinderGeometry(.6, .6, 24, 4), dark); p.position.set(6 + Math.cos(a)*7, 11, 4 + Math.sin(a)*7); p.lookAt(6, 30, 4); g.add(p); }
+  put(M(new T.SphereGeometry(4.5, 10, 8, 0, 6.29, Math.PI/2.4, Math.PI/1.7), mat('#2b2622')), 6, 17, 4);
+  // barrels, crates and the flag
+  for (const [x, z] of [[-18, 16], [-22, 10], [24, -34]]) put(M(new T.CylinderGeometry(5, 5, 11, 10), dark), x, 5.5, z);
+  for (const [x, z] of [[-14, -14], [28, 30]]) put(M(new T.BoxGeometry(10, 9, 10), log), x, 4.5, z);
+  put(M(new T.CylinderGeometry(.8, .8, 46, 5), dark), -20, 23, 0);
+  put(M(new T.BoxGeometry(1, 12, 19), mat('#1f1a1a')), -20, 40, 9.5);
+  put(M(new T.SphereGeometry(2.5, 10, 8), mat('#e9dcc0'), false), -19.3, 40.5, 9.5).scale.set(.3, 1, 1);
+  // bandits with bows on the beach, facing the sea
+  g.userData.archers = [];
+  [[46, -26], [52, -6], [50, 16], [44, 34]].forEach(([x, z], i) => { const p = person(['rTunic', '#2c1f1f', 'rTunic', '#5a2a22'][i], 'archer', 'pirate'); p.scale.setScalar(1.6); p.rotation.y = 0; put(p, x, 0, z); g.userData.archers.push(p); });
   return g;
 }

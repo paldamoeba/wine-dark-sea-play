@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=f11df90';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=f11df90';
-import {G} from './state.js?v=f11df90';
-import {TOD, updateDayNight} from './daynight.js?v=f11df90';
-import {showGrass} from './grass.js?v=f11df90';
+import {QUALITY, SHIPS} from './config.js?v=341cce2';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=341cce2';
+import {G} from './state.js?v=341cce2';
+import {TOD, updateDayNight} from './daynight.js?v=341cce2';
+import {showGrass} from './grass.js?v=341cce2';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -232,7 +232,7 @@ const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.
       vec3 col = c.rgb/tot;
       // bloom: a wide ring of samples, only the bright parts, added back as a warm glow
       if (bloom > .01){ vec3 b = vec3(0.); for (int i = 0; i < 16; i++){ float k = float(i), a = k*.7854 + (i >= 8 ? .39 : 0.), rr = (i >= 8 ? 15. : 7.)*res.y/900.; // two fixed rings: smooth, no grain
-          vec3 sc = texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res).rgb; b += max(sc - .6, 0.)*(i >= 8 ? .6 : 1.); }
+          vec3 sc = texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res).rgb; b += max(sc - .8, 0.)*(i >= 8 ? .6 : 1.); } // P51: only really bright things (flames, windows) glow, not white sails
         col += b/12.*bloom*vec3(1.25, 1.05, .8); }
       float l = dot(col, vec3(.299, .587, .114));
       col = mix(vec3(l), col, 1.15)*vec3(1.035, 1.0, .955);
@@ -248,6 +248,6 @@ export function renderFrame(on){
   if (!rt || rt.width !== w || rt.height !== h){ if (rt) rt.dispose();
     rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); }
   renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
-  post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .15 + TOD.night*3.2; // a hint by day, strong at night around flames and windows
+  post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .1 + TOD.night*1.5; // a hint by day, strong at night around flames and windows
   renderer.render(postScene, postCam);
 }

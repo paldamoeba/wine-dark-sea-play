@@ -1,7 +1,7 @@
 // Clouds: soft white puffs drifting between the camera and the sea. A few on fair days, many in mist (instead of one white
 // fog over everything), grey in storms. They wrap around the camera so there are always some nearby.
-import {G} from './state.js?v=f11df90';
-import {scene, camera} from './scene.js?v=f11df90';
+import {G} from './state.js?v=341cce2';
+import {scene, camera} from './scene.js?v=341cce2';
 
 const T = window.THREE;
 const N = 22, R = 1100;
@@ -33,7 +33,7 @@ export function updateClouds(dt, kind){
     const clear = Math.min(1, Math.max(0, (Math.hypot(u.x - cx, u.z - cz) - 260)/320));
     const target = u.rank < want ? (kind === 'mist' ? .32 : .4)*clear : 0;
     u.m.opacity += (target - u.m.opacity)*Math.min(1, dt*.4);
-    u.m.color.copy(WHITE).lerp(GREY, G.stormK || 0);
+    u.m.color.copy(WHITE).lerp(GREY, G.stormK || 0).multiplyScalar(1 - .72*(G.night || 0)); // dark at night, so they don't glow
     c.visible = u.m.opacity > .01;
   }
 }

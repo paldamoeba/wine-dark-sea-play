@@ -755,3 +755,4 @@ body.big .raid.capture{zoom:1.5}
 .ab.turn{filter:saturate(.3) brightness(.95)}
 .ab.turn span{font-size:0}.ab.turn span::after{content:'Side-on';font-size:10px}
 body.big .abilities{zoom:1.5}
+.ab.cata{--c:#b8462e;--c2:#8a3220}

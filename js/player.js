@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=f11df90';
-import {SPECS} from './ships.js?v=f11df90';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=f11df90';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=f11df90';
-import {W} from './weather.js?v=f11df90';
-import {steering} from './input.js?v=f11df90';
-import {toast, showZone} from './ui.js?v=f11df90';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=f11df90';
-import {startFish, stopFish} from './fishing.js?v=f11df90';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=f11df90';
-import {progress} from './quests.js?v=f11df90';
-import {startSink} from './sinking.js?v=f11df90';
-import {sfx} from './audio.js?v=f11df90';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=341cce2';
+import {SPECS} from './ships.js?v=341cce2';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=341cce2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=341cce2';
+import {W} from './weather.js?v=341cce2';
+import {steering} from './input.js?v=341cce2';
+import {toast, showZone} from './ui.js?v=341cce2';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=341cce2';
+import {startFish, stopFish} from './fishing.js?v=341cce2';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=341cce2';
+import {progress} from './quests.js?v=341cce2';
+import {startSink} from './sinking.js?v=341cce2';
+import {sfx} from './audio.js?v=341cce2';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -107,8 +107,23 @@ function gather(dt, sh){
 function fullTip(k){ const S = G.S; S.fullTips = S.fullTips || {}; if (S.fullTips[k]) return; S.fullTips[k] = true;
   toast(`No more room for ${k}. Dock at any harbor and it goes to the Kallisto warehouse.`, 4.5); }
 
+function moveSpot(s){
+  const S = G.S;
+  for (let k=0;k<30;k++){ const a = Math.random()*6.28, d = 700 + Math.random()*1900, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
+    if (x < 300 || y < 300 || x > WORLD - 300 || y > WORLD - 300 || landDist(x, y) < 110 || zoneAt(x, y) > 1 || SPOTS.some(o => o !== s && Math.hypot(o.x - x, o.y - y) < 600)) continue;
+    Object.assign(s, {x, y, kind:zoneAt(x, y) === 0 ? 'tuna' : 'swordfish', stock:TUNING.spotStock, regen:0, life:180 + Math.random()*240});
+    if (s.g){ s.g.position.x = x; s.g.position.z = y; s.fish.forEach(f => f.userData.kind = s.kind); } return; }
+  s.life = 60;
+}
+
 function regrow(dt){
-  for (const s of SPOTS) if (s.stock < TUNING.spotStock){ s.regen += dt; if (s.regen > TUNING.spotRegen){ s.stock++; s.regen = 0; } }
+  // P51: fishing spots wander. A fished-out spot comes back somewhere new near you; an untouched one moves on after a few minutes.
+  for (const s of SPOTS){
+    s.life = (s.life ?? 150 + Math.random()*200) - dt;
+    const far = Math.hypot(s.x - G.S.x, s.y - G.S.y) > 900;
+    if ((!s.stock && (s.regen += dt) > TUNING.spotRegen*3) || (s.life <= 0 && far)){ moveSpot(s); continue; }
+    if (s.stock && s.stock < TUNING.spotStock){ s.regen += dt; if (s.regen > TUNING.spotRegen){ s.stock++; s.regen = 0; } }
+  }
   for (const i of ISLANDS) if (i.trees && i.stock < i.trees){ i.regen += dt; if (i.regen > TUNING.treeRegen){ i.stock++; i.regen = 0; refreshTrees(i); } }
   for (const w of WRECKS) if (!w.stock){ w.regen += dt; if (w.regen > TUNING.wreckRespawn){ w.stock = WRECK_SIZES[w.size].stock; w.regen = 0; } }
 }

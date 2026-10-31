@@ -1,17 +1,17 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=f11df90';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=f11df90';
-import {G, ship, lvl} from './state.js?v=f11df90';
-import {men} from './crew.js?v=f11df90';
-import {scene} from './scene.js?v=f11df90';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=f11df90';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=f11df90';
-import {addTown, figure} from './town.js?v=f11df90';
-import {makeFire, updateFire, burn} from './fire.js?v=f11df90';
-import {addGrass} from './grass.js?v=f11df90';
-import {sinkPose} from './sinking.js?v=f11df90';
-import {moored} from './fleet.js?v=f11df90';
-import {placeOnWaves} from './combat.js?v=f11df90';
+import {SHIPS} from './config.js?v=341cce2';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=341cce2';
+import {G, ship, lvl} from './state.js?v=341cce2';
+import {men} from './crew.js?v=341cce2';
+import {scene} from './scene.js?v=341cce2';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=341cce2';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=341cce2';
+import {addTown, figure} from './town.js?v=341cce2';
+import {makeFire, updateFire, burn} from './fire.js?v=341cce2';
+import {addGrass} from './grass.js?v=341cce2';
+import {sinkPose} from './sinking.js?v=341cce2';
+import {moored} from './fleet.js?v=341cce2';
+import {placeOnWaves} from './combat.js?v=341cce2';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -265,8 +265,29 @@ function animateDock(dt, t){
 
 // ---- player boat ----
 let boat = null;
+// P51: fishing rods over both sides with a line and a red and white float, shown while you fish (the fishing game or near the shore)
+function makeRods(sh){
+  const s = SPECS[sh.model], g = new T.Group(), deck = s.H*.2 + 3, rods = [];
+  for (const sg of [1, -1]){ const rod = mesh(new T.CylinderGeometry(.35, .6, 26, 5), '#8a5a30'); rod.castShadow = false;
+    const base = new T.Vector3(sg*3, deck, sg*sh.beam*.42), tip = new T.Vector3(6, deck + 15, sg*(sh.beam*.5 + 20));
+    rod.position.copy(base).add(tip).multiplyScalar(.5); rod.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), tip.clone().sub(base).normalize()); g.add(rod);
+    const bob = new T.Group(), top = mesh(new T.SphereGeometry(1.5, 10, 8), '#e2563f'), bot = mesh(new T.SphereGeometry(1.5, 10, 8, 0, 6.29, Math.PI/2, Math.PI/2), '#fff6e2');
+    bob.add(top, bot); g.add(bob);
+    const lg = new T.BufferGeometry(); lg.setAttribute('position', new T.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3)); const line = new T.Line(lg, new T.LineBasicMaterial({color:'#f4efe2'})); g.add(line);
+    rods.push({tip, bob, line, sg, x:tip.x + 6, z:tip.z + sg*6}); }
+  g.visible = false; g.userData.rods = rods; return g;
+}
+function animateRods(t){
+  const r = boat && boat.userData.rodset; if (!r) return;
+  const on = !!G.fish || !!(G.act && G.act.type === 'shore'); r.visible = on && !G.dock; if (!r.visible) return;
+  const sea = waveAt(G.S.x, G.S.y, t) - boat.position.y; // the water line, in the boat's own height
+  for (const q of r.userData.rods){ const bite = G.fish && G.fish.flash > 0 ? 2.5 : 0, y = sea + Math.sin(t*2.2 + q.sg)*.8 - bite;
+    q.bob.position.set(q.x, y + .6, q.z);
+    const p = q.line.geometry.attributes.position; p.setXYZ(0, q.tip.x, q.tip.y, q.tip.z); p.setXYZ(1, q.x, y + 1.6, q.z); p.needsUpdate = true; }
+}
 export function swapBoat(){ if (boat) scene.remove(boat); const sh = SHIPS[G.S.tier]; boat = buildShip(sh.model, {...G.S.look, ...(G.S.crewName ? {} : {flag:'none'}), ram:lvl('ram'), plate:lvl('hull'), sailLv:lvl('sail'), men:men()}, G.settings.dev.crew); // no flag until you found a crew
-  boat.userData.fire = makeFire(sh.len, sh.beam, SPECS[sh.model].H*.9); boat.add(boat.userData.fire); scene.add(boat); }
+  boat.userData.fire = makeFire(sh.len, sh.beam, SPECS[sh.model].H*.9); boat.add(boat.userData.fire);
+  boat.userData.rodset = makeRods(sh); boat.add(boat.userData.rodset); scene.add(boat); }
 
 export function animateEntities(dt){
   updatePops(dt);
@@ -290,7 +311,7 @@ export function animateEntities(dt){
   for (const f of fleet) animateShip(f, t, 0);
   showHomeFleet();
   for (const f of homeFleet){ const p = f.userData.at; placeOnWaves(f, p.x, p.y, p.a, p.len, t); animateShip(f, t, 0); }
-  animateDock(dt, t);
+  animateDock(dt, t); animateRods(t);
 
   for (const s of SPOTS){
     s.g.visible = s.stock > 0; if (!s.stock) continue;

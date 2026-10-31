@@ -1,20 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES} from './config.js?v=f11df90';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=f11df90';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank} from './state.js?v=f11df90';
-import {scene} from './scene.js?v=f11df90';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=f11df90';
-import {makeFire, updateFire, burn} from './fire.js?v=f11df90';
-import {blessing, fighters} from './crew.js?v=f11df90';
-import {progress, goal} from './quests.js?v=f11df90';
-import {arrowK, ramDmg} from './upgrades.js?v=f11df90';
-import {toast} from './ui.js?v=f11df90';
-import {sink} from './player.js?v=f11df90';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=f11df90';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=f11df90';
-import {sfx} from './audio.js?v=f11df90';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES} from './config.js?v=341cce2';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=341cce2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank} from './state.js?v=341cce2';
+import {scene, screenToSea} from './scene.js?v=341cce2';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=341cce2';
+import {makeFire, updateFire, burn} from './fire.js?v=341cce2';
+import {blessing, fighters} from './crew.js?v=341cce2';
+import {progress, goal} from './quests.js?v=341cce2';
+import {arrowK, ramDmg} from './upgrades.js?v=341cce2';
+import {toast} from './ui.js?v=341cce2';
+import {sink} from './player.js?v=341cce2';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=341cce2';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=341cce2';
+import {sfx} from './audio.js?v=341cce2';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -47,11 +47,11 @@ export const enemies = [...RAIDERS, ...TRAFFIC].map(makeEnemy);
 const fortName = o => o === 'pirate' ? 'Pirate fortress' : `${o === 'athens' ? 'Athenian' : 'Spartan'} fortress`;
 const fortSpec = owner => ({name:fortName(owner), side:'fort', city:owner === 'pirate' ? null : owner, hull:FORTS.hull[owner === 'pirate' ? 'pirate' : 'city'], fighters:FORTS.fighters,
   dmg:FORTS.dmg, sight:FORTS.range, gold:FORTS.gold, wood:FORTS.wood, bronze:FORTS.bronze, len:200, beam:200, speed:0, turn:0});
-function fortSite(is){
+function fortSite(is, inset = 60){ // inset: how far up from the waterline it stands
   const base = Math.atan2(HOME.y - is.y, HOME.x - is.x);
   for (const off of [0, .4, -.4, .8, -.8, 1.2, -1.2, 1.6, -1.6, 2.1, -2.1, 2.6, -2.6, Math.PI]){ const a = base + off, dx = Math.cos(a), dy = Math.sin(a);
     let t = is.r + 120; while (t > 0 && landDist(is.x + dx*t, is.y + dy*t) > 0) t -= 6; // walk in to the shore
-    const x = is.x + dx*(t - 60), y = is.y + dy*(t - 60);
+    const x = is.x + dx*(t - inset), y = is.y + dy*(t - inset);
     if (landDist(is.x + dx*(t + 320), is.y + dy*(t + 320)) < 160) continue; // needs open water in front
     if (HARBORS.some(h => Math.hypot(h.dock.x - x, h.dock.y - y) < 520) || TOWN_PIERS.some(p => Math.hypot(p.x - x, p.y - y) < 600)) continue; // keep clear of the town's pier
     return {x, y, a, sea:{x:is.x + dx*(t + 250), y:is.y + dy*(t + 250)}}; }
@@ -73,7 +73,7 @@ for (const is of ISLANDS){
 const campSpec = c => ({name:`${c.isle} bandit camp`, side:'fort', city:null, hull:c.hull, fighters:c.fighters, dmg:c.dmg, sight:c.sight, gold:c.gold, wood:c.wood, bronze:c.bronze, len:160, beam:160, speed:0, turn:0});
 for (const c of CAMPS){
   const is = ISLANDS.find(i => i.name === c.isle); if (!is || is.fort) continue;
-  const site = fortSite(is); if (!site) continue;
+  const site = fortSite(is, 18); if (!site) continue; // right on the beach
   const spec = campSpec(c);
   const f = {kind:'fort', fort:true, owner:'bandit', camp:c, bandit:true, isle:is, spec, city:null, x:site.x, y:site.y, a:site.a, sea:site.sea, home:{x:site.x, y:site.y}, v:0, hull:spec.hull, cool:2, stoneT:[],
     mode:'patrol', dead:false, sinkY:0, respawn:0, obj:null, angry:false, attacked:false, lost:0, calm:0, quiet:0, guards:[]};
@@ -257,7 +257,7 @@ function pirate(e, dt){
   if (e.mode === 'chase' && !e.foe && (safe || fromHome > e.spec.leash || d > e.spec.sight*1.6)) e.mode = 'return';
   else if (e.mode !== 'chase' && !safe && d < e.spec.sight && fromHome < e.spec.leash*.8){
     startFight(e);
-    if (!S.raidHint){ S.raidHint = true; toast('Raiders! Your crew shoots back by itself. Flee to the Shallows if it goes badly.', 5); }
+    if (!S.raidHint && !e.bandit){ S.raidHint = true; toast('Raiders! Your crew shoots back by itself. Flee to the Shallows if it goes badly.', 5); }
   }
   if (e.mode === 'chase'){
     // the player comes first; a navy ship that shot at them is next
@@ -329,7 +329,7 @@ function fortThink(e, dt){
   if (d < FORTS.stoneRange && !e.camp) e.stoneT.forEach((t, i) => { e.stoneT[i] = t - dt; if (e.stoneT[i] <= 0){ e.stoneT[i] = FORTS.stoneEvery*(.85 + Math.random()*.3); throwStone(e, i); } });
   if (d > e.spec.sight || e.cool > 0) return;
   e.cool = FORTS.every*(.8 + Math.random()*.4); salvo(e, null, e.spec.fighters, e.spec.dmg, 110);
-  if (e.camp){ if (!G.S.campTip){ G.S.campTip = true; toast(`The bandits are shooting! Turn side-on so your crew shoots back, and sink the mothership too.`, 5); } }
+  if (e.camp){ /* the caution card already explains it: less text on screen */ }
   else if (!G.S.fortTip){ G.S.fortTip = true; toast(`The ${e.spec.name.toLowerCase()} is shooting! Its catapults throw stones: steer out of the red rings.`, 5); }
 }
 
@@ -406,6 +406,7 @@ const arrowGeo = new T.CylinderGeometry(.9, .9, 20, 4); arrowGeo.rotateZ(Math.PI
 const ARROWS = Array.from({length:160}, () => { const m = mesh(arrowGeo, '#f1ece0'); m.visible = false; m.castShadow = false; m.userData.mat0 = m.material; scene.add(m); return {m, live:false}; });
 const fireArrowMat = new T.MeshBasicMaterial({color:'#ff9a3c'}); // flaming arrows glow orange
 const chainMat = new T.MeshBasicMaterial({color:'#2c3036'}); // chain shot: dark iron
+const tmpW = new T.Vector3();
 let arrowI = 0;
 // Every arrow does the same damage whoever shoots it. Bigger ships win by having more archers and thicker hulls.
 const lenOf = e => e ? e.spec.len : ship().len;
@@ -417,7 +418,10 @@ function salvo(from, to, n, dmg, gap, fire = !from && fireT > 0){ for (let i=0;i
 // from = an enemy (or null for the player); to = an enemy (or null for the player).
 function shoot(from, to, dmg, fire = false, chain = false){
   const a = ARROWS[arrowI++ % ARROWS.length], src = from || G.S, sa = from ? from.a : G.S.a, al = (Math.random() - .5)*lenOf(from)*.6;
-  Object.assign(a, {live:true, from, to, dmg, t:0, x0:src.x + Math.cos(sa)*al, y0:src.y + Math.sin(sa)*al, hit:Math.random() < COMBAT.hitChance + (from ? 0 : blessing().hit || 0),
+  // a bandit camp shoots from one of its archers on the beach, who leans back as the arrow flies
+  const bow = from && from.camp && from.obj && from.obj.userData.archers ? from.obj.userData.archers[Math.floor(Math.random()*from.obj.userData.archers.length)] : null;
+  if (bow){ bow.getWorldPosition(tmpW); bow.userData.kick = 1; }
+  Object.assign(a, {live:true, from, to, dmg, t:0, x0:bow ? tmpW.x : src.x + Math.cos(sa)*al, y0:bow ? tmpW.z : src.y + Math.sin(sa)*al, hit:Math.random() < COMBAT.hitChance + (from ? 0 : blessing().hit || 0),
     ox:(Math.random()-.5)*70, oy:(Math.random()-.5)*70, fire, chain});
   if (chain) a.hit = true; // the chain always finds the rigging
   a.m.material = chain ? chainMat : fire ? fireArrowMat : a.m.userData.mat0; a.m.scale.setScalar(chain ? 2.4 : 1); a.m.visible = true; sfx(chain ? 'volley' : 'bow', src);
@@ -617,33 +621,90 @@ function playerCrew(dt){
   if (tgt && !G.sheetOpen && !G.sinking && pCool <= 0 && combatState.side){ pCool = COMBAT.shotEvery*(.85 + Math.random()*.3); salvo(null, tgt, fighters(), COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(), 120);
     if (tgt.spec.hull > ship().hull*1.5 && tgt.spec.fighters > fighters() && !G.S.bigTip){ G.S.bigTip = true; toast(`That ${tgt.spec.name.toLowerCase()} has more archers and a far thicker hull than your boat. Better to run!`, 5); } }
 }
-function volley(){
-  const tgt = combatState.target; if (!tgt || volleyT > 0 || G.sinking) return;
-  if (!broadside(null, tgt)){ toast('Turn side-on first: your archers shoot over the sides.', 2.5); return; }
-  volleyT = COMBAT.volleyCooldown*(blessing().volley || 1);
-  salvo(null, tgt, fighters()*COMBAT.volleyArrows, COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(), 70);
-  // everyone leans over the rail at once: the boat heels away from the target and the view jolts
-  G.kick = Math.min(.25, (G.kick || 0) + .1); G.shake = Math.min(1, (G.shake || 0) + .5);
-  toast('Volley!', 1); sfx('volley');
+// ---- aimed shots (P51): arrow shower, chain shot and catapult are lobbed at a spot on the sea and land a moment later ----
+// Each projectile flies in a high arc from your ship to its own landing point, then hurts whatever ship is there when it lands.
+const LOBS = [], lobGeo = {ball:new T.SphereGeometry(5, 12, 10), fire:new T.SphereGeometry(9, 14, 12)};
+const lobMat = {ball:new T.MeshBasicMaterial({color:'#2c3036'}), fire:new T.MeshBasicMaterial({color:'#ffb347'})};
+function lob(kind, x, y, dur, peak, hit){
+  const S = G.S, m = kind === 'arrow' ? new T.Mesh(arrowGeo, fireT > 0 ? fireArrowMat : ARROWS[0].m.userData.mat0) : new T.Mesh(lobGeo[kind], lobMat[kind]);
+  m.castShadow = false; scene.add(m); LOBS.push({m, x0:S.x, y0:S.y, x, y, t:0, dur, peak, hit, kind});
 }
-$('volleyBtn').addEventListener('click', volley);
+function updateLobs(dt){
+  for (let i=LOBS.length-1;i>=0;i--){ const l = LOBS[i]; l.t += dt/l.dur; const k = Math.min(1, l.t);
+    const x = l.x0 + (l.x - l.x0)*k, y = l.y0 + (l.y - l.y0)*k, h = 20 + Math.sin(k*Math.PI)*l.peak;
+    l.m.position.set(x, h, y);
+    if (l.kind === 'arrow'){ const k2 = Math.min(1, k + .02); l.m.lookAt(l.x0 + (l.x - l.x0)*k2, 20 + Math.sin(k2*Math.PI)*l.peak, l.y0 + (l.y - l.y0)*k2); l.m.rotateY(Math.PI/2); }
+    else if (l.kind === 'fire'){ l.m.scale.setScalar(1 + .15*Math.sin(G.t*30)); if (Math.random() < .5) puff(x, y, false, 1); }
+    if (k < 1) continue;
+    scene.remove(l.m); LOBS.splice(i, 1); l.hit(l.x, l.y);
+  }
+}
+// the hostile ships (and forts) a shot landing at (x, y) with radius r hits
+const struck = (x, y, r) => enemies.filter(e => !e.dead && hostile(e) && Math.hypot(e.x - x, e.y - y) < r + (e.fort ? 110 : e.spec.beam*.6));
+// where a tap (no drag) aims: the target as it is now
+const tapAim = () => combatState.target ? {x:combatState.target.x, y:combatState.target.y} : null;
+function clampAim(p, range){ const S = G.S, d = Math.hypot(p.x - S.x, p.y - S.y); return d <= range ? p : {x:S.x + (p.x - S.x)/d*range, y:S.y + (p.y - S.y)/d*range}; }
+export const abilityInfo = k => ABILITIES[k];
+// Arrow shower: every archer shoots high; the arrows rain down over the circle.
+function shower(at){
+  if (volleyT > 0 || G.sinking || !at) return false; const A = ABILITIES.shower, p = clampAim(at, A.range);
+  volleyT = COMBAT.volleyCooldown*(blessing().volley || 1);
+  const n = fighters()*COMBAT.volleyArrows, dmg = COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(), fire = fireT > 0;
+  for (let i=0;i<n;i++){ const a = Math.random()*6.28, r = Math.sqrt(Math.random())*A.r;
+    setTimeout(() => lob('arrow', p.x + Math.cos(a)*r, p.y + Math.sin(a)*r, A.flight*(.92 + Math.random()*.16), 230, (x, y) => {
+      const hit = struck(x, y, 14); if (!hit.length){ splash(x, y); sfx('plop', {x, y}); return; }
+      for (const e of hit){ e.hull -= dmg; e.hitT = .25; if (fire) e.burnT = FIRE_ARROWS.burnSeconds; spark(e.x, e.y); sfx('thud', e); if (side(e) !== 'pirate' && !e.bandit) crime(e); else startFight(e); if (e.hull <= 0) sinkEnemy(e, true); } }), i*45); }
+  G.kick = Math.min(.25, (G.kick || 0) + .1); G.shake = Math.min(1, (G.shake || 0) + .4); sfx('volley'); return true;
+}
+function volley(){ shower(tapAim()); } // a tap with a second finger or the old shortcut: at the target as it is now
+// Chain shot: two iron balls on a chain; a ship where they land loses its sail.
+function chainAt(at){
+  if (!lvl('chain') || chainCd > 0 || G.sinking || !at) return false; const A = ABILITIES.chain, p = clampAim(at, A.range);
+  chainCd = A.cd; sfx('volley');
+  for (const o of [-1, 1]) lob('ball', p.x + o*10, p.y, A.flight, 150, (x, y) => { const hit = struck(x, y, A.r).filter(e => !e.fort); if (!hit.length){ splash(x, y); sfx('plop', {x, y}); } hit.forEach(dismast); });
+  return true;
+}
+// Catapult (bireme and bigger): a ball of fire thrown very high; big damage where it lands, and it sets ships alight.
+function catapultAt(at){
+  if (!lvl('catapult') || cataCd > 0 || G.sinking || !at) return false; const A = ABILITIES.catapult, p = clampAim(at, A.range);
+  cataCd = A.cd; sfx('horn'); G.shake = Math.min(1, (G.shake || 0) + .5);
+  lob('fire', p.x, p.y, A.flight, 420, (x, y) => { const hit = struck(x, y, A.r); puff(x, y, false, 8); sfx('crash', {x, y});
+    for (const e of hit){ e.hull -= A.dmg(lvl('catapult')); e.burnT = FIRE_ARROWS.burnSeconds*1.5; e.hitT = .3; e.kick = .2; if (side(e) !== 'pirate' && !e.bandit) crime(e); else startFight(e); if (e.hull <= 0) sinkEnemy(e, true); } });
+  return true;
+}
+// called by the ability bar (input on the buttons): kind, and the spot on the sea (or null for a tap)
+// The bar's buttons: press, drag onto the sea to aim (a ring shows where it lands), let go to shoot. A tap shoots at the target as it is now.
+document.querySelectorAll('.ab[data-ab]').forEach(btn => {
+  btn.addEventListener('pointerdown', e => { if (btn.disabled) return; e.preventDefault(); try { btn.setPointerCapture(e.pointerId); } catch(_){}
+    G.aimDrag = {k:btn.dataset.ab, id:e.pointerId, sx:e.clientX, sy:e.clientY, moved:false}; });
+  btn.addEventListener('pointermove', e => { const d = G.aimDrag; if (!d || d.id !== e.pointerId) return;
+    if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 18) d.moved = true;
+    const A = ABILITIES[d.k]; if (!d.moved || !A.range) return;
+    const p = screenToSea(e.clientX, e.clientY); if (p) G.aim = {k:d.k, ...clampAim(p, A.range), r:A.r, range:A.range}; });
+  const end = e => { const d = G.aimDrag; if (!d || d.id !== e.pointerId) return; const at = G.aim; G.aimDrag = null; G.aim = null;
+    if (e.type !== 'pointercancel') useAbility(d.k, d.moved ? at : null); };
+  btn.addEventListener('pointerup', end); btn.addEventListener('pointercancel', end);
+});
+export function useAbility(kind, at){
+  at = at || tapAim();
+  if (kind === 'shower') return shower(at);
+  if (kind === 'chain') return chainAt(at);
+  if (kind === 'catapult') return catapultAt(at);
+  if (kind === 'fire') return fireUp();
+}
 // ---- abilities (P50): fire arrows for a few seconds, and chain shot that brings down a ship's sail ----
-let fireT = 0, fireCd = 0, chainCd = 0;
+let fireT = 0, fireCd = 0, chainCd = 0, cataCd = 0;
 function fireUp(){ if (!lvl('fire') || fireCd > 0 || fireT > 0 || !combatState.target || G.sinking) return;
   fireT = ABILITIES.fire.secs; fireCd = ABILITIES.fire.cd; sfx('horn'); toast('Fire arrows!', 1.2); pCool = 0; }
-function chainShot(){ const tgt = combatState.target; if (!tgt || tgt.fort || !lvl('chain') || chainCd > 0 || G.sinking) return;
-  if (!broadside(null, tgt)){ toast('Turn side-on first', 2); return; }
-  chainCd = ABILITIES.chain.cd; shoot(null, tgt, 0, false, true); setTimeout(() => !tgt.dead && shoot(null, tgt, 0, false, true), 160); G.shake = Math.min(1, (G.shake || 0) + .4); }
 function dismast(e){ if (e.dead || e.fort) return; const first = !(e.dismastT > 0);
   e.dismastT = ABILITIES.chain.secs(lvl('chain')); e.v *= .4; sfx('crash', e); spark(e.x, e.y);
   (e.obj.userData.sails || []).forEach(s => s.visible = false);
   if (first) toast(`Dismasted! The ${e.spec.name.toLowerCase()} can barely move.`, 2.2); }
 function updateAbilities(dt){
-  fireT = Math.max(0, fireT - dt); fireCd = Math.max(0, fireCd - dt); chainCd = Math.max(0, chainCd - dt);
+  fireT = Math.max(0, fireT - dt); fireCd = Math.max(0, fireCd - dt); chainCd = Math.max(0, chainCd - dt); cataCd = Math.max(0, cataCd - dt); updateLobs(dt);
   for (const e of enemies) if (e.dismastT > 0 && (e.dismastT -= dt) <= 0) (e.obj.userData.sails || []).forEach(s => s.visible = true);
 }
-$('fireBtn').addEventListener('click', fireUp);
-$('chainBtn').addEventListener('click', chainShot);
+
 document.addEventListener('volley', volley); // a tap with a second finger, or a double tap on your own ship (input.js)
 // ---- capturing bandit ships (P49) ----
 // Beat a raider ship down below a quarter of its hull and come close: its crew gives up. Capture it and a prize crew sails it
@@ -681,6 +742,9 @@ export function updateCombat(dt){
       if (e.dead){ e.sinkT += dt; e.respawn -= dt; e.obj.position.y = 2 - Math.min(70, e.sinkT*10); if (e.respawn <= 0){ respawn(e); e.obj.position.y = 2; } }
       else { think(e, dt); const d = dist(e, G.S); if (d < 150){ G.S.x = e.x + (G.S.x - e.x)/d*150; G.S.y = e.y + (G.S.y - e.y)/d*150; } } // the walls are solid
       e.hitT = Math.max(0, (e.hitT || 0) - dt);
+      if (e.camp && !e.dead && e.obj.userData.archers && dist(e, G.S) < 1400){ const u = e.obj.userData, th = Math.atan2(G.S.y - e.y, G.S.x - e.x);
+        for (const p of u.archers){ p.userData.kick = Math.max(0, (p.userData.kick || 0) - dt*2.5); p.rotation.y = hostile(e) ? e.a - th : 0; p.rotation.z = .35*p.userData.kick; }
+        u.flames.forEach((f, i) => f.scale.set(1, .85 + .25*Math.sin(G.t*9 + i*2), 1)); }
       updateFire(e.fire, dist(e, G.S) < 1600 && (!e.dead || e.sinkT < 8) ? Math.max(burn(e.hull, e.spec.hull), e.burnT > 0 && !e.dead ? .6 : 0) : 0, G.t);
       continue;
     }
@@ -718,11 +782,14 @@ export function updateCombat(dt){
   G.hunted = {athens:false, sparta:false}; for (const e of enemies) if (e.angry && !e.dead) G.hunted[e.city] = true;
   combatState.threat = enemies.some(e => !e.dead && hostile(e) && e.mode === 'chase' && dist(e, G.S) < e.spec.sight*1.6);
   // the ability bar shows only in a fight
-  const show = !!combatState.target && !G.sheetOpen && !G.sinking, btn = $('volleyBtn'), fb = $('fireBtn'), cb2 = $('chainBtn');
+  // the ability bar shows only in a fight (and while you're aiming one)
+  const show = (!!combatState.target || !!G.aim) && !G.sheetOpen && !G.sinking, cd = (el, left, all) => el.style.setProperty('--cd', (left > 0 ? left/all*360 : 0) + 'deg');
   $('abilities').hidden = !show;
-  if (show){ btn.disabled = volleyT > 0; btn.classList.toggle('turn', !combatState.side); btn.style.setProperty('--cd', (volleyT/(COMBAT.volleyCooldown*(blessing().volley || 1))*360) + 'deg');
-    fb.hidden = !lvl('fire'); fb.disabled = fireCd > 0 && fireT <= 0; fb.classList.toggle('on', fireT > 0); fb.style.setProperty('--cd', (fireT > 0 ? 0 : fireCd/ABILITIES.fire.cd*360) + 'deg');
-    cb2.hidden = !lvl('chain'); cb2.disabled = chainCd > 0 || !!combatState.target.fort; cb2.classList.toggle('turn', !combatState.side); cb2.style.setProperty('--cd', chainCd/ABILITIES.chain.cd*360 + 'deg'); }
+  if (show){ const vb = $('volleyBtn'), fb = $('fireBtn'), cb = $('chainBtn'), kb = $('cataBtn');
+    vb.disabled = volleyT > 0; cd(vb, volleyT, COMBAT.volleyCooldown*(blessing().volley || 1));
+    fb.hidden = !lvl('fire'); fb.disabled = fireCd > 0 && fireT <= 0; fb.classList.toggle('on', fireT > 0); cd(fb, fireT > 0 ? 0 : fireCd, ABILITIES.fire.cd);
+    cb.hidden = !lvl('chain'); cb.disabled = chainCd > 0; cd(cb, chainCd, ABILITIES.chain.cd);
+    kb.hidden = !lvl('catapult') || rank() < 2; kb.disabled = cataCd > 0; cd(kb, cataCd, ABILITIES.catapult.cd); }
   const cf = nearCouncil(), cb = $('councilBtn'); if (!G.sheetOpen) G.council = cf; cb.hidden = !cf || !!combatState.target;
   if (cf) cb.textContent = `${adj(cf.city)} war council`;
   const prey = combatState.prey, raid = $('raidBtn');

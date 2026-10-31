@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=f11df90';
-import {makePost} from './glow.js?v=f11df90';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=f11df90';
-import {buildColossus, buildFortress, buildGladiator} from './monuments.js?v=f11df90';
-import {makeFire, updateFire} from './fire.js?v=f11df90';
-import {updateSmoke} from './smoke.js?v=f11df90';
-import {addGrass, updateGrass} from './grass.js?v=f11df90';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=f11df90';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=341cce2';
+import {makePost} from './glow.js?v=341cce2';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=341cce2';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=341cce2';
+import {makeFire, updateFire} from './fire.js?v=341cce2';
+import {updateSmoke} from './smoke.js?v=341cce2';
+import {addGrass, updateGrass} from './grass.js?v=341cce2';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=341cce2';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -255,6 +255,7 @@ const GROUPS = {
     {name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
     {name:'Spartan fortress', desc:'The same plan in warmer stone, with red banners.', make:() => buildFortress('sparta', '#9e2a22')},
     {name:'Pirate fortress', desc:'Dark stone on Thasos and Kos, with black banners.', make:() => buildFortress('pirate', '#231d1d')},
+    {name:'Bandit camp', desc:'On the wild islands near Kallisto: two log cabins, a tent, a campfire with a cooking pot, a black flag, and bandits with bows on the beach.', make:() => buildCamp()},
     {name:'Spartacus, in marble', desc:'The champion of the games, as a cartoony gladiator: a huge chest, a crested helmet, his sword raised and his shield up. He stands in white marble in the middle of the Arena of Rhodes.', make:() => buildGladiator('marble')},
     {name:'Spartacus, in bronze', desc:'The same champion cast in polished bronze, with a red crest.', make:() => buildGladiator('bronze')},
     {name:'Statue of Athena, in marble', desc:'Some towns keep their statues plain white marble instead of painting them.', make:() => statue('athena', 'marble')},
