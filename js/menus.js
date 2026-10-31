@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS} from './config.js?v=769a00d';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=769a00d';
-import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=769a00d';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=769a00d';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=769a00d';
-import {board, active, canDeliver, goal} from './quests.js?v=769a00d';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=769a00d';
-import {shipPortrait} from './portrait.js?v=769a00d';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=769a00d';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS} from './config.js?v=1ea44ec';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=1ea44ec';
+import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=1ea44ec';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=1ea44ec';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=1ea44ec';
+import {board, active, canDeliver, goal} from './quests.js?v=1ea44ec';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=1ea44ec';
+import {shipPortrait} from './portrait.js?v=1ea44ec';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=1ea44ec';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;

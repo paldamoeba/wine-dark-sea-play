@@ -1,10 +1,10 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=769a00d';
-import {ARENA} from './arena.js?v=769a00d';
-import {enemies} from './combat.js?v=769a00d';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=769a00d';
-import {G, ship, isExplored, reveal, save} from './state.js?v=769a00d';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=1ea44ec';
+import {ARENA} from './arena.js?v=1ea44ec';
+import {enemies} from './combat.js?v=1ea44ec';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=1ea44ec';
+import {G, ship, isExplored, reveal, save} from './state.js?v=1ea44ec';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -137,6 +137,10 @@ function draw(){
     if (is.tiers[2]){ islandPath(c, is, 2); c.fillStyle = '#b4a888'; c.fill(); c.strokeStyle = 'rgba(90,70,40,.45)'; c.stroke(); }
     islandPath(c, is, 0); c.strokeStyle = INK; c.lineWidth = 1.7*px; c.stroke();
   }
+  // places your jobs, goals and treasure maps send you to show on the chart even before you've sailed there
+  for (const r of G.S.reqs || []){ const is = r.to && ISLANDS.find(i => i.name === r.to); if (is && !isExplored(is.x, is.y)) reveal(is.x, is.y, is.r + 350); }
+  for (const m of G.goalMarks || []) if (!isExplored(m.x, m.y)) reveal(m.x, m.y, 600);
+  if (G.S.treasure && !isExplored(G.S.treasure.x, G.S.treasure.y)) reveal(G.S.treasure.x, G.S.treasure.y, 400);
   c.drawImage(fogLayer(FOG), 0, 0, WORLD, WORLD);
   // a double ink frame around the world
   c.strokeStyle = INK; c.lineWidth = 3*px; c.strokeRect(0, 0, WORLD, WORLD); c.lineWidth = 1*px; c.strokeRect(-9*px, -9*px, WORLD + 18*px, WORLD + 18*px);

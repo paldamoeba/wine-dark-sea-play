@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=769a00d';
+import {hash} from './world.js?v=1ea44ec';
 
-import {smokeColumn} from './smoke.js?v=769a00d';
+import {smokeColumn} from './smoke.js?v=1ea44ec';
 const T = window.THREE;
-import {mat} from './ships.js?v=769a00d';
+import {mat} from './ships.js?v=1ea44ec';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -202,15 +202,23 @@ export function gull(){ const g = new T.Group();
   g.userData.wings = []; return g; }
 // The whale: one long smooth body, dark blue-grey on top and pale underneath, long soft flippers and wide flukes that grow
 // out of the body without seams.
+// P53: a friendly humpback: a big blunt head, a body that narrows into a slim tail stalk, wide swept-back flukes,
+// long pale-edged flippers, a little hump of a fin, a pale belly with throat grooves, an eye with a highlight, and a blowhole.
 export function whaleModel(){
   const g = new T.Group(), body = new T.Group(); g.add(body);
-  body.add(latheBody([[-56, 0], [-54, 3.5], [-44, 7], [-28, 12], [-8, 16.5], [12, 18], [30, 17.5], [44, 15.5], [54, 11.5], [60, 6], [62, 0]], '#4d6d86', '#d3dcdf', .82, 1.08, 30, -.1));
-  for (const sd of [-1, 1]){ const f = blade(36, 7.5, 1.8, .7, .35, 0, '#3f5d74'); // a long flipper, root sunk into the body, pointing out, down and back
-    f.rotation.set(sd*-.6, sd*(Math.PI/2 + .55), 0); f.position.set(24, -8, sd*9); body.add(f);
-    const eye = soft(new T.SphereGeometry(1.4, 12, 10), '#1d2633'); eye.position.set(46, -1, sd*14.8); body.add(eye); }
-  const hump = blade(9, 3.2, 1.4, .8, -.3, 0, '#456580'); hump.rotation.z = Math.PI/2 + .9; hump.position.set(-22, 8.5, 0); body.add(hump); // a low fin on the back, near the tail
-  const tail = new T.Group(); tail.position.set(-52, 1, 0); body.add(tail);
-  for (const sd of [-1, 1]){ const fl = blade(30, 9, 1.6, .7, -.3*sd, 0, '#3f5d74'); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*.95); fl.position.x = 2; tail.add(fl); }
+  body.add(latheBody([[-72, 0], [-70, 2.4], [-62, 3.8], [-50, 6.5], [-36, 11], [-18, 16], [2, 19.5], [22, 20.5], [38, 19], [50, 16], [59, 11.5], [65, 6], [67.5, 0]], '#46657d', '#e2e6e2', .8, 1.05, 32, -.05));
+  // throat grooves: pale stripes under the chin
+  for (let k=-2;k<=2;k++){ const z = k*3.6, gr = soft(new T.CylinderGeometry(.45, .45, 13, 6), '#b9c2c0'); gr.rotation.z = Math.PI/2; gr.position.set(42, -15.4*Math.sqrt(1 - Math.pow(z/20, 2)) + .25, z*1.02); body.add(gr); } // hug the belly
+  for (const sd of [-1, 1]){
+    const f = blade(48, 7.5, 1.6, .65, .5, 0, '#4f7189'); // long humpback flipper, swept back and down
+    f.rotation.set(sd*.3, -sd*(Math.PI/2 + .6), 0); f.position.set(30, -7, sd*15); body.add(f); // out to the sides, so they show from above
+    const eye = soft(new T.SphereGeometry(1.7, 12, 10), '#16202b'); eye.position.set(50, -3, sd*14.6); body.add(eye);
+    const hi = soft(new T.SphereGeometry(.55, 8, 6), '#ffffff'); hi.position.set(50.6, -2.3, sd*15.6); body.add(hi);
+  }
+  const blow = soft(new T.SphereGeometry(2.2, 12, 8), '#3d5a70'); blow.scale.set(1.4, .5, 1); blow.position.set(40, 15.5, 0); body.add(blow);
+  const hump = blade(10, 4, 1.6, .8, -.4, 0, '#405e75'); hump.rotation.z = Math.PI/2 + 1.05; hump.position.set(-30, 9, 0); body.add(hump); // a small fin on a hump near the tail
+  const tail = new T.Group(); tail.position.set(-69, 0, 0); body.add(tail);
+  for (const sd of [-1, 1]){ const fl = blade(40, 14, 1.8, .75, -.55*sd, 0, '#3e5c72'); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*1.05); fl.position.x = 1; tail.add(fl); }
   const spout = []; for (let k=0;k<7;k++){ const p = mesh(new T.SphereGeometry(5, 10, 8), '#f4fbff', {transparent:true, opacity:.8, flatShading:false}, false); p.material = p.material.clone(); p.visible = false; g.add(p); spout.push(p); }
   g.userData = {body, tail, spout};
   return g;

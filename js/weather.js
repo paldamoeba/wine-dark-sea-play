@@ -1,10 +1,10 @@
 // Weather: fair, calm, windy or stormy, each for a few minutes. Storms are announced a little before they hit.
 // wave = how big the waves are; storm = dark sky, rain and lightning (0 to 1).
 // Storms wear down small boats outside the Shallows, but fish bite faster in them: a reward for the brave.
-import {G} from './state.js?v=769a00d';
-import {WEATHER_WAVES} from './world.js?v=769a00d';
-import {toast} from './ui.js?v=769a00d';
-import {sfx} from './audio.js?v=769a00d';
+import {G} from './state.js?v=1ea44ec';
+import {WEATHER_WAVES} from './world.js?v=1ea44ec';
+import {toast} from './ui.js?v=1ea44ec';
+import {sfx} from './audio.js?v=1ea44ec';
 
 export const KINDS = {
   fair:  {label:'Fair',   wave:1,   storm:0,   wind:.55, dur:[150, 280], icon:'☀'},

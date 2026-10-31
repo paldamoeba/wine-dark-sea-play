@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=769a00d';
-import {SPECS} from './ships.js?v=769a00d';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=769a00d';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=769a00d';
-import {W} from './weather.js?v=769a00d';
-import {steering} from './input.js?v=769a00d';
-import {toast, showZone} from './ui.js?v=769a00d';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=769a00d';
-import {startFish, stopFish} from './fishing.js?v=769a00d';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=769a00d';
-import {progress} from './quests.js?v=769a00d';
-import {startSink} from './sinking.js?v=769a00d';
-import {sfx} from './audio.js?v=769a00d';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=1ea44ec';
+import {SPECS} from './ships.js?v=1ea44ec';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=1ea44ec';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=1ea44ec';
+import {W} from './weather.js?v=1ea44ec';
+import {steering} from './input.js?v=1ea44ec';
+import {toast, showZone} from './ui.js?v=1ea44ec';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=1ea44ec';
+import {startFish, stopFish} from './fishing.js?v=1ea44ec';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=1ea44ec';
+import {progress} from './quests.js?v=1ea44ec';
+import {startSink} from './sinking.js?v=1ea44ec';
+import {sfx} from './audio.js?v=1ea44ec';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -23,7 +23,7 @@ const SINK_SECONDS = 4.5;
 function washUp(){
   const S = G.S, name = ship().name.toLowerCase(); G.sinking = null;
   for (const k in S.cargo) S.cargo[k] = 0; S.bless = 0; S.hull = Math.round(ship().hull*COMBAT.washUpHull); S.x = START.x; S.y = START.y; S.a = START.a;
-  G.v = 0; G.dest = null; G.flash = 0; G.cam = {x:S.x, y:S.y}; ringArmed = false;
+  G.v = 0; G.dest = null; G.flash = 0; G.cam = {x:S.x, y:S.y}; ringArmed = false; moorAt(HARBORS[0]); // towed in to the Kallisto pier
   toast(`Your ${name} broke apart. You were towed home to Kallisto without your cargo, the hull badly patched. Repair it at the shipyard.`, 4.5); save();
 }
 
@@ -184,7 +184,10 @@ function docking(dt){
 // It only works again once you've sailed out of it (so leaving the harbor doesn't pull you straight back in).
 export const RING_R = 70;
 export const harborRing = h => ({x:h.pier.x + h.pier.dx*(PIER_LEN + 75), y:h.pier.y + h.pier.dy*(PIER_LEN + 75)});
-let ringArmed = false;
+let ringArmed = false, started = false;
+// Tied up at harbor h right away (no sailing in): when the game starts near a harbor, and after you're towed home.
+function moorAt(h){ const b = berth(ship(), h.pier); Object.assign(G.S, {x:b.x, y:b.y, a:b.a}); G.v = 0; G.dest = null; G.joy = null;
+  G.dock = {mode:'moored', t:1, dur:1, x0:b.x, y0:b.y, a0:b.a, h, ...b}; G.cam = {x:b.x, y:b.y}; }
 function harborRings(){
   const S = G.S; let near = Infinity, hit = null;
   for (const h of HARBORS){ const r = harborRing(h), d = Math.hypot(S.x - r.x, S.y - r.y); if (d < near){ near = d; hit = h; } }
@@ -199,6 +202,8 @@ function harborRings(){
 // Returns null (harbors are entered through their rings now, see harborRings()).
 export function updatePlayer(dt){
   const S = G.S, sh = ship();
+  // coming back to the game at a harbor (inside or by its ring): start tied up at the pier, not out on the water
+  if (!started){ started = true; const h = HARBORS.find(h => { const r = harborRing(h); return Math.hypot(S.x - r.x, S.y - r.y) < RING_R + 120; }); if (h) moorAt(h); }
   G.t += dt;
   if (!G.sheetOpen) S.playSeconds = (S.playSeconds || 0) + dt;
   if (S.bless > 0) S.bless = Math.max(0, S.bless - dt);
