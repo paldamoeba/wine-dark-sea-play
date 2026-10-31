@@ -535,3 +535,33 @@ button.goal .more{color:var(--ochre);font-weight:800}
 .legend svg{width:15px;height:15px;flex:none}
 /* the little map's wooden frame is drawn with the map (overlay.js); the button is just the place to tap */
 .mapbtn{border:0!important;background:transparent!important;box-shadow:none!important}
+
+/* ---- P43: the wood frames, finished. No corner notches: a rounded frame of grained wood with a light inner edge, a dark outline,
+   a lip underneath and a soft drop shadow, so every panel sits on the screen like a little wooden tray. ---- */
+:root{--corners:linear-gradient(transparent,transparent);
+  --grain:repeating-linear-gradient(90deg,rgba(60,30,10,.07) 0 2px,transparent 2px 6px,rgba(255,230,190,.06) 6px 7px,transparent 7px 11px);
+  --woodframe:linear-gradient(#fdf6e6,#efdfbd) padding-box,var(--grain) border-box,linear-gradient(#c8935c,#9a6538 50%,#7a4b28) border-box;
+  --woodshadow:0 0 0 1.5px #4a2e17,0 3px 0 1.5px #4a2e17,0 8px 18px rgba(40,24,10,.38),inset 0 2px 0 rgba(255,255,255,.85),inset 0 -3px 6px rgba(140,95,45,.18)}
+.hudbar,.lifebar,.tool,.toast,.dock.alt,.raid.council,.bossbar,.legend{border-width:4px!important}
+.hi{box-shadow:inset 0 0 0 1px #e1caa0,inset 0 -2px 0 rgba(150,105,55,.18),0 1px 2px rgba(60,35,15,.2)}
+.hi b{text-shadow:0 1px 0 rgba(255,255,255,.7)}
+#goldChip{box-shadow:inset 0 0 0 1.5px #c48a25,inset 0 2px 0 rgba(255,255,255,.7),0 2px 0 #9a6417,0 3px 6px rgba(90,55,10,.3)}
+.dock{box-shadow:0 0 0 1.5px #6a3f10,0 4px 0 1.5px #6a3f10,0 8px 16px rgba(40,24,10,.35)!important;border:0!important}
+/* toolbar: pictures only, bigger */
+.tool{width:58px;height:58px;border-radius:17px}
+.tool>span:not(.vh){display:none}
+.tool .ic{width:40px;height:40px;border-radius:12px}.tool .ic svg{width:32px;height:32px}
+.toolbar{gap:10px}
+@media (max-height:560px){.tool{width:50px;height:50px}.tool .ic{width:34px;height:34px}.tool .ic svg{width:27px;height:27px}}
+/* menus fill the whole screen, and the HUD, toolbar and little map step aside while one is open */
+body.sheeton .hud,body.sheeton .toolbar,body.sheeton .mapbtn,body.sheeton #ov,body.sheeton .bossbar{visibility:hidden}
+.sheet{top:0;max-height:none;border-radius:0}
+.sheet.menu{max-height:none;border-width:0 4px;border-radius:0;padding-top:env(safe-area-inset-top,0px)}
+.sheet.menu .mtop{border-radius:0;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+@media (min-width:560px){ .sheet,.sheet.menu{top:12px;bottom:12px;border-radius:22px;border-width:4px;max-width:520px}
+  body.sheeton #cv{filter:blur(3px) brightness(.85)} }
+/* upgrade slots carry their name under the picture */
+.slot{height:auto;min-height:72px;padding:6px 0 5px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.slot svg{width:40px;height:40px}
+.slot .slab{font-size:10.5px;font-weight:800;color:var(--ink);line-height:1}
+.slot .badge{bottom:auto;top:-7px;left:-7px}

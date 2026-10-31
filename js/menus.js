@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=af6cebe';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=af6cebe';
-import {G, ship, holdUsed, lvl, have, canPay} from './state.js?v=af6cebe';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=af6cebe';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=af6cebe';
-import {board, active, canDeliver, goal} from './quests.js?v=af6cebe';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=af6cebe';
-import {shipPortrait} from './portrait.js?v=af6cebe';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=af6cebe';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=ef9eba3';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=ef9eba3';
+import {G, ship, holdUsed, lvl, have, canPay} from './state.js?v=ef9eba3';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=ef9eba3';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=ef9eba3';
+import {board, active, canDeliver, goal} from './quests.js?v=ef9eba3';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=ef9eba3';
+import {shipPortrait} from './portrait.js?v=ef9eba3';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=ef9eba3';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -52,7 +52,16 @@ const OL = 'stroke="#2a1d17" stroke-width="1.3" stroke-linejoin="round"';
 const teeth = Array.from({length:8}, (_, i) => `<rect x="10.4" y="1.6" width="3.2" height="5" rx="1" fill="#8fa3b5" ${OL} transform="rotate(${i*45} 12 12)"/>`).join('');
 Object.assign(IC, {
   hold: svg(`<path d="M3.5 10 h17 v9.5 a1.5 1.5 0 0 1 -1.5 1.5 h-14 a1.5 1.5 0 0 1 -1.5 -1.5Z" fill="#b5793f" ${OL}/><path d="M3.5 10 Q3.5 4 12 4 Q20.5 4 20.5 10Z" fill="#d49a58" ${OL}/><path d="M7 4.8 V21 M17 4.8 V21" stroke="#e3b341" stroke-width="2"/><rect x="10" y="8.5" width="4" height="5" rx="1" fill="#e3b341" ${OL}/><path d="M5.5 6.5 Q8 5.2 11 5" stroke="#f3cf95" stroke-width="1.2" fill="none"/>`),
-  hull: svg(`<path d="M12 2.5 L20.5 5.5 V12 Q20.5 18.5 12 21.5 Q3.5 18.5 3.5 12 V5.5Z" fill="#c98a4b" ${OL}/><path d="M4 9.5h16M4 14h16M6 18h12" stroke="#8a5a30" stroke-width="1.3"/><path d="M12 2.8 V21.2" stroke="#8a5a30" stroke-width="1.2"/><path d="M6 6.6 L11 4.8" stroke="#f0c48a" stroke-width="1.4" stroke-linecap="round"/>`),
+  // the hull: a boat seen from the side, planks and bronze nails
+  hull: svg(`<path d="M2 9.5 H22 L19.4 17.6 Q12 20.8 4.6 17.6Z" fill="#c98a4b" ${OL}/><path d="M2.9 12.2 H21.1 M3.9 15 H20.1" stroke="#8a5a30" stroke-width="1.3"/><path d="M2 9.5 H22" stroke="#6e3d1e" stroke-width="2.2" stroke-linecap="round"/><path d="M4 7.8 Q12 5.6 20 7.8" fill="none" stroke="#2a1d17" stroke-width="1.2"/><circle cx="7" cy="13.6" r=".9" fill="#e2ac5a"/><circle cx="12" cy="13.6" r=".9" fill="#e2ac5a"/><circle cx="17" cy="13.6" r=".9" fill="#e2ac5a"/><path d="M5 11 H11" stroke="#f0c48a" stroke-width="1.1" stroke-linecap="round"/>`),
+  // oars: two crossed oars with wide blades
+  rower: svg(`<path d="M4 20 L16.4 7.6 M20 20 L7.6 7.6" stroke="#2a1d17" stroke-width="3.8" stroke-linecap="round"/><path d="M4 20 L16.4 7.6 M20 20 L7.6 7.6" stroke="#d29a5c" stroke-width="2" stroke-linecap="round"/>
+    <path d="M15.2 8.8 L18.6 2.6 Q21.6 2.4 21.4 5.4 L15.2 8.8Z" fill="#c98a4b" ${OL}/><path d="M8.8 8.8 L5.4 2.6 Q2.4 2.4 2.6 5.4 L8.8 8.8Z" fill="#c98a4b" ${OL}/><path d="M3 19 l2 2 M21 19 l-2 2" stroke="#2a1d17" stroke-width="2.4" stroke-linecap="round"/>`),
+  // the sail: a square sail full of wind on its mast and yard, red stripes, a small hull underneath
+  sail: svg(`<path d="M12 1.8 V17" stroke="#2a1d17" stroke-width="3.2" stroke-linecap="round"/><path d="M12 1.8 V17" stroke="#8a5a30" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M4.5 3.4 Q8 6.6 6 14.2 H18 Q16 6.6 19.5 3.4Z" fill="#f6ecd2" ${OL}/><path d="M5.6 7 Q12 9 18.4 7 M5.9 10.6 Q12 12.6 18.1 10.6" fill="none" stroke="#d6503f" stroke-width="1.8"/>
+    <path d="M3.5 3.4 H20.5" stroke="#2a1d17" stroke-width="2.6" stroke-linecap="round"/><path d="M3.5 3.4 H20.5" stroke="#b5793f" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M3 17 H21 L19.4 20.4 Q12 22.4 4.6 20.4Z" fill="#b5793f" ${OL}/>`),
   map: svg(`<path d="M3 5.5 L8.5 3.5 L15.5 5.5 L21 3.5 V18.5 L15.5 20.5 L8.5 18.5 L3 20.5Z" fill="#f3e3b8" ${OL}/><path d="M8.5 3.8V18.5M15.5 5.5V20.2" stroke="#c9ad74" stroke-width="1"/><path d="M5.5 15.5 Q9 9 12.5 12 T16.5 8.5" stroke="#3f6c94" stroke-width="1.5" stroke-dasharray="1.6 1.5" fill="none"/><path d="M15.8 6.2 l3.2 3.2 m0 -3.2 l-3.2 3.2" stroke="#c64a3c" stroke-width="2.2" stroke-linecap="round"/>`),
   gear: svg(`${teeth}<circle cx="12" cy="12" r="7" fill="#8fa3b5" ${OL}/><circle cx="12" cy="12" r="3" fill="#e9d9b4" ${OL}/><path d="M7.8 9.5 A5 5 0 0 1 10.5 7.2" stroke="#d7e2ea" stroke-width="1.4" fill="none" stroke-linecap="round"/>`),
   market: svg(`<rect x="4.5" y="10" width="15" height="10.5" fill="#efd9a6" ${OL}/><path d="M3 10 L5 4 H19 L21 10Z" fill="#d6503f" ${OL}/><path d="M7.8 4.4 L7.2 10 M11.6 4.4 V10 M15.3 4.4 L15.9 10" stroke="#fbf3df" stroke-width="2.2"/><path d="M3 10 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0 q1.5 2.2 3 0" fill="#d6503f" ${OL}/><rect x="9.5" y="14" width="5" height="6.5" fill="#8a5a30" ${OL}/>`),
@@ -86,6 +95,7 @@ export const goodPrice = (h, k) => Math.round(GOODS[k].base*(h.free ? FREEPORT.g
 export const canBuyGood = (h, k) => !GOODS[k].rare || !!h.free;
 export const goodSell = (h, k) => Math.round(goodPrice(h, k)*TRADE.sellK);
 const JOB_IC = {catch:() => IC.fish(), deliver:() => IC.hold, salvage:() => IC.wreck, wood:() => IC.wood, visit:() => IC.letter, sink:() => IC.swords};
+const UP_NAME = {hull:'Hull', oars:'Oars', sail:'Sail', helm:'Helm', seats:'Crew', arrows:'Arrows', ram:'Ram', fire:'Fire'}; // short names under the upgrade pictures
 const UP_IC = {fire:() => IC.flame, sail:() => IC.sail, helm:() => IC.helm, hull:() => IC.hull, oars:() => IC.rower, seats:() => IC.seats, arrows:() => IC.arrows, ram:() => IC.ram((ramMat(lvl('ram') + 1) || ramMat(lvl('ram')) || {color:'#8a5a30'}).color)};
 export const FISH_COLOR = {sardine:'#9fb8c8', tuna:'#4f7fa3', swordfish:'#2f5f8a'};
 // cost chips: "12 [log] 40 [coin]", red when you're short
@@ -216,7 +226,7 @@ function upgradesCard(){
   const S = G.S, keys = upKeys();
   if (!keys.includes(sel.up)) sel.up = keys[0];
   const slot = k => { const l = lvl(k), m = k === 'ram' ? ramMat(l) : null, c = costOf(k), ok = canPay(c);
-    return `<button class="slot ${k === sel.up ? 'on' : ''} ${ok ? 'can' : ''}" data-act="selup" data-k="${k}" aria-label="${UPGRADES[k].label}">${UP_IC[k]()}<span class="badge">${k === 'ram' ? (m ? m.name[0] + m.sub : 0) : l}</span>${ok ? '<i class="plus">+</i>' : ''}</button>`; };
+    return `<button class="slot ${k === sel.up ? 'on' : ''} ${ok ? 'can' : ''}" data-act="selup" data-k="${k}" aria-label="${UPGRADES[k].label}">${UP_IC[k]()}<span class="slab">${UP_NAME[k] || UPGRADES[k].label}</span><span class="badge">${k === 'ram' ? (m ? m.name[0] + m.sub : 0) : l}</span>${ok ? '<i class="plus">+</i>' : ''}</button>`; };
   const left = keys.slice(0, Math.ceil(keys.length/2)), right = keys.slice(Math.ceil(keys.length/2));
   const k = sel.up, u = UPGRADES[k], l = lvl(k), c = costOf(k), ok = canPay(c), m = k === 'ram' ? ramMat(l) : null;
   const short = l => k === 'ram' ? (ramMat(l) ? `${ramDmg(l)} damage` : 'no ram') : effectText(k, l);

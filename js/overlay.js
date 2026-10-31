@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=af6cebe';
-import {G, isExplored} from './state.js?v=af6cebe';
-import {fogLayer, islandPath} from './map.js?v=af6cebe';
-import {view, project} from './scene.js?v=af6cebe';
-import {JOY_RADIUS} from './input.js?v=af6cebe';
-import {enemies, combatState, capture} from './combat.js?v=af6cebe';
-import {drawFish} from './fishing.js?v=af6cebe';
-import {whale} from './wildlife.js?v=af6cebe';
-import {SHORE_FISH} from './config.js?v=af6cebe';
-import {W as WIND} from './weather.js?v=af6cebe';
-import {bottle} from './quests.js?v=af6cebe';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=af6cebe';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=ef9eba3';
+import {G, isExplored} from './state.js?v=ef9eba3';
+import {fogLayer, islandPath} from './map.js?v=ef9eba3';
+import {view, project} from './scene.js?v=ef9eba3';
+import {JOY_RADIUS} from './input.js?v=ef9eba3';
+import {enemies, combatState, capture} from './combat.js?v=ef9eba3';
+import {drawFish} from './fishing.js?v=ef9eba3';
+import {whale} from './wildlife.js?v=ef9eba3';
+import {SHORE_FISH} from './config.js?v=ef9eba3';
+import {W as WIND} from './weather.js?v=ef9eba3';
+import {bottle} from './quests.js?v=ef9eba3';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=ef9eba3';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -82,19 +82,50 @@ function drawSplashes(W, H, t){
   }
 }
 // Wind: a few soft white streaks drifting over the sea the way the wind blows, more when it is strong (like a cartoon).
-const STREAKS = Array.from({length:14}, (_, i) => ({life:i/14, x:0, y:0, len:0, ph:0}));
+const STREAKS = Array.from({length:10}, (_, i) => ({life:i/10, x:0, y:0, len:0, ph:0}));
+// Wind: long thin gusts that draw themselves across the sea and fade, tapered at both ends, a gentle bend, and now and then
+// a little curl at the tip, like wind in a picture book.
+const GUST_N = 18, gustPts = Array.from({length:GUST_N + 1}, () => [0, 0, 0]);
 function drawWind(t, dt){
   const k = WIND.windK; if (k < .3 || G.mapOpen) return;
-  const n = Math.round(STREAKS.length*Math.min(1, (k - .2)*1.3)), ca = Math.cos(WIND.windA), sa = Math.sin(WIND.windA), sp = 70 + 150*k;
-  c.lineWidth = 2.8; c.lineCap = 'round';
-  for (let i=0;i<n;i++){ const s = STREAKS[i]; s.life += dt/(2.6 + (i % 3)*.6);
-    if (s.life >= 1 || !s.len){ s.life = s.len ? 0 : Math.random(); const r = 200 + Math.random()*500, a = Math.random()*6.28; s.x = G.cam.x + Math.cos(a)*r - ca*200; s.y = G.cam.y + Math.sin(a)*r - sa*200; s.len = 70 + Math.random()*80; s.ph = Math.random()*6.28; }
-    s.x += ca*sp*dt; s.y += sa*sp*dt;
-    const al = Math.sin(s.life*Math.PI)*.6*k*(1 - .5*(G.night || 0)); if (al < .02) continue;
-    c.strokeStyle = `rgba(250,253,255,${al})`; c.beginPath();
-    for (let j=0;j<=8;j++){ const u = j/8 - .5, w = Math.sin(u*6 + s.ph + t*3)*6, wx = s.x + ca*u*s.len - sa*w, wy = s.y + sa*u*s.len + ca*w, [px, py, pz] = project(wx, 26, wy);
-      if (pz > 1){ c.beginPath(); break; } j ? c.lineTo(px, py) : c.moveTo(px, py); }
-    c.stroke(); }
+  const n = Math.round(STREAKS.length*Math.min(1, (k - .2)*1.1)), wa = WIND.windA, sp = 60 + 120*k;
+  c.lineCap = 'round';
+  for (let i=0;i<n;i++){ const s = STREAKS[i]; s.life += dt/(2.2 + (i % 3)*.5);
+    if (s.life >= 1 || !s.len){ s.life = s.len ? 0 : Math.random(); const r = 150 + Math.random()*520, a = Math.random()*6.28;
+      s.x = G.cam.x + Math.cos(a)*r - Math.cos(wa)*220; s.y = G.cam.y + Math.sin(a)*r - Math.sin(wa)*220;
+      s.len = 150 + Math.random()*150; s.bend = (Math.random() - .5)*.5; s.curl = Math.random() < .35 ? (Math.random() < .5 ? 1 : -1) : 0; }
+    s.x += Math.cos(wa)*sp*dt; s.y += Math.sin(wa)*sp*dt;
+    // the gust's path: walk along the wind, turning slowly, and wind into a small loop at the end if it curls
+    let x = s.x, y = s.y, ang = wa - s.bend*.5; const step = s.len/GUST_N;
+    for (let j=0;j<=GUST_N;j++){ const u = j/GUST_N, p = project(x, 24, y); gustPts[j][0] = p[0]; gustPts[j][1] = p[1]; gustPts[j][2] = p[2];
+      ang += s.bend/GUST_N + (s.curl && u > .72 ? s.curl*.62 : 0); x += Math.cos(ang)*step*(s.curl && u > .72 ? .55 : 1); y += Math.sin(ang)*step*(s.curl && u > .72 ? .55 : 1); }
+    // only part of it shows at a time: the head runs ahead, the tail follows and the gust is gone
+    const head = Math.min(1, s.life/.55), tail = Math.max(0, (s.life - .4)/.6), al = .75*k*(1 - .5*(G.night || 0));
+    for (let j=0;j<GUST_N;j++){ const u0 = j/GUST_N, u1 = (j + 1)/GUST_N; if (u1 < tail || u0 > head) continue;
+      const a0 = gustPts[j], a1 = gustPts[j + 1]; if (a0[2] > 1 || a1[2] > 1) continue;
+      const m = ((u0 + u1)/2 - tail)/Math.max(.01, head - tail), w = Math.sin(Math.min(1, Math.max(0, m))*Math.PI); // thick in the middle, thin at both ends
+      c.strokeStyle = `rgba(255,255,255,${al*(.35 + .65*w)})`; c.lineWidth = .6 + 2.6*w; c.beginPath(); c.moveTo(a0[0], a0[1]); c.lineTo(a1[0], a1[1]); c.stroke(); }
+  }
+}
+// A town's name on a little ribbon banner: cream cloth with folded tails, a wooden edge, the name in carved capitals,
+// and the city that rules it on a small colored tag underneath.
+function banner(name, x, y, alpha, city){
+  c.save(); c.globalAlpha = alpha; c.font = '400 17px Marcellus, Georgia, serif';
+  const txt = name.toUpperCase().split('').join(String.fromCharCode(8202)), w = c.measureText(txt).width + 28, h = 26, l = x - w/2, tp = y - h/2;
+  c.shadowColor = 'rgba(40,24,10,.35)'; c.shadowBlur = 8; c.shadowOffsetY = 3;
+  // the folded tails behind each end
+  c.fillStyle = '#c9a874'; c.strokeStyle = '#5a381d'; c.lineWidth = 1.5; c.lineJoin = 'round';
+  for (const sg of [-1, 1]){ const ex = x + sg*w/2; c.beginPath(); c.moveTo(ex - sg*6, tp + 6); c.lineTo(ex + sg*14, tp + 6); c.lineTo(ex + sg*8, tp + h/2 + 3); c.lineTo(ex + sg*14, tp + h); c.lineTo(ex - sg*6, tp + h); c.closePath(); c.fill(); c.stroke(); }
+  // the band, curving gently like cloth
+  const g = c.createLinearGradient(0, tp, 0, tp + h); g.addColorStop(0, '#fff8e8'); g.addColorStop(1, '#ecd8b0'); c.fillStyle = g;
+  c.beginPath(); c.moveTo(l, tp); c.quadraticCurveTo(x, tp - 5, l + w, tp); c.lineTo(l + w, tp + h - 4); c.quadraticCurveTo(x, tp + h - 9, l, tp + h - 4); c.closePath(); c.fill();
+  c.shadowColor = 'transparent'; c.lineWidth = 1.8; c.stroke();
+  c.strokeStyle = 'rgba(181,85,44,.55)'; c.lineWidth = 1; c.beginPath(); c.moveTo(l + 5, tp + 2.5); c.quadraticCurveTo(x, tp - 2, l + w - 5, tp + 2.5); c.moveTo(l + 5, tp + h - 6.5); c.quadraticCurveTo(x, tp + h - 11, l + w - 5, tp + h - 6.5); c.stroke();
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = 'rgba(255,255,255,.8)'; c.fillText(txt, x, y - 1); c.fillStyle = '#4a2a14'; c.fillText(txt, x, y - 2.2);
+  if (city){ c.font = '800 9px Nunito, system-ui, sans-serif'; const cw = c.measureText(city.name.toUpperCase()).width + 12;
+    c.fillStyle = city.color; c.strokeStyle = '#3e2b1c'; c.lineWidth = 1.2; c.beginPath(); c.roundRect ? c.roundRect(x - cw/2, tp + h - 3, cw, 13, 6.5) : c.rect(x - cw/2, tp + h - 3, cw, 13); c.fill(); c.stroke();
+    c.fillStyle = '#fff'; c.fillText(city.name.toUpperCase(), x, tp + h + 3.6); }
+  c.restore();
 }
 let lastT = 0;
 export function drawOverlay(fps){
@@ -123,7 +154,7 @@ export function drawOverlay(fps){
   }
   for (const {is} of HARBORS){ if (Math.hypot(is.x - S.x, is.y - S.y) > 2500) continue; // harbor town names
     const [hx, hy, hz] = project(is.x, is.ht + 60, is.y);
-    if (hz < 1){ c.font = '400 20px Marcellus, Georgia, serif'; c.textAlign = 'center'; c.fillStyle = 'rgba(34,40,58,.85)'; c.fillText(is.name, hx, hy); } }
+    const dd = Math.hypot(is.x - S.x, is.y - S.y); if (hz < 1) banner(is.name, hx, hy, Math.min(1, (2500 - dd)/500), is.city && CITIES[is.city]); }
   if (G.dest){
     const [dx, dy, dz] = project(G.dest.x, 0, G.dest.y), p = (t*1.5) % 1, r = 9 + p*12, M = 46;
     const onScreen = dz < 1 && dx > M && dx < W-M && dy > M+60 && dy < H-M;

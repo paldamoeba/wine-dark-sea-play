@@ -1,22 +1,22 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=af6cebe';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=af6cebe';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=af6cebe';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=af6cebe';
-import {swapBoat, refreshAllTrees} from './entities.js?v=af6cebe';
-import {setZoom} from './input.js?v=af6cebe';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=af6cebe';
-import {tutHTML} from './tutorial.js?v=af6cebe';
-import {founded, blessing, seats, candidates} from './crew.js?v=af6cebe';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=af6cebe';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=af6cebe';
-import {effectText, buy} from './upgrades.js?v=af6cebe';
-import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=af6cebe';
-import {GOODS, WAR} from './config.js?v=af6cebe';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=af6cebe';
-import {W, KINDS} from './weather.js?v=af6cebe';
-import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=af6cebe';
-import {setTimeOfDay} from './daynight.js?v=af6cebe';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=ef9eba3';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=ef9eba3';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=ef9eba3';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=ef9eba3';
+import {swapBoat, refreshAllTrees} from './entities.js?v=ef9eba3';
+import {setZoom} from './input.js?v=ef9eba3';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=ef9eba3';
+import {tutHTML} from './tutorial.js?v=ef9eba3';
+import {founded, blessing, seats, candidates} from './crew.js?v=ef9eba3';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=ef9eba3';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=ef9eba3';
+import {effectText, buy} from './upgrades.js?v=ef9eba3';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=ef9eba3';
+import {GOODS, WAR} from './config.js?v=ef9eba3';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=ef9eba3';
+import {W, KINDS} from './weather.js?v=ef9eba3';
+import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=ef9eba3';
+import {setTimeOfDay} from './daynight.js?v=ef9eba3';
 
 const $ = id => document.getElementById(id);
 
@@ -48,6 +48,7 @@ export function updateUI(dt, nearDock){
   $('dockBtn').textContent = moored ? 'Set sail' : banned ? `${CITIES[h.is.city].name} won't let you dock` : h ? `Enter ${h.is.name} harbor` : '';
   $('harborBtn').hidden = G.sheetOpen || !moored;
   $('hint').hidden = !G.S.hint || G.sheetOpen;
+  document.body.classList.toggle('sheeton', !!G.sheetOpen); // menus cover the whole screen: the HUD and little map step aside
   const pill = pillText(); $('goalDot').hidden = !pill || G.sheetOpen; // the quest button stays; a little dot shows when there's a goal or job
   if (pill && $('goalText').textContent !== pill){ $('goalText').textContent = pill; $('goalLbl').textContent = goal() ? 'Goal' : 'Job'; $('goalPill').title = $('goalLbl').textContent + ': ' + pill; }
   // at night a clear sky shows the moon instead of the sun
@@ -117,6 +118,16 @@ function mapHTML(){
 // Settings: the same Greek menu as the harbor, with a close button, and three tabs.
 // sound volumes: Off, Quiet, Medium, Loud
 const VOLS = [[0, 'Off'], [.3, 'Quiet'], [.6, 'Medium'], [1, 'Loud']];
+// full screen (Android browsers and computers; iPhones only through "Add to Home Screen")
+const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+function toggleFull(){
+  const d = document.documentElement, rq = d.requestFullscreen || d.webkitRequestFullscreen;
+  if (isFull()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  const blocked = () => toast('Full screen is blocked on this page. Open the play link, or add the game to your home screen', 4);
+  if (!rq) return blocked();
+  try { Promise.resolve(rq.call(d, {navigationUI:'hide'})).then(() => { try { screen.orientation.lock('portrait').catch(() => {}); } catch(_){} }, blocked); } catch(_){ blocked(); }
+}
+document.addEventListener('fullscreenchange', () => { if (sheet === 'settings') render(); });
 function saveSound(){ const {on, music, sfx: fx, sea, style} = SND; G.settings.sound = {on, music, sfx:fx, sea, style}; saveSettings(); applyVolumes(); }
 const tog = (act, on, label) => `<button class="tog ${on ? 'on' : ''}" data-act="${act}" role="switch" aria-checked="${on}" aria-label="${label}"><i></i></button>`;
 const row = (title, small, ctl) => `<div class="row"><div>${title}${small ? `<small>${small}</small>` : ''}</div>${ctl}</div>`;
@@ -133,10 +144,11 @@ function settingsHTML(){
       + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
       + `<div class="looks"><label><span>Music style</span><select data-set="mstyle" ${SND.on ? '' : 'disabled'}>${Object.entries(STYLES).map(([k, v]) => `<option value="${k}" ${SND.style === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
       <p class="note">${STYLES[SND.style].desc} Every style is in the Showroom too, to compare.</p>`)
+    + card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`))
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 42</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 43</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -238,6 +250,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'bright'){ G.settings.bright = G.settings.bright === false; saveSettings(); setSeaLook(G.settings.bright); }
   if (a === 'tiny'){ G.settings.tiny = G.settings.tiny === false; saveSettings(); }
   if (a === 'cel'){ G.settings.cel = !G.settings.cel; saveSettings(); setCel(G.settings.cel); document.dispatchEvent(new Event('crew')); swapBoat(); }
+  if (a === 'full'){ toggleFull(); return; }
   if (a === 'sound'){ SND.on = !SND.on; saveSound(); if (SND.on) sfx('chime'); }
   if (a === 'fps'){ G.settings.showFps = !G.settings.showFps; saveSettings(); }
   if (a === 'angle'){ G.settings.angle = b.dataset.v; saveSettings(); }
