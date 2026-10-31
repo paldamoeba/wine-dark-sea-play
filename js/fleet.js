@@ -1,12 +1,14 @@
 // Your fleet: every ship you build stays yours, moored at Kallisto with its own upgrades, hull and paint.
 // Switch ships at the Kallisto shipwright. Your crew comes with you (sailors beyond the seats wait on the pier).
-import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=08a29d0';
-import {G, ship, holdUsed} from './state.js?v=08a29d0';
+import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=c50fa36';
+import {G, ship, used, capOf, LOADS} from './state.js?v=c50fa36';
 
 export const owned = () => G.S.owned || (G.S.owned = Array.from({length:G.S.tier + 1}, (_, i) => i));
 export const has = t => owned().includes(t);
 // Why you can't switch to ship t right now, or '' if you can.
-export function cantSwitch(t){ const c = captainOf(t); return t === G.S.tier ? 'You are on it' : c && c.out ? `${c.n} has it out at sea, back in ${clock(c.t)}` : holdUsed() > SHIPS[t].hold ? `Too much in the hold for its ${SHIPS[t].hold} spaces` : ''; }
+export function cantSwitch(t){ const c = captainOf(t); return t === G.S.tier ? 'You are on it' : c && c.out ? `${c.n} has it out at sea, back in ${clock(c.t)}` : tooMuch(t); }
+// a smaller ship may not have room for everything aboard
+function tooMuch(t){ const k = LOADS.find(c => used(c) > capOf(c, t)); return k ? `Too much ${k} aboard for it (room for ${capOf(k, t)})` : ''; }
 function stow(){ const S = G.S; S.hulls = {...(S.hulls || {}), [S.tier]:S.hull}; S.looks = {...(S.looks || {}), [S.tier]:{...S.look}}; }
 function board(t){ const S = G.S, flag = S.look.flag; S.tier = t; S.look = {...((S.looks || {})[t] || {}), flag}; S.hull = (S.hulls || {})[t] ?? ship().hull; }
 export function switchTo(t){ if (cantSwitch(t)) return false; stow(); board(t); return true; }

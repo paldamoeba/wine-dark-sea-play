@@ -8,12 +8,14 @@ export const SETTINGS_KEY = 'wine-dark-sea-settings';
 // fighters = crew members who shoot in a fight. More crew, more arrows.
 // turn = how fast the ship can turn (radians per second). Small boats turn quickly, big ships slowly.
 export const SHIPS = [
-  {name:'Rowboat',      model:'rowboat', speed:89, hull:40,  hold:10, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:1, turn:2.4},
-  {name:'Fishing Boat', model:'fishing', speed:166, hull:80,  hold:20, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:2, turn:1.92, cost:{wood:150, linen:10, gold:60},
+// speed and turn are lower than before P48 and heavy = how slowly the ship gets going and stops (bigger = heavier).
+// hold = fish; cap = how much wood, bronze and trade goods it can carry (wood and bronze go to the warehouse when you dock).
+  {name:'Rowboat',      model:'rowboat', speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, goods:3}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:1, turn:1.6},
+  {name:'Fishing Boat', model:'fishing', speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, goods:6}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:2, turn:1.3, cost:{wood:150, linen:10, gold:60},
     desc:'A sail, more speed, a second crew member, steadier in big waves'},
-  {name:'Bireme',       model:'bireme',  speed:200, hull:170, hold:16, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, turn:1.04, cost:{wood:300, bronze:30, linen:20, gold:250},
+  {name:'Bireme',       model:'bireme',  speed:150, hull:170, hold:16, cap:{wood:140, bronze:40, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, turn:.75, cost:{wood:300, bronze:30, linen:20, gold:250},
     desc:'A warship. Four archers, a hull that shrugs off big waves, but a small hold'},
-  {name:'Trireme',      model:'trireme', speed:212, hull:260, hold:18, fishTime:2.6, woodTime:2.8, storm:0,   len:190, beam:34, fighters:6, turn:.9, cost:{wood:600, bronze:80, linen:40, gold:600},
+  {name:'Trireme',      model:'trireme', speed:178, hull:260, hold:18, cap:{wood:200, bronze:60, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:190, beam:34, fighters:6, turn:.62, cost:{wood:600, bronze:80, linen:40, gold:600},
     desc:'The greatest warship of the Aegean: six archers, an outrigger and a big bronze ram'},
 ];
 
@@ -72,7 +74,7 @@ export const STARTER_GOALS = 7; // the first seven goals teach the basics; past 
 // Polycrates, the pirate king: a huge black galley with a golden boar's head ram, waiting off his fortress with two skiffs.
 // fireEvery: seconds between his flaming volleys (they set your ship alight for burnSeconds). At half hull he calls two more skiffs.
 // He never heals, so you can always sail home, repair and come back.
-export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'raider', scale:1.35, hull:1000, speed:150, turn:.55, fighters:8, dmg:2.2, sight:900, leash:2600,
+export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'raider', scale:1.35, hull:1000, speed:125, turn:.42, fighters:8, dmg:2.2, sight:900, leash:2600,
   gold:[1200, 1200], wood:200, bronze:60, len:180, beam:38, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2};
 // Fire arrows: a ship hit by one burns for burnSeconds, losing dps(level) hull a second.
 export const FIRE_ARROWS = {burnSeconds:3, dps:l => l ? 1 + .3*l : 0};
@@ -138,7 +140,7 @@ export const FREEPORT = {goods:.6, wood:4, fish:1.2}; // wood: per 10
 export const TRADE = {makes:{Kallisto:'pottery', Chios:'wine', Crete:'oil', Milos:'obsidian', Naxos:'wine'},
   wants:{Kallisto:'oil', Chios:'obsidian', Crete:'pottery', Milos:'wine', Naxos:'oil'}, made:.6, wanted:1.45, sellK:.85};
 
-// Building materials: wood, bronze and linen. They go straight to your warehouse at Kallisto and never take hold space.
+// Building materials: wood, bronze and linen. Wood and bronze ride aboard (each with its own limit) until you dock; linen you buy goes straight to the warehouse.
 // Prices are per 10 wood, or per 1 bronze or linen. Wood and linen are sold in every harbor (cheapest where marked);
 // bronze only by the smiths of a few cities and your free ports. Bronze also comes from warship wrecks and sunk warships.
 export const TIMBER = {price:12, at:{Naxos:6, Crete:6, Chios:8, Milos:10}};
@@ -196,14 +198,14 @@ export const COMBAT = {
   lootRange: 70,
 };
 export const ENEMIES = {
-  dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:80,  turn:2.2, fighters:1, dmg:1.5, sight:420, leash:800, gold:[5, 10], wood:10, len:44, beam:17},
-  skiff:  {name:'Raider skiff',  model:'skiff',  hull:70,  speed:95,  turn:1.5, fighters:3, dmg:2, sight:500, leash:900,  gold:[12, 24], wood:25, bronze:1, len:72,  beam:22},
-  galley: {name:'Raider galley', model:'raider', hull:150, speed:150, turn:.6,  fighters:6, dmg:3, sight:600, leash:1100, gold:[60, 90], wood:60, bronze:6, len:135, beam:28},
+  dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:64,  turn:1.5, fighters:1, dmg:1.5, sight:420, leash:800, gold:[5, 10], wood:10, len:44, beam:17},
+  skiff:  {name:'Raider skiff',  model:'skiff',  hull:70,  speed:80,  turn:1.05, fighters:3, dmg:2, sight:500, leash:900,  gold:[12, 24], wood:25, bronze:1, len:72,  beam:22},
+  galley: {name:'Raider galley', model:'raider', hull:150, speed:120, turn:.45, fighters:6, dmg:3, sight:600, leash:1100, gold:[60, 90], wood:60, bronze:6, len:135, beam:28},
   // side: pirate (always hostile), merchant (peaceful, flees), navy (hunts pirates; hunts you only if one of them saw you raid)
-  merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:80, turn:.7, fighters:0, dmg:0, sight:450, gold:[45, 75], wood:30, len:110, beam:44},
+  merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:64, turn:.5, fighters:0, dmg:0, sight:450, gold:[45, 75], wood:30, len:110, beam:44},
   // navies: one kind per city. A patrol switches city when its island changes hands.
-  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:150, speed:165, turn:.75, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:190, beam:34},
-  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:150, speed:165, turn:.8, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:160, beam:30},
+  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:150, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:190, beam:34},
+  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:150, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:160, beam:30},
 };
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 export const WITNESS = {

@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES} from './config.js?v=08a29d0';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=08a29d0';
-import {sfx} from './audio.js?v=08a29d0';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS} from './config.js?v=c50fa36';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=c50fa36';
+import {sfx} from './audio.js?v=c50fa36';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -54,7 +54,17 @@ export const have = k => G.S[HAVE[k]] || 0;
 export const canPay = c => !!c && Object.keys(HAVE).every(k => have(k) >= (c[k] || 0));
 export function pay(c){ if (!canPay(c)) return false; for (const k in HAVE) G.S[HAVE[k]] = have(k) - (c[k] || 0); return true; }
 export function addMat(k, n){ G.S[HAVE[k]] = have(k) + n; }
-export const holdUsed = () => Object.values(G.S.cargo).reduce((a, b) => a + (b || 0), 0);
+// What the ship carries. Each kind has its own limit: fish (the hold), wood, bronze and trade goods (SHIPS[t].cap).
+export const LOADS = ['fish', 'wood', 'bronze', 'goods'];
+export const loadOf = k => FISH[k] ? 'fish' : GOODS[k] ? 'goods' : k;
+export function used(cat, cargo = G.S.cargo){ const keys = cat === 'fish' ? Object.keys(FISH) : cat === 'goods' ? Object.keys(GOODS) : [cat]; return keys.reduce((a, k) => a + (cargo[k] || 0), 0); }
+export const capOf = (cat, t = G.S.tier) => cat === 'fish' ? SHIPS[t].hold : SHIPS[t].cap[cat];
+export const room = cat => Math.max(0, capOf(cat) - used(cat));
+export const holdUsed = () => used('fish');
+// Put n of something aboard, as much as fits. Returns how many went aboard.
+export function putAboard(k, n = 1){ const m = Math.min(n, room(loadOf(k))); G.S.cargo[k] = (G.S.cargo[k] || 0) + m; return m; }
+// At any harbor the wood and bronze aboard go to the warehouse (it's shipped home to Kallisto).
+export function unload(){ const S = G.S, w = S.cargo.wood || 0, b = S.cargo.bronze || 0; S.ware = (S.ware || 0) + w; S.bronze = (S.bronze || 0) + b; S.cargo.wood = 0; S.cargo.bronze = 0; return [w, b]; }
 
 export function newSave(){
   return {version:SAVE_VERSION, econ:2, tier:0, gold:0, ware:0, bronze:0, linen:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},
@@ -124,7 +134,8 @@ export function resetSave(){
 export function loadSettings(){
   const saved = read(SETTINGS_KEY) || {};
   const {dev, ...rest} = saved;
-  G.settings = {quality:'auto', detected:null, showFps:false, builder:false, ...rest, // a new player starts with builder tools off
+  if (!rest.camP48){ rest.angle = 'low'; rest.camP48 = true; } // P48: the low camera became the default, once for everyone
+  G.settings = {quality:'auto', detected:null, showFps:false, builder:false, angle:'low', ...rest, // a new player starts with builder tools off
     // Builder tools: only for making the game, removed before release.
     tools: {zoom:1, speed:1, teleport:false, markers:true, crew:true, raiders:true, fleet:false, map:'D', spread:1, isle:1, ...(dev || {})}};
   // The game reads G.settings.dev. With builder tools off it gets what a player would have; the builder values stay saved for later.

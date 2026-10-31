@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=08a29d0';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=08a29d0';
-import {G, ship, holdUsed, lvl, have, canPay} from './state.js?v=08a29d0';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=08a29d0';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=08a29d0';
-import {board, active, canDeliver, goal} from './quests.js?v=08a29d0';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=08a29d0';
-import {shipPortrait} from './portrait.js?v=08a29d0';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=08a29d0';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=c50fa36';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=c50fa36';
+import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=c50fa36';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=c50fa36';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=c50fa36';
+import {board, active, canDeliver, goal} from './quests.js?v=c50fa36';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=c50fa36';
+import {shipPortrait} from './portrait.js?v=c50fa36';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=c50fa36';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -176,7 +176,7 @@ function marketTab(h){
 const home = h => h.is.port;
 const MAT_NAMES = {wood:'Wood', bronze:'Bronze', linen:'Linen'};
 function tradeCard(h){
-  const S = G.S, room = Math.max(0, ship().hold - holdUsed());
+  const S = G.S, room = roomFor('goods');
   const rows = Object.entries(GOODS).filter(([k]) => canBuyGood(h, k) || S.cargo[k]).map(([k, g]) => { const p = goodPrice(h, k), sp = goodSell(h, k), n = S.cargo[k] || 0, made = TRADE.makes[h.is.name] === k, want = TRADE.wants[h.is.name] === k;
     return `<div class="job"><span class="jic">${GOOD_IC(k)}</span><div><b>${g.label}${made ? ' <span class="good">made here: cheap</span>' : want ? ' <span class="good">wanted here</span>' : ''}</b><small>Buy ${p} · sell ${sp} · you have ${n}</small></div>
       <div class="btnrow tight"><button class="btn ghostdark small" data-act="sellgood" data-k="${k}" ${n ? '' : 'disabled'}>Sell ${n ? chip(IC.coin, n*sp) : ''}</button><button class="btn gold small" data-act="buygood" data-k="${k}" ${room && S.gold >= p && canBuyGood(h, k) ? '' : 'disabled'}>Buy</button></div></div>`; }).join('');
@@ -305,9 +305,12 @@ export function bagHTML(){
 function holdTab(){
   const S = G.S, sh = ship(), used = holdUsed();
   const tile = (icon, name, n, k) => `<div class="tile ${n ? '' : 'dim'}">${icon}<b>${name}</b><span class="n">× ${n}</span>${k && n ? `<button class="btn ghostdark small" data-act="toss" data-k="${k}">Throw 1</button>` : ''}</div>`;
-  return card(`Hold · ${used} of ${sh.hold}`, `${bar(used/sh.hold)}<div class="tiles">${Object.entries(FISH).map(([k, f]) => tile(IC.fish(FISH_COLOR[k]), f.label, S.cargo[k] || 0, k)).join('')}${Object.entries(GOODS).filter(([k]) => S.cargo[k]).map(([k, g]) => tile(GOOD_IC(k), g.label, S.cargo[k], k)).join('')}</div>
-      <p class="note">The hold is for fish and trade goods. Sell fish at any harbor.</p>`)
-    + card('Warehouse at Kallisto', `<div class="tiles">${tile(IC.wood, 'Wood', S.ware)}${tile(IC.bronze, 'Bronze', S.bronze || 0)}${tile(IC.linen, 'Linen', S.linen || 0)}</div><p class="note">Wood, bronze and linen go straight here when you find or buy them.</p>`);
+  const gu = usedOf('goods'), gc = capOf('goods'), wu = S.cargo.wood || 0, bu = S.cargo.bronze || 0;
+  return card(`Fish · ${used} of ${sh.hold}`, `${bar(used/sh.hold)}<div class="tiles">${Object.entries(FISH).map(([k, f]) => tile(IC.fish(FISH_COLOR[k]), f.label, S.cargo[k] || 0, k)).join('')}</div>
+      <p class="note">Sell fish at any harbor.</p>`)
+    + card(`Aboard · wood ${wu} of ${capOf('wood')} · bronze ${bu} of ${capOf('bronze')}`, `<div class="tiles">${tile(IC.wood, 'Wood', wu)}${tile(IC.bronze, 'Bronze', bu)}</div><p class="note">Each kind has its own space. Dock at any harbor and it's shipped to the Kallisto warehouse.</p>`)
+    + card(`Trade goods · ${gu} of ${gc}`, `${bar(gu/gc)}<div class="tiles">${Object.entries(GOODS).map(([k, g]) => tile(GOOD_IC(k), g.label, S.cargo[k] || 0, S.cargo[k] ? k : null)).join('')}</div>`)
+    + card('Warehouse at Kallisto', `<div class="tiles">${tile(IC.wood, 'Wood', S.ware)}${tile(IC.bronze, 'Bronze', S.bronze || 0)}${tile(IC.linen, 'Linen', S.linen || 0)}</div><p class="note">Linen you buy goes straight here.</p>`);
 }
 function shipTab(){
   const S = G.S, sh = ship(), bl = S.bless || 0;

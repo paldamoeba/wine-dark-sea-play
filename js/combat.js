@@ -1,20 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS} from './config.js?v=08a29d0';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=08a29d0';
-import {G, ship, holdUsed, save, gain, addMat, lvl} from './state.js?v=08a29d0';
-import {scene} from './scene.js?v=08a29d0';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=08a29d0';
-import {makeFire, updateFire, burn} from './fire.js?v=08a29d0';
-import {blessing, fighters} from './crew.js?v=08a29d0';
-import {progress, goal} from './quests.js?v=08a29d0';
-import {arrowK, ramDmg} from './upgrades.js?v=08a29d0';
-import {toast} from './ui.js?v=08a29d0';
-import {sink} from './player.js?v=08a29d0';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=08a29d0';
-import {buildFortress, FORT_GUNS} from './monuments.js?v=08a29d0';
-import {sfx} from './audio.js?v=08a29d0';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS} from './config.js?v=c50fa36';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=c50fa36';
+import {G, ship, holdUsed, save, gain, lvl, putAboard} from './state.js?v=c50fa36';
+import {scene} from './scene.js?v=c50fa36';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=c50fa36';
+import {makeFire, updateFire, burn} from './fire.js?v=c50fa36';
+import {blessing, fighters} from './crew.js?v=c50fa36';
+import {progress, goal} from './quests.js?v=c50fa36';
+import {arrowK, ramDmg} from './upgrades.js?v=c50fa36';
+import {toast} from './ui.js?v=c50fa36';
+import {sink} from './player.js?v=c50fa36';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=c50fa36';
+import {buildFortress, FORT_GUNS} from './monuments.js?v=c50fa36';
+import {sfx} from './audio.js?v=c50fa36';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -168,7 +168,7 @@ function avoidLand(e, want){
 function steer(e, tx, ty, speed, dt){
   const want = avoidLand(e, Math.atan2(ty - e.y, tx - e.x)), diff = angDiff(want, e.a), turn = Math.max(-1, Math.min(1, diff)) * e.spec.turn;
   e.a += turn * dt; e.heel = (e.heel || 0) + (Math.max(-.2, Math.min(.2, -turn*e.v/e.spec.speed*.12)) - (e.heel || 0))*Math.min(1, dt*3);
-  e.v += (speed*Math.max(.25, Math.cos(diff)) - e.v) * Math.min(1, dt*1.2);
+  e.v += (speed*Math.max(.25, Math.cos(diff)) - e.v) * Math.min(1, dt*.6); // other ships are heavy too
   // The Shallows are off limits: at the edge, slide along it instead of stopping.
   let moved = false;
   for (const turn of [0, .5, -.5, 1, -1, 1.6, -1.6]){
@@ -176,6 +176,8 @@ function steer(e, tx, ty, speed, dt){
     if (side(e) === 'merchant' || zoneAt(nx, ny) !== 0){ e.x = nx; e.y = ny; if (turn) e.a += Math.sign(turn)*Math.min(Math.abs(turn), e.spec.turn*1.2*dt); moved = true; break; }
   }
   if (!moved) e.v *= .9;
+  if (e.shx || e.shy){ const k = Math.exp(-dt*1.6); e.x += e.shx*dt; e.y += e.shy*dt; e.a += (e.spin || 0)*dt; e.shx *= k; e.shy *= k; e.spin = (e.spin || 0)*k; pushOut(e, e.spec.beam*.6);
+    if (Math.abs(e.shx) + Math.abs(e.shy) < 2){ e.shx = e.shy = 0; e.spin = 0; } }
   // Keep raiders from piling onto the same spot.
   for (const o of enemies){ if (o === e || o.dead || o.fort) continue; const dx = e.x - o.x, dy = e.y - o.y; if (Math.abs(dx) > 400 || Math.abs(dy) > 400) continue;
     const d = Math.hypot(dx, dy) || 1, min = (e.spec.beam + o.spec.beam)*1.6;
@@ -455,12 +457,12 @@ function updateLoot(dt){
     l.obj.position.set(l.x, waveAt(l.x, l.y, G.t) - Math.max(0, 5 - l.life)*3, l.y); l.obj.rotation.y += dt*.6;
     if (Math.hypot(S.x - l.x, S.y - l.y) < COMBAT.lootRange && !G.sheetOpen){
       // the wreck's timber patches your hull first, but only up to a field repair: a full repair needs a dry dock.
-      // What's left over (and any bronze) goes to your warehouse.
-      const ph = TUNING.plankHull, cap = ship().hull*COMBAT.patchTo, need = Math.ceil(Math.max(0, cap - S.hull)/ph), patch = Math.min(need, l.wood), wood = l.wood - patch;
-      S.hull = Math.max(S.hull, Math.min(cap, S.hull + patch*ph)); S.gold += l.gold; addMat('wood', wood); addMat('bronze', l.bronze); l.life = 0;
-      if (l.goods){ const n = Math.min(l.goods.n, Math.max(0, ship().hold - holdUsed())); S.cargo[l.goods.k] = (S.cargo[l.goods.k] || 0) + n; if (n) setTimeout(() => toast(`+${n} ${l.goods.k === 'oil' ? 'olive oil' : l.goods.k} from the merchant's cargo`, 2.6), 3000); }
-      gain('coin', l.gold); if (wood) gain('wood', wood); if (l.bronze) gain('bronze', l.bronze); if (l.goods) gain(l.goods.k, l.goods.n);
-      if (patch || l.bronze) toast(`+${l.gold} drachmae${patch ? `, hull patched with ${patch} wood` : need === 0 && S.hull < ship().hull ? ', the rest needs a dry dock' : ''}${wood ? `, +${wood} wood` : ''}${l.bronze ? `, +${l.bronze} bronze` : ''}`, 3); save();
+      // What's left over (and any bronze) goes aboard, as much as there's room for.
+      const ph = TUNING.plankHull, cap = ship().hull*COMBAT.patchTo, need = Math.ceil(Math.max(0, cap - S.hull)/ph), patch = Math.min(need, l.wood), wood = putAboard('wood', l.wood - patch), bronze = putAboard('bronze', l.bronze);
+      S.hull = Math.max(S.hull, Math.min(cap, S.hull + patch*ph)); S.gold += l.gold; l.life = 0;
+      if (l.goods){ const n = putAboard(l.goods.k, l.goods.n); if (n) setTimeout(() => toast(`+${n} ${l.goods.k === 'oil' ? 'olive oil' : l.goods.k} from the merchant's cargo`, 2.6), 3000); }
+      gain('coin', l.gold); if (wood) gain('wood', wood); if (bronze) gain('bronze', bronze); if (l.goods) gain(l.goods.k, l.goods.n);
+      if (patch || bronze) toast(`+${l.gold} drachmae${patch ? `, hull patched with ${patch} wood` : need === 0 && S.hull < ship().hull ? ', the rest needs a dry dock' : ''}${wood ? `, +${wood} wood` : ''}${bronze ? `, +${bronze} bronze` : ''}`, 3); save();
     }
     if (l.life <= 0){ scene.remove(l.obj); LOOT.splice(i, 1); }
   }
@@ -483,10 +485,13 @@ function collide(){
     const d = hit.d || 1, nx = (hit.bx - hit.ax)/d, ny = (hit.by - hit.ay)/d, over = pr + er - d, mE = e.spec.len*e.spec.beam, kP = mE/(mP + mE);
     S.x -= nx*over*kP; S.y -= ny*over*kP; e.x += nx*over*(1 - kP); e.y += ny*over*(1 - kP); pushOut(S, sh.beam*.6); pushOut(e, e.spec.beam*.6);
     const into = Math.cos(S.a)*nx + Math.sin(S.a)*ny, fast = G.v/sh.speed;
-    if (hit.i >= 3 && into > .6 && fast > RAM.minSpeed && !e.ramT && zoneAt(S.x, S.y) !== 0){ e.ramT = RAM.cooldown; ramHit(e, Math.min(1, fast)*into); G.v *= .35; e.v *= .4; }
-    else if (!e.bumpT && G.v > 20){ e.bumpT = .8; sfx('bump', e); G.kick = Math.min(.25, (G.kick || 0) + .06); G.shake = Math.min(1, (G.shake || 0) + .25); G.v *= .6; e.v *= .7; }
+    const mass = Math.max(.6, Math.min(1.8, Math.sqrt(mP/mE)));
+    if (hit.i >= 3 && into > .6 && fast > RAM.minSpeed && !e.ramT && zoneAt(S.x, S.y) !== 0){ e.ramT = RAM.cooldown; shove(e, nx, ny, G.v*.9*mass); ramHit(e, Math.min(1, fast)*into*mass); G.v *= .45 + .35*(1 - kP); e.v *= .25; }
+    else if (!e.bumpT && G.v > 20){ e.bumpT = .8; sfx('bump', e); shove(e, nx, ny, G.v*.4*mass); G.kick = Math.min(.25, (G.kick || 0) + .06); G.shake = Math.min(1, (G.shake || 0) + .25); G.v *= .6; e.v *= .6; }
   }
 }
+// A hit pushes the other ship sideways and swings it round a little; the push fades over a second or two (see steer()).
+function shove(e, nx, ny, v){ e.shx = (e.shx || 0) + nx*v; e.shy = (e.shy || 0) + ny*v; e.spin = (Math.random() < .5 ? -1 : 1)*Math.min(.9, v/150); e.heel = Math.max(-.3, Math.min(.3, (e.heel || 0) + (Math.random() - .5)*.4)); }
 // A head-on hit. With a ram it hurts them a lot and you a little; without one, both ships take the same small knock.
 function ramHit(e, k){
   const S = G.S, r = ramDmg(), dmg = Math.max(1, Math.round((r || RAM.bump)*k)), self = r ? Math.round(1 + dmg*.04) : dmg;
@@ -587,6 +592,7 @@ function volley(){
   toast('Volley!', 1); sfx('volley');
 }
 $('volleyBtn').addEventListener('click', volley);
+document.addEventListener('volley', volley); // a tap with a second finger, or a double tap on your own ship (input.js)
 // Raid: attack the nearest merchant or navy ship on purpose. Your crew opens fire, and any navy ship watching will come for you.
 $('raidBtn').addEventListener('click', () => {
   const e = combatState.prey; if (!e) return;
@@ -640,6 +646,7 @@ export function updateCombat(dt){
   combatState.threat = enemies.some(e => !e.dead && hostile(e) && e.mode === 'chase' && dist(e, G.S) < e.spec.sight*1.6);
   const show = !!combatState.target && !G.sheetOpen && !G.sinking, btn = $('volleyBtn');
   btn.hidden = !show;
+  if (show && !G.S.volleyTip && G.S.tier >= 1){ G.S.volleyTip = true; toast('Volley: tap anywhere with a second finger while you steer, or double tap your ship.', 5); }
   if (show){ btn.disabled = volleyT > 0; btn.classList.toggle('turn', !combatState.side); btn.style.setProperty('--cd', (volleyT/(COMBAT.volleyCooldown*(blessing().volley || 1))*360) + 'deg'); }
   const cf = nearCouncil(), cb = $('councilBtn'); if (!G.sheetOpen) G.council = cf; cb.hidden = !cf || !!combatState.target;
   if (cf) cb.textContent = `${adj(cf.city)} war council`;

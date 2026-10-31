@@ -1,12 +1,12 @@
-// Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that jump beside the boat.
-import {WILDLIFE} from './config.js?v=08a29d0';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=08a29d0';
-import {G, save} from './state.js?v=08a29d0';
-import {scene} from './scene.js?v=08a29d0';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=08a29d0';
-import {toast} from './ui.js?v=08a29d0';
-import {combatState} from './combat.js?v=08a29d0';
-import {sfx} from './audio.js?v=08a29d0';
+// Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
+import {WILDLIFE} from './config.js?v=c50fa36';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=c50fa36';
+import {G, save} from './state.js?v=c50fa36';
+import {scene} from './scene.js?v=c50fa36';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=c50fa36';
+import {toast} from './ui.js?v=c50fa36';
+import {combatState} from './combat.js?v=c50fa36';
+import {sfx} from './audio.js?v=c50fa36';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -67,30 +67,38 @@ function updateWhale(dt){
 // Builder tool / test: make the whale come up now.
 document.addEventListener('whale', () => { W.state = 'gone'; W.wait = 0; });
 
-// ---- dolphins: a small pod jumps alongside the boat for a while ----
+// ---- dolphins: a small pod crosses the sea on its own course, leaping as it goes, then swims off ----
+// Like the whale, they don't follow you: they appear ahead, pass by and are gone.
 const pod = [0, 1, 2].map(() => { const d = dolphinModel(); d.visible = false; scene.add(d); return d; });
-const P = {on:false, wait:rand(WILDLIFE.dolphinEvery), t:0, side:1};
+const P = {on:false, wait:rand(WILDLIFE.dolphinEvery), t:0, x:0, y:0, a:0};
+const POD_SPEED = 95, POD_TIME = 16;
 function updateDolphins(dt){
   const S = G.S;
   if (!P.on){
-    if (G.sheetOpen || G.dock || G.v < 40 || combatState.threat || combatState.target) return;
+    if (G.sheetOpen || G.dock || combatState.threat || combatState.target) return;
     P.wait -= dt;
-    if (P.wait <= 0){ P.side = Math.random() < .5 ? 1 : -1;
-      if (openSea(S.x - Math.sin(S.a)*P.side*90, S.y + Math.cos(S.a)*P.side*90, 120)){ P.on = true; P.t = 0; } else P.wait = 8; }
+    if (P.wait <= 0){
+      // start off to one side ahead of the boat and swim across in front of it
+      const side = Math.random() < .5 ? 1 : -1, ahead = S.a + side*(.5 + Math.random()*.5), d = 280 + Math.random()*80;
+      const x = S.x + Math.cos(ahead)*d, y = S.y + Math.sin(ahead)*d, a = S.a - side*(1.6 + (Math.random() - .5)*.6);
+      if (openSea(x, y, 160) && openSea(x + Math.cos(a)*POD_SPEED*POD_TIME, y + Math.sin(a)*POD_SPEED*POD_TIME, 60)){ Object.assign(P, {on:true, t:0, x, y, a}); }
+      else P.wait = 8;
+    }
     return;
   }
-  P.t += dt;
+  P.t += dt; P.a += Math.sin(P.t*.4)*.05*dt;
+  P.x += Math.cos(P.a)*POD_SPEED*dt; P.y += Math.sin(P.a)*POD_SPEED*dt;
   pod.forEach((d, i) => {
-    // each one runs a little ahead of the boat on one side, leaping in turn
-    const fwd = 50 + i*28 + Math.sin(P.t*.7 + i)*12, out = P.side*(80 + i*22);
-    const x = S.x + Math.cos(S.a)*fwd - Math.sin(S.a)*out, y = S.y + Math.sin(S.a)*fwd + Math.cos(S.a)*out;
+    // a loose line, each one leaping in turn
+    const back = i*38 + Math.sin(P.t*.7 + i)*8, out = (i - 1)*26;
+    const x = P.x - Math.cos(P.a)*back - Math.sin(P.a)*out, y = P.y - Math.sin(P.a)*back + Math.cos(P.a)*out;
     const ph = (P.t*.9 + i*.33) % 1, jump = ph < .45 ? Math.sin(ph/.45*Math.PI) : -Math.sin((ph - .45)/.55*Math.PI)*.4;
-    d.visible = jump > -.15 && P.t < 13;
+    d.visible = jump > -.15 && P.t < POD_TIME - 1;
     const was = d.userData.up; d.userData.up = jump > 0; if (d.visible && was !== undefined && was !== d.userData.up) sfx('splash', {x, y}, .35);
     d.position.set(x, waveAt(x, y, G.t) + jump*26 - 3, y);
-    d.rotation.set(0, -S.a, ph < .45 ? Math.cos(ph/.45*Math.PI)*.8 : -.5);
+    d.rotation.set(0, -P.a, ph < .45 ? Math.cos(ph/.45*Math.PI)*.8 : -.5);
   });
-  if (P.t > 14 || !openSea(S.x, S.y, 90) || combatState.threat || combatState.target){ P.on = false; pod.forEach(d => d.visible = false); P.wait = rand(WILDLIFE.dolphinEvery); }
+  if (P.t > POD_TIME || !openSea(P.x, P.y, 40)){ P.on = false; pod.forEach(d => d.visible = false); P.wait = rand(WILDLIFE.dolphinEvery); }
 }
 
 document.addEventListener('dolphins', () => { P.wait = 0; });

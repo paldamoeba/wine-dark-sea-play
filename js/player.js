@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=08a29d0';
-import {SPECS} from './ships.js?v=08a29d0';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=08a29d0';
-import {G, ship, holdUsed, save, gain, addMat, lvl} from './state.js?v=08a29d0';
-import {W} from './weather.js?v=08a29d0';
-import {steering} from './input.js?v=08a29d0';
-import {toast, showZone} from './ui.js?v=08a29d0';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=08a29d0';
-import {startFish, stopFish} from './fishing.js?v=08a29d0';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=08a29d0';
-import {progress} from './quests.js?v=08a29d0';
-import {startSink} from './sinking.js?v=08a29d0';
-import {sfx} from './audio.js?v=08a29d0';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=c50fa36';
+import {SPECS} from './ships.js?v=c50fa36';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=c50fa36';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=c50fa36';
+import {W} from './weather.js?v=c50fa36';
+import {steering} from './input.js?v=c50fa36';
+import {toast, showZone} from './ui.js?v=c50fa36';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=c50fa36';
+import {startFish, stopFish} from './fishing.js?v=c50fa36';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=c50fa36';
+import {progress} from './quests.js?v=c50fa36';
+import {startSink} from './sinking.js?v=c50fa36';
+import {sfx} from './audio.js?v=c50fa36';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -38,15 +38,17 @@ function windBoost(){
 }
 function move(dt, sh){
   const S = G.S, [ix, iy] = steering(S), mag = Math.hypot(ix, iy);
-  let target = 0; G.turnRate = 0;
+  let target = 0, turn = 0; const heavy = sh.heavy || 2;
   if (!G.sheetOpen && mag > .06){
     const want = Math.atan2(iy, ix), diff = ((want - S.a + Math.PI*3) % (Math.PI*2)) - Math.PI;
-    const turn = Math.max(-1, Math.min(1, diff)) * sh.turn; S.a += turn * dt; G.turnRate = turn;
-    // a sharp turn slows the boat almost to a stop; it picks up speed again once it points the right way
+    turn = Math.max(-1, Math.min(1, diff*1.4)) * sh.turn;
+    // a sharp turn slows the boat down; it picks up speed again once it points the right way
     const ahead = Math.max(0, Math.cos(diff));
-    target = sh.speed * G.settings.dev.speed * mag * Math.max(.06, ahead*ahead) * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost();
+    target = sh.speed * G.settings.dev.speed * mag * (.25 + .75*ahead*ahead) * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost();
   }
-  G.v += (target - G.v) * Math.min(1, dt*(.8 + sh.turn*.3)); // big ships are slower to get going
+  // weight: a heavy ship takes a while to swing round and to get going, and glides on a long way when you stop rowing
+  G.turnRate = (G.turnRate || 0) + (turn - (G.turnRate || 0)) * Math.min(1, dt*3.2/Math.sqrt(heavy)); S.a += G.turnRate * dt;
+  G.v += (target - G.v) * Math.min(1, dt*(target > G.v ? 1.6/heavy : 1.2/Math.sqrt(heavy)));
   let px = Math.cos(S.a)*G.v*dt, py = Math.sin(S.a)*G.v*dt;
   if (zoneAt(S.x, S.y) === 2){ px += Math.sin(G.t*1.7)*TUNING.stormDrift*dt; py += Math.cos(G.t*1.3)*TUNING.stormDrift*dt; }
   S.x += px; S.y += py;
@@ -77,7 +79,9 @@ function gather(dt, sh){
   }
   if (!cur || cur.type !== 'fish') stopFish();
   if (!cur){ G.act = null; return; }
-  if (holdUsed() >= sh.hold && (cur.type === 'fish' || cur.type === 'shore')){ G.act = {full:true}; stopFish(); return; } // wood goes to the warehouse, so only fishing needs room
+  // each kind has its own limit: fish in the hold, wood on deck
+  if (holdUsed() >= sh.hold && (cur.type === 'fish' || cur.type === 'shore')){ G.act = {full:true}; stopFish(); return; }
+  if (!room('wood') && (cur.type === 'wood' || cur.type === 'wreck')){ if (!G.act || !G.act.full) fullTip('wood'); G.act = {full:true}; return; }
   if (cur.type === 'fish'){ if (!G.fish || G.fish.ref !== cur.ref) startFish(cur.ref); G.act = null; return; }
   if (!G.act || G.act.ref !== cur.ref) G.act = {...cur, p:0};
   const act = G.act;
@@ -86,18 +90,22 @@ function gather(dt, sh){
   act.p = 0;
   const r = act.ref;
   if (act.type === 'shore'){ S.cargo[SHORE_FISH.kind]++; progress('catch', SHORE_FISH.kind); gain(SHORE_FISH.kind); } // a little fish pops up from the boat instead of a message
-  else if (act.type === 'wood'){ const n = TUNING.woodPerCut; sfx('chop'); addMat('wood', n); r.stock--; refreshTrees(r); gain('wood', n); progress('wood', null, n); }
+  else if (act.type === 'wood'){ const n = putAboard('wood', TUNING.woodPerCut); sfx('chop'); r.stock--; refreshTrees(r); gain('wood', n); progress('wood', null, n); }
   else {
     // bigger wrecks give more timber per pull, more coins, and merchant wrecks sometimes an amphora of wine or oil
     const ws = WRECK_SIZES[r.size] || WRECK_SIZES.small, wood = ws.wood;
-    addMat('wood', wood); r.stock--; progress('salvage', null, wood); gain('wood', wood);
-    if (ws.bronze && Math.random() < ws.bronze[0]){ const b = ws.bronze[1] + Math.floor(Math.random()*(ws.bronze[2] - ws.bronze[1] + 1)); addMat('bronze', b); gain('bronze', b); } // warships carried bronze fittings
+    const wn = putAboard('wood', wood); r.stock--; progress('salvage', null, wn); gain('wood', wn);
+    if (ws.bronze && Math.random() < ws.bronze[0]){ const b = putAboard('bronze', ws.bronze[1] + Math.floor(Math.random()*(ws.bronze[2] - ws.bronze[1] + 1))); if (b) gain('bronze', b); } // warships carried bronze fittings
     const [gc, g0, g1] = ws.gold;
     if (Math.random() < gc){ const c = g0 + Math.floor(Math.random()*(g1 - g0 + 1)); S.gold += c; gain('coin', c); }
-    if (ws.goods && Math.random() < ws.goods && holdUsed() < sh.hold){ const k = Math.random() < .5 ? 'wine' : 'oil'; S.cargo[k] = (S.cargo[k] || 0) + 1; gain(k); }
+    if (ws.goods && Math.random() < ws.goods){ const k = Math.random() < .5 ? 'wine' : 'oil'; if (putAboard(k)) gain(k); }
     if (!r.stock) toast('The wreck slips under the waves', 2.4);
   }
 }
+
+// The first time a kind fills up, say where to take it.
+function fullTip(k){ const S = G.S; S.fullTips = S.fullTips || {}; if (S.fullTips[k]) return; S.fullTips[k] = true;
+  toast(`No more room for ${k}. Dock at any harbor and it goes to the Kallisto warehouse.`, 4.5); }
 
 function regrow(dt){
   for (const s of SPOTS) if (s.stock < TUNING.spotStock){ s.regen += dt; if (s.regen > TUNING.spotRegen){ s.stock++; s.regen = 0; } }
@@ -145,7 +153,7 @@ document.addEventListener('undock', () => {
   Object.assign(d, {mode:'out', t:0, dur:2.6, x0:d.x, y0:d.y, a0:d.a, x1:d.x + Math.cos(d.a)*L*out, y1:d.y + Math.sin(d.a)*L*out});
 });
 function docking(dt){
-  const S = G.S, d = G.dock, px = S.x, py = S.y;
+  const S = G.S, d = G.dock, px = S.x, py = S.y; G.turnRate = 0;
   if (d.mode === 'moored'){ S.x = d.x; S.y = d.y; S.a = d.a; G.v = 0; return; }
   d.t += dt/d.dur; const k = ease(Math.min(1, d.t));
   if (d.mode === 'in'){ S.x = d.x0 + (d.x - d.x0)*k; S.y = d.y0 + (d.y - d.y0)*k; S.a = turnTo(d.a0, d.a, Math.min(1, k*1.4)); }

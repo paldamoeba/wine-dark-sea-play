@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board'.
-import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS} from './config.js?v=08a29d0';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=08a29d0';
-import {G, save, ship, lvl} from './state.js?v=08a29d0';
-import {scene} from './scene.js?v=08a29d0';
-import {mesh} from './models.js?v=08a29d0';
-import {toast} from './ui.js?v=08a29d0';
-import {sfx} from './audio.js?v=08a29d0';
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS} from './config.js?v=c50fa36';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt} from './world.js?v=c50fa36';
+import {G, save, ship, lvl} from './state.js?v=c50fa36';
+import {scene} from './scene.js?v=c50fa36';
+import {mesh} from './models.js?v=c50fa36';
+import {toast} from './ui.js?v=c50fa36';
+import {sfx} from './audio.js?v=c50fa36';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);

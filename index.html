@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=08a29d0">
+<link rel="stylesheet" href="css/style.css?v=c50fa36">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -12,9 +12,9 @@
 <canvas id="ov"></canvas>
 <div class="hud" aria-live="polite">
   <div class="lifebar" title="Hull"><div class="bar"><i id="hullbar"></i></div></div>
+  <div class="loads" id="loads" aria-label="What your ship carries"></div>
   <div class="hudbar">
     <div class="hi" id="goldChip" title="Drachmae"><i class="ic" data-ic="coin"></i><b id="gold">0</b></div>
-    <div class="hi" id="holdChip" title="Hold"><i class="ic" data-ic="hold"></i><b id="hold">0/10</b></div>
     <div class="hi wx" id="wxChip" title="Weather"><span id="wxIcon">☀</span><b id="wxName">Fair</b></div>
     <div class="hi bless" id="blessChip" hidden title="Poseidon's blessing"><i class="ic" data-ic="bless"></i><b id="blessT">2:00</b></div>
   </div>
@@ -66,4 +66,4 @@
 <script>
   if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
 </script>
-<script type="module" src="js/main.js?v=08a29d0"></script>
+<script type="module" src="js/main.js?v=c50fa36"></script>

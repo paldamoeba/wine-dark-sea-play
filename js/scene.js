@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY} from './config.js?v=08a29d0';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=08a29d0';
-import {G} from './state.js?v=08a29d0';
-import {TOD, updateDayNight} from './daynight.js?v=08a29d0';
-import {showGrass} from './grass.js?v=08a29d0';
+import {QUALITY} from './config.js?v=c50fa36';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=c50fa36';
+import {G} from './state.js?v=c50fa36';
+import {TOD, updateDayNight} from './daynight.js?v=c50fa36';
+import {showGrass} from './grass.js?v=c50fa36';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -180,8 +180,8 @@ export function updateCamera(){
   if (Math.abs(dk - depthK) > .002){ depthK += (dk - depthK)*.012; if (zoomBucket(viewZoom()) !== zoomBucket(lastZoom)) applyZoom(); }
   const dist = (view.H > view.W ? 740 : 600) * viewZoom() * camK;
   // camera angle (a setting): high looks down more, low sees further toward the horizon
-  const ang = CAM_ANGLES[G.settings.angle] || CAM_ANGLES.mid;
-  V.set(1, ang.up, 1).normalize().multiplyScalar(dist*ang.d);
+  const ang = CAM_ANGLES[G.settings.angle] || CAM_ANGLES.low;
+  V.set(0, ang.up, Math.SQRT2).normalize() /* north is up: the camera sits to the south, looking north */.multiplyScalar(dist*ang.d);
   // a short jolt when you're hit or fire a volley
   G.shake = Math.max(0, (G.shake || 0) - 1/60*2.2); const j = G.shake*G.shake*dist*.012, jx = Math.sin(G.t*71)*j, jz = Math.cos(G.t*57)*j;
   camera.position.set(G.cam.x + V.x + jx, V.y, G.cam.y + V.z + jz); camera.lookAt(G.cam.x + jx, 0, G.cam.y + jz);

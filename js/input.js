@@ -1,8 +1,9 @@
 // Touch, mouse and keyboard. Double tap = sail there (a single tap only marks the spot). Press and drag = joystick.
-import {G, ship, saveSettings} from './state.js?v=08a29d0';
-import {landDist} from './world.js?v=08a29d0';
-import {canvas, screenToSea} from './scene.js?v=08a29d0';
-import {hideHint, toast} from './ui.js?v=08a29d0';
+// Volley: while one thumb steers, a quick tap with another finger anywhere; or a double tap on your own ship.
+import {G, ship, saveSettings} from './state.js?v=c50fa36';
+import {landDist} from './world.js?v=c50fa36';
+import {canvas, screenToSea} from './scene.js?v=c50fa36';
+import {hideHint, toast} from './ui.js?v=c50fa36';
 
 export const JOY_RADIUS = 58;
 const keys = new Set();
@@ -21,11 +22,8 @@ const others = new Map();
 canvas.addEventListener('wheel', e => { e.preventDefault(); if (!G.sheetOpen) setZoom(G.settings.dev.zoom * Math.exp(e.deltaY*.001)); }, {passive:false});
 
 canvas.addEventListener('pointerdown', e => {
-  if (ptr && e.pointerId !== ptr.id && !G.sheetOpen){ // second finger: pinch to zoom
-    others.set(e.pointerId, {x:e.clientX, y:e.clientY});
-    const o = [...others.values()][0];
-    pinch = {d: Math.hypot(o.x - ptr.cx, o.y - ptr.cy) || 1, z: G.settings.dev.zoom};
-    ptr.moved = true; G.joy = null; G.dest = null;
+  if (ptr && e.pointerId !== ptr.id && !G.sheetOpen){ // second finger: a quick tap fires the volley; in builder mode, moving it pinches to zoom
+    others.set(e.pointerId, {x:e.clientX, y:e.clientY, sx:e.clientX, sy:e.clientY, t:performance.now()});
     return;
   }
   if (ptr || G.sheetOpen) return;
@@ -34,7 +32,8 @@ canvas.addEventListener('pointerdown', e => {
   hideHint();
 });
 canvas.addEventListener('pointermove', e => {
-  if (others.has(e.pointerId)) others.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (others.has(e.pointerId)){ const o = others.get(e.pointerId); o.x = e.clientX; o.y = e.clientY;
+    if (!pinch && G.settings.builder && ptr && Math.hypot(o.x - o.sx, o.y - o.sy) > 20){ pinch = {d: Math.hypot(o.x - ptr.cx, o.y - ptr.cy) || 1, z: G.settings.dev.zoom}; ptr.moved = true; G.joy = null; G.dest = null; } }
   if (ptr && e.pointerId === ptr.id){ ptr.cx = e.clientX; ptr.cy = e.clientY; }
   if (pinch && ptr){ const o = [...others.values()][0]; if (o) setZoom(pinch.z * pinch.d / (Math.hypot(o.x - ptr.cx, o.y - ptr.cy) || 1)); return; }
   if (!ptr || e.pointerId !== ptr.id) return;
@@ -43,7 +42,9 @@ canvas.addEventListener('pointermove', e => {
   if (ptr.moved){ const k = Math.min(1, d/JOY_RADIUS); G.joy = {bx:ptr.sx, by:ptr.sy, vx: d ? dx/d*k : 0, vy: d ? dy/d*k : 0}; }
 });
 function endPtr(e){
-  if (others.has(e.pointerId)){ others.delete(e.pointerId); if (!others.size) pinch = null; return; }
+  if (others.has(e.pointerId)){ const o = others.get(e.pointerId); others.delete(e.pointerId);
+    if (!pinch && e.type === 'pointerup' && performance.now() - o.t < 350 && Math.hypot(o.x - o.sx, o.y - o.sy) < 20) document.dispatchEvent(new Event('volley'));
+    if (!others.size) pinch = null; return; }
   if (!ptr || e.pointerId !== ptr.id) return;
   if (pinch){ pinch = null; others.clear(); ptr = null; G.joy = null; return; }
   if (!ptr.moved && !G.sheetOpen){
@@ -51,7 +52,9 @@ function endPtr(e){
     else {
       // two taps close together in time and place set the course; one tap just shows a little ring
       const p = screenToSea(ptr.sx, ptr.sy), now = performance.now(), tp = lastTap;
-      if (p && tp && now - tp.t < 420 && Math.hypot(ptr.sx - tp.sx, ptr.sy - tp.sy) < 45){ G.dest = p; G.tapMark = null; lastTap = null; }
+      if (p && tp && now - tp.t < 420 && Math.hypot(ptr.sx - tp.sx, ptr.sy - tp.sy) < 45){ lastTap = null; G.tapMark = null;
+        if (Math.hypot(p.x - G.S.x, p.y - G.S.y) < Math.max(60, ship().len*.7)) document.dispatchEvent(new Event('volley')); // double tap on your own ship
+        else G.dest = p; }
       else if (p){ lastTap = {t:now, sx:ptr.sx, sy:ptr.sy}; G.tapMark = {x:p.x, y:p.y, t:G.t};
         if ((G.S.singleTaps = (G.S.singleTaps || 0) + 1) === 3) toast('Double tap to sail there', 2.2); }
     }
@@ -69,8 +72,8 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 
-// Screen directions -> world directions for the diagonal camera.
-const toWorld = (ix, iy) => [(ix + iy)*Math.SQRT1_2, (iy - ix)*Math.SQRT1_2];
+// Screen directions -> world directions. North is up on screen, so they are the same.
+const toWorld = (ix, iy) => [ix, iy];
 
 // On a set course, bend around land in the way instead of bumping into it: feel ahead, and turn toward the first clear heading.
 function avoidIslands(S, ux, uy, dist){
@@ -100,7 +103,7 @@ export function steering(S){
   if (G.dest){
     const dx = G.dest.x - S.x, dy = G.dest.y - S.y, d = Math.hypot(dx, dy);
     if (d < (G.dest.far ? 40 : 18)){ if (G.dest.far) toast('You have arrived'); G.dest = null; return [0, 0]; }
-    const [ux, uy] = avoidIslands(S, dx/d, dy/d, d), k = Math.min(1, d/110);
+    const [ux, uy] = avoidIslands(S, dx/d, dy/d, d), k = Math.min(1, d/(110*Math.sqrt(ship().heavy || 2))); // heavy ships ease off sooner so they stop on the spot
     return [ux*k, uy*k];
   }
   return [0, 0];

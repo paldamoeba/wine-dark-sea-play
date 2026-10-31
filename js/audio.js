@@ -69,7 +69,7 @@ const now = () => fakeT ?? ctx.currentTime;
 function place(bus, at, vol = 1){
   const g = ctx.createGain(); let k = vol;
   if (at){ const dx = at.x - lis.x, dy = at.y - lis.y, d = Math.hypot(dx, dy); k *= Math.max(0, 1 - d/lis.far)**2; if (k < .01) return null;
-    if (ctx.createStereoPanner){ const p = ctx.createStereoPanner(); p.pan.value = Math.max(-.8, Math.min(.8, (dx - dy)*.7071/600)); g.connect(p); p.connect(bus); } else g.connect(bus); }
+    if (ctx.createStereoPanner){ const p = ctx.createStereoPanner(); p.pan.value = Math.max(-.8, Math.min(.8, dx/600)); g.connect(p); p.connect(bus); } else g.connect(bus); }
   else g.connect(bus);
   g.gain.value = k; return g;
 }

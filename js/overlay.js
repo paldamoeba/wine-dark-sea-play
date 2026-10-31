@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=08a29d0';
-import {G, isExplored} from './state.js?v=08a29d0';
-import {fogLayer, islandPath} from './map.js?v=08a29d0';
-import {view, project} from './scene.js?v=08a29d0';
-import {JOY_RADIUS} from './input.js?v=08a29d0';
-import {enemies, combatState, capture} from './combat.js?v=08a29d0';
-import {drawFish} from './fishing.js?v=08a29d0';
-import {whale} from './wildlife.js?v=08a29d0';
-import {SHORE_FISH} from './config.js?v=08a29d0';
-import {W as WIND} from './weather.js?v=08a29d0';
-import {bottle} from './quests.js?v=08a29d0';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=08a29d0';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=c50fa36';
+import {G, isExplored} from './state.js?v=c50fa36';
+import {fogLayer, islandPath} from './map.js?v=c50fa36';
+import {view, project, screenToSea} from './scene.js?v=c50fa36';
+import {JOY_RADIUS} from './input.js?v=c50fa36';
+import {enemies, combatState, capture} from './combat.js?v=c50fa36';
+import {drawFish} from './fishing.js?v=c50fa36';
+import {whale} from './wildlife.js?v=c50fa36';
+import {SHORE_FISH} from './config.js?v=c50fa36';
+import {W as WIND} from './weather.js?v=c50fa36';
+import {bottle} from './quests.js?v=c50fa36';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=c50fa36';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -66,15 +66,31 @@ function courseArrow(dx, dy, dz, W, H, M){
   c.textBaseline = 'alphabetic'; c.restore();
 }
 
+// Raindrops falling through the air around the ship: each has a place in the world, so when the ship sails on, it leaves
+// the rain behind instead of the rain moving with the screen.
+const DROPS = Array.from({length:120}, () => ({x:0, y:0, h:-1, v:0}));
+let dropT = 0;
+function drawDrops(t){
+  const dt = Math.min(.05, Math.max(0, t - dropT)); dropT = t;
+  c.strokeStyle = `rgba(215,228,240,${.38*G.stormK})`; c.lineWidth = 1.2; c.beginPath();
+  for (const d of DROPS){ d.h -= d.v*dt;
+    if (d.h < 0){ const a = Math.random()*6.28, r = Math.sqrt(Math.random())*900; d.x = G.cam.x + Math.cos(a)*r; d.y = G.cam.y + Math.sin(a)*r - 150; d.h = 80 + Math.random()*420; d.v = 650 + Math.random()*200; }
+    const p = project(d.x, d.h, d.y), q = project(d.x - 4, d.h + 34, d.y - 3); if (p[2] > 1 || q[2] > 1) continue;
+    c.moveTo(q[0], q[1]); c.lineTo(p[0], p[1]); }
+  c.stroke();
+}
 // Rain splashes: little rings that spread on the water where drops land, with two droplets jumping up. Smaller further up
 // the screen (further away). Each splash has its own start time so they don't all land at once; more in heavier rain.
-const SPL = Array.from({length:110}, (_, k) => ({k, t0:-k*.01, x:0, y:0}));
+// Each one lands on a spot on the sea (wx, wy) and stays there, so the rain doesn't slide along with the camera.
+const SPL = Array.from({length:110}, (_, k) => ({k, t0:-k*.01, wx:0, wy:0}));
 const SPLASH_LIFE = .5;
 function drawSplashes(W, H, t){
   const n = Math.round(SPL.length*Math.min(1, G.stormK*1.15));
   c.lineWidth = 1.7;
   for (let i=0;i<n;i++){ const s = SPL[i]; let a = (t - s.t0)/SPLASH_LIFE;
-    if (a >= 1 || a < 0){ s.t0 = t + Math.random()*.3; s.x = Math.random()*W; s.y = H*.12 + Math.random()*H*.88; continue; }
+    if (a >= 1 || a < 0){ s.t0 = t + Math.random()*.3; const p = screenToSea(Math.random()*W, H*.12 + Math.random()*H*.88); s.wx = p ? p.x : NaN; s.wy = p ? p.y : 0; continue; }
+    if (s.wx !== s.wx) continue;
+    const q = project(s.wx, 0, s.wy); if (q[2] > 1) continue; s.x = q[0]; s.y = q[1];
     const far = .5 + .6*s.y/H, r = (3 + a*13)*far, al = (1 - a)*.85*Math.min(1, G.stormK*1.8);
     c.strokeStyle = `rgba(230,242,250,${al})`; c.beginPath(); c.ellipse(s.x, s.y, r, r*.42, 0, 0, Math.PI*2); c.stroke();
     if (a < .55){ const h = Math.sin(a/.55*Math.PI)*10*far; c.fillStyle = `rgba(240,248,255,${al})`;
@@ -133,8 +149,7 @@ export function drawOverlay(fps){
   c.setTransform(DPR,0,0,DPR,0,0); c.clearRect(0,0,W,H);
   drawWind(t, Math.min(.05, Math.max(0, t - lastT))); lastT = t;
   if (G.stormK > .05){
-    c.strokeStyle = `rgba(215,228,240,${.35*G.stormK})`; c.lineWidth = 1.2;
-    for (let k=0;k<90;k++){ const rx = (hash(k,1)*W*1.2 + t*160) % (W*1.2) - W*.1, ry = (hash(k,2)*H + t*760) % H; c.beginPath(); c.moveTo(rx, ry); c.lineTo(rx-7, ry+20); c.stroke(); }
+    drawDrops(t);
     drawSplashes(W, H, t);
   }
   if (G.flash){ c.fillStyle = `rgba(240,245,255,${G.flash*.4})`; c.fillRect(0,0,W,H); }
@@ -199,7 +214,7 @@ export function drawOverlay(fps){
 
   // round minimap, turned to match the camera, showing the sea around the ship (MINI_RANGE world units to the edge)
   if (!mini) buildMini();
-  const ms = 112, cx = W - ms/2 - 12, cy = 10 + ms/2 + topInset();
+  const ms = 112*(G.uik || 1), cx = W - ms/2 - 12, cy = 10 + ms/2 + topInset();
   // the minimap is drawn into its own small canvas only every third frame, then copied: it's one of the slower things to draw
   if (!miniCv){ miniCv = document.createElement('canvas'); miniCv.width = miniCv.height = ms*2; }
   if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
@@ -211,17 +226,17 @@ export function drawOverlay(fps){
   c.strokeStyle = 'rgba(255,240,210,.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(cx, cy, ms/2 - 1.2, 0, Math.PI*2); c.stroke();
   c.strokeStyle = 'rgba(60,35,15,.5)'; c.beginPath(); c.arc(cx, cy, ms/2 + 5.6, 0, Math.PI*2); c.stroke();
   for (let i=0;i<4;i++){ const a = i*Math.PI/2 + Math.PI/4; c.fillStyle = '#4a2e17'; c.beginPath(); c.arc(cx + Math.cos(a)*(ms/2 + 2), cy + Math.sin(a)*(ms/2 + 2), 2.2, 0, Math.PI*2); c.fill(); }
-  const na = -Math.PI/4, nx = cx + Math.cos(na)*(ms/2 + 2), ny = cy + Math.sin(na)*(ms/2 + 2);
+  const na = -Math.PI/2, nx = cx + Math.cos(na)*(ms/2 + 2), ny = cy + Math.sin(na)*(ms/2 + 2);
   c.fillStyle = '#fbf3e0'; c.strokeStyle = '#6a4224'; c.lineWidth = 2; c.beginPath(); c.arc(nx, ny, 9, 0, Math.PI*2); c.fill(); c.stroke();
   c.fillStyle = '#b8402f'; c.font = '400 11px Marcellus, Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('N', nx, ny + .5); c.restore();
   // which way the wind blows: a white arrow across the little map, stronger wind = more solid
-  if (WIND.windK > .2){ const a = WIND.windA + Math.PI/4, al = Math.min(.85, WIND.windK);
+  if (WIND.windK > .2){ const a = WIND.windA, al = Math.min(.85, WIND.windK);
     c.save(); c.translate(cx, cy); c.rotate(a); c.globalAlpha = al; c.strokeStyle = '#f4fbff'; c.fillStyle = '#f4fbff'; c.lineWidth = 2.2; c.lineCap = 'round';
     c.beginPath(); c.moveTo(-ms*.36, 0); c.lineTo(ms*.3, 0); c.stroke(); c.beginPath(); c.moveTo(ms*.38, 0); c.lineTo(ms*.27, -5); c.lineTo(ms*.27, 5); c.closePath(); c.fill();
     for (const f of [-.36, -.29]){ c.beginPath(); c.moveTo(ms*f, 0); c.lineTo(ms*(f - .06), -5); c.moveTo(ms*f, 0); c.lineTo(ms*(f - .06), 5); c.stroke(); } c.restore(); }
   // the nearest chapter goal off the little map: a red arrow on its rim pointing the way
   let gm = null, gd = Infinity; for (const m of G.goalMarks || []){ const d = Math.hypot(m.x - S.x, m.y - S.y); if (d < gd){ gd = d; gm = m; } }
-  if (gm && gd > MINI_RANGE*.9){ const a = Math.atan2(gm.y - S.y, gm.x - S.x) + Math.PI/4, r = ms/2 - 2, px = cx + Math.cos(a)*r, py = cy + Math.sin(a)*r, pulse = 1 + Math.sin(G.t*5)*.12;
+  if (gm && gd > MINI_RANGE*.9){ const a = Math.atan2(gm.y - S.y, gm.x - S.x), r = ms/2 - 2, px = cx + Math.cos(a)*r, py = cy + Math.sin(a)*r, pulse = 1 + Math.sin(G.t*5)*.12;
     c.save(); c.translate(px, py); c.rotate(a); c.scale(pulse, pulse); c.fillStyle = '#e0614d'; c.strokeStyle = '#2a1d17'; c.lineWidth = 1.5;
     c.beginPath(); c.moveTo(7, 0); c.lineTo(-5, -6); c.lineTo(-2, 0); c.lineTo(-5, 6); c.closePath(); c.fill(); c.stroke(); c.restore(); }
 
@@ -236,7 +251,7 @@ function drawMini(c, cx, cy, ms, S){
   const k = ms/2/MINI_RANGE;
   c.save(); c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.clip();
   c.fillStyle = '#dccaa2'; c.fillRect(cx - ms/2, cy - ms/2, ms, ms); // unexplored water is blank paper, like on the chart
-  c.translate(cx, cy); c.rotate(Math.PI/4); c.translate(-S.x*k, -S.y*k);
+  c.translate(cx, cy); c.translate(-S.x*k, -S.y*k);
   c.drawImage(mini, 0, 0, WORLD*k, WORLD*k);
   c.drawImage(fogLayer('#dccaa2'), 0, 0, WORLD*k, WORLD*k);
   c.strokeStyle = '#3e2b1c'; c.lineWidth = 1;

@@ -1,14 +1,14 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=08a29d0';
-import {ARENA} from './arena.js?v=08a29d0';
-import {enemies} from './combat.js?v=08a29d0';
-import {G, ship, isExplored, reveal, save} from './state.js?v=08a29d0';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=c50fa36';
+import {ARENA} from './arena.js?v=c50fa36';
+import {enemies} from './combat.js?v=c50fa36';
+import {G, ship, isExplored, reveal, save} from './state.js?v=c50fa36';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
 const INK = '#4a3b28', PARCH = '#e9d8b0', FOG = '#e6d5ac', COURSE = '#b8402f', OCHRE = '#d48a2a';
-const R45 = Math.PI/4, COS = Math.SQRT1_2;
+const R45 = 0; /* the chart is not turned: north is up, like the camera */
 
 // ---- fog layers: a tiny canvas per color, stretched over the world with smoothing for soft edges ----
 const fogCache = {};
@@ -69,8 +69,8 @@ const minZ = () => Math.min(W, H) / (WORLD*1.3);
 const maxZ = () => .7;
 function size(){ DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W*DPR; cv.height = H*DPR; }
 const clampView = () => { view.z = Math.max(minZ(), Math.min(maxZ(), view.z)); view.cx = Math.max(0, Math.min(WORLD, view.cx)); view.cy = Math.max(0, Math.min(WORLD, view.cy)); };
-function toScreen(x, y){ const dx = (x - view.cx)*view.z, dy = (y - view.cy)*view.z; return [W/2 + dx*COS - dy*COS, H/2 + dx*COS + dy*COS]; }
-function toWorld(sx, sy){ const dx = sx - W/2, dy = sy - H/2; return [view.cx + (dx*COS + dy*COS)/view.z, view.cy + (-dx*COS + dy*COS)/view.z]; }
+function toScreen(x, y){ return [W/2 + (x - view.cx)*view.z, H/2 + (y - view.cy)*view.z]; }
+function toWorld(sx, sy){ return [view.cx + (sx - W/2)/view.z, view.cy + (sy - H/2)/view.z]; }
 
 // ---- drawing ----
 export function islandPath(g, is, tier, k = 1){
@@ -90,7 +90,7 @@ function towerGlyph(x, y, fill, ruined){ c.save(); c.translate(x, y); c.fillStyl
   c.lineTo(4, -7); c.lineTo(4, -9); c.lineTo(7, -9); c.lineTo(7, -4); c.lineTo(5, -4); c.lineTo(6, 7); c.closePath(); c.fill(); c.stroke();
   c.fillStyle = INK; c.fillRect(-1.3, 2, 2.6, 5);
   if (ruined){ c.strokeStyle = COURSE; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-9, -10); c.lineTo(9, 8); c.stroke(); } c.restore(); }
-// a compass rose in the corner; the chart is turned like the camera, so north points up and to the right
+// a compass rose in the corner; north points straight up
 function compass(x, y, r){ c.save(); c.translate(x, y);
   c.fillStyle = 'rgba(250,242,222,.85)'; c.strokeStyle = INK; c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, r, 0, Math.PI*2); c.fill(); c.stroke();
   c.beginPath(); c.arc(0, 0, r*.78, 0, Math.PI*2); c.stroke();
@@ -98,7 +98,7 @@ function compass(x, y, r){ c.save(); c.translate(x, y);
   for (let i=0;i<8;i++){ const a = i*Math.PI/4, L = i % 2 ? r*.5 : r*.92, w = i % 2 ? r*.1 : r*.16; c.save(); c.rotate(a);
     c.beginPath(); c.moveTo(0, -L); c.lineTo(w, 0); c.lineTo(0, 0); c.closePath(); c.fillStyle = i === 0 ? COURSE : INK; c.fill();
     c.beginPath(); c.moveTo(0, -L); c.lineTo(-w, 0); c.lineTo(0, 0); c.closePath(); c.fillStyle = i === 0 ? '#e38d72' : '#f3e6c8'; c.fill(); c.stroke(); c.restore(); }
-  c.fillStyle = INK; c.font = `400 ${Math.round(r*.42)}px Marcellus, Georgia, serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.rotate(-R45); c.fillText('N', r*1.2*COS, -r*1.2*COS); c.restore(); }
+  c.fillStyle = INK; c.font = `400 ${Math.round(r*.42)}px Marcellus, Georgia, serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.rotate(-R45); c.fillText('N', 0, -r*1.2); c.restore(); }
 // names with a paper-colored halo so they stay readable over lines and color; skipped when they'd overlap a name already written
 let placed = [];
 function label(text, x, y, font, color, sub){
@@ -235,7 +235,7 @@ cv.addEventListener('pointermove', e => {
   if (gesture.type === 'tap' && Math.hypot(cur.x - gesture.sx, cur.y - gesture.sy) > 8) gesture.type = 'pan';
   if (gesture.type === 'pan'){
     const dx = cur.x - prev.x, dy = cur.y - prev.y;
-    view.cx -= (dx*COS + dy*COS)/view.z; view.cy -= (-dx*COS + dy*COS)/view.z; clampView(); draw();
+    view.cx -= dx/view.z; view.cy -= dy/view.z; clampView(); draw();
   } else if (gesture.type === 'pinch' && pts.size === 2){
     const [a, b] = [...pts.values()]; view.z = gesture.z * Math.hypot(a.x-b.x, a.y-b.y) / gesture.d; clampView(); draw();
   }
