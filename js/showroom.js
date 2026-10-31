@@ -1,10 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=fc5d4f8';
-import {makePost} from './glow.js?v=fc5d4f8';
-import {SOUNDS, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=fc5d4f8';
-import {buildColossus, buildFortress} from './monuments.js?v=fc5d4f8';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=fc5d4f8';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=af6cebe';
+import {makePost} from './glow.js?v=af6cebe';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=af6cebe';
+import {buildColossus, buildFortress} from './monuments.js?v=af6cebe';
+import {makeFire, updateFire} from './fire.js?v=af6cebe';
+import {updateSmoke} from './smoke.js?v=af6cebe';
+import {addGrass, updateGrass} from './grass.js?v=af6cebe';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=af6cebe';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -175,11 +178,12 @@ const SHIP_INFO = {
   trader:'A small round trading ship. Some merchants sail these.', dinghy:'The small pirate boat.', skiff:'The pirate skiff, with its own little boar\'s head.'};
 // ---- sounds: every sound in the game, with a model to look at while it plays ----
 // Scenes keep playing (music, the sea); single sounds play once when picked and again with Play.
+const MOOD_INFO = {day:'Out at sea in the daytime.', night:'Slower and softer, for sailing under the stars.', harbor:'A little brighter, while your ship is tied up in a harbor.',
+  battle:'When raiders or warships come for you. Still calm, with a low pulse and a far-off drum.'};
 const SOUND_SCENES = [
-  {name:'Music: a day at sea', desc:'A lyre, a soft drone and now and then a flute, in a warm old Greek mode. It makes itself up as it plays, so it never repeats exactly. In the game it rests every few minutes to let the sea be heard.', music:'day', make:() => statue('apollo', 'painted')},
-  {name:'Music: night', desc:'Slower and softer, in a darker mode, for sailing under the stars.', music:'night', light:'night', make:() => statue('apollo', 'painted')},
-  {name:'Music: in the harbor', desc:'Brighter, with a little hand drum, while your ship is tied up in a harbor.', music:'harbor', make:() => harborTown('poseidon')},
-  {name:'Music: battle', desc:'A frame drum and a tense mode when raiders or warships come for you. It fades back to the sea music when the fight is over.', music:'battle', make:() => buildShip('raider')},
+  // every music style in every mood, to compare (the game uses the one picked in Settings)
+  ...Object.entries(STYLES).flatMap(([st, S]) => [['day', 'a day at sea', () => statue('apollo', 'painted')], ['night', 'night', () => statue('apollo', 'painted'), 'night'], ['harbor', 'in the harbor', () => harborTown('poseidon')], ['battle', 'battle', () => buildShip('raider')]]
+    .map(([m, label, make, light], i) => ({name:`${S.name}: ${label}`, desc:(i ? MOOD_INFO[m] : S.desc + ' ' + MOOD_INFO.day) + ' It makes itself up as it plays, so it never repeats exactly.', music:m, style:st, light, make}))),
   {name:'Sea: calm near an island', desc:'Soft waves, gulls calling from the shore, the hull creaking now and then.', sea:{speed:.3, waves:.55, wind:.1, land:.4, gulls:.8, sail:true}, make:() => buildShip('fishing')},
   {name:'Sea: rowing at full speed', desc:'Oars dipping in time, water rushing past the hull, the wind in your ears.', sea:{speed:1, waves:1, wind:.4, rowing:true}, make:() => buildShip('bireme')},
   {name:'Sea: storm', desc:'Big waves, howling wind, rain and thunder after each lightning flash.', sea:{speed:.8, waves:2.1, storm:1, wind:1, rain:1, rowing:true}, light:'storm', make:() => buildShip('bireme')},
@@ -212,7 +216,7 @@ const SOUND_MODEL = {
 let playing = null; // the item whose sound is on
 function playItem(item){
   playing = item.music || item.sea ? item : null;
-  if (item.music) testMusic(item.music, true); else stopMusic();
+  if (item.music) testMusic(item.music, true, item.style); else stopMusic();
   if (item.sound) setTimeout(() => sfx(item.sound), 150);
   $('play').hidden = !(item.sound || item.music || item.sea); 
 }
@@ -225,6 +229,8 @@ function updateSoundScene(dt){
 const GROUPS = {
   ships:{name:'Ships', items:[
     ...Object.keys(SPECS).map(k => ({name:k[0].toUpperCase() + k.slice(1), desc:SHIP_INFO[k] || '', make:() => buildShip(k, {}, true)})),
+    {name:'Burning ship', desc:'A badly damaged ship catches fire: flames on deck, sparks, and a thick column of smoke that sways as it rises, dark at the bottom and grey at the top.', make:() => {
+      const sh = buildShip('raider'), f = makeFire(SPECS.raider.L, SPECS.raider.B, SPECS.raider.H*.9); sh.add(f); sh.userData.fire = f; sh.userData.anim = 'fire'; return sh; }},
     {name:'The whole fleet', desc:'Every ship side by side, smallest to largest.', make:() => { const g = new T.Group(); let z = 0;
       ['rowboat', 'fishing', 'trader', 'merchant', 'penteconter', 'bireme', 'trireme', 'dinghy', 'skiff', 'raider'].forEach(k => { const s = buildShip(k); z += SPECS[k].B*1.4 + 30; s.position.set(-SPECS[k].L/2 + 100, 0, z); g.add(s); z += SPECS[k].B*1.4; });
       g.position.z = -z/2; const w = new T.Group(); w.add(g); return w; }},
@@ -253,7 +259,7 @@ const GROUPS = {
     {name:'Athenian town', desc:'City harbors are built the same way, with Athena in front of the temple.', make:() => harborTown('athena')},
     {name:'Snowy northern town', desc:'In the cold north the islands, roofs and trees are covered in snow, and icebergs float offshore.', make:() => snowyTown()},
     {name:'Farms', desc:'Little farms just outside the towns, inside low stone walls: a vineyard with grapes, an olive grove, a wheat field and a vegetable garden with melons.', make:() => { const g = row([0, 1, 2, 3].map(i => farm(i)), 14); g.add(grassDisc(120)); return g; }},
-    {name:'Houses', desc:'The four kinds of house: white with a flat roof, a blue dome, a red tile roof, and two floors with a terrace.', make:() => { const g = row([0, 1, 2, 3].map(k => house(k)), 18); g.add(grassDisc(90)); return g; }},
+    {name:'Houses', desc:'The four kinds of house: white with a flat roof, a blue dome, a red tile roof, and two floors with a terrace. Most have a chimney, and many have white smoke curling up from the cooking fire.', make:() => { const g = row([0, 1, 2, 3].map(k => house(k)), 18); g.add(grassDisc(90)); return g; }},
   ]},
   people:{name:'People', items:[
     {name:'Everyone', desc:'Round and cute, no arms, legs or faces. Townspeople, a rower, a deckhand, a captain, an archer, and pirates.', make:() => {
@@ -296,6 +302,9 @@ const GROUPS = {
     {name:'Cypress trees', desc:'Tall and slim like a flame, with soft tufts of leaves, in four greens.', make:() => { const g = row(CYPRESS_TINTS.map(t => cypress(t)), 12); g.add(grassDisc(70)); return g; }},
     {name:'Round trees', desc:'Olive, almond and fig trees in blossom and autumn colors.', make:() => { const g = row(ROUND_TINTS.map((t, i) => roundTree(t, i)), 6); g.add(grassDisc(120)); return g; }},
     {name:'Snowy trees', desc:'On the cold northern islands, with snow lying on top of the tufts.', make:() => { const g = row([0, 1, 2].map(() => cypress(['#2f4d3a', '#f4f8fa'])), 12); g.add(grassDisc(50, '#eef3f5')); return g; }},
+    {name:'Grass', desc:'Little tufts of grass in soft patches on the green islands, swaying in the wind. Only on High graphics in the game, so slower phones stay smooth.', make:() => {
+      const g = new T.Group(), d = grassDisc(130, '#76883c'); d.userData.ground = false; g.add(d); const pts = Array.from({length:40}, (_, i) => [Math.cos(i/40*6.283)*124, Math.sin(i/40*6.283)*124]);
+      addGrass(g, pts, null, 1, Math.random, null, '#f2f7e4'); return g; }},
     {name:'Iceberg', desc:'Chunks of sharp-cut ice: a wide slab, a tall peak and a smaller chunk. Twenty-six of them float in the cold north. Ships can\'t sail through.', make:() => icebergModel(70)},
   ]},
   sounds:{name:'Sounds and music', items:[
@@ -339,7 +348,7 @@ $('gfx').addEventListener('change', e => setFull(e.target.value === 'full'));
 $('glow').addEventListener('click', () => setGlow(!glowOn));
 // the cel-shaded test look: hard bands and ink outlines
 $('cel').addEventListener('click', () => { setCel(!CEL.on); $('cel').setAttribute('aria-pressed', CEL.on); show(); });
-$('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true); });
+$('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true, it.style); });
 $('spin').addEventListener('click', () => { spin = !spin; $('spin').setAttribute('aria-pressed', spin); });
 const fold = on => { $('bar').classList.toggle('folded', on); $('unfold').hidden = !on; $('fold').setAttribute('aria-expanded', !on); resize(); };
 $('fold').addEventListener('click', () => fold(true)); $('unfold').addEventListener('click', () => fold(false));
@@ -379,6 +388,8 @@ function animate(t){
   for (const s of obj.userData.ships || []) animateShip(s, t, 10);
   const a = obj.userData.anim;
   for (const r of fires) flicker(r, t);
+  if (a === 'fire') updateFire(obj.userData.fire, .9, t);
+  updateSmoke(t, lightKey === 'night' ? .6 : 0, -.8, .35); updateGrass(t);
   if (a === 'whale'){ obj.userData.tail.rotation.z = Math.sin(t*1.4)*.25; obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
   if (a === 'kraken'){ obj.userData.tents.forEach(tn => { tn.piv.rotation.z = Math.sin(t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(t*.9 + tn.ph*2)*.15; }); obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
   if (a === 'dolphins') obj.children.forEach(d => { const p = (t*.9 + d.userData.ph) % (Math.PI*2); d.position.y = 6 + Math.max(0, Math.sin(p))*26 - 8; d.rotation.z = Math.cos(p)*.7; });

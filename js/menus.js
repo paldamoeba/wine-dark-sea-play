@@ -1,14 +1,14 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=fc5d4f8';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=fc5d4f8';
-import {G, ship, holdUsed, lvl, have, canPay} from './state.js?v=fc5d4f8';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=fc5d4f8';
-import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=fc5d4f8';
-import {board, active, canDeliver, goal} from './quests.js?v=fc5d4f8';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=fc5d4f8';
-import {shipPortrait} from './portrait.js?v=fc5d4f8';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=fc5d4f8';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT} from './config.js?v=af6cebe';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=af6cebe';
+import {G, ship, holdUsed, lvl, have, canPay} from './state.js?v=af6cebe';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=af6cebe';
+import {founded, blessing, seats, candidates, aboard, fighters, hired} from './crew.js?v=af6cebe';
+import {board, active, canDeliver, goal} from './quests.js?v=af6cebe';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=af6cebe';
+import {shipPortrait} from './portrait.js?v=af6cebe';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=af6cebe';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -17,7 +17,9 @@ export const IC = {
   // a book of quests: a red leather cover, cream pages and a ribbon
   book: svg(`<path d="M4 5.5 Q4 4 5.5 4 H18.5 a1 1 0 0 1 1 1 V18 H6 a2 2 0 0 0 0 4 H19.5" fill="none" stroke="#3a2618" stroke-width="1.3"/><path d="M4 5.5 Q4 4 5.5 4 H18.5 a1 1 0 0 1 1 1 V18 H6 Q4 18 4 20Z" fill="#b8402f" stroke="#3a2618" stroke-width="1.2"/><path d="M6 18 H19.5 V21.5 H6 a1.75 1.75 0 0 1 0 -3.5Z" fill="#f3e3b8" stroke="#3a2618" stroke-width="1.2"/><path d="M8 7.5 H16 V11 H8Z" fill="#e8c867"/><path d="M15 4 V9 L16.3 8 L17.6 9 V4" fill="#e8c867"/>`),
   // a silver drachma: the owl of Athena on a worn silver coin
-  coin: svg(`<circle cx="12" cy="12.8" r="9.6" fill="#8d949b"/><circle cx="12" cy="12" r="9.6" fill="#d5dade"/><circle cx="12" cy="12" r="7.6" fill="#c3c9ce"/><path d="M8.2 16.5 Q7.6 9 12 7.4 Q16.4 9 15.8 16.5 Q12 18 8.2 16.5Z" fill="#9aa1a8"/><circle cx="10.3" cy="10.9" r="1.7" fill="#eef1f3"/><circle cx="13.7" cy="10.9" r="1.7" fill="#eef1f3"/><circle cx="10.3" cy="10.9" r=".8" fill="#3c4148"/><circle cx="13.7" cy="10.9" r=".8" fill="#3c4148"/><path d="M11.4 12.6 L12 13.6 L12.6 12.6Z" fill="#7a5a2a"/>`),
+  // gold drachmae: a little stack behind, and a front coin with Athena's owl
+  coin: svg(`<ellipse cx="15.5" cy="17.6" rx="7" ry="2.6" fill="#a8721f"/><ellipse cx="15.5" cy="16.4" rx="7" ry="2.6" fill="#e8b23f"/><ellipse cx="15.5" cy="14.9" rx="7" ry="2.6" fill="#a8721f"/><ellipse cx="15.5" cy="13.7" rx="7" ry="2.6" fill="#f3c654"/>
+    <circle cx="10" cy="12.6" r="8.4" fill="#9a6417"/><circle cx="10" cy="11.8" r="8.4" fill="#f4c24a"/><circle cx="10" cy="11.8" r="6.6" fill="#e2a632"/><path d="M6.7 15.7 Q6.2 9.2 10 7.8 Q13.8 9.2 13.3 15.7 Q10 17 6.7 15.7Z" fill="#b97f1f"/><circle cx="8.5" cy="10.8" r="1.5" fill="#fff1c4"/><circle cx="11.5" cy="10.8" r="1.5" fill="#fff1c4"/><circle cx="8.5" cy="10.8" r=".7" fill="#4a3210"/><circle cx="11.5" cy="10.8" r=".7" fill="#4a3210"/><path d="M9.5 12.3 L10 13.2 L10.5 12.3Z" fill="#6a4512"/><path d="M4.6 8.6 A6.6 6.6 0 0 1 8.4 5.4" fill="none" stroke="#fff3c8" stroke-width="1.1" stroke-linecap="round" opacity=".8"/>`),
   wood: svg(`<rect x="3" y="8" width="16" height="8" rx="4" fill="${WOOD}"/><ellipse cx="19" cy="12" rx="3" ry="4" fill="#d9b382"/><ellipse cx="19" cy="12" rx="1.2" ry="1.6" fill="${WOOD}"/>`),
   fish: (c = '#4f7fa3') => svg(`<path d="M2 12 Q9 4 17 12 Q9 20 2 12Z M17 12 L23 7 L23 17Z" fill="${c}"/><circle cx="7" cy="10.8" r="1.3" fill="${INK}"/>`),
   market: svg(`<path d="M3 9 L5 4 H19 L21 9Z" fill="#c64a3c"/><path d="M3 9 h18 v2 H3Z" fill="#efe4c8"/><rect x="5" y="11" width="14" height="9" fill="#e6d29c"/><rect x="10" y="14" width="4" height="6" fill="${WOOD}"/>`),
@@ -280,7 +282,7 @@ export function councilHTML(f){
 export function bagHTML(){
   const list = [['hold', 'Hold', IC.hold], ['ship', 'Ship', IC.ship], ['jobs', 'Jobs', IC.jobs], ['world', 'World', IC.world]];
   const t = tabs.inv, body = t === 'ship' ? shipTab() : t === 'jobs' ? bagJobs() : t === 'world' ? worldTab() : holdTab();
-  return `<div class="mtop">${top('Your things')}${res()}${tabBar(list, t, 'inv')}</div><div class="mbody">${body}</div>`;
+  return `<div class="mtop">${top('Your bag')}${res()}${tabBar(list, t, 'inv')}</div><div class="mbody">${body}</div>`;
 }
 function holdTab(){
   const S = G.S, sh = ship(), used = holdUsed();

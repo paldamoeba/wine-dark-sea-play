@@ -438,3 +438,100 @@ button.goal .more{color:var(--ochre);font-weight:800}
 .endpic{display:flex;justify-content:center;gap:10px;margin:6px 0 10px}
 .endpic svg{width:46px;height:46px}
 .endtxt{font-size:16px;line-height:1.45;margin:0 0 10px}
+
+/* ---- P42: beige and wood. Every panel is light parchment in a wooden frame with darker wood corner pieces and a soft shadow.
+   The menus, the HUD, the toolbar, messages and the little map all share it. ---- */
+:root{--bg1:#fbf3e0;--bg2:#eedcb8;--woodA:#c38d57;--woodB:#8c5b33;--woodC:#6a4224;--knot:#563419;--ink2:#3e2b1c;--muted:#8a6a48;
+  --corners:linear-gradient(var(--knot),var(--knot)) 0 0/13px 4px,linear-gradient(var(--knot),var(--knot)) 0 0/4px 13px,
+    linear-gradient(var(--knot),var(--knot)) 100% 0/13px 4px,linear-gradient(var(--knot),var(--knot)) 100% 0/4px 13px,
+    linear-gradient(var(--knot),var(--knot)) 0 100%/13px 4px,linear-gradient(var(--knot),var(--knot)) 0 100%/4px 13px,
+    linear-gradient(var(--knot),var(--knot)) 100% 100%/13px 4px,linear-gradient(var(--knot),var(--knot)) 100% 100%/4px 13px;
+  --woodframe:var(--corners),linear-gradient(var(--bg1),var(--bg2)) padding-box,linear-gradient(155deg,var(--woodA),var(--woodB) 55%,var(--woodC)) border-box;
+  --woodshadow:0 3px 0 #4a2e17,0 7px 16px rgba(45,28,12,.3),inset 0 1px 0 rgba(255,255,255,.75)}
+.hudbar,.lifebar,.tool,.toast,.dock.alt,.raid.council,.bossbar{border:3px solid transparent!important;background:var(--woodframe)!important;background-repeat:no-repeat!important;
+  box-shadow:var(--woodshadow)!important;color:var(--ink2)!important}
+.hudbar{border-radius:16px;padding:4px 6px}
+.lifebar{border-radius:14px}
+.lifebar .bar{background:#d9c49c!important;border:2px solid #9c7348!important;box-shadow:inset 0 1px 2px rgba(60,35,15,.4)!important}
+.hi{background:#fffaf0;box-shadow:inset 0 0 0 1px #e1caa0,0 1px 0 rgba(255,255,255,.8);color:var(--ink2)}
+.hi .ic{box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.hi.full b{color:#c4473b}
+#wxChip{background:#fffaf0;color:var(--ink2)}#wxChip.storm{background:#dfe4ea}#wxChip.mist{background:#f0ece4}
+.hi.bless{background:#d9e9f6}
+/* money pops: a gold chip with a stack of gold coins */
+#goldChip{background:linear-gradient(#ffe9a3,#f5c24e);box-shadow:inset 0 0 0 1.5px #c48a25,inset 0 2px 0 rgba(255,255,255,.7),0 2px 0 #9a6417;color:#4a2f0c;padding-right:10px}
+#goldChip .ic{background:transparent;box-shadow:none;width:26px;height:26px}#goldChip .ic svg{width:25px;height:25px;filter:drop-shadow(0 1px 0 rgba(90,55,10,.4))}
+#goldChip b{font-size:15px;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+/* toolbar: four wooden picture buttons on the left (bag, quests, chart, settings) */
+.tool{width:60px;height:60px;border-radius:16px}
+.tool span{color:var(--ink2)!important;font-size:10.5px}
+.tool .ic{box-shadow:inset 0 -2px 0 rgba(0,0,0,.14),0 1px 2px rgba(60,35,15,.25)}
+.tool:active{transform:translateY(2px);box-shadow:0 1px 0 #4a2e17,0 3px 8px rgba(45,28,12,.3)!important}
+#goalPill{position:relative}#goalPill .ic{background:#f6d2c4}
+.tool .dot{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:#e2563f;border:2px solid #fff6e2;box-shadow:0 1px 2px rgba(0,0,0,.35);animation:dotPulse 2s ease-in-out infinite}
+.tool .dot[hidden]{display:none}
+@keyframes dotPulse{50%{transform:scale(1.18)}}
+@media (prefers-reduced-motion:reduce){.tool .dot{animation:none}}
+@media (max-height:560px){.tool{width:50px;height:50px}.tool span{display:none}.toolbar{gap:6px}}
+/* the little map: a round wooden frame */
+.mapbtn{border:5px solid transparent!important;background:linear-gradient(155deg,var(--woodA),var(--woodB) 55%,var(--woodC)) border-box!important;box-shadow:0 3px 0 #4a2e17,0 8px 18px rgba(45,28,12,.35)!important;
+  -webkit-mask:none;background-clip:border-box!important}
+.toast{border-radius:999px}
+.dock.alt{border-radius:999px}
+.bossbar b{color:#7a2a1c}
+.bossbar .bar{background:#d9c49c!important}
+
+/* menus */
+.sheet.menu{--parch:#f4e7cb;--parch-2:#fbf4e4;--ink:#3e2b1c;--olive:#6b8a2a;--danger:#c4473b;--clay:#b5552c;--tile:#fffaf0;--line:#dcc59c;
+  background:linear-gradient(#f7ecd4,#efdfbf);color:var(--ink);border:4px solid transparent;border-bottom:0;
+  background:var(--corners),linear-gradient(#f7ecd4,#efdfbf) padding-box,linear-gradient(155deg,var(--woodA),var(--woodB) 55%,var(--woodC)) border-box;background-repeat:no-repeat;
+  box-shadow:0 -8px 30px rgba(45,28,12,.35);scrollbar-color:#b08a5c transparent}
+.sheet.menu .mtop{background:linear-gradient(#f7ecd4,#f1e2c3);box-shadow:0 8px 12px -8px rgba(80,50,20,.35)}
+.sheet.menu .mtop::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M0 11 H18 V3 H6 V7 H12' fill='none' stroke='%23b5552c' stroke-width='2'/%3E%3C/svg%3E");opacity:.75}
+.sheet.menu .mhead h1{color:#4a2f18;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.sheet.menu .mhead h1 small,.sheet.menu .res small,.sheet.menu .card small,.sheet.menu .note,.sheet.menu .row small,.sheet.menu .looks span,.sheet.menu .tutfoot,.ladder figcaption,.steps small{color:var(--muted)}
+.sheet.menu .res .chipc{background:#fffaf0;border:1px solid var(--line);box-shadow:0 1px 0 rgba(255,255,255,.8)}
+.sheet.menu .tab{color:var(--muted)}
+.sheet.menu .tab svg{box-shadow:0 2px 0 rgba(90,60,30,.25);opacity:.7}
+.sheet.menu .tab.on{color:var(--ink)}
+.sheet.menu .tab.on span{color:#b5552c}
+.sheet.menu .tab.on svg{opacity:1;border-color:var(--woodB);box-shadow:0 0 0 3px rgba(181,85,44,.18),0 2px 0 rgba(90,60,30,.3)}
+.sheet.menu .card{background:linear-gradient(#fffaf0,#f8eedb);border:1px solid var(--line);box-shadow:0 2px 0 rgba(140,100,55,.18),0 4px 10px rgba(90,60,30,.08)}
+.sheet.menu .card h3{color:#b5552c}
+.sheet.menu .card.hi{background:#eef2d6;box-shadow:inset 0 0 0 2px #8ea544}
+.sheet.menu .tile,.sheet.menu .job,.sheet.menu .sailor,.sheet.menu .fship,.sheet.menu .upc,.sheet.menu .updetail,.sheet.menu .tut,.steps li{background:#f6ead1;border:1px solid var(--line)}
+.sheet.menu .cap{background:#f1e2c3}
+.sheet.menu .btn{background:linear-gradient(#a57347,#7f532e);color:#fff4dc;box-shadow:0 2px 0 #4a2e17}
+.sheet.menu .btn.gold{background:linear-gradient(#f6bd55,#d9902b);color:#3a240c;box-shadow:0 3px 0 #8f5a17}
+.sheet.menu .btn.ghostdark{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px #c9a978}
+.sheet.menu .btn.danger{background:linear-gradient(#cf5442,#a8392d);color:#fff1ea}
+.sheet.menu .foot .btn:not(.gold){background:linear-gradient(#a57347,#7f532e);color:#fff4dc}
+.sheet.menu .pbar,.sheet.menu .pips i{background:rgba(110,75,40,.16)}
+.sheet.menu .tag{background:rgba(110,75,40,.12);color:var(--ink)}
+.sheet.menu .tag.on{background:#e3eac4;color:#4d5a24}
+.sheet.menu .tag.bad{background:#f3d0c8;color:#9a2f24}
+.sheet.menu select,.sheet.menu input{background:#fffaf0;color:var(--ink);border:1.5px solid #cfb388}
+.sheet.menu .mats i{background:rgba(110,75,40,.1);color:var(--muted)}
+.sheet.menu .seg{color:var(--ink);border-color:#cfb388}
+.sheet.menu .seg.on{background:linear-gradient(#f6bd55,#d9902b);color:#3a240c;border-color:#c48a25}
+.tog{border-color:#b89466;background:#e6d5b2}.tog i{background:#fffaf0;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.tog.on{background:#8ea544;border-color:#6b8a2a}.tog.on i{background:#fff}
+.slot{background:#fffaf0;border-color:#c9a978;box-shadow:0 2px 0 rgba(90,60,30,.2)}
+.slot .badge{background:#7f532e;border-color:#fff4dc;color:#fff4dc}
+.sheet.menu .xbtn{color:#fff4dc;border:0;background:linear-gradient(#a57347,#7f532e);box-shadow:0 2px 0 #4a2e17}
+.sheet.menu .tut span,.tutlead{color:var(--ink)}
+.sheet.menu .fship.on{border:2px solid #d9902b}
+.sheet.menu .fship img.shippic.photo,.sheet.menu .hero img.shippic.photo,.sheet.menu .card>img.shippic.photo{background:radial-gradient(60% 45% at 50% 62%,rgba(84,160,200,.3),transparent 70%)}
+.stage{background:radial-gradient(closest-side,rgba(120,170,200,.18),transparent)}
+.sheet.menu .eff b,.sheet.menu .good{color:var(--olive)}
+.sheet.menu .chipc.short{color:var(--danger)}
+/* P42: the chart, on old paper: wooden buttons, the legend on a little parchment card */
+.mapview{background:#e9d8b0}
+.maphead{background:linear-gradient(#e9d8b0 55%,rgba(233,216,176,0))}
+.maphead h2{color:#4a2f18;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.maphead .btn,.mapbtns .btn{background:linear-gradient(#a57347,#7f532e);color:#fff4dc;border:0;box-shadow:0 3px 0 #4a2e17,0 5px 12px rgba(45,28,12,.25);padding:10px 16px}
+.mapfoot{background:linear-gradient(rgba(233,216,176,0),#e9d8b0 45%)}
+.legend{border:3px solid transparent;background:var(--woodframe);background-repeat:no-repeat;box-shadow:var(--woodshadow);border-radius:14px;padding:7px 12px;pointer-events:none}
+.legend svg{width:15px;height:15px;flex:none}
+/* the little map's wooden frame is drawn with the map (overlay.js); the button is just the place to tap */
+.mapbtn{border:0!important;background:transparent!important;box-shadow:none!important}

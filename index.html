@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=fc5d4f8">
+<link rel="stylesheet" href="css/style.css?v=af6cebe">
 
 <canvas id="cv" aria-label="The sea"></canvas>
 <canvas id="ov"></canvas>
@@ -17,11 +17,9 @@
   </div>
 </div>
 <div class="bossbar" id="bossBar" hidden><b>Polycrates, the pirate king</b><div class="bar"><i id="bossHull"></i></div></div>
-<div class="goalwrap">
-  <button class="goal book" id="goalPill" hidden aria-label="Quests"><i class="ic" data-ic="book"></i><span class="vh"><span id="goalLbl">Goal</span>: <span id="goalText"></span></span></button>
-</div>
 <nav class="toolbar" aria-label="Menus">
-  <button class="tool" id="bagBtn" aria-label="Your things"><i class="ic" data-ic="hold"></i><span>Things</span></button>
+  <button class="tool" id="bagBtn" aria-label="Your bag"><i class="ic" data-ic="hold"></i><span>Bag</span></button>
+  <button class="tool" id="goalPill" aria-label="Quests"><i class="ic" data-ic="book"></i><span>Quests</span><span class="vh"><span id="goalLbl">Goal</span>: <span id="goalText"></span></span><em class="dot" id="goalDot" hidden></em></button>
   <button class="tool" id="chartBtn" aria-label="Chart"><i class="ic" data-ic="map"></i><span>Chart</span></button>
   <button class="tool" id="gearBtn" aria-label="Settings"><i class="ic" data-ic="gear"></i><span>Settings</span></button>
 </nav>
@@ -35,9 +33,10 @@
   <footer class="mapfoot">
     <ul class="legend">
       <li><i class="lg-you"></i>You</li>
-      <li><i class="lg-port"></i>Harbor</li>
+      <li><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#d48a2a" stroke="#4a3b28" stroke-width="1.5"/><path d="M10 5.2a1.5 1.5 0 1 0 0 .1M10 7.6v7M7 9.4h6M5.6 11.6q.9 3.4 4.4 3.4t4.4-3.4" fill="none" stroke="#fff8e6" stroke-width="1.6" stroke-linecap="round"/></svg>Harbor</li>
+      <li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>Fortress</li>
       <li><i class="lg-fish"></i>Fish</li>
-      <li><i class="lg-wreck">×</i>Wreck</li>
+      <li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 12q8 6 16 0M9 14l5-11-5 2" fill="none" stroke="#4a3b28" stroke-width="1.8" stroke-linecap="round"/></svg>Wreck</li>
       <li><i class="lg-course">×</i>Course</li>
     </ul>
     <div class="mapbtns">
@@ -62,4 +61,4 @@
 <script>
   if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
 </script>
-<script type="module" src="js/main.js?v=fc5d4f8"></script>
+<script type="module" src="js/main.js?v=af6cebe"></script>

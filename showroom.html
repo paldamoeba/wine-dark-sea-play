@@ -14,7 +14,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#c9e3e8;font-family:va
 .tag p{margin:2px 0 0;font-weight:700;font-size:13px;color:#5c5446}
 .dark .tag p{color:#c9d3e0}
 .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));box-sizing:border-box;
-  background:linear-gradient(#3b2d25,#2b211c);border:2px solid #6b4f3d;border-radius:18px;padding:10px 12px;color:var(--ink);display:grid;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  border:3px solid transparent;background:linear-gradient(#fbf3e0,#eedcb8) padding-box,linear-gradient(155deg,#c38d57,#8c5b33 55%,#6a4224) border-box;border-radius:18px;padding:10px 12px;color:#3e2b1c;display:grid;gap:8px;box-shadow:0 3px 0 #4a2e17,0 8px 20px rgba(45,28,12,.3)}
 .row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 @media (max-width:520px){.row{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .row2{display:flex;gap:6px}
@@ -22,10 +22,10 @@ html,body{height:100%;margin:0;overflow:hidden;background:#c9e3e8;font-family:va
 .show{position:fixed;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));flex:none;padding:10px 16px}
 select{min-width:0;width:100%}
 @media (max-width:420px){select{font-size:14px;padding:7px 4px}}
-.tab{flex:1;font:inherit;font-weight:800;font-size:14px;border:2px solid #6b4f3d;background:#47362c;color:#c9b48f;border-radius:11px;padding:8px 4px;cursor:pointer}
-.tab[aria-pressed="true"]{background:var(--ochre);border-color:var(--ochre);color:#2a1d17}
-label{display:grid;gap:3px;font-size:12px;font-weight:700;color:#c9b48f}
-select{font:inherit;font-weight:700;font-size:15px;background:#2b211c;color:var(--ink);border:2px solid #6b4f3d;border-radius:10px;padding:8px}
+.tab{flex:1;font:inherit;font-weight:800;font-size:14px;border:0;background:linear-gradient(#a57347,#7f532e);color:#fff4dc;border-radius:11px;padding:8px 4px;cursor:pointer;box-shadow:0 2px 0 #4a2e17}
+.tab[aria-pressed="true"]{background:linear-gradient(#f6bd55,#d9902b);color:#3a240c;box-shadow:0 2px 0 #8f5a17}
+label{display:grid;gap:3px;font-size:12px;font-weight:700;color:#8a6a48}
+select{font:inherit;font-weight:700;font-size:15px;background:#fffaf0;color:#3e2b1c;border:1.5px solid #cfb388;border-radius:10px;padding:8px}
 p.d{margin:0;font-size:13.5px;line-height:1.4}
 button:focus-visible,select:focus-visible{outline:3px solid #f4fbff;outline-offset:2px}
 .err{position:fixed;inset:0;display:grid;place-items:center;font-weight:700;padding-inline:16px;text-align:center}
@@ -45,4 +45,4 @@ button:focus-visible,select:focus-visible{outline:3px solid #f4fbff;outline-offs
 <button class="tab show" id="unfold" hidden>Show panel</button>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the page.</div>');</script>
-<script type="module" src="js/showroom.js?v=fc5d4f8"></script>
+<script type="module" src="js/showroom.js?v=af6cebe"></script>

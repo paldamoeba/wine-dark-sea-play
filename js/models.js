@@ -1,8 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=fc5d4f8';
+import {hash} from './world.js?v=af6cebe';
 
+import {smokeColumn} from './smoke.js?v=af6cebe';
 const T = window.THREE;
-import {mat} from './ships.js?v=fc5d4f8';
+import {mat} from './ships.js?v=af6cebe';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
@@ -74,6 +75,10 @@ export function house(kind = 0){ if (kind === true) kind = 1; if (kind === false
   if (kind === 3){ const up = mesh(new T.BoxGeometry(12, 10, 14), wall); up.position.set(-4, 21, 0); g.add(up);
     const rail = mesh(new T.BoxGeometry(9, 2, 20), '#e4dccb'); rail.position.set(6.5, 17, 0); g.add(rail);
     const w2 = mesh(new T.BoxGeometry(.6, 4, 3.4), trim, {}, false); w2.position.set(2.2, 22, 0); g.add(w2); }
+  // a chimney on most houses, and on two out of three of those a column of white smoke from the cooking fire
+  const ch = {0:[-6, 16, 5], 2:[-5, 19, -4.5], 3:[-7.5, 26, 4]}[kind];
+  if (ch){ const c = mesh(new T.BoxGeometry(3.4, kind === 2 ? 9 : 6, 3.4), kind === 2 ? '#d8ccb0' : wall); c.position.set(ch[0], ch[1] + (kind === 2 ? 4.5 : 3), ch[2]); g.add(c);
+    if (Math.random() < .67){ const sm = smokeColumn({h:66, r0:2.4, r1:10, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); } }
   return g; }
 export function temple(){ const g = new T.Group();
   const base = mesh(new T.BoxGeometry(44, 4, 30), '#e9e2cf'); base.position.y = 2; g.add(base);

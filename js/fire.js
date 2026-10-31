@@ -1,10 +1,11 @@
 // Fire and smoke on badly damaged ships. Starts below FIRE_AT of the hull and grows as the hull drops.
+import {smokeColumn} from './smoke.js?v=af6cebe';
 const T = window.THREE;
 export const FIRE_AT = .4;
 
 // a soft teardrop: round at the bottom, pointed at the top
 const flameGeo = new T.LatheGeometry([0, .55, .9, 1, .85, .55, .25, 0].map((r, i) => new T.Vector2(r, i*.36)), 12);
-const smokeGeo = new T.IcosahedronGeometry(1, 2), emberGeo = new T.SphereGeometry(.6, 5, 4);
+const emberGeo = new T.SphereGeometry(.6, 5, 4);
 const EMBER = new T.MeshBasicMaterial({color:'#ffb347'});
 const OUTER = new T.MeshBasicMaterial({color:'#ef6a2a', transparent:true, opacity:.8, depthWrite:false}), INNER = new T.MeshBasicMaterial({color:'#ffd35a'});
 
@@ -18,10 +19,10 @@ export function makeFire(len, beam, deck){
     f.position.set((i/(n - 1 || 1) - .5)*len*.6, deck, (i % 2 ? 1 : -1)*beam*.15);
     f.userData = {s, ph:i*1.7}; g.add(f); flames.push(f);
   }
-  // a column of puffs per flame: dark at the bottom, turning light grey as they rise and spread
-  for (let i=0;i<n*4;i++){
-    const m = new T.Mesh(smokeGeo, new T.MeshBasicMaterial({color:'#3a383c', transparent:true, opacity:.6, depthWrite:false}));
-    m.userData = {ph:(i*.618) % 1, from:flames[i % n], wob:Math.random()*6}; g.add(m); smoke.push(m);
+  // one thick, swaying column of smoke per flame: dark at the bottom, turning soft grey as it rises and spreads
+  for (let i=0;i<n;i++){
+    const m = smokeColumn({h:110 + len*.35, r0:2.5 + beam*.08, r1:13 + beam*.35, sway:11, base:'#3b393d', top:'#a9a6a8', alpha:.88, speed:1.25, lean:1.3});
+    m.userData.from = flames[i]; g.add(m); smoke.push(m);
   }
   const embers = []; for (let i=0;i<n*3;i++){ const e = new T.Mesh(emberGeo, EMBER); e.userData = {ph:Math.random(), from:flames[i % n], dx:(Math.random() - .5)*20, dz:(Math.random() - .5)*20}; g.add(e); embers.push(e); }
   g.userData = {flames, smoke, embers}; g.visible = false;
@@ -40,11 +41,9 @@ export function updateFire(g, k, t){
     f.rotation.y = t*2 + u.ph;
   });
   smoke.forEach(m => {
-    const u = m.userData, p = (t*.28 + u.ph) % 1, f = u.from;
-    m.visible = f.visible && k > .1;
-    m.position.set(f.position.x + p*22 + Math.sin(u.wob + t*.8)*4, f.position.y + 8 + p*95, f.position.z + p*10 + Math.cos(u.wob + t*.7)*4);
-    m.scale.setScalar((3 + p*15)*(.6 + k*.5)); m.material.opacity = .75*Math.min(1, p*6)*(1 - p)*Math.min(1, k*2);
-    const c = .23 + p*.45; m.material.color.setRGB(c, c*.98, c*1.03);
+    const f = m.userData.from; m.visible = f.visible && k > .1;
+    m.position.set(f.position.x, f.position.y + 3, f.position.z);
+    const sc = .55 + k*.55; m.scale.set(sc, .6 + k*.4, sc); m.material.uniforms.uAlpha.value = .88*Math.min(1, (k - .1)*3);
   });
   embers.forEach(e => {
     const u = e.userData, p = (t*.7 + u.ph) % 1, f = u.from;

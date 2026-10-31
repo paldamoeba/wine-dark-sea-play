@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=fc5d4f8';
-import {G, isExplored} from './state.js?v=fc5d4f8';
-import {fogLayer, islandPath} from './map.js?v=fc5d4f8';
-import {view, project} from './scene.js?v=fc5d4f8';
-import {JOY_RADIUS} from './input.js?v=fc5d4f8';
-import {enemies, combatState, capture} from './combat.js?v=fc5d4f8';
-import {drawFish} from './fishing.js?v=fc5d4f8';
-import {whale} from './wildlife.js?v=fc5d4f8';
-import {SHORE_FISH} from './config.js?v=fc5d4f8';
-import {W as WIND} from './weather.js?v=fc5d4f8';
-import {bottle} from './quests.js?v=fc5d4f8';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=fc5d4f8';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=af6cebe';
+import {G, isExplored} from './state.js?v=af6cebe';
+import {fogLayer, islandPath} from './map.js?v=af6cebe';
+import {view, project} from './scene.js?v=af6cebe';
+import {JOY_RADIUS} from './input.js?v=af6cebe';
+import {enemies, combatState, capture} from './combat.js?v=af6cebe';
+import {drawFish} from './fishing.js?v=af6cebe';
+import {whale} from './wildlife.js?v=af6cebe';
+import {SHORE_FISH} from './config.js?v=af6cebe';
+import {W as WIND} from './weather.js?v=af6cebe';
+import {bottle} from './quests.js?v=af6cebe';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=af6cebe';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -40,9 +40,12 @@ let mini = null;
 function buildMini(){
   const s = 1024, m = document.createElement('canvas'); m.width = m.height = s; const g = m.getContext('2d'), k = s/WORLD;
   const img = g.createImageData(s, s);
-  for (let y=0;y<s;y++) for (let x=0;x<s;x++){ const z = zoneAt(x/k, y/k), col = z === 0 ? [79,183,174] : z === 1 ? [29,106,140] : [38,60,79]; img.data.set([...col, 255], (y*s+x)*4); }
+  // the same colors as the chart: aqua shallows, blue middle sea, deep blue open sea, islands with sand, grass and rocky tops
+  for (let y=0;y<s;y++) for (let x=0;x<s;x++){ const z = zoneAt(x/k, y/k), col = z === 0 ? [122,206,198] : z === 1 ? [70,154,192] : [46,100,142]; img.data.set([...col, 255], (y*s+x)*4); }
   g.putImageData(img, 0, 0);
-  g.fillStyle = '#e6d29c'; ISLANDS.forEach(i => { islandPath(g, i, 0, k); g.fill(); });
+  ISLANDS.forEach(i => { islandPath(g, i, 0, k); g.strokeStyle = 'rgba(225,245,238,.55)'; g.lineWidth = 7; g.stroke(); });
+  ISLANDS.forEach(i => { islandPath(g, i, 0, k); g.fillStyle = '#efdcaa'; g.fill(); g.strokeStyle = '#6b5236'; g.lineWidth = 1.6; g.stroke();
+    if (i.tiers[1]){ islandPath(g, i, 1, k); g.fillStyle = '#9fbe62'; g.fill(); } if (i.tiers[2]){ islandPath(g, i, 2, k); g.fillStyle = '#b4a888'; g.fill(); } });
   mini = m;
 }
 const topInset = () => parseFloat(getComputedStyle(document.documentElement).paddingTop) || 0;
@@ -170,7 +173,16 @@ export function drawOverlay(fps){
   if (!miniCv){ miniCv = document.createElement('canvas'); miniCv.width = miniCv.height = ms*2; }
   if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
   c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
-  c.strokeStyle = 'rgba(247,238,214,.75)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.stroke();
+  // a round wooden frame, with a little N where north is (the map is turned like the camera, so north is up and to the right)
+  c.save(); const wg = c.createLinearGradient(cx - ms/2, cy - ms/2, cx + ms/2, cy + ms/2); wg.addColorStop(0, '#c99560'); wg.addColorStop(.55, '#8c5b33'); wg.addColorStop(1, '#5e3a1e');
+  c.shadowColor = 'rgba(45,28,12,.35)'; c.shadowBlur = 10; c.shadowOffsetY = 3;
+  c.strokeStyle = wg; c.lineWidth = 7; c.beginPath(); c.arc(cx, cy, ms/2 + 2, 0, Math.PI*2); c.stroke(); c.shadowColor = 'transparent';
+  c.strokeStyle = 'rgba(255,240,210,.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(cx, cy, ms/2 - 1.2, 0, Math.PI*2); c.stroke();
+  c.strokeStyle = 'rgba(60,35,15,.5)'; c.beginPath(); c.arc(cx, cy, ms/2 + 5.6, 0, Math.PI*2); c.stroke();
+  for (let i=0;i<4;i++){ const a = i*Math.PI/2 + Math.PI/4; c.fillStyle = '#4a2e17'; c.beginPath(); c.arc(cx + Math.cos(a)*(ms/2 + 2), cy + Math.sin(a)*(ms/2 + 2), 2.2, 0, Math.PI*2); c.fill(); }
+  const na = -Math.PI/4, nx = cx + Math.cos(na)*(ms/2 + 2), ny = cy + Math.sin(na)*(ms/2 + 2);
+  c.fillStyle = '#fbf3e0'; c.strokeStyle = '#6a4224'; c.lineWidth = 2; c.beginPath(); c.arc(nx, ny, 9, 0, Math.PI*2); c.fill(); c.stroke();
+  c.fillStyle = '#b8402f'; c.font = '400 11px Marcellus, Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('N', nx, ny + .5); c.restore();
   // which way the wind blows: a white arrow across the little map, stronger wind = more solid
   if (WIND.windK > .2){ const a = WIND.windA + Math.PI/4, al = Math.min(.85, WIND.windK);
     c.save(); c.translate(cx, cy); c.rotate(a); c.globalAlpha = al; c.strokeStyle = '#f4fbff'; c.fillStyle = '#f4fbff'; c.lineWidth = 2.2; c.lineCap = 'round';
@@ -192,20 +204,23 @@ let miniCv = null, miniTick = 0;
 function drawMini(c, cx, cy, ms, S){
   const k = ms/2/MINI_RANGE;
   c.save(); c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.clip();
-  c.fillStyle = '#1c2a36'; c.fillRect(cx - ms/2, cy - ms/2, ms, ms);
+  c.fillStyle = '#dccaa2'; c.fillRect(cx - ms/2, cy - ms/2, ms, ms); // unexplored water is blank paper, like on the chart
   c.translate(cx, cy); c.rotate(Math.PI/4); c.translate(-S.x*k, -S.y*k);
   c.drawImage(mini, 0, 0, WORLD*k, WORLD*k);
-  c.drawImage(fogLayer('#1c2a36'), 0, 0, WORLD*k, WORLD*k);
-  for (const h of HARBORS){ c.fillStyle = h.is.city ? CITIES[h.is.city].color : '#d48a2a'; c.beginPath(); c.arc(h.dock.x*k, h.dock.y*k, 2.5, 0, Math.PI*2); c.fill(); }
+  c.drawImage(fogLayer('#dccaa2'), 0, 0, WORLD*k, WORLD*k);
+  c.strokeStyle = '#3e2b1c'; c.lineWidth = 1;
+  for (const h of HARBORS){ c.fillStyle = h.is.city ? CITIES[h.is.city].color : '#d48a2a'; c.beginPath(); c.arc(h.dock.x*k, h.dock.y*k, 3, 0, Math.PI*2); c.fill(); c.stroke(); }
   if (G.dest){ c.fillStyle = '#e0614d'; c.beginPath(); c.arc(G.dest.x*k, G.dest.y*k, 3, 0, Math.PI*2); c.fill(); }
   WRECKS.forEach(w => { if (G.settings.dev.markers && w.stock && isExplored(w.x, w.y)){ c.fillStyle = '#f4fbff'; c.fillRect(w.x*k-1.5, w.y*k-1.5, 3, 3); } });
   enemies.forEach(e => { const d = Math.hypot(e.x - S.x, e.y - S.y);
     if (e.dead || d > (e.spec.side === 'pirate' ? e.spec.sight*1.3 : MINI_RANGE)) return;
-    c.fillStyle = shipColor(e); c.beginPath(); if (e.fort) c.rect(e.x*k - 4, e.y*k - 4, 8, 8); else c.arc(e.x*k, e.y*k, 3, 0, Math.PI*2); c.fill(); });
+    c.fillStyle = shipColor(e); c.strokeStyle = 'rgba(30,20,12,.7)'; c.lineWidth = 1; c.beginPath(); if (e.fort) c.rect(e.x*k - 4, e.y*k - 4, 8, 8); else c.arc(e.x*k, e.y*k, 3, 0, Math.PI*2); c.fill(); c.stroke(); });
   if (whale.state !== 'gone' && whale.state !== 'dive'){ c.fillStyle = '#bfe3f5'; c.beginPath(); c.ellipse(whale.x*k, whale.y*k, 5, 3, whale.a, 0, Math.PI*2); c.fill(); }
   if (bottle.on){ c.fillStyle = '#bfe8d2'; c.fillRect(bottle.x*k - 2, bottle.y*k - 2, 4, 4); }
   if (S.treasure){ const tx = S.treasure.x*k, ty = S.treasure.y*k; c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.moveTo(tx - 4, ty - 4); c.lineTo(tx + 4, ty + 4); c.moveTo(tx + 4, ty - 4); c.lineTo(tx - 4, ty + 4); c.stroke(); }
   for (const m of G.goalMarks || []){ c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.arc(m.x*k, m.y*k, 4 + (G.t*2 % 1)*4, 0, Math.PI*2); c.stroke(); } // the chapter goal pulses
-  c.fillStyle = '#fff'; c.beginPath(); c.arc(S.x*k, S.y*k, 3.5, 0, Math.PI*2); c.fill();
+  // you: a white arrow pointing where the ship is heading
+  c.save(); c.translate(S.x*k, S.y*k); c.rotate(S.a); c.fillStyle = '#fff'; c.strokeStyle = '#3e2b1c'; c.lineWidth = 1.4; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(7, 0); c.lineTo(-5, -5); c.lineTo(-2.5, 0); c.lineTo(-5, 5); c.closePath(); c.fill(); c.stroke(); c.restore();
   c.restore();
 }

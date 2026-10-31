@@ -1,15 +1,16 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=fc5d4f8';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=fc5d4f8';
-import {G, ship, lvl} from './state.js?v=fc5d4f8';
-import {scene} from './scene.js?v=fc5d4f8';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=fc5d4f8';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=fc5d4f8';
-import {addTown, figure} from './town.js?v=fc5d4f8';
-import {makeFire, updateFire, burn} from './fire.js?v=fc5d4f8';
-import {sinkPose} from './sinking.js?v=fc5d4f8';
-import {moored} from './fleet.js?v=fc5d4f8';
-import {placeOnWaves} from './combat.js?v=fc5d4f8';
+import {SHIPS} from './config.js?v=af6cebe';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=af6cebe';
+import {G, ship, lvl} from './state.js?v=af6cebe';
+import {scene} from './scene.js?v=af6cebe';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=af6cebe';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=af6cebe';
+import {addTown, figure} from './town.js?v=af6cebe';
+import {makeFire, updateFire, burn} from './fire.js?v=af6cebe';
+import {addGrass} from './grass.js?v=af6cebe';
+import {sinkPose} from './sinking.js?v=af6cebe';
+import {moored} from './fleet.js?v=af6cebe';
+import {placeOnWaves} from './combat.js?v=af6cebe';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -78,7 +79,10 @@ ISLANDS.forEach((is, i) => {
   if (is.harbor || is.town){ const free = buildTown(is, g, top, R, ground, (is.harbor || is.town).pier, hill);
     // trees that landed in the streets or on houses move elsewhere on the island
     for (const c of is.treeObjs){ if (free(c.position.x, c.position.z)) continue;
-      for (let k=0;k<40;k++){ const p = spotIn(R, ground, 10); if (p && free(...p)){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } } }
+      for (let k=0;k<40;k++){ const p = spotIn(R, ground, 10); if (p && free(...p)){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } }
+    is.free = free; }
+  // grass on the green islands (High graphics)
+  if (grass && !cold && (is.trees || is.port || is.harbor || is.frame)) addGrass(g, grass, hill, top, rng(i*131 + 7), is.free, '#f2f7e4');
   scene.add(g);
 });
 

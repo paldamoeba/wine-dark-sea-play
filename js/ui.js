@@ -1,22 +1,22 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=fc5d4f8';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=fc5d4f8';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=fc5d4f8';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=fc5d4f8';
-import {swapBoat, refreshAllTrees} from './entities.js?v=fc5d4f8';
-import {setZoom} from './input.js?v=fc5d4f8';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=fc5d4f8';
-import {tutHTML} from './tutorial.js?v=fc5d4f8';
-import {founded, blessing, seats, candidates} from './crew.js?v=fc5d4f8';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=fc5d4f8';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=fc5d4f8';
-import {effectText, buy} from './upgrades.js?v=fc5d4f8';
-import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=fc5d4f8';
-import {GOODS, WAR} from './config.js?v=fc5d4f8';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=fc5d4f8';
-import {W, KINDS} from './weather.js?v=fc5d4f8';
-import {sfx, SND, applyVolumes} from './audio.js?v=fc5d4f8';
-import {setTimeOfDay} from './daynight.js?v=fc5d4f8';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=af6cebe';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=af6cebe';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat} from './state.js?v=af6cebe';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=af6cebe';
+import {swapBoat, refreshAllTrees} from './entities.js?v=af6cebe';
+import {setZoom} from './input.js?v=af6cebe';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=af6cebe';
+import {tutHTML} from './tutorial.js?v=af6cebe';
+import {founded, blessing, seats, candidates} from './crew.js?v=af6cebe';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=af6cebe';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=af6cebe';
+import {effectText, buy} from './upgrades.js?v=af6cebe';
+import {WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=af6cebe';
+import {GOODS, WAR} from './config.js?v=af6cebe';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=af6cebe';
+import {W, KINDS} from './weather.js?v=af6cebe';
+import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=af6cebe';
+import {setTimeOfDay} from './daynight.js?v=af6cebe';
 
 const $ = id => document.getElementById(id);
 
@@ -48,7 +48,7 @@ export function updateUI(dt, nearDock){
   $('dockBtn').textContent = moored ? 'Set sail' : banned ? `${CITIES[h.is.city].name} won't let you dock` : h ? `Enter ${h.is.name} harbor` : '';
   $('harborBtn').hidden = G.sheetOpen || !moored;
   $('hint').hidden = !G.S.hint || G.sheetOpen;
-  const pill = pillText(); $('goalPill').hidden = !pill || G.sheetOpen;
+  const pill = pillText(); $('goalDot').hidden = !pill || G.sheetOpen; // the quest button stays; a little dot shows when there's a goal or job
   if (pill && $('goalText').textContent !== pill){ $('goalText').textContent = pill; $('goalLbl').textContent = goal() ? 'Goal' : 'Job'; $('goalPill').title = $('goalLbl').textContent + ': ' + pill; }
   // at night a clear sky shows the moon instead of the sun
   const wk = KINDS[W.kind], moon = (G.night || 0) > .5 && (W.kind === 'fair' || W.kind === 'calm'), wkey = W.kind + (moon ? '-n' : '');
@@ -117,7 +117,7 @@ function mapHTML(){
 // Settings: the same Greek menu as the harbor, with a close button, and three tabs.
 // sound volumes: Off, Quiet, Medium, Loud
 const VOLS = [[0, 'Off'], [.3, 'Quiet'], [.6, 'Medium'], [1, 'Loud']];
-function saveSound(){ const {on, music, sfx: fx, sea} = SND; G.settings.sound = {on, music, sfx:fx, sea}; saveSettings(); applyVolumes(); }
+function saveSound(){ const {on, music, sfx: fx, sea, style} = SND; G.settings.sound = {on, music, sfx:fx, sea, style}; saveSettings(); applyVolumes(); }
 const tog = (act, on, label) => `<button class="tog ${on ? 'on' : ''}" data-act="${act}" role="switch" aria-checked="${on}" aria-label="${label}"><i></i></button>`;
 const row = (title, small, ctl) => `<div class="row"><div>${title}${small ? `<small>${small}</small>` : ''}</div>${ctl}</div>`;
 function settingsHTML(){
@@ -129,12 +129,14 @@ function settingsHTML(){
   const list = [['game', 'Game', IC.ship], ['gfx', 'Graphics', IC.star], ...(s.builder || s.showBuilder ? [['dev', 'Builder', IC.gear]] : [])];
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
   const game = card('Your voyage', `<div class="stats big">${IC.ship} ${ship().name} · ${mins} min at sea</div>${row('How to play', 'The two pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}`)
-    + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and a soft lyre tune.', tog('sound', SND.on, 'Sound'))
-      + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`)
+    + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and soft music.', tog('sound', SND.on, 'Sound'))
+      + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
+      + `<div class="looks"><label><span>Music style</span><select data-set="mstyle" ${SND.on ? '' : 'disabled'}>${Object.entries(STYLES).map(([k, v]) => `<option value="${k}" ${SND.style === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
+      <p class="note">${STYLES[SND.style].desc} Every style is in the Showroom too, to compare.</p>`)
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 41</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 42</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -248,6 +250,7 @@ sheetEl.addEventListener('click', e => {
 sheetEl.addEventListener('change', e => {
   const ci = e.target.dataset && e.target.dataset.crew;
   if (ci !== undefined){ const c = G.S.crew[+ci]; c.job = e.target.value; toast(`${c.n} is now a ${CREW.jobs[c.job].label.toLowerCase()}`, 2); save(); render(); return; }
+  if (e.target.dataset && e.target.dataset.set === 'mstyle'){ SND.style = e.target.value; saveSound(); playNow(); render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'daynight'){ G.settings.daynight = e.target.value; saveSettings(); return; }
   const sk = e.target.dataset && e.target.dataset.snd; if (sk){ SND[sk] = +e.target.value; saveSound(); sfx(sk === 'sea' ? 'gull' : 'coin'); return; }
   const k = e.target.dataset && e.target.dataset.look; if (!k) return;
