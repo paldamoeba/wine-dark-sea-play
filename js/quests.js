@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board', 'camp', 'fort'.
-import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS, PLANS} from './config.js?v=e273bb2';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=e273bb2';
-import {G, save, ship, lvl, rank, gain, putAboard} from './state.js?v=e273bb2';
-import {scene} from './scene.js?v=e273bb2';
-import {mesh} from './models.js?v=e273bb2';
-import {toast} from './ui.js?v=e273bb2';
-import {sfx} from './audio.js?v=e273bb2';
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS, PLANS} from './config.js?v=260b261';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=260b261';
+import {G, save, ship, lvl, rank, gain, putAboard} from './state.js?v=260b261';
+import {scene} from './scene.js?v=260b261';
+import {mesh} from './models.js?v=260b261';
+import {toast} from './ui.js?v=260b261';
+import {sfx} from './audio.js?v=260b261';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -28,7 +28,7 @@ function goalStep(type, kind, n){
   const g = goal(); if (!g || g.t !== type || (g.kind && g.kind !== kind)) return;
   G.S.goalN = (G.S.goalN || 0) + n;
   if (G.S.goalN >= g.n){ G.S.gold += g.gold; sfx('chime'); setTimeout(() => sfx('coins'), 500); G.S.goal = (G.S.goal || 0) + 1; G.S.goalN = 0;
-    const next = goal(); toast(`Goal done! +${g.gold}`, 3); }
+    G.S.lastDone = {text:g.text, gold:g.gold, t:Date.now()}; G.doneT = 5; } // P59: no message: a check mark pops on the Quests button (ui.js)
 }
 
 // ---- requests ----
@@ -58,7 +58,7 @@ export function accept(i){
 }
 export function decline(i){ board().splice(i, 1, makeOffer()); }
 export function drop(i){ G.S.reqs = active().filter((_, k) => k !== i); }
-function finish(r){ G.S.gold += r.gold; sfx('chime'); setTimeout(() => sfx('coins'), 500); G.S.reqs = active().filter(q => q !== r); toast(`Job done! +${r.gold}`, 3.5); save(); }
+function finish(r){ G.S.gold += r.gold; sfx('chime'); setTimeout(() => sfx('coins'), 500); G.S.reqs = active().filter(q => q !== r); (G.S.lastDone = {text:r.text, gold:r.gold, t:Date.now()}, G.doneT = 5); save(); }
 // Deliveries are handed over in the harbor.
 export const canDeliver = (r, h) => r.t === 'deliver' && h && h.is.name === r.to && (G.S.cargo[r.kind] || 0) >= r.n;
 export function deliver(i, h){ const r = active()[i]; if (!canDeliver(r, h)) return; G.S.cargo[r.kind] -= r.n; finish(r); }

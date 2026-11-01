@@ -1,16 +1,16 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS} from './config.js?v=e273bb2';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=e273bb2';
-import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=e273bb2';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=e273bb2';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=e273bb2';
-import {planClues} from './combat.js?v=e273bb2';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=e273bb2';
-import {board, active, canDeliver, goal} from './quests.js?v=e273bb2';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=e273bb2';
-import {shipPortrait} from './portrait.js?v=e273bb2';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=e273bb2';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS} from './config.js?v=260b261';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=260b261';
+import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=260b261';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=260b261';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=260b261';
+import {planClues} from './combat.js?v=260b261';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=260b261';
+import {board, active, canDeliver, goal} from './quests.js?v=260b261';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=260b261';
+import {shipPortrait} from './portrait.js?v=260b261';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=260b261';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -126,9 +126,39 @@ Object.assign(IC, {
     <ellipse cx="12" cy="12" rx="4.6" ry="1.4" fill="none" stroke="#c98a1c" stroke-width=".8"/><path d="M8 11.2 Q10 10.2 12.5 10.4" stroke="#fff" stroke-width="1" stroke-linecap="round" fill="none" opacity=".85"/>`),
 });
 // trade goods: an amphora (wine, oil), a painted pot, a shard of black obsidian
-export const GOOD_IC = k => k === 'obsidian' ? svg(`<path d="M6 19 L9 6 L15 3 L19 11 L14 21Z" fill="#2c2a33"/><path d="M9 6 L15 3 L13 12Z" fill="#4c4a58"/>`)
-  : k === 'pottery' ? svg(`<path d="M7 5 h10 l-1 3 q5 3 3 9 q-2 4 -7 4 q-5 0 -7 -4 q-2 -6 3 -9Z" fill="#c46a3a"/><path d="M5.5 13 h13" stroke="${INK}" stroke-width="1.6"/><path d="M8 16 h8" stroke="${INK}" stroke-width="1" stroke-dasharray="2 1.5"/>`)
-  : svg(`<path d="M10 2 h4 v3 q4 2 4 8 q0 6 -6 9 q-6 -3 -6 -9 q0 -6 4 -8Z" fill="${GOODS[k].color}"/><path d="M8 7 q-3 0 -3 3 M16 7 q3 0 3 3" stroke="${GOODS[k].color}" stroke-width="1.6" fill="none"/>`);
+// P59: trade goods in the glossy style: an amphora with a shine (wine, oil, dye in their colors), a red-figure pot, a black glass shard
+const tone = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = c => Math.max(0, Math.min(255, Math.round(c*k))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
+export const GOOD_IC = k => {
+  if (k === 'obsidian') return svg(`<defs>${glossy('go', [[0, '#6a6680'], [.5, '#2c2a36'], [1, '#121118']])}</defs>${shade(12, 21.3, 6)}
+    <path d="M7 20 L5.5 11 L10 3.5 L17 6 L19 14 L14 20.5Z" fill="url(#go)"/><path d="M10 3.5 L12.5 11 L5.5 11Z" fill="#4c4860"/><path d="M12.5 11 L19 14 L14 20.5Z" fill="#1d1b26"/>
+    <path d="M9.6 5.6 L8 9.6" stroke="#c9c2ff" stroke-width="1.1" stroke-linecap="round" opacity=".8"/>`);
+  if (k === 'pottery') return svg(`<defs>${glossy('gp', [[0, '#f0955f'], [.55, '#c8592f'], [1, '#8f3a1c']])}</defs>${shade(12, 21.4, 6)}
+    <path d="M8 4 H16 L15 7 C20 9 20.5 15 17.5 18.5 C16 20.3 14 21 12 21 C10 21 8 20.3 6.5 18.5 C3.5 15 4 9 9 7Z" fill="url(#gp)"/>
+    <path d="M5.2 12 H18.8 V14.6 H5.2Z" fill="#2a1d17"/><path d="M8 13.3 h1.4 M11.3 13.3 h1.4 M14.6 13.3 h1.4" stroke="#e8955e" stroke-width="1.2"/>
+    <path d="M7.4 9.6 C8.6 8.6 10 8.4 11 8.5" stroke="#fff" stroke-width="1.1" stroke-linecap="round" fill="none" opacity=".75"/>`);
+  const c = GOODS[k] ? GOODS[k].color : '#8a3a4a', id = 'ga' + k;
+  return svg(`<defs>${glossy(id, [[0, tone(c, 1.45)], [.5, c], [1, tone(c, .6)]])}</defs>${shade(12, 21.4, 5.5)}
+    <path d="M10 2.5 H14 V5 C17.8 6.8 18.5 10.5 18 13.5 C17.4 17 15 19.8 12 21 C9 19.8 6.6 17 6 13.5 C5.5 10.5 6.2 6.8 10 5Z" fill="url(#${id})"/>
+    <path d="M9.6 6.2 C7 6 5.6 7.4 6.2 9.4 M14.4 6.2 C17 6 18.4 7.4 17.8 9.4" stroke="${tone(c, .8)}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <rect x="9.5" y="1.6" width="5" height="1.8" rx=".9" fill="${tone(c, .7)}"/>
+    <path d="M8.6 9.4 C8.4 11.6 8.8 13.6 9.8 15.4" stroke="#fff" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".7"/>`);
+};
+// P59: the tab pictures in the glossy style too
+Object.assign(IC, {
+  hold: svg(`<defs>${glossy('th', [[0, '#d9a066'], [1, '#93602f']])}</defs>${shade(12, 21.4, 9)}
+    <path d="M8.2 9 C7.6 5 9 3.6 10.4 4 C11 5.4 10.4 7.6 9.6 9Z" fill="#c8593a"/><ellipse cx="15.2" cy="7.6" rx="3.4" ry="1.9" fill="#8cc4e6" transform="rotate(-25 15.2 7.6)"/>
+    <path d="M3.5 9 H20.5 V19.5 C20.5 20.3 19.8 21 19 21 H5 C4.2 21 3.5 20.3 3.5 19.5Z" fill="url(#th)"/>
+    <path d="M3.5 13 H20.5 M3.5 17 H20.5" stroke="#7a4e25" stroke-width=".8" opacity=".6"/><path d="M5 10.4 H19" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".5"/>`),
+  ship: svg(`<defs>${glossy('ts', [[0, '#c98a52'], [1, '#7e4f2b']])}${glossy('tss', [[0, '#ffffff'], [1, '#e2d8c4']])}</defs>${shade(12, 21.6, 9)}
+    <path d="M12 3 V15" stroke="#7a4e25" stroke-width="1.4"/><path d="M12.6 4 C17 6 18 10 17.5 13.5 H12.6Z" fill="url(#tss)"/><path d="M11.4 6 C8.4 8 7.6 11 8 13.5 H11.4Z" fill="url(#tss)"/>
+    <path d="M2.5 14.5 H21.5 C20.5 18 17 20.5 12 20.5 C7 20.5 3.5 18 2.5 14.5Z" fill="url(#ts)"/><path d="M5 16 H19" stroke="#fff" stroke-width=".9" stroke-linecap="round" opacity=".45"/>`),
+  jobs: svg(`<defs>${glossy('tj', [[0, '#fff6dc'], [1, '#e6d1a2']])}</defs>${shade(12, 21.6, 7)}
+    <rect x="5" y="3.5" width="14" height="17" rx="2" fill="url(#tj)"/><rect x="9" y="2" width="6" height="3" rx="1.2" fill="#c8593a"/>
+    <path d="M8 9 H16 M8 12 H16 M8 15 H13" stroke="#8a6a48" stroke-width="1.3" stroke-linecap="round"/><path d="M14.6 16.4 l1.2 1.3 l2.4 -2.8" stroke="#5fb35a" stroke-width="1.6" fill="none" stroke-linecap="round"/>`),
+  world: svg(`<defs><radialGradient id="tw" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#9fd8f2"/><stop offset=".6" stop-color="#3f8fb0"/><stop offset="1" stop-color="#245f7c"/></radialGradient></defs>${shade(12, 21.8, 7)}
+    <circle cx="12" cy="11.5" r="9" fill="url(#tw)"/><path d="M6.5 8 C8.5 6.5 10.5 8.5 9.5 10.5 C8.5 12.5 6 11.5 6.5 8Z M13 13 C15.5 11.5 18.5 13 17.5 15.5 C16.5 17.5 13.5 17 13 13Z M13.5 5 C15 4.5 16.5 5.5 16 7 C15 7.5 13.5 6.5 13.5 5Z" fill="#8cc061"/>
+    <path d="M7 6 C8.5 4.5 10.5 3.8 12.5 3.8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".7"/>`),
+});
 export const goodPrice = (h, k) => Math.round(GOODS[k].base*(h.free ? FREEPORT.goods : TRADE.makes[h.is.name] === k ? TRADE.made : TRADE.wants[h.is.name] === k ? TRADE.wanted : 1));
 export const canBuyGood = (h, k) => !GOODS[k].rare || !!h.free;
 export const goodSell = (h, k) => Math.round(goodPrice(h, k)*TRADE.sellK);
@@ -366,6 +396,7 @@ function plansCard(){ const list = planClues(); if (!list.length) return '';
 function bagJobs(){
   const S = G.S, g = goal(), tr = S.treasure;
   return (g ? card(g.chapter ? `Chapter one · goal ${(S.goal || 0) + 1 - STARTER_GOALS} of ${GOALS.length - STARTER_GOALS}` : `First voyage · goal ${(S.goal || 0) + 1} of ${STARTER_GOALS}`, `<div class="job"><span class="jic">${IC.star}</span><div><b>${g.text}</b>${g.n > 1 ? bar((S.goalN || 0)/g.n) : ''}<small>${g.n > 1 ? `${S.goalN || 0} of ${g.n} · ` : ''}reward</small></div><span class="reward">${chip(IC.coin, '+' + g.gold)}</span></div>`) : '')
+    + (S.lastDone && Date.now() - S.lastDone.t < 600000 ? card('Just done', `<div class="job ready"><span class="jic">${IC.check || '✓'}</span><div><b>${S.lastDone.text}</b></div><span class="reward">${chip(IC.coin, '+' + S.lastDone.gold)}</span></div>`, 'hi') : '')
     + plansCard()
     + card(`Your jobs · ${active().length} of ${REQUESTS.max}`, myJobs() + (active().some(r => r.to) ? '<p class="note">The islands they send you to have a dashed red ring on the chart.</p>' : ''))
     + (S.war ? card('War contract', `<div class="job"><span class="jic">${IC.swords}</span><div><b>${warText(S.war)}</b><small>For ${CITIES[S.war.city].name} · ${Math.min(S.war.got, S.war.n)} of ${S.war.n}</small>${bar(S.war.got/S.war.n)}</div><span class="reward">${chip(IC.coin, '+' + S.war.gold)}</span></div>`) : '')

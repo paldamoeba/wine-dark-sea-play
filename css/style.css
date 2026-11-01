@@ -781,3 +781,13 @@ body.big .abilities{zoom:1.5}
 .mission .reward em{color:#9a5a12;font-weight:800}
 .ab.row{--c:#3f8fb0;--c2:#2c6b86}
 .mapbtn{top:calc(18px + env(safe-area-inset-top,0px))!important;right:18px!important}body.big .mapbtn{top:calc(22px + env(safe-area-inset-top,0px))!important;right:21px!important}
+/* P59: the blessing icon is a button (tap to learn what it is); it pulses while a whale is up */
+#blessChip{pointer-events:auto;cursor:pointer}
+#blessChip.call{animation:blessCall 1.2s ease-in-out infinite}
+@keyframes blessCall{50%{transform:scale(1.25)}}
+/* a goal or job done: the Quests button shows a green check mark for a moment */
+#goalPill.done::after{content:'✓';position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#5fb35a;color:#fff;font:900 14px/22px var(--body);text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.3);animation:donePop .4s ease-out}
+@keyframes donePop{from{transform:scale(0)}70%{transform:scale(1.3)}}
+/* P59: card titles in the same round font as "Your bag": no capitals, no letter spacing */
+.sheet.menu .card h3{font-family:var(--body)!important;font-weight:800;font-size:16px;letter-spacing:0;text-transform:none;color:var(--cz-ink)!important}
+.sheet.menu .card h3::after{opacity:.25}

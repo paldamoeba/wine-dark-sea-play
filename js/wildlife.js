@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=e273bb2';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=e273bb2';
-import {G, save} from './state.js?v=e273bb2';
-import {scene} from './scene.js?v=e273bb2';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=e273bb2';
-import {toast} from './ui.js?v=e273bb2';
-import {combatState} from './combat.js?v=e273bb2';
-import {sfx} from './audio.js?v=e273bb2';
+import {WILDLIFE} from './config.js?v=260b261';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=260b261';
+import {G, save} from './state.js?v=260b261';
+import {scene} from './scene.js?v=260b261';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=260b261';
+import {toast} from './ui.js?v=260b261';
+import {combatState} from './combat.js?v=260b261';
+import {sfx} from './audio.js?v=260b261';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -14,6 +14,7 @@ const openSea = (x, y, gap) => x > 200 && y > 200 && x < WORLD - 200 && y < WORL
 
 // ---- the whale ----
 // state: 'gone' (waiting), 'rise' (coming up), 'swim' (at the surface, spouting), 'dive' (tail up, going down)
+export const WHALE = {up:false};
 const W = {obj:whaleModel(), state:'gone', wait:rand(WILDLIFE.whaleFirst), x:0, y:0, a:0, t:0, blessed:false, puff:0};
 W.obj.visible = false; scene.add(W.obj);
 function spawnWhale(){
@@ -22,7 +23,7 @@ function spawnWhale(){
     const a = S.a + (Math.random() - .5)*2.2, d = 300 + Math.random()*140, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
     if (!openSea(x, y, 650)) continue; // whales keep well away from land
     Object.assign(W, {state:'rise', x, y, a:Math.random()*6.28, t:0, blessed:false, puff:1});
-    W.obj.visible = true; toast('A whale!', 3.5); sfx('whale', W);
+    W.obj.visible = true; sfx('whale', W); // no message: the blessing icon lights up in the corner (ui.js)
     return true;
   }
   return false;
@@ -35,7 +36,7 @@ function updateWhale(dt){
     if (W.wait <= 0 && !(spawnWhale())) W.wait = 10;
     return;
   }
-  W.t += dt;
+  W.t += dt; WHALE.up = W.state !== 'gone' && W.state !== 'dive' && !W.blessed;
   const ud = W.obj.userData, swim = W.state === 'swim' ? 28 : W.state === 'dive' ? 34 : 12;
   // swim slowly, turning gently, keeping away from land
   W.a += Math.sin(G.t*.13)*.08*dt;
@@ -61,7 +62,6 @@ function updateWhale(dt){
   // the blessing
   if (!W.blessed && W.state !== 'dive' && Math.hypot(S.x - W.x, S.y - W.y) < WILDLIFE.whaleNear){
     W.blessed = true; S.bless = WILDLIFE.blessSeconds; save(); sfx('blessing');
-    toast(`Poseidon's blessing!`, 4.5);
   }
 }
 // Builder tool / test: make the whale come up now.

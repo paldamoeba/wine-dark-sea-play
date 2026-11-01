@@ -1,23 +1,24 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=e273bb2';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=e273bb2';
-import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=e273bb2';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=e273bb2';
-import {swapBoat, refreshAllTrees} from './entities.js?v=e273bb2';
-import {setZoom} from './input.js?v=e273bb2';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=e273bb2';
-import {tutHTML} from './tutorial.js?v=e273bb2';
-import {founded, blessing} from './crew.js?v=e273bb2';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=e273bb2';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=e273bb2';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=e273bb2';
-import {effectText, buy} from './upgrades.js?v=e273bb2';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=e273bb2';
-import {GOODS, WAR} from './config.js?v=e273bb2';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=e273bb2';
-import {W, KINDS} from './weather.js?v=e273bb2';
-import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=e273bb2';
-import {setTimeOfDay} from './daynight.js?v=e273bb2';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=260b261';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=260b261';
+import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=260b261';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=260b261';
+import {swapBoat, refreshAllTrees} from './entities.js?v=260b261';
+import {setZoom} from './input.js?v=260b261';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=260b261';
+import {tutHTML} from './tutorial.js?v=260b261';
+import {founded, blessing} from './crew.js?v=260b261';
+import {WHALE} from './wildlife.js?v=260b261';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=260b261';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=260b261';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=260b261';
+import {effectText, buy} from './upgrades.js?v=260b261';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=260b261';
+import {GOODS, WAR} from './config.js?v=260b261';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=260b261';
+import {W, KINDS} from './weather.js?v=260b261';
+import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=260b261';
+import {setTimeOfDay} from './daynight.js?v=260b261';
 
 const $ = id => document.getElementById(id);
 
@@ -49,12 +50,14 @@ export function updateUI(dt, nearDock){
   $('harborBtn').hidden = G.sheetOpen || !moored;
   $('hint').hidden = !G.S.hint || G.sheetOpen;
   document.body.classList.toggle('sheeton', !!G.sheetOpen); // menus cover the whole screen: the HUD and little map step aside
-  const pill = pillText(); $('goalDot').hidden = !pill || G.sheetOpen; // the quest button stays; a little dot shows when there's a goal or job
+  G.doneT = Math.max(0, (G.doneT || 0) - dt); $('goalPill').classList.toggle('done', G.doneT > 0); // a check mark for a moment after a goal or job is done
+  const pill = pillText(); $('goalDot').hidden = !pill || G.sheetOpen || G.doneT > 0; // the quest button stays; a little dot shows when there's a goal or job
   if (pill && $('goalText').textContent !== pill){ $('goalText').textContent = pill; $('goalLbl').textContent = goal() ? 'Goal' : 'Job'; $('goalPill').title = $('goalLbl').textContent + ': ' + pill; }
   // at night a clear sky shows the moon instead of the sun
   const wk = KINDS[W.kind], moon = (G.night || 0) > .5 && (W.kind === 'fair' || W.kind === 'calm'), wkey = W.kind + (moon ? '-n' : '');
   if ($('wxChip').dataset.k !== wkey){ $('wxChip').dataset.k = wkey; $('wxName').textContent = moon ? (W.kind === 'calm' ? 'Calm night' : 'Clear night') : wk.label; $('wxIcon').innerHTML = (moon ? WX_IC.night : WX_IC[W.kind]) || wk.icon; $('wxChip').className = 'hi wx ' + W.kind; }
-  const bl = G.S.bless || 0; $('blessChip').hidden = !bl;
+  const bl = G.S.bless || 0, wh = WHALE.up && !bl; $('blessChip').hidden = !bl && !wh; $('blessChip').classList.toggle('call', wh);
+  if (wh) $('blessT').textContent = '';
   if (bl) $('blessT').textContent = `${Math.floor(bl/60)}:${String(Math.floor(bl % 60)).padStart(2, '0')}`;
   if (toastT > 0){ toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
   placeNearBoat();
@@ -70,7 +73,7 @@ export function updateUI(dt, nearDock){
 // What the ship carries: one short bar for each kind, stacked under the hull bar. Bronze and goods show once you have some.
 const LOAD_IC = {fish:() => IC.fish(), wood:() => IC.wood, bronze:() => IC.bronze, goods:() => GOOD_IC('wine')};
 function drawLoads(){
-  const S = G.S, rows = LOADS.filter(k => k === 'fish' || k === 'wood' || used(k) > 0 || (k === 'bronze' && SHIPS[S.tier].rank >= 2));
+  const S = G.S, rows = LOADS; // P59: every kind, always
   $('loads').innerHTML = rows.map(k => { const u = used(k), c = capOf(k), p = Math.min(100, u/c*100);
     return `<div class="ld ${u >= c ? 'full' : ''}" title="${k}"><i class="ic">${LOAD_IC[k]()}</i><span class="bar"><i style="width:${p}%"></i></span><b>${u}/${c}</b></div>`; }).join('');
 }
@@ -181,7 +184,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 58</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 59</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -312,6 +315,8 @@ $('dockBtn').addEventListener('click', () => {
 $('harborBtn').addEventListener('click', openPort);
 // P49: hired sailors became each ship's own crew; say so once to players who had some
 setTimeout(() => { const S = G.S; if (S && S.crewRefund){ toast(`Sailors paid back: +${30*S.crewRefund}`, 7); delete S.crewRefund; save(); } }, 4000);
+// tapping the blessing icon explains it
+$('blessChip').addEventListener('click', () => toast(G.S.bless ? "Poseidon's blessing: faster sailing and quicker work" : 'A whale! Sail close for Poseidon\'s blessing', 3));
 // docking: wood and bronze aboard go to the warehouse first, so the shipyard can use them
 document.addEventListener('docked', () => { const [w, b] = unload(); if (w || b){ toast(`Unloaded ${[w && w + ' wood', b && b + ' bronze'].filter(Boolean).join(', ')}`, 2.6); save(); } openPort(); });
 $('goalPill').addEventListener('click', () => { if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });
