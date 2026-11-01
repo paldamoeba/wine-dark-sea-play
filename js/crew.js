@@ -1,10 +1,10 @@
 // Your crew. Each ship has its own crew (P49): it comes with a few men (SHIPS men[0]) and the Crew upgrade at the shipyard
 // fills its benches up to men[1]. You see every one of them aboard: rowers on the oars, archers, a helmsman.
 // Once you own a second ship you can also name your crew and fly a god's flag (each god gives a blessing).
-import {GOD_BLESSINGS, SHIPS} from './config.js?v=1ea44ec';
-import {G} from './state.js?v=1ea44ec';
-import {SPECS, crewLayout} from './ships.js?v=1ea44ec';
-import {crewPer} from './upgrades.js?v=1ea44ec';
+import {GOD_BLESSINGS, SHIPS} from './config.js?v=b8d289e';
+import {G} from './state.js?v=b8d289e';
+import {SPECS, crewLayout} from './ships.js?v=b8d289e';
+import {crewPer} from './upgrades.js?v=b8d289e';
 
 export const founded = () => !!G.S.crewName;
 // The current god's blessing, or {} before the crew is founded or with no flag.

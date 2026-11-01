@@ -1,17 +1,17 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=1ea44ec';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=1ea44ec';
-import {G, ship, lvl} from './state.js?v=1ea44ec';
-import {men} from './crew.js?v=1ea44ec';
-import {scene} from './scene.js?v=1ea44ec';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=1ea44ec';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=1ea44ec';
-import {addTown, figure} from './town.js?v=1ea44ec';
-import {makeFire, updateFire, burn} from './fire.js?v=1ea44ec';
-import {addGrass} from './grass.js?v=1ea44ec';
-import {sinkPose} from './sinking.js?v=1ea44ec';
-import {moored} from './fleet.js?v=1ea44ec';
-import {placeOnWaves} from './combat.js?v=1ea44ec';
+import {SHIPS} from './config.js?v=b8d289e';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=b8d289e';
+import {G, ship, lvl} from './state.js?v=b8d289e';
+import {men} from './crew.js?v=b8d289e';
+import {scene} from './scene.js?v=b8d289e';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=b8d289e';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=b8d289e';
+import {addTown, figure} from './town.js?v=b8d289e';
+import {makeFire, updateFire, burn} from './fire.js?v=b8d289e';
+import {addGrass} from './grass.js?v=b8d289e';
+import {sinkPose} from './sinking.js?v=b8d289e';
+import {moored} from './fleet.js?v=b8d289e';
+import {placeOnWaves} from './combat.js?v=b8d289e';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----

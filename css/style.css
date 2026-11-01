@@ -756,3 +756,7 @@ body.big .raid.capture{zoom:1.5}
 .ab.turn span{font-size:0}.ab.turn span::after{content:'Side-on';font-size:10px}
 body.big .abilities{zoom:1.5}
 .ab.cata{--c:#b8462e;--c2:#8a3220}
+/* P54: the placeholder video for speeding up the shipwrights */
+.videobox{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(20,16,12,.72)}
+.videobox div{background:var(--cz-solid);border-radius:18px;padding:22px 26px;text-align:center;box-shadow:var(--cz-shadow);max-width:280px;display:flex;flex-direction:column;gap:6px;color:var(--cz-ink)}
+.videobox small{color:var(--cz-muted)}.videobox em{font:800 34px/1 var(--body);font-style:normal;color:var(--cz-teal)}

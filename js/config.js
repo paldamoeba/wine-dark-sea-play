@@ -72,15 +72,15 @@ export const GOALS = [
   {t:'salvage', n:10, gold:8, text:'Salvage 10 wood from a wreck'},
   {t:'catch', kind:'tuna', n:1, gold:8, text:'Catch a tuna in bubbling water'},
   {t:'board', n:1, gold:6, text:'Take a job from the request board in a harbor'},
-  {t:'camp', kind:'Ikaria', n:1, gold:20, text:'Burn the bandit camp on Ikaria and win the fishing boat\'s plans'},
-  {t:'build', n:1, gold:25, text:'Build the fishing boat at Kallisto (150 wood, 10 linen, 60 drachmae)'},
+  {t:'piece', kind:1, n:1, gold:20, text:'Burn the bandit camp on Ikaria to win the fishing boat\'s plans'},
+  {t:'build', n:1, gold:25, text:'At the Kallisto shipyard, study the plans and build the fishing boat (150 wood, 10 linen, 60 drachmae)'},
   // chapter one: from fishing boat to the pirate king (about an hour)
-  {t:'camp', kind:'Tinos', n:1, gold:60, text:'Burn the bandit camp on Tinos and win the bireme\'s plans', chapter:true},
-  {t:'build', kind:'bireme', n:1, gold:100, text:'Build the bireme at Kallisto, your first warship', chapter:true},
+  {t:'piece', kind:2, n:2, gold:60, text:'Win the 2 pieces of the bireme\'s plans: burn the bandit camps on Tinos and Syros', chapter:true},
+  {t:'build', kind:'bireme', n:1, gold:100, text:'Study the plans and build the bireme at Kallisto, your first warship', chapter:true},
   {t:'sink', kind:'galley', n:3, gold:150, text:'Sink 3 raider galleys out in the Open Sea', chapter:true},
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
-  {t:'fort', n:1, gold:300, text:'Knock down a pirate fortress on Thasos or Kos and win the trireme\'s plans', chapter:true},
-  {t:'build', kind:'trireme', n:1, gold:200, text:'Build the trireme, the greatest warship of the Aegean', chapter:true},
+  {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp, a pirate fortress (Thasos or Kos) and any city fortress', chapter:true},
+  {t:'build', kind:'trireme', n:1, gold:200, text:'Study the plans and build the trireme, the greatest warship of the Aegean', chapter:true},
   {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, off Kos', chapter:true},
 ];
 export const STARTER_GOALS = 8; // the first eight goals teach the basics; past the rowboat they are skipped
@@ -147,10 +147,14 @@ export const CAPTAIN = {cost:60, grow:2.5, // 60, 150, 380, 940...
 export const CAMPS = [
   {isle:'Ikaria',  hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[50, 70],   wood:30,  bronze:2,  plans:1},
   {isle:'Tinos',   hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[110, 150], wood:70,  bronze:8,  plans:2},
-  {isle:'Syros',   hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
-  {isle:'Ios',     hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
+  {isle:'Syros',   plans:2, hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
+  {isle:'Ios',     plans:3, hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
 ];
-export const PIRATE_PLANS = 3; // a pirate fortress gives the trireme's blueprint
+export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme's plans (so does any city fortress you knock down)
+// P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
+// then build the ship. Both take real time (seconds, running even while the game is closed); a video makes it faster.
+export const PLANS = {1:{pieces:1, study:180, build:120}, 2:{pieces:2, study:900, build:600}, 3:{pieces:3, study:1800, build:1200}};
+export const VIDEO_SKIP = 600; // each video takes 10 minutes off studying or building (a placeholder until real ads)
 // Athens and Sparta keep their fortresses and navies this far from Kallisto: the start is neutral (P49).
 export const NEUTRAL_R = 8000; // P52: the fortresses stand far out
 export const FORTS = {pirates:['Thasos', 'Kos'], // every city island except the capitals has a fortress too

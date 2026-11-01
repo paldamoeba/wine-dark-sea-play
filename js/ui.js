@@ -1,22 +1,23 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=1ea44ec';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=1ea44ec';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=1ea44ec';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=1ea44ec';
-import {swapBoat, refreshAllTrees} from './entities.js?v=1ea44ec';
-import {setZoom} from './input.js?v=1ea44ec';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=1ea44ec';
-import {tutHTML} from './tutorial.js?v=1ea44ec';
-import {founded, blessing} from './crew.js?v=1ea44ec';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=1ea44ec';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=1ea44ec';
-import {effectText, buy} from './upgrades.js?v=1ea44ec';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=1ea44ec';
-import {GOODS, WAR} from './config.js?v=1ea44ec';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=1ea44ec';
-import {W, KINDS} from './weather.js?v=1ea44ec';
-import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=1ea44ec';
-import {setTimeOfDay} from './daynight.js?v=1ea44ec';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=b8d289e';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=b8d289e';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=b8d289e';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=b8d289e';
+import {swapBoat, refreshAllTrees} from './entities.js?v=b8d289e';
+import {setZoom} from './input.js?v=b8d289e';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=b8d289e';
+import {tutHTML} from './tutorial.js?v=b8d289e';
+import {founded, blessing} from './crew.js?v=b8d289e';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=b8d289e';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=b8d289e';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=b8d289e';
+import {effectText, buy} from './upgrades.js?v=b8d289e';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=b8d289e';
+import {GOODS, WAR} from './config.js?v=b8d289e';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=b8d289e';
+import {W, KINDS} from './weather.js?v=b8d289e';
+import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=b8d289e';
+import {setTimeOfDay} from './daynight.js?v=b8d289e';
 
 const $ = id => document.getElementById(id);
 
@@ -57,6 +58,12 @@ export function updateUI(dt, nearDock){
   if (bl) $('blessT').textContent = `${Math.floor(bl/60)}:${String(Math.floor(bl % 60)).padStart(2, '0')}`;
   if (toastT > 0){ toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
   placeNearBoat();
+  // the shipyard's clocks: live countdowns in the menu, and news when a study or a build is done
+  for (const el of document.querySelectorAll('[data-until]')) el.textContent = mmss(Math.max(0, +el.dataset.until - Date.now()/1000));
+  for (const d of checkYard()){ const n = SHIPS[d.t]; sfx('fanfare');
+    if (d.what === 'study') toast(`The ${n.name.toLowerCase()}'s plans are studied! Build it at the Kallisto shipyard.`, 4.5);
+    else { progress('build', n.model); document.dispatchEvent(new Event('fleetmoved')); toast(`Your ${n.name.toLowerCase()} is finished! It's moored at Kallisto. Sail it from the shipyard.`, 5); }
+    if (G.sheetOpen) render(); }
   if (zoneT > 0){ zoneT -= dt; if (zoneT <= 0) $('zone').style.opacity = 0; }
 }
 
@@ -68,6 +75,11 @@ function drawLoads(){
     return `<div class="ld ${u >= c ? 'full' : ''}" title="${k}"><i class="ic">${LOAD_IC[k]()}</i><span class="bar"><i style="width:${p}%"></i></span><b>${u}/${c}</b></div>`; }).join('');
 }
 
+// A video to make studying or building faster. For now a 5-second placeholder; real ads come in when we choose an ad company.
+function playVideo(done){
+  const v = document.createElement('div'); v.className = 'videobox'; v.innerHTML = '<div><b>A short video would play here</b><small>Ads come later. This one takes 10 minutes off.</small><em>5</em></div>'; document.body.appendChild(v);
+  let n = 5; const iv = setInterval(() => { n--; v.querySelector('em').textContent = n; if (n <= 0){ clearInterval(iv); v.remove(); done(); toast('10 minutes faster!', 2); } }, 1000);
+}
 // Tablets: everything on screen is drawn half as big again (body.big in the CSS, G.uik for the minimap and placed buttons).
 // ?big=1 or ?big=0 forces it for testing.
 export function sizeUI(){
@@ -86,7 +98,7 @@ function placeNearBoat(){
   const z = G.uik || 1;
   if (!toastEl.hidden){ toastEl.classList.add('near'); toastEl.style.left = x/z + 'px'; toastEl.style.top = Math.max(busy ? 150 : 200, by - (busy ? 235 : 118)*z)/z + 'px'; }
   const below = Math.min(view.H - 150*z, by + 62*z);
-  for (const id of ['dockbar', 'raidBtn', 'captureBtn', 'councilBtn', 'arenaBtn']){ const el = id === 'dockbar' ? document.querySelector('.dockbar') : $(id); if (!el) continue;
+  for (const id of ['dockbar', 'raidBtn', 'councilBtn', 'arenaBtn']){ const el = id === 'dockbar' ? document.querySelector('.dockbar') : $(id); if (!el) continue;
     el.classList.add('near'); el.style.left = x/z + 'px'; el.style.top = (below + (id === 'councilBtn' || id === 'arenaBtn' ? 54*z : 0))/z + 'px'; }
 }
 // ---- sheets (harbor, settings) ----
@@ -167,7 +179,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 53</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 54</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -231,7 +243,9 @@ sheetEl.addEventListener('click', e => {
     if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; sfx('coins'); toast(`Sold ${S.cargo[k]} ${GOODS[k].label.toLowerCase()} for ${g} drachmae`, 2.4); S.cargo[k] = 0; progress('trade'); } }
   if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]); S.gold += g; if (g) sfx('coins'); for (const k in FISH) S.cargo[k] = 0; toast(`Sold the catch for ${g} drachmae`); progress('sell'); }
   if (a === 'repair'){ const cost = Math.min(Math.ceil((sh.hull - S.hull)/TUNING.repairPerGold), S.gold); S.gold -= cost; S.hull = Math.min(sh.hull, S.hull + cost*TUNING.repairPerGold); if (cost) sfx('hammer'); }
-  if (a === 'build'){ const t = +b.dataset.t, n = SHIPS[t]; if ((S.plans || [0]).includes(t) && pay(n.cost)){ launch(t); progress('build', n.model); swapBoat(); sfx('fanfare'); toast(`Your ${n.name} is ready${lvl('ram') || lvl('arrows') ? '. Your ram and arrowheads came along' : ''}`, 3); } }
+  if (a === 'build'){ const t = +b.dataset.t; if (startBuild(t)){ sfx('hammer'); toast(`The shipwrights start on your ${SHIPS[t].name.toLowerCase()}`, 3); } }
+  if (a === 'study'){ const t = +b.dataset.t; if (startStudy(t)){ sfx('buy'); toast(`The shipwrights start studying the ${SHIPS[t].name.toLowerCase()}'s plans`, 3); } }
+  if (a === 'video'){ const k = b.dataset.k; playVideo(() => { watchedVideo(k); render(); }); }
   if (a === 'captain'){ const n = hireCaptain(+b.dataset.t); if (n){ toast(`${n} takes your ${SHIPS[+b.dataset.t].name.toLowerCase()} out fishing`, 3); document.dispatchEvent(new Event('fleetmoved')); } }
   if (a === 'collect'){ sfx('coins'); toast(`+${S.purse} drachmae from your captains`, 2.5); S.gold += S.purse; S.purse = 0; }
   if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(`You go aboard your ${SHIPS[t].name.toLowerCase()}`, 2.4); } }

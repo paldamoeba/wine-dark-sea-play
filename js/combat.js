@@ -1,20 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN} from './config.js?v=1ea44ec';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=1ea44ec';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank} from './state.js?v=1ea44ec';
-import {scene, screenToSea} from './scene.js?v=1ea44ec';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=1ea44ec';
-import {makeFire, updateFire, burn} from './fire.js?v=1ea44ec';
-import {blessing, fighters} from './crew.js?v=1ea44ec';
-import {progress, goal} from './quests.js?v=1ea44ec';
-import {arrowK, ramDmg} from './upgrades.js?v=1ea44ec';
-import {toast} from './ui.js?v=1ea44ec';
-import {sink} from './player.js?v=1ea44ec';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=1ea44ec';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=1ea44ec';
-import {sfx} from './audio.js?v=1ea44ec';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=b8d289e';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=b8d289e';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank} from './state.js?v=b8d289e';
+import {scene, screenToSea} from './scene.js?v=b8d289e';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=b8d289e';
+import {makeFire, updateFire, burn} from './fire.js?v=b8d289e';
+import {blessing, fighters} from './crew.js?v=b8d289e';
+import {progress, goal} from './quests.js?v=b8d289e';
+import {arrowK, ramDmg} from './upgrades.js?v=b8d289e';
+import {toast} from './ui.js?v=b8d289e';
+import {sink} from './player.js?v=b8d289e';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=b8d289e';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=b8d289e';
+import {sfx} from './audio.js?v=b8d289e';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -492,16 +492,24 @@ function land(a){
 }
 
 // Ship plans (blueprints): you need them before the shipyard can build that ship.
-function givePlans(t){ const S = G.S; if ((S.plans || []).includes(t)) return; S.plans = [...(S.plans || [0]), t];
-  setTimeout(() => { toast(`You found the plans for the ${SHIPS[t].name.toLowerCase()}! Now the Kallisto shipyard can build it.`, 5); sfx('fanfare'); }, 2500); save(); }
+// Ship plans come in pieces (P54): each camp or fortress gives its piece once (S.pieceFrom). With every piece, take them to the
+// Kallisto shipyard to be studied (menus.js / shipyard.js). Pieces for plans you already hold are skipped.
+function givePiece(t, from){
+  const S = G.S, need = PLANS[t].pieces, have = (S.pieces || {})[t] || 0;
+  if ((S.plans || []).includes(t) || (S.owned || []).includes(t) || have >= need || (S.pieceFrom || []).includes(from)) return;
+  S.pieces = {...(S.pieces || {}), [t]:have + 1}; S.pieceFrom = [...(S.pieceFrom || []), from]; progress('piece', t);
+  const done = have + 1 >= need, name = SHIPS[t].name.toLowerCase();
+  setTimeout(() => { toast(done ? `You have all the plans for the ${name}! Take them to the Kallisto shipyard to be studied.` : `A piece of the ${name}'s plans: ${have + 1} of ${need}.`, 5); sfx('fanfare'); }, 2500); save();
+}
 
 // ---- loot ----
 const LOOT = [];
 function sinkEnemy(e, byPlayer){
   if (e.ally){ allyHome(e); return; }
   if (byPlayer) progress('sink', e.kind);
-  if (byPlayer && e.fort && e.owner === 'pirate'){ progress('fort'); givePlans(PIRATE_PLANS); }
-  if (e.camp){ const S = G.S; S.camps = [...new Set([...(S.camps || []), e.isle.name])]; if (byPlayer) progress('camp', e.isle.name); if (e.camp.plans) givePlans(e.camp.plans); }
+  if (byPlayer && e.fort && e.owner === 'pirate'){ progress('fort'); givePiece(PIRATE_PLANS, 'fort:' + e.isle.name); }
+  if (byPlayer && e.fort && e.city) givePiece(3, 'fort:' + e.isle.name); // any city fortress you knock down: a piece of the trireme's plans
+  if (e.camp){ const S = G.S; S.camps = [...new Set([...(S.camps || []), e.isle.name])]; if (byPlayer) progress('camp', e.isle.name); if (e.camp.plans) givePiece(e.camp.plans, 'camp:' + e.isle.name); }
   if (e.boss) bossDown(e);
   const w = G.S.war; // a war contract from a fortress
   if (byPlayer && w && w.got < w.n && e.city === w.foe && (w.t === 'fort' ? e.fort : side(e) === 'navy')){ w.got++;
@@ -743,25 +751,7 @@ function updateAbilities(dt){
 }
 
 document.addEventListener('volley', volley); // a tap with a second finger, or a double tap on your own ship (input.js)
-// ---- capturing bandit ships (P49) ----
-// Beat a raider ship down below a quarter of its hull and come close: its crew gives up. Capture it and a prize crew sails it
-// home to Kallisto, where it joins your fleet (one of each kind). The pirate king's flagship can't be taken.
-const PRIZE_SHIP = {dinghy:4, skiff:5, galley:6};
-let prize = null;
-function prizeNear(){
-  if (G.dock || G.sinking) return null;
-  return enemies.find(e => !e.dead && !e.fort && !e.boss && !e.arena && side(e) === 'pirate' && PRIZE_SHIP[e.kind] != null && e.hull < e.spec.hull*.25 && dist(e, G.S) < 260) || null;
-}
-$('captureBtn').addEventListener('click', () => {
-  const e = prize; if (!e || e.dead) return;
-  const S = G.S, t = PRIZE_SHIP[e.kind];
-  e.dead = true; e.respawn = e.mother && campDone(e.isle) ? 1e9 : COMBAT.respawn; e.sinkT = 99; e.obj.visible = false; e.burnT = 0; sfx('horn'); progress('sink', e.kind);
-  if ((S.owned || []).includes(t)){ const g = Math.round(e.spec.gold[1]*1.5); S.gold += g; gain('coin', g); toast(`You already have a ${SHIPS[t].name.toLowerCase()}. Its crew pays ${g} drachmae to be let go.`, 4); save(); return; }
-  S.owned = [...new Set([...(S.owned || [S.tier]), t])].sort(); S.hulls = {...(S.hulls || {}), [t]:Math.round(SHIPS[t].hull*.5)};
-  S.looks = {...(S.looks || {}), [t]:{paint:'raider', sail:'blood'}};
-  setTimeout(() => sfx('fanfare'), 400);
-  toast(`Captured! A prize crew sails the ${SHIPS[t].name.toLowerCase()} home to Kallisto. Switch to it at the shipyard.`, 5); save();
-});
+// (P54: capturing ships was removed. New ships only come from plans studied and built at Kallisto; ships captured before stay yours.)
 
 // Raid: attack the nearest merchant or navy ship on purpose. Your crew opens fire, and any navy ship watching will come for you.
 $('raidBtn').addEventListener('click', () => {
@@ -830,8 +820,6 @@ export function updateCombat(dt){
   const cf = nearCouncil(), cb = $('councilBtn'); if (!G.sheetOpen) G.council = cf; cb.hidden = !cf || !!combatState.target;
   if (cf) cb.textContent = `${adj(cf.city)} war council`;
   const prey = combatState.prey, raid = $('raidBtn');
-  raid.hidden = !prey || !!prize;
-  const pz = prize = prizeNear(), pb = $('captureBtn'); pb.hidden = !pz || G.sheetOpen;
-  if (pz){ pb.textContent = `Capture the ${pz.spec.name.toLowerCase()}`; if (!G.S.captureTip){ G.S.captureTip = true; toast('Its crew is ready to give up! Tap Capture to take the ship for your fleet.', 4.5); } }
+  raid.hidden = !prey;
   if (prey) raid.textContent = side(prey) === 'fort' ? `Attack the ${adj(prey.city)} fort` : side(prey) === 'navy' ? `Attack the ${adj(prey.city)} ship` : `Raid the ${prey.city ? adj(prey.city) + ' ' : ''}merchant`;
 }

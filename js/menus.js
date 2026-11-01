@@ -1,14 +1,15 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS} from './config.js?v=1ea44ec';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=1ea44ec';
-import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=1ea44ec';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=1ea44ec';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=1ea44ec';
-import {board, active, canDeliver, goal} from './quests.js?v=1ea44ec';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=1ea44ec';
-import {shipPortrait} from './portrait.js?v=1ea44ec';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=1ea44ec';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS} from './config.js?v=b8d289e';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=b8d289e';
+import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=b8d289e';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=b8d289e';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=b8d289e';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=b8d289e';
+import {board, active, canDeliver, goal} from './quests.js?v=b8d289e';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=b8d289e';
+import {shipPortrait} from './portrait.js?v=b8d289e';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=b8d289e';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -209,8 +210,20 @@ function repairCard(){
 function dockTab(){ return repairCard() + (founded() && (G.S.crew || []).length ? card('Your sailors', sailorRows(false)) : ''); }
 
 // ---- the shipyard: your fleet, repairs, upgrades, paint ----
+// P54: what the shipwrights can do for a ship you don't have yet: collect its plan pieces, study them, build it.
+// Times count down live (ui.js fills any [data-until] with the time left). A video takes 10 minutes off.
+const video = kind => `<button class="btn ghostdark small" data-act="video" data-k="${kind}">${IC.play || '▶'} Watch a video: 10 min faster</button>`;
+function yardAct(t, sh){
+  const S = G.S, P = PLANS[t], n = piecesOf(t);
+  if (S.build && S.build.t === t) return `<span class="tag on">Building · <b data-until="${S.build.until}">${mmss(timeLeft(S.build))}</b> left</span>${video('build')}`;
+  if (S.study && S.study.t === t) return `<span class="tag on">Studying the plans · <b data-until="${S.study.until}">${mmss(timeLeft(S.study))}</b> left</span>${video('study')}`;
+  if (studied(t)){ const ok = canPay(sh.cost) && !S.build;
+    return `<div class="cost">${costChips(sh.cost)}</div><button class="btn gold" data-act="build" data-t="${t}" ${ok ? '' : 'disabled'}>Build (${span(P.build)})</button>${S.build ? '<small>The slipway is busy with another ship.</small>' : ''}`; }
+  if (allPieces(t)) return `<button class="btn gold" data-act="study" data-t="${t}" ${S.study ? 'disabled' : ''}>Study the plans (${span(P.study)})</button>${S.study ? '<small>The shipwrights are studying other plans.</small>' : ''}`;
+  return `<span class="tag">Plans: ${n} of ${P.pieces} piece${P.pieces > 1 ? 's' : ''}</span><small>${PLANS_FROM[t] || 'Win them in battle'}</small>`;
+}
 // where each ship's plans come from (the camps in config CAMPS, and the pirate fortresses)
-const PLANS_FROM = {...Object.fromEntries(CAMPS.filter(c => c.plans).map(c => [c.plans, `Burn the bandit camp on ${c.isle} to win them`])), [PIRATE_PLANS]:'Knock down a pirate fortress on Thasos or Kos to win them'};
+const PLANS_FROM = {1:'From the bandit camp on Ikaria', 2:'From the bandit camps on Tinos and Syros', 3:'From the Ios bandit camp, a pirate fortress (Thasos or Kos) and any city fortress'};
 function yardTab(){
   const S = G.S, own = owned();
   const fleet = SHIPS.map((sh, t) => {
@@ -223,8 +236,7 @@ function yardTab(){
         : `<button class="btn ghostdark" data-act="captain" data-t="${t}" ${G.S.gold >= captainCost() ? '' : 'disabled'}>Hire a captain ${chip(IC.coin, captainCost())}</button><small>They fish with it and bring back about ${tripPay(t)} drachmae every few minutes. Each captain costs more than the last.</small>`;
       act = `${cap}<button class="btn" data-act="switch" data-t="${t}" ${why ? 'disabled' : ''}>${c && c.out ? 'At sea' : 'Sail this'}</button>`; }
     else if (sh.locked) act = '<span class="tag">Coming later</span>';
-    else if (!(S.plans || [0]).includes(t)) act = `<span class="tag">Needs plans</span><small>${PLANS_FROM[t] || 'Win them in battle'}</small>`;
-    else { const ok = canPay(sh.cost); act = `<div class="cost">${costChips(sh.cost)}</div><button class="btn gold" data-act="build" data-t="${t}" ${ok ? '' : 'disabled'}>Build</button>`; }
+    else act = yardAct(t, sh);
     return `<div class="fship ${on ? 'on' : ''} ${!mine && sh.locked ? 'dim' : ''}">${shipImg(sh.model, lk)}<b>${sh.name}</b><small>${sh.desc || 'Your first boat.'}</small>
       <div class="stats">${IC.hull}${sh.hull}${IC.speed}${sh.speed}${IC.hold}${sh.hold}${IC.crew}${sh.men[0]}/${sh.men[1]}</div>${act}</div>`;
   }).join('');

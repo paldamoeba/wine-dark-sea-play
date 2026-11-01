@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board', 'camp', 'fort'.
-import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS} from './config.js?v=1ea44ec';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=1ea44ec';
-import {G, save, ship, lvl, rank, gain, putAboard} from './state.js?v=1ea44ec';
-import {scene} from './scene.js?v=1ea44ec';
-import {mesh} from './models.js?v=1ea44ec';
-import {toast} from './ui.js?v=1ea44ec';
-import {sfx} from './audio.js?v=1ea44ec';
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS, PLANS} from './config.js?v=b8d289e';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=b8d289e';
+import {G, save, ship, lvl, rank, gain, putAboard} from './state.js?v=b8d289e';
+import {scene} from './scene.js?v=b8d289e';
+import {mesh} from './models.js?v=b8d289e';
+import {toast} from './ui.js?v=b8d289e';
+import {sfx} from './audio.js?v=b8d289e';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -14,12 +14,14 @@ const pick = (R, a) => a[Math.floor(R()*a.length)];
 
 // ---- first voyages: one goal at a time ----
 // a camp goal is met once that camp is burnt, or once you already hold the plans it would give
+// a plans goal is met once you have every piece (or the plans are studied, or the ship is already yours)
+const planHeld = (S, t) => (S.plans || []).includes(t) || (S.owned || []).includes(t) || ((S.pieces || {})[t] || 0) >= PLANS[t].pieces;
 const campMet = (S, isle) => { const c = CAMPS.find(c => c.isle === isle); return (S.camps || []).includes(isle) || !!(c && c.plans && (S.plans || []).includes(c.plans)); };
 export function goal(){
   const S = G.S;
   if (rank() >= 1 && (S.goal || 0) < STARTER_GOALS) S.goal = STARTER_GOALS; // past the rowboat already: no starter goals
   // a ship you already own counts as built, an upgrade you already have as bought
-  for (let g = GOALS[S.goal || 0]; g && ((g.t === 'build' && g.kind && (S.owned || [...Array(S.tier + 1).keys()]).some(t => SHIPS[t].model === g.kind)) || (g.t === 'upgrade' && lvl(g.kind) > 0) || (g.t === 'camp' && campMet(S, g.kind))); g = GOALS[S.goal]){ S.goal = (S.goal || 0) + 1; S.goalN = 0; }
+  for (let g = GOALS[S.goal || 0]; g && ((g.t === 'build' && g.kind && (S.owned || [...Array(S.tier + 1).keys()]).some(t => SHIPS[t].model === g.kind)) || (g.t === 'upgrade' && lvl(g.kind) > 0) || (g.t === 'camp' && campMet(S, g.kind)) || (g.t === 'piece' && planHeld(S, g.kind))); g = GOALS[S.goal]){ S.goal = (S.goal || 0) + 1; S.goalN = 0; }
   return GOALS[S.goal || 0] || null;
 }
 function goalStep(type, kind, n){
