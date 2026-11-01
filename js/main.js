@@ -1,33 +1,33 @@
 // Starts the game and runs the frame loop.
-import {AUTO_QUALITY} from './config.js?v=fe97fed';
-import {zoneAt} from './world.js?v=fe97fed';
-import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=fe97fed';
+import {AUTO_QUALITY} from './config.js?v=f22acb2';
+import {zoneAt} from './world.js?v=f22acb2';
+import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=f22acb2';
 
 load();
 loadSettings();
 
 // These modules build the scene and wire up the UI as they load, so they come after the save is in.
-const {updateClouds} = await import('./clouds.js?v=fe97fed');
-const {updateWakes} = await import('./wakes.js?v=fe97fed');
-const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame} = await import('./scene.js?v=fe97fed');
-const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=fe97fed');
-const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=fe97fed');
-const {updatePlayer} = await import('./player.js?v=fe97fed');
-const {updateCombat} = await import('./combat.js?v=fe97fed');
-const {updateFish} = await import('./fishing.js?v=fe97fed');
-const {updateTowns} = await import('./town.js?v=fe97fed');
-const {updateWildlife} = await import('./wildlife.js?v=fe97fed');
-const {updateQuests} = await import('./quests.js?v=fe97fed');
-const {updateFleet} = await import('./fleet.js?v=fe97fed');
-const {updateArena} = await import('./arena.js?v=fe97fed');
-const {updateWeather: weatherTick, W} = await import('./weather.js?v=fe97fed');
-const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=fe97fed');
-await import('./map.js?v=fe97fed');
-const {updateSounds} = await import('./sounds.js?v=fe97fed');
-const {initNight} = await import('./daynight.js?v=fe97fed');
-const {updateSmoke} = await import('./smoke.js?v=fe97fed');
-const {updateGrass} = await import('./grass.js?v=fe97fed');
-const {updateFortWatch} = await import('./fortwatch.js?v=fe97fed');
+const {updateClouds} = await import('./clouds.js?v=f22acb2');
+const {updateWakes} = await import('./wakes.js?v=f22acb2');
+const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame} = await import('./scene.js?v=f22acb2');
+const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=f22acb2');
+const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=f22acb2');
+const {updatePlayer} = await import('./player.js?v=f22acb2');
+const {updateCombat} = await import('./combat.js?v=f22acb2');
+const {updateFish} = await import('./fishing.js?v=f22acb2');
+const {updateTowns} = await import('./town.js?v=f22acb2');
+const {updateWildlife} = await import('./wildlife.js?v=f22acb2');
+const {updateQuests} = await import('./quests.js?v=f22acb2');
+const {updateFleet} = await import('./fleet.js?v=f22acb2');
+const {updateArena} = await import('./arena.js?v=f22acb2');
+const {updateWeather: weatherTick, W} = await import('./weather.js?v=f22acb2');
+const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=f22acb2');
+await import('./map.js?v=f22acb2');
+const {updateSounds} = await import('./sounds.js?v=f22acb2');
+const {initNight} = await import('./daynight.js?v=f22acb2');
+const {updateSmoke} = await import('./smoke.js?v=f22acb2');
+const {updateGrass} = await import('./grass.js?v=f22acb2');
+const {updateFortWatch} = await import('./fortwatch.js?v=f22acb2');
 
 const startQuality = G.settings.quality === 'auto' ? (G.settings.detected || 'high') : G.settings.quality;
 applyQuality(startQuality);

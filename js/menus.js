@@ -1,16 +1,16 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS} from './config.js?v=fe97fed';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=fe97fed';
-import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=fe97fed';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=fe97fed';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=fe97fed';
-import {planClues} from './combat.js?v=fe97fed';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=fe97fed';
-import {board, active, canDeliver, goal} from './quests.js?v=fe97fed';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=fe97fed';
-import {shipPortrait} from './portrait.js?v=fe97fed';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=fe97fed';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE} from './config.js?v=f22acb2';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=f22acb2';
+import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=f22acb2';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=f22acb2';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=f22acb2';
+import {planClues} from './combat.js?v=f22acb2';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=f22acb2';
+import {board, active, canDeliver, goal} from './quests.js?v=f22acb2';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=f22acb2';
+import {shipPortrait} from './portrait.js?v=f22acb2';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=f22acb2';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -140,8 +140,11 @@ Object.assign(IC, {
   // upgrades
   hull: svg(`<defs>${glossy('uh', [[0, '#d39257'], [1, '#7e4f2b']])}</defs>${shade(12, 21.4, 9)}<path d="M2.5 9 H21.5 C21 15.5 17.5 19.5 12 19.5 C6.5 19.5 3 15.5 2.5 9Z" fill="url(#uh)"/>
     <path d="M3.4 12 H20.6 M4.6 15 H19.4" stroke="#5e3a1c" stroke-width=".8" opacity=".55"/><path d="M5 10.4 H19" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".5"/><rect x="2" y="7.6" width="20" height="2" rx="1" fill="#e3ad48"/>`),
-  rower: svg(`<defs>${glossy('uo', [[0, '#e0b07a'], [1, '#8a5a30']])}</defs>${shade(12, 21.6, 8)}<path d="M4 4 L17.5 17.5" stroke="url(#uo)" stroke-width="2.6" stroke-linecap="round"/><path d="M15.4 15.4 l4.8 1.6 l1.4 3.4 l-3.4 -1.4 z" fill="url(#uo)"/>
-    <path d="M20 4 L6.5 17.5" stroke="url(#uo)" stroke-width="2.6" stroke-linecap="round"/><path d="M8.6 15.4 l-4.8 1.6 l-1.4 3.4 l3.4 -1.4 z" fill="url(#uo)"/><path d="M5 5 L9 9" stroke="#fff" stroke-width=".9" stroke-linecap="round" opacity=".6"/>`),
+  // two crossed oars: long round shafts with wide flat blades and grips
+  rower: svg(`<defs>${glossy('uo', [[0, '#e6b984'], [1, '#8a5a30']])}${glossy('uob', [[0, '#d49a5e'], [1, '#7e4f2b']])}</defs>${shade(12, 22, 9)}
+    ${[1, -1].map(sg => `<g transform="translate(12 12) scale(${sg} 1) translate(-12 -12)"><path d="M4.2 3.4 L15.6 14.8" stroke="url(#uo)" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M14.2 13.2 C16.6 13 19.8 15.8 20.6 18.8 C20.9 20 20 20.9 18.8 20.6 C15.8 19.8 13 16.6 13.2 14.2Z" fill="url(#uob)"/><path d="M15.2 15.4 C16.8 16 18.4 17.6 19.2 19.2" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".55" fill="none"/>
+    <circle cx="4" cy="3.2" r="1.4" fill="#6a4223"/></g>`).join('')}`),
   sail: svg(`<defs>${glossy('us', [[0, '#ffffff'], [1, '#d9cfb8']])}</defs>${shade(12, 21.6, 8)}<path d="M12 2.5 V20" stroke="#8a5a30" stroke-width="1.8"/><path d="M5.5 4.5 H18.5" stroke="#8a5a30" stroke-width="1.6" stroke-linecap="round"/>
     <path d="M6 5.2 H18 C19 9.5 18.6 13.5 17 17 H7 C5.4 13.5 5 9.5 6 5.2Z" fill="url(#us)"/><path d="M7.4 7.6 C7 10 7.2 12.4 7.8 14.4" stroke="#fff" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M12 8 V15" stroke="#c64a3c" stroke-width="2.2" opacity=".85"/>`),
   helm: svg(`<defs><radialGradient id="uw" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#e0b07a"/><stop offset="1" stop-color="#7e4f2b"/></radialGradient></defs>${shade(12, 21.8, 7)}
@@ -150,7 +153,10 @@ Object.assign(IC, {
   seats: svg(`<defs>${glossy('uc', [[0, '#7fb6dd'], [1, '#3f6c94']])}${glossy('uc2', [[0, '#f08a6a'], [1, '#b8402f']])}</defs>${shade(12, 21.6, 9)}
     <path d="M2.5 21 C2.5 15 5 13.5 7.5 13.5 C10 13.5 12.5 15 12.5 21Z" fill="url(#uc2)"/><circle cx="7.5" cy="9.5" r="3.5" fill="#f2c9a2"/><path d="M4 8.8 C4.4 5.4 10.6 5.4 11 8.8 C9 7.4 6 7.4 4 8.8Z" fill="#5a3a22"/>
     <path d="M11.5 21 C11.5 14 14.5 12 17 12 C19.5 12 22 14 22 21Z" fill="url(#uc)"/><circle cx="17" cy="8" r="3.8" fill="#f2c9a2"/><path d="M13.2 7.2 C13.6 3.6 20.4 3.6 20.8 7.2 C18.6 5.8 15.4 5.8 13.2 7.2Z" fill="#3a2614"/>`),
-  arrows: svg(`<defs>${glossy('ua', [[0, '#e0b07a'], [1, '#8a5a30']])}</defs>${shade(12, 21.6, 8)}${[[-3, 0], [0, -1], [3, 0]].map(([dx, dy]) => `<path d="M${6 + dx} ${20 + dy} L${17 + dx} ${5 + dy}" stroke="url(#ua)" stroke-width="1.8" stroke-linecap="round"/><path d="M${17 + dx} ${5 + dy} l-3.2 .6 l1.2 2.6 z" fill="#c0c8d2"/><path d="M${6 + dx} ${20 + dy} l-1.6 -.4 l1 -2.2 l1.8 1.2 z" fill="#c64a3c"/>`).join('')}`),
+  // one arrow: a wooden shaft, a bronze head, red feathers
+  arrows: svg(`<defs>${glossy('ua', [[0, '#e6b984'], [1, '#8a5a30']])}${glossy('uah', [[0, '#f6d29a'], [1, '#b07a35']])}</defs>${shade(12, 22, 8)}
+    <path d="M4.5 19.5 L17 7" stroke="url(#ua)" stroke-width="2" stroke-linecap="round"/><path d="M15.4 4.6 L21 3 L19.4 8.6 Z" fill="url(#uah)"/>
+    <path d="M4.5 19.5 l-2.6 -.4 l2 -3.2 l2.6 1.2 z M4.5 19.5 l.4 2.6 l3.2 -2 l-1.2 -2.6 z" fill="#d9483c"/><path d="M6 17.2 L15 8.2" stroke="#fff" stroke-width=".7" stroke-linecap="round" opacity=".55"/>`),
   ram: c => svg(`<defs>${glossy('ur' + c.slice(1), [[0, '#fff2cc'], [.4, c], [1, '#4a2e17']])}</defs>${shade(12, 21.4, 9)}<path d="M2.5 9 H13 L22 13 L13 17 H2.5Z" fill="url(#ur${c.slice(1)})"/>
     <path d="M13 9 L22 13 L13 17" stroke="#4a2e17" stroke-width=".7" fill="none" opacity=".5"/><path d="M4 10.8 H13" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".7"/><rect x="6" y="8" width="2" height="10" rx="1" fill="#4a2e17" opacity=".5"/>`),
   flame: svg(`<defs>${glossy('uf', [[0, '#ffe08a'], [.5, '#f59a3a'], [1, '#d9482c']])}</defs>${shade(12, 22, 6)}<path d="M12 2 C13.4 7 19 9 18.6 14.6 C18.2 19 15.2 21.5 12 21.5 C8.6 21.5 5.6 19 5.6 15 C5.6 11 8.8 9.4 9.4 5.6 C11.2 7.6 11.4 9.8 11.4 11 C12.8 8.8 12.4 5 12 2Z" fill="url(#uf)"/>
@@ -341,8 +347,15 @@ function yardTab(){
   }).join('');
   const purse = S.purse ? card("Captains' purse", `<div class="line">${IC.coin}<div><b>${S.purse} drachmae</b><small>What your captains brought back from their trips.</small></div><button class="btn gold" data-act="collect">Collect</button></div>`, 'hi') : '';
   // repairs first, then upgrades for the ship you sail, then your fleet
-  return repairCard() + upgradesCard() + purse + card('Your fleet', `<div class="fleet">${fleet}</div><p class="note">Every ship you build stays yours, moored here with its own upgrades. Switch any time you're in Kallisto.</p>`)
+  return repairCard() + warehouseCard() + upgradesCard() + purse + card('Your fleet', `<div class="fleet">${fleet}</div><p class="note">Every ship you build stays yours, moored here with its own upgrades. Switch any time you're in Kallisto.</p>`)
     + looksCard();
+}
+// P61: the Kallisto warehouse: how full it is, and its next level
+function warehouseCard(){
+  const S = G.S, lv = S.wareLv || 0, nx = WAREHOUSE[lv + 1], cap = WAREHOUSE[lv].cap;
+  const row = (k, ic) => { const n = have(k), c = cap[k]; return `<div class="wrow"><span class="uic">${ic}</span><span class="pbar ${n >= c ? 'full' : ''}"><i style="width:${Math.min(100, n/c*100)}%"></i></span><b>${n}/${c}</b></div>`; };
+  return card(`Warehouse · level ${lv + 1}`, `${row('wood', IC.wood)}${row('bronze', IC.bronze)}${row('linen', IC.linen)}
+    ${nx ? `<div class="btnrow"><div class="cost">${costChips(nx.cost)}</div><button class="btn gold" data-act="wareup" ${canPay(nx.cost) ? '' : 'disabled'}>Bigger warehouse</button></div>` : ''}`);
 }
 // The upgrade stage: your ship in the middle, upgrade slots around it (tap one to see it), its details below.
 export const sel = {up:'hull'};
@@ -417,7 +430,7 @@ function holdTab(){
       <p class="note">Sell fish at any harbor.</p>`)
     + card('Aboard', `<div class="tiles">${tile(IC.wood, 'Wood', wu)}${tile(IC.bronze, 'Bronze', bu)}${tile(IC.linen, 'Linen', lu)}</div><p class="note">Each kind has its own space. Dock at any harbor and it's shipped to the Kallisto warehouse.</p>`)
     + card(`Trade goods · ${gu} of ${gc}`, `${bar(gu/gc)}<div class="tiles">${Object.entries(GOODS).map(([k, g]) => tile(GOOD_IC(k), g.label, S.cargo[k] || 0, S.cargo[k] ? k : null)).join('')}</div>`)
-    + card('Warehouse at Kallisto', `<div class="tiles">${tile(IC.wood, 'Wood', S.ware)}${tile(IC.bronze, 'Bronze', S.bronze || 0)}${tile(IC.linen, 'Linen', S.linen || 0)}</div><p class="note">Linen you buy goes straight here.</p>`);
+    + card(`Warehouse at Kallisto · level ${(S.wareLv || 0) + 1}`, `<div class="tiles">${tile(IC.wood, 'Wood', `${S.ware}/${wareCap('wood')}`)}${tile(IC.bronze, 'Bronze', `${S.bronze || 0}/${wareCap('bronze')}`)}${tile(IC.linen, 'Linen', `${S.linen || 0}/${wareCap('linen')}`)}</div>`);
 }
 function shipTab(){
   const S = G.S, sh = ship(), bl = S.bless || 0;

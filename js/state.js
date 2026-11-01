@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS} from './config.js?v=fe97fed';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=fe97fed';
-import {sfx} from './audio.js?v=fe97fed';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE} from './config.js?v=f22acb2';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=f22acb2';
+import {sfx} from './audio.js?v=f22acb2';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -55,7 +55,10 @@ const HAVE = {wood:'ware', bronze:'bronze', linen:'linen', gold:'gold'};
 export const have = k => G.S[HAVE[k]] || 0;
 export const canPay = c => !!c && Object.keys(HAVE).every(k => have(k) >= (c[k] || 0));
 export function pay(c){ if (!canPay(c)) return false; for (const k in HAVE) G.S[HAVE[k]] = have(k) - (c[k] || 0); return true; }
-export function addMat(k, n){ G.S[HAVE[k]] = have(k) + n; }
+// The warehouse's room for wood, bronze and linen (gold has no limit)
+export const wareCap = k => k === 'gold' ? Infinity : (WAREHOUSE[G.S.wareLv || 0] || WAREHOUSE[0]).cap[k];
+export const wareRoom = k => Math.max(0, wareCap(k) - have(k));
+export function addMat(k, n){ G.S[HAVE[k]] = Math.min(have(k) + n, Math.max(have(k), wareCap(k))); }
 // What the ship carries. Each kind has its own limit: fish (the hold), wood, bronze and trade goods (SHIPS[t].cap).
 export const LOADS = ['fish', 'wood', 'bronze', 'linen', 'goods'];
 export const loadOf = k => FISH[k] ? 'fish' : GOODS[k] ? 'goods' : k;
@@ -66,7 +69,8 @@ export const holdUsed = () => used('fish');
 // Put n of something aboard, as much as fits. Returns how many went aboard.
 export function putAboard(k, n = 1){ const m = Math.min(n, room(loadOf(k))); G.S.cargo[k] = (G.S.cargo[k] || 0) + m; return m; }
 // At any harbor the wood and bronze aboard go to the warehouse (it's shipped home to Kallisto).
-export function unload(){ const S = G.S, w = S.cargo.wood || 0, b = S.cargo.bronze || 0, l = S.cargo.linen || 0; S.ware = (S.ware || 0) + w; S.bronze = (S.bronze || 0) + b; S.linen = (S.linen || 0) + l; S.cargo.wood = S.cargo.bronze = S.cargo.linen = 0; return [w, b, l]; }
+export function unload(){ const S = G.S, m = k => { const n = Math.min(S.cargo[k] || 0, wareRoom(k)); S.cargo[k] = (S.cargo[k] || 0) - n; addMat(k, n); return n; }; // what doesn't fit stays aboard
+  return [m('wood'), m('bronze'), m('linen')]; }
 
 export function newSave(){
   return {version:SAVE_VERSION, econ:2, tier:0, gold:0, ware:0, bronze:0, linen:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, bronze:0, linen:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},

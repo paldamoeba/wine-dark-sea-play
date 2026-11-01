@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=fe97fed';
-import {SPECS} from './ships.js?v=fe97fed';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=fe97fed';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=fe97fed';
-import {W} from './weather.js?v=fe97fed';
-import {steering} from './input.js?v=fe97fed';
-import {toast, showZone} from './ui.js?v=fe97fed';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=fe97fed';
-import {startFish, stopFish} from './fishing.js?v=fe97fed';
-import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=fe97fed';
-import {progress} from './quests.js?v=fe97fed';
-import {startSink} from './sinking.js?v=fe97fed';
-import {sfx} from './audio.js?v=fe97fed';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=f22acb2';
+import {SPECS} from './ships.js?v=f22acb2';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=f22acb2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=f22acb2';
+import {W} from './weather.js?v=f22acb2';
+import {steering} from './input.js?v=f22acb2';
+import {toast, showZone} from './ui.js?v=f22acb2';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=f22acb2';
+import {startFish, stopFish} from './fishing.js?v=f22acb2';
+import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=f22acb2';
+import {progress} from './quests.js?v=f22acb2';
+import {startSink} from './sinking.js?v=f22acb2';
+import {sfx} from './audio.js?v=f22acb2';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -42,17 +42,28 @@ export function rowNow(){ if (!hasSail() || G.rowT > 0 || G.rowCd > 0 || G.dock 
   G.rowT = ROW.secs; G.rowCd = ROW.cd; sfx('horn'); if (!G.S.rowTip){ G.S.rowTip = true; toast('Row! Ram at full speed', 4.5); } return true; }
 addEventListener('keydown', e => { if (e.key === 'Shift' && !G.sheetOpen && !G.mapOpen) rowNow(); });
 function move(dt, sh){
+  // P61: hold the joystick out past its rim (thumb pushed all the way) for half a second to Row!
+  if (G.joy && G.joy.raw > 1.3) { if ((G.rimT = (G.rimT || 0) + dt) > .5 && !(G.rowT > 0)){ rowNow(); G.rimT = 0; } } else G.rimT = 0;
   G.rowT = Math.max(0, (G.rowT || 0) - dt); G.rowCd = Math.max(0, (G.rowCd || 0) - dt);
   G.rowing = !hasSail() || G.rowT > 0; // oars in the water (for the oars' look and the sound)
   const S = G.S, [ix, iy] = steering(S), mag = Math.hypot(ix, iy);
   let target = 0, turn = 0; const heavy = sh.heavy || 2;
+  const boost = () => G.settings.dev.speed * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost() * (G.rowT > 0 ? rowBurst() : 1);
   if (!G.sheetOpen && mag > .06){
     const want = Math.atan2(iy, ix), diff = ((want - S.a + Math.PI*3) % (Math.PI*2)) - Math.PI;
-    turn = Math.max(-1, Math.min(1, diff*1.4)) * sh.turn;
-    // a sharp turn slows the boat down; it picks up speed again once it points the right way
-    const ahead = Math.max(0, Math.cos(diff));
-    target = sh.speed * G.settings.dev.speed * mag * (.25 + .75*ahead*ahead) * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost() * (G.rowT > 0 ? rowBurst() : 1);
+    if (Math.abs(diff) > 2.5 && G.joy){ G.cruise = false; target = 0; } // P61: pulling the stick back behind the ship brakes (the sail is let go)
+    else {
+      turn = Math.max(-1, Math.min(1, diff*1.4)) * sh.turn;
+      // a sharp turn slows the boat down; it picks up speed again once it points the right way
+      const ahead = Math.max(0, Math.cos(diff));
+      target = sh.speed * mag * (.25 + .75*ahead*ahead) * boost();
+      if (hasSail() && G.joy && ahead > .5 && mag > .3) G.cruise = true;
+    }
+  } else if (G.cruise && hasSail() && !G.sheetOpen && !G.dock){
+    // P61: let go and a ship under sail keeps going straight at cruising speed: your thumb is free for Row! or a power
+    target = sh.speed * .8 * boost();
   }
+  if (G.dock || G.sinking) G.cruise = false;
   // weight: a heavy ship takes a while to swing round and to get going, and glides on a long way when you stop rowing
   G.turnRate = (G.turnRate || 0) + (turn - (G.turnRate || 0)) * Math.min(1, dt*3.2/Math.sqrt(heavy)); S.a += G.turnRate * dt;
   G.v += (target - G.v) * Math.min(1, dt*(target > G.v ? 1.6/heavy : 1.2/Math.sqrt(heavy)));

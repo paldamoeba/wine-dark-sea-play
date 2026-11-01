@@ -804,3 +804,6 @@ body.big .abilities{zoom:1.5}
 .mission .done{color:#5fb35a;font:900 14px/1 var(--body);font-style:normal}
 .mission .mscroll{font-size:14px;line-height:1}
 .caution{width:auto!important;padding:8px 16px 8px 10px!important;gap:8px!important}.caution .cic{width:26px!important;height:26px!important;font-size:16px!important}.caution p b{margin:0!important}
+/* P61: warehouse rows */
+.wrow{display:flex;align-items:center;gap:8px;margin:5px 0}.wrow .uic svg{width:24px;height:24px}.wrow .pbar{flex:1;height:8px;border-radius:4px;background:var(--cz-track);overflow:hidden;display:block}
+.wrow .pbar i{display:block;height:100%;background:var(--cz-teal);border-radius:4px}.wrow .pbar.full i{background:var(--cz-coral)}.wrow b{min-width:64px;text-align:right;font-variant-numeric:tabular-nums}

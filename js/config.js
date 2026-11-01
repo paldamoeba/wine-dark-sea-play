@@ -95,7 +95,7 @@ export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'flag
 // P51: shower, chain and catapult are aimed: drag the button onto the sea (range = how far from your ship, r = how wide it lands,
 // flight = seconds in the air, so you aim where the ship is going to be). A tap fires at where the target is right now.
 export const ABILITIES = {fire:{secs:8, cd:28},
-  shower:{cd:16, range:420, r:70, flight:1.7},
+  shower:{cd:16, range:420, r:42, flight:1.7}, // P61: a tighter rain, so most arrows land on a ship-sized spot
   chain:{cd:22, secs:l => 4 + .6*l, slow:.25, range:380, r:45, flight:1.3},
   catapult:{cd:20, range:540, r:60, flight:2.4, dmg:l => 26 + 6*l}};
 export const FIRE_ARROWS = {burnSeconds:2.5, dps:l => l ? .6 + .18*l : 0}; // P49: weaker, so fire no longer sinks ships at once
@@ -128,6 +128,14 @@ export const UPGRADES = {
   catapult:{label:'Catapult',      minTier:2, cost:{bronze:8, gold:70}, desc:'A catapult on deck that throws a ball of fire high into the air. Drag the Catapult button to where the enemy will be'},
   chain:  {label:'Chain shot',      minTier:1, cost:{bronze:3, gold:30}, desc:'Iron balls joined by a chain. Tap Chains in a fight to tear down a ship\'s sail: it can barely move for a while'},
 };
+// P61: the Kallisto warehouse holds only so much; upgrade it at the shipyard. Level 1 is enough for the fishing boat,
+// level 2 for the bireme, level 3 for the trireme. What doesn't fit stays aboard your ship.
+export const WAREHOUSE = [
+  {cap:{wood:200, bronze:40, linen:30}},
+  {cap:{wood:400, bronze:80, linen:50},   cost:{wood:120, gold:100}},
+  {cap:{wood:700, bronze:140, linen:80},  cost:{wood:300, linen:20, gold:300}},
+  {cap:{wood:1100, bronze:220, linen:120}, cost:{wood:600, bronze:60, gold:700}},
+];
 export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry
 export const SHIP_K = [.6, 1, 2, 3];
 // The ram: wood levels 1-10, then bronze 1-10, then gold 1-10 (30 in all). The bronze levels are paid in bronze (pay), the gold ones in more drachmae. Damage when your bow hits a ship head-on at speed.

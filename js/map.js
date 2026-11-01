@@ -1,10 +1,10 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=fe97fed';
-import {ARENA} from './arena.js?v=fe97fed';
-import {enemies, planReward} from './combat.js?v=fe97fed';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=fe97fed';
-import {G, ship, isExplored, reveal, save} from './state.js?v=fe97fed';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=f22acb2';
+import {ARENA} from './arena.js?v=f22acb2';
+import {enemies, planReward} from './combat.js?v=f22acb2';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=f22acb2';
+import {G, ship, isExplored, reveal, save} from './state.js?v=f22acb2';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');

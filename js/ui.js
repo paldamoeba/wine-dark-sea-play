@@ -1,24 +1,24 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=fe97fed';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=fe97fed';
-import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=fe97fed';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=fe97fed';
-import {swapBoat, refreshAllTrees} from './entities.js?v=fe97fed';
-import {setZoom} from './input.js?v=fe97fed';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=fe97fed';
-import {tutHTML} from './tutorial.js?v=fe97fed';
-import {founded, blessing} from './crew.js?v=fe97fed';
-import {WHALE} from './wildlife.js?v=fe97fed';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=fe97fed';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=fe97fed';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=fe97fed';
-import {effectText, buy} from './upgrades.js?v=fe97fed';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=fe97fed';
-import {GOODS, WAR} from './config.js?v=fe97fed';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=fe97fed';
-import {W, KINDS} from './weather.js?v=fe97fed';
-import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=fe97fed';
-import {setTimeOfDay} from './daynight.js?v=fe97fed';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=f22acb2';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=f22acb2';
+import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom} from './state.js?v=f22acb2';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=f22acb2';
+import {swapBoat, refreshAllTrees} from './entities.js?v=f22acb2';
+import {setZoom} from './input.js?v=f22acb2';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=f22acb2';
+import {tutHTML} from './tutorial.js?v=f22acb2';
+import {founded, blessing} from './crew.js?v=f22acb2';
+import {WHALE} from './wildlife.js?v=f22acb2';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=f22acb2';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=f22acb2';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=f22acb2';
+import {effectText, buy} from './upgrades.js?v=f22acb2';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=f22acb2';
+import {GOODS, WAR} from './config.js?v=f22acb2';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=f22acb2';
+import {W, KINDS} from './weather.js?v=f22acb2';
+import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=f22acb2';
+import {setTimeOfDay} from './daynight.js?v=f22acb2';
 
 const $ = id => document.getElementById(id);
 
@@ -184,7 +184,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 60</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 61</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -242,7 +242,8 @@ sheetEl.addEventListener('click', e => {
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
   if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); progress('upgrade', k); if (k === 'ram' || k === 'hull' || k === 'sail' || k === 'seats') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   if (a === 'buymat'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k, n = +b.dataset.n, p = matPrice(h, k), cost = n/matStep(k)*p;
-    if (p !== null && S.gold >= cost){ sfx('buy'); S.gold -= cost; addMat(k, n); toast(`Bought ${n} ${k} for the warehouse`, 2); } }
+    if (p !== null && S.gold >= cost && wareRoom(k) >= n){ sfx('buy'); S.gold -= cost; addMat(k, n); } else if (wareRoom(k) < n) toast('Warehouse full', 1.6); }
+  if (a === 'wareup'){ const nx = WAREHOUSE[(S.wareLv || 0) + 1]; if (nx && pay(nx.cost)){ S.wareLv = (S.wareLv || 0) + 1; sfx('hammer'); save(); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k;
     if (a === 'buygood' && room('goods') && S.gold >= goodPrice(h, k) && canBuyGood(h, k)){ S.gold -= goodPrice(h, k); S.cargo[k] = (S.cargo[k] || 0) + 1; sfx('buy'); }
     if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; sfx('coins'); toast(`+${g}`, 2.4); S.cargo[k] = 0; progress('trade'); } }

@@ -1,21 +1,21 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=fe97fed';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=fe97fed';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored} from './state.js?v=fe97fed';
-import {scene, screenToSea, setLair} from './scene.js?v=fe97fed';
-import {wreckModel} from './models.js?v=fe97fed';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=fe97fed';
-import {makeFire, updateFire, burn} from './fire.js?v=fe97fed';
-import {blessing, fighters, hasSail} from './crew.js?v=fe97fed';
-import {progress, goal} from './quests.js?v=fe97fed';
-import {arrowK, ramDmg} from './upgrades.js?v=fe97fed';
-import {toast} from './ui.js?v=fe97fed';
-import {sink, rowNow, ROW} from './player.js?v=fe97fed';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=fe97fed';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=fe97fed';
-import {sfx} from './audio.js?v=fe97fed';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=f22acb2';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=f22acb2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored} from './state.js?v=f22acb2';
+import {scene, screenToSea, setLair} from './scene.js?v=f22acb2';
+import {wreckModel} from './models.js?v=f22acb2';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=f22acb2';
+import {makeFire, updateFire, burn} from './fire.js?v=f22acb2';
+import {blessing, fighters, hasSail} from './crew.js?v=f22acb2';
+import {progress, goal} from './quests.js?v=f22acb2';
+import {arrowK, ramDmg} from './upgrades.js?v=f22acb2';
+import {toast} from './ui.js?v=f22acb2';
+import {sink, rowNow, ROW} from './player.js?v=f22acb2';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=f22acb2';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=f22acb2';
+import {sfx} from './audio.js?v=f22acb2';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -736,9 +736,15 @@ function updateLobs(dt){
   }
 }
 // the hostile ships (and forts) a shot landing at (x, y) with radius r hits
-const struck = (x, y, r) => enemies.filter(e => !e.dead && hostile(e) && Math.hypot(e.x - x, e.y - y) < r + (e.fort ? 110 : e.spec.beam*.6));
+// P61: a ship is long and thin, so test against its whole length (a capsule along its heading), not a small circle at its middle
+function hitShip(e, x, y, r){ if (e.fort) return Math.hypot(e.x - x, e.y - y) < r + 110;
+  const ca = Math.cos(e.a), sa = Math.sin(e.a), dx = x - e.x, dy = y - e.y, along = Math.max(-e.spec.len/2, Math.min(e.spec.len/2, dx*ca + dy*sa));
+  return Math.hypot(dx - ca*along, dy - sa*along) < r + e.spec.beam*.6; }
+const struck = (x, y, r) => enemies.filter(e => !e.dead && hostile(e) && hitShip(e, x, y, r));
 // where a tap (no drag) aims: the target as it is now
-const tapAim = () => combatState.target ? {x:combatState.target.x, y:combatState.target.y} : null;
+// P61: a tap leads the target: it aims where the ship will be when the shot lands (a drag is your own aim)
+const tapAim = (flight = 1.7) => { const e = combatState.target; if (!e) return null; const v = e.v || 0, tt = flight*.9;
+  return {x:e.x + Math.cos(e.a)*v*tt + (e.shx || 0)*.3, y:e.y + Math.sin(e.a)*v*tt + (e.shy || 0)*.3}; };
 function clampAim(p, range){ const S = G.S, d = Math.hypot(p.x - S.x, p.y - S.y); return d <= range ? p : {x:S.x + (p.x - S.x)/d*range, y:S.y + (p.y - S.y)/d*range}; }
 export const abilityInfo = k => ABILITIES[k];
 // Arrow shower: every archer shoots high; the arrows rain down over the circle.
@@ -748,11 +754,11 @@ function shower(at){
   const n = fighters()*COMBAT.volleyArrows, dmg = COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(), fire = fireT > 0;
   for (let i=0;i<n;i++){ const a = Math.random()*6.28, r = Math.sqrt(Math.random())*A.r;
     setTimeout(() => lob('arrow', p.x + Math.cos(a)*r, p.y + Math.sin(a)*r, A.flight*(.92 + Math.random()*.16), 230, (x, y) => {
-      const hit = struck(x, y, 14); if (!hit.length){ splash(x, y); sfx('plop', {x, y}); return; }
+      const hit = struck(x, y, 10); if (!hit.length){ splash(x, y); sfx('plop', {x, y}); return; }
       for (const e of hit){ e.hull -= dmg; e.hitT = .25; if (fire) e.burnT = FIRE_ARROWS.burnSeconds; spark(e.x, e.y); sfx('thud', e); if (side(e) !== 'pirate' && !e.bandit) crime(e); else startFight(e); if (e.hull <= 0) sinkEnemy(e, true); } }), i*45); }
   G.kick = Math.min(.25, (G.kick || 0) + .1); G.shake = Math.min(1, (G.shake || 0) + .4); sfx('volley'); return true;
 }
-function volley(){ shower(tapAim()); } // a tap with a second finger or the old shortcut: at the target as it is now
+function volley(){ shower(tapAim(ABILITIES.shower.flight)); } // a tap with a second finger or the old shortcut: at the target as it is now
 // Chain shot: two iron balls on a chain; a ship where they land loses its sail.
 function chainAt(at){
   if (!lvl('chain') || chainCd > 0 || G.sinking || !at) return false; const A = ABILITIES.chain, p = clampAim(at, A.range);
@@ -783,7 +789,7 @@ document.querySelectorAll('.ab[data-ab]').forEach(btn => {
   btn.addEventListener('pointerup', end); btn.addEventListener('pointercancel', end);
 });
 export function useAbility(kind, at){
-  at = at || tapAim();
+  at = at || tapAim((ABILITIES[kind] || {}).flight);
   if (kind === 'shower') return shower(at);
   if (kind === 'chain') return chainAt(at);
   if (kind === 'catapult') return catapultAt(at);

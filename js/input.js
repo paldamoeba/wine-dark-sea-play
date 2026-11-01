@@ -1,10 +1,10 @@
 // Touch, mouse and keyboard. Double tap = sail there (a single tap only marks the spot). Press and drag = joystick.
 // Volley: while one thumb steers, a quick tap with another finger anywhere; or a double tap on your own ship.
 // Two fingers moving apart or together: zoom in and out a little.
-import {G, ship, saveSettings} from './state.js?v=fe97fed';
-import {landDist} from './world.js?v=fe97fed';
-import {canvas, screenToSea} from './scene.js?v=fe97fed';
-import {hideHint, toast} from './ui.js?v=fe97fed';
+import {G, ship, saveSettings} from './state.js?v=f22acb2';
+import {landDist} from './world.js?v=f22acb2';
+import {canvas, screenToSea} from './scene.js?v=f22acb2';
+import {hideHint, toast} from './ui.js?v=f22acb2';
 
 export const JOY_RADIUS = 58;
 const keys = new Set();
@@ -43,7 +43,7 @@ canvas.addEventListener('pointermove', e => {
   if (!ptr || e.pointerId !== ptr.id) return;
   const dx = e.clientX - ptr.sx, dy = e.clientY - ptr.sy, d = Math.hypot(dx, dy);
   if (!ptr.moved && d > 12){ ptr.moved = true; G.dest = null; }
-  if (ptr.moved){ const k = Math.min(1, d/JOY_RADIUS); G.joy = {bx:ptr.sx, by:ptr.sy, vx: d ? dx/d*k : 0, vy: d ? dy/d*k : 0}; }
+  if (ptr.moved){ const k = Math.min(1, d/JOY_RADIUS); G.joy = {bx:ptr.sx, by:ptr.sy, vx: d ? dx/d*k : 0, vy: d ? dy/d*k : 0, raw:d/JOY_RADIUS}; } // raw > 1: pushed past the rim (Row!)
 });
 function endPtr(e){
   if (others.has(e.pointerId)){ const o = others.get(e.pointerId); others.delete(e.pointerId);
