@@ -1,21 +1,21 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=f22acb2';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=f22acb2';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored} from './state.js?v=f22acb2';
-import {scene, screenToSea, setLair} from './scene.js?v=f22acb2';
-import {wreckModel} from './models.js?v=f22acb2';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=f22acb2';
-import {makeFire, updateFire, burn} from './fire.js?v=f22acb2';
-import {blessing, fighters, hasSail} from './crew.js?v=f22acb2';
-import {progress, goal} from './quests.js?v=f22acb2';
-import {arrowK, ramDmg} from './upgrades.js?v=f22acb2';
-import {toast} from './ui.js?v=f22acb2';
-import {sink, rowNow, ROW} from './player.js?v=f22acb2';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=f22acb2';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=f22acb2';
-import {sfx} from './audio.js?v=f22acb2';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=e3c0bca';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=e3c0bca';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored} from './state.js?v=e3c0bca';
+import {scene, screenToSea, setLair} from './scene.js?v=e3c0bca';
+import {wreckModel} from './models.js?v=e3c0bca';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=e3c0bca';
+import {makeFire, updateFire, burn} from './fire.js?v=e3c0bca';
+import {blessing, fighters, hasSail} from './crew.js?v=e3c0bca';
+import {progress, goal} from './quests.js?v=e3c0bca';
+import {arrowK, ramDmg} from './upgrades.js?v=e3c0bca';
+import {toast} from './ui.js?v=e3c0bca';
+import {sink, rowNow, ROW} from './player.js?v=e3c0bca';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=e3c0bca';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=e3c0bca';
+import {sfx} from './audio.js?v=e3c0bca';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -510,7 +510,7 @@ function land(a){
 // What a camp or fortress still holds for you: the ship whose plan piece you'd win there, or 0
 export function planReward(f){
   if (!f || !f.fort) return 0; const S = G.S;
-  const t = f.camp ? f.camp.plans || 0 : f.owner === 'pirate' ? PIRATE_PLANS : f.city ? 3 : 0; if (!t) return 0;
+  const t = f.camp ? f.camp.plans || 0 : f.owner === 'pirate' ? PIRATE_PLANS : f.city ? 7 : 0; if (!t) return 0;
   const from = (f.camp ? 'camp:' : 'fort:') + f.isle.name, held = (S.plans || []).includes(t) || (S.owned || []).includes(t) || ((S.pieces || {})[t] || 0) >= PLANS[t].pieces;
   return held || (S.pieceFrom || []).includes(from) ? 0 : t;
 }
@@ -530,12 +530,12 @@ function clueFor(is){ // "Tinos, north-west of Kallisto": told from the nearest 
   return `${is.name}, ${dirFrom(ref, is)} of ${ref.name}`; }
 export function planClues(){
   const S = G.S, out = [];
-  for (const t of [1, 2, 3]){ const need = PLANS[t].pieces, have = (S.pieces || {})[t] || 0;
+  for (const t of [1, 2, 3, 7]){ const need = PLANS[t].pieces, have = (S.pieces || {})[t] || 0;
     if ((S.plans || []).includes(t) || (S.owned || []).includes(t) || have >= need) continue;
     const spots = enemies.filter(e => e.fort && planReward(e) === t);
     const clues = []; for (const e of spots){ if (e.camp) clues.push(`Bandit camp on ${clueFor(e.isle)}`); }
-    if (t === 3){ const pir = spots.filter(e => e.owner === 'pirate'); if (pir.length) clues.push(`A pirate fortress: ${pir.map(e => clueFor(e.isle)).join(' or ')}`);
-      if (spots.some(e => e.city)) clues.push('Any fortress of Athens or Sparta, far out at sea'); }
+    for (const e of spots.filter(e => e.owner === 'pirate')) clues.push(`Pirate fortress on ${clueFor(e.isle)}`);
+    if (t === 7 && spots.some(e => e.city)) clues.push('Fortresses of Athens and Sparta, far out at sea');
     out.push({t, have, need, clues}); }
   return out;
 }
@@ -559,7 +559,7 @@ function sinkEnemy(e, byPlayer){
   if (e.ally){ allyHome(e); return; }
   if (byPlayer) progress('sink', e.kind);
   if (byPlayer && e.fort && e.owner === 'pirate'){ progress('fort'); givePiece(PIRATE_PLANS, 'fort:' + e.isle.name); }
-  if (byPlayer && e.fort && e.city) givePiece(3, 'fort:' + e.isle.name); // any city fortress you knock down: a piece of the trireme's plans
+  if (byPlayer && e.fort && e.city) givePiece(7, 'fort:' + e.isle.name); // P62: city fortresses hold the quinquereme's plans
   if (e.camp){ const S = G.S; S.camps = [...new Set([...(S.camps || []), e.isle.name])]; if (byPlayer) progress('camp', e.isle.name); if (e.camp.plans) givePiece(e.camp.plans, 'camp:' + e.isle.name); }
   if (e.boss) bossDown(e);
   const w = G.S.war; // a war contract from a fortress
@@ -776,6 +776,7 @@ function catapultAt(at){
 }
 // called by the ability bar (input on the buttons): kind, and the spot on the sea (or null for a tap)
 $('rowBtn').addEventListener('click', () => rowNow());
+$('stopBtn').addEventListener('click', () => { G.cruise = false; G.dest = null; G.rowT = 0; sfx('dock'); }); // lower the sail: the ship glides to a stop
 // The bar's buttons: press, drag onto the sea to aim (a ring shows where it lands), let go to shoot. A tap shoots at the target as it is now.
 document.querySelectorAll('.ab[data-ab]').forEach(btn => {
   btn.addEventListener('pointerdown', e => { if (btn.disabled) return; e.preventDefault(); try { btn.setPointerCapture(e.pointerId); } catch(_){}
@@ -870,6 +871,7 @@ export function updateCombat(dt){
   // the ability bar shows only in a fight (and while you're aiming one)
   const fight = (!!combatState.target || !!G.aim) && !G.sheetOpen && !G.sinking, canRow = hasSail() && !G.dock && !G.sheetOpen && !G.sinking, cd = (el, left, all) => el.style.setProperty('--cd', (left > 0 ? left/all*360 : 0) + 'deg');
   $('abilities').hidden = !fight && !canRow;
+  const sb = $('stopBtn'); sb.hidden = !(canRow && G.cruise); // the anchor: shown while the ship sails on by itself
   const rb = $('rowBtn'); rb.hidden = !canRow; if (canRow){ rb.disabled = G.rowCd > 0 && !(G.rowT > 0); rb.classList.toggle('on', G.rowT > 0); cd(rb, G.rowT > 0 ? 0 : G.rowCd, ROW.cd); }
   for (const id of ['volleyBtn', 'fireBtn', 'chainBtn', 'cataBtn']) if (!fight) $(id).hidden = true; else if (id === 'volleyBtn') $(id).hidden = false;
   if (fight){ const vb = $('volleyBtn'), fb = $('fireBtn'), cb = $('chainBtn'), kb = $('cataBtn');

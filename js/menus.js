@@ -1,16 +1,16 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE} from './config.js?v=f22acb2';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=f22acb2';
-import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=f22acb2';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=f22acb2';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=f22acb2';
-import {planClues} from './combat.js?v=f22acb2';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=f22acb2';
-import {board, active, canDeliver, goal} from './quests.js?v=f22acb2';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=f22acb2';
-import {shipPortrait} from './portrait.js?v=f22acb2';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=f22acb2';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE} from './config.js?v=e3c0bca';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=e3c0bca';
+import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=e3c0bca';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=e3c0bca';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=e3c0bca';
+import {planClues} from './combat.js?v=e3c0bca';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=e3c0bca';
+import {board, active, canDeliver, goal} from './quests.js?v=e3c0bca';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=e3c0bca';
+import {shipPortrait} from './portrait.js?v=e3c0bca';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=e3c0bca';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -328,7 +328,7 @@ function yardAct(t, sh){
   return `<span class="tag">Plans: ${n} of ${P.pieces}</span><small>Clues in your bag</small>`;
 }
 // where each ship's plans come from (the camps in config CAMPS, and the pirate fortresses)
-const PLANS_FROM = {1:'From the bandit camp on Ikaria', 2:'From the bandit camps on Tinos and Syros', 3:'From the Ios bandit camp, a pirate fortress (Thasos or Kos) and any city fortress'};
+const PLANS_FROM = {1:'From the bandit camp on Ikaria', 2:'From the bandit camps on Tinos and Syros', 3:'From the Ios bandit camp and the pirate fortresses of Thasos and Kos', 7:'From the fortresses of Athens and Sparta'};
 function yardTab(){
   const S = G.S, own = owned();
   const fleet = SHIPS.map((sh, t) => {
@@ -376,13 +376,20 @@ function upgradesCard(){
   return card(`Upgrades · ${ship().name}`, `<div class="stage"><div class="slots">${left.map(slot).join('')}</div><div class="hero">${shipImg(ship().model, {...S.look, ram:lvl('ram'), sailLv:lvl('sail'), men:men()})}</div><div class="slots">${right.map(slot).join('')}</div></div>${detail}
     <p class="note">Paid with materials from the Kallisto warehouse and drachmae. A + means you can afford the next level.</p>`);
 }
+// P62: paint, sail and flag as pictures to tap (not text lists): a little hull in each paint, a sail in each pattern, each god's pennant
+const paintSw = p => `<svg viewBox="0 0 48 26"><path d="M2 6 H46 C44 16 36 22 24 22 C12 22 4 16 2 6Z" fill="${p.top}"/><path d="M4 11 H44" stroke="${p.panel}" stroke-width="3.4"/><path d="M8.6 17 C13 20.4 18 21.6 24 21.6 C30 21.6 35 20.4 39.4 17Z" fill="${p.bottom}"/><rect x="1" y="4.4" width="46" height="2.6" rx="1.3" fill="${p.wale}"/></svg>`;
+const sailSw = sl => { const st = sl.stripes, w = 30/st.length; return `<svg viewBox="0 0 40 34"><path d="M20 2 V32" stroke="#8a5a30" stroke-width="2"/><path d="M4 4 H36" stroke="#8a5a30" stroke-width="2" stroke-linecap="round"/>
+  <clipPath id="sc${st.join('').replace(/#/g, '')}"><path d="M5 5 H35 C36.5 14 36 22 33 29 H7 C4 22 3.5 14 5 5Z"/></clipPath><g clip-path="url(#sc${st.join('').replace(/#/g, '')})">${st.map((c, i) => `<rect x="${5 + i*w}" y="4" width="${w + .4}" height="26" fill="${c}"/>`).join('')}</g>
+  <path d="M5 5 H35 C36.5 14 36 22 33 29 H7 C4 22 3.5 14 5 5Z" fill="none" stroke="${sl.border || 'rgba(60,40,20,.35)'}" stroke-width="${sl.border ? 2.4 : 1}"/></svg>`; };
+const flagSw = g => g.bg ? `<svg viewBox="0 0 40 30"><path d="M5 3 V28" stroke="#8a5a30" stroke-width="2.2" stroke-linecap="round"/><path d="M6 4 H35 L29 11.5 L35 19 H6Z" fill="${g.bg}"/><circle cx="17" cy="11.5" r="4.2" fill="${g.fg}"/></svg>`
+  : `<svg viewBox="0 0 40 30"><path d="M5 3 V28" stroke="#8a5a30" stroke-width="2.2" stroke-linecap="round"/><path d="M10 9 L22 21 M22 9 L10 21" stroke="#c9b48e" stroke-width="2.4" stroke-linecap="round"/></svg>`;
 function looksCard(){
   const spec = SPECS[ship().model], lk = {...spec.look, ...G.S.look};
-  const opts = (obj, sel) => Object.entries(obj).filter(([, v]) => !v.city && !v.hidden).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${v.name}</option>`).join('');
-  return card('Paint and flag', `${shipImg(ship().model, {...G.S.look, ram:lvl('ram'), sailLv:lvl('sail'), men:men()})}<div class="looks">
-      <label><span>Hull paint</span><select data-look="paint">${opts(PAINTS, lk.paint)}</select></label>
-      <label><span>Sail</span>${spec.mast || lvl('sail') ? `<select data-look="sail">${opts(SAILS, lk.sail)}</select>` : '<select disabled><option>Needs a mast</option></select>'}</label>
-      <label><span>Flag</span>${founded() ? `<select data-look="flag">${opts(GODS, lk.flag)}</select>` : '<select disabled><option>Found a crew first</option></select>'}</label></div>`);
+  const pick = (k, obj, sel, draw) => `<div class="swatches">${Object.entries(obj).filter(([, v]) => !v.city && !v.hidden).map(([v, o]) => `<button class="sw ${v === sel ? 'on' : ''}" data-act="look" data-k="${k}" data-v="${v}" aria-label="${o.name}">${draw(o)}<small>${o.name}</small></button>`).join('')}</div>`;
+  return card('Paint and flag', `${shipImg(ship().model, {...G.S.look, ram:lvl('ram'), sailLv:lvl('sail'), men:men()})}
+    <h4 class="swh">Hull</h4>${pick('paint', PAINTS, lk.paint, paintSw)}
+    <h4 class="swh">Sail</h4>${spec.mast || lvl('sail') ? pick('sail', SAILS, lk.sail, sailSw) : '<p class="note">Your boat needs a sail first (Sail upgrade).</p>'}
+    <h4 class="swh">Flag</h4>${founded() ? pick('flag', GODS, lk.flag, flagSw) : '<p class="note">Found a crew first (Crew tab).</p>'}`);
 }
 
 // ---- crew ----

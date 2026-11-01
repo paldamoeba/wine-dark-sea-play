@@ -1,7 +1,7 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES} from './config.js?v=f22acb2';
-import {G, lvl, ship, pay, rank} from './state.js?v=f22acb2';
-import {SPECS, sailSizes, crewLayout} from './ships.js?v=f22acb2';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES} from './config.js?v=e3c0bca';
+import {G, lvl, ship, pay, rank} from './state.js?v=e3c0bca';
+import {SPECS, sailSizes, crewLayout} from './ships.js?v=e3c0bca';
 
 export const ramMax = () => UPGRADE_MAX*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
@@ -15,12 +15,15 @@ export function ramMat(l = lvl('ram')){ if (!l) return null; const m = Math.min(
 export function ramDmg(l = lvl('ram')){ const m = ramMat(l); return m ? Math.round((RAM.base + RAM.per*m.sub)*m.k) : 0; }
 export const arrowK = () => 1 + UPGRADES.arrows.each*lvl('arrows');
 // Crew: each level hires one more hand on small ships, two (a bench) on big ones, up to the ship's most (SHIPS men).
-export const crewPer = (t = G.S.tier) => SHIPS[t].men[1] > 8 ? 2 : 1;
-export const crewLevels = (t = G.S.tier) => Math.ceil((SHIPS[t].men[1] - SHIPS[t].men[0])/crewPer(t));
+// P62: hiring is a big step: at most 4 hires per ship, each brings a group of men. The first costs 500, each next one 2.5 times more.
+export const crewLevels = (t = G.S.tier) => Math.min(4, SHIPS[t].men[1] - SHIPS[t].men[0]);
+export const crewPer = (t = G.S.tier) => Math.ceil((SHIPS[t].men[1] - SHIPS[t].men[0])/crewLevels(t));
+export const CREW_COST = [500, 1250, 3100, 7800];
 
 // The cost of the next level, or null at the top.
 export function costOf(k){
   const l = lvl(k), u = UPGRADES[k]; if (l >= maxOf(k)) return null;
+  if (k === 'seats') return {gold:CREW_COST[l] || CREW_COST[3]};
   const n = l + 1, sk = u.ship ? SHIP_K[rank()] : 1;
   const step = k === 'ram' ? ramMat(n).sub : n, mk = k === 'ram' ? ramMat(n).cost : 1, c = {};
   for (const m in u.cost) c[m] = Math.round(u.cost[m]*step*sk*mk);

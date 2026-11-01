@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=f22acb2';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=f22acb2';
-import {G} from './state.js?v=f22acb2';
-import {TOD, updateDayNight} from './daynight.js?v=f22acb2';
-import {showGrass} from './grass.js?v=f22acb2';
+import {QUALITY, SHIPS} from './config.js?v=e3c0bca';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=e3c0bca';
+import {G} from './state.js?v=e3c0bca';
+import {TOD, updateDayNight} from './daynight.js?v=e3c0bca';
+import {showGrass} from './grass.js?v=e3c0bca';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -162,7 +162,7 @@ let lastZoom = 1, depthK = 1;
 // The camera pulls back in deeper water: more sea to see out there. Builder zoom multiplies on top.
 const DEPTH_ZOOM = [1, 1.3, 1.5];
 // bigger ships get a camera further out, so a trireme isn't crammed into the screen (P49)
-const SHIP_ZOOM = [1, 1.12, 1.3, 1.42];
+const SHIP_ZOOM = [1, 1.12, 1.3, 1.42, 1.6];
 const viewZoom = () => (G.settings.builder ? G.settings.dev.zoom : (G.settings.pzoom || 1))*depthK; // players zoom a little (input.js PZOOM)
 export function applyZoom(){
   const z = viewZoom(), s = 520*Math.max(1, z);

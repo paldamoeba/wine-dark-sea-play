@@ -807,3 +807,10 @@ body.big .abilities{zoom:1.5}
 /* P61: warehouse rows */
 .wrow{display:flex;align-items:center;gap:8px;margin:5px 0}.wrow .uic svg{width:24px;height:24px}.wrow .pbar{flex:1;height:8px;border-radius:4px;background:var(--cz-track);overflow:hidden;display:block}
 .wrow .pbar i{display:block;height:100%;background:var(--cz-teal);border-radius:4px}.wrow .pbar.full i{background:var(--cz-coral)}.wrow b{min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+.ab.stop{--c:#8a6a48;--c2:#5e4630}
+/* P62: paint / sail / flag swatches */
+.swh{margin:12px 0 6px;font:800 13px/1 var(--body);color:var(--cz-muted)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.sw{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 6px;border:0;border-radius:12px;background:#f8f3ea;cursor:pointer;font:inherit}
+.sw svg{width:46px;height:32px}.sw small{font:700 10.5px/1.15 var(--body);color:var(--cz-ink);text-align:center}
+.sw.on{background:#fff;box-shadow:0 0 0 2.5px var(--cz-teal),0 2px 6px rgba(35,30,25,.12)}

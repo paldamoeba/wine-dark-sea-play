@@ -57,6 +57,9 @@ export const SPECS = {
   // P58: Polycrates' flagship, a floating fortress (inspired by the great ships of Syracuse and Ptolemy, our own design): a very tall,
   // wide hull with a row of statues along each side, a flat upper deck with towers at the corners and a long hall, three masts with
   // square sails, oars low down, a great curled stern and a ram. A ghost ship: nobody aboard.
+  // P62: the quinquereme, the biggest warship: two rows of oars, a raised fighting deck with a railing over the rowers,
+  // a mainsail and a foresail, a big ram. Archers fight from the top deck.
+  quinquereme:{L:215, B:62, H:30, rise:36, oarRows:2, oarCount:18, mast:true, sailW:84, sailH:70, sailMax:15, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, twoDeck:true, crew:[['stand', 1], ['archer', 10]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
   flagship:   {L:280, B:96, H:44, rise:30, oarRows:2, oarCount:20, mast:true, sailW:70, sailH:58, sailMax:15, flagship:true, ghost:true, eyes:true, raider:true, crew:[], look:{paint:'king', sail:'plain', flag:'none'}},
 };
 
@@ -343,12 +346,21 @@ function steeringOars(s, info){
   return g;
 }
 // color/k: the player's upgraded ram (wood, bronze or gold; k grows it a little with each level)
-function ram(s, color = 'bronze', k = 1){
-  const g = new T.Group(), len = s.L*(s.bigRam ? .21 : .18)*k, h = Math.max(4, s.H*(s.bigRam ? .34 : .26))*k;
-  const body = mesh(new T.BoxGeometry(len, h, s.B*.16), color); body.position.x = len/2; g.add(body);
-  const tip = mesh(new T.ConeGeometry(h*.62, len*.45, 4), color); tip.rotation.z = -Math.PI/2; tip.rotation.x = Math.PI/4; tip.position.x = len*1.2; g.add(tip);
-  for (const dy of [-.28, 0, .28]){ const fin = mesh(new T.BoxGeometry(len*.8, h*.12, s.B*.3), color); fin.position.set(len*.55, dy*h, 0); g.add(fin); }
-  g.position.set(s.L*.38, keelAt(s, .76) + h*.45, 0); return g;
+// P62: the ram grows out of the bow: a wedge in the hull's paint sweeps down and forward from the stem at the waterline,
+// then a bronze beak with three flat fins at the tip (like the real ones: a trident seen from the front).
+// A box stretched between two cross-sections: (h0, w0) at the back, (h1, w1) at the front, smooth shaded.
+function wedge(len, h0, w0, h1, w1, color, lift = 0){
+  const geo = new T.BoxGeometry(len, 1, 1, 8, 1, 1), p = geo.attributes.position;
+  for (let i=0;i<p.count;i++){ const u = p.getX(i)/len + .5, y = p.getY(i), z = p.getZ(i); p.setXYZ(i, p.getX(i), y*(h0 + (h1 - h0)*u) + lift*u, z*(w0 + (w1 - w0)*u)); }
+  geo.computeVertexNormals(); return mesh(geo, color, {flatShading:false});
+}
+function ram(s, color = '#b8843e', k = 1, hullColor = '#7a4b28'){
+  const g = new T.Group(), h = Math.max(4, s.H*(s.bigRam ? .34 : .28))*k, fl = s.L*.15, bl = s.L*(s.bigRam ? .13 : .11)*k;
+  const fair = wedge(fl, s.H*.7, s.B*.34, h*1.05, s.B*.17, hullColor, -s.H*.12); fair.position.x = fl/2; g.add(fair); // the bow timbers flowing down into the ram
+  const beak = wedge(bl, h, s.B*.17, h*.45, s.B*.05, color); beak.position.x = fl + bl/2 - 1; g.add(beak);
+  for (const dy of [-.3, 0, .3]){ const fin = wedge(bl*.55, h*.12, s.B*.2, h*.06, s.B*.34, color); fin.position.set(fl + bl*.75, dy*h, 0); g.add(fin); } // the trident fins flare at the tip
+  const band = wedge(2.4, h*1.15, s.B*.19, h*1.15, s.B*.19, color); band.position.x = fl - .5; g.add(band); // a bronze collar where wood meets bronze
+  g.position.set(s.L*.37, keelAt(s, .74) + h*1.25, 0); return g; // riding at the waterline, half out of the water
 }
 // The pirate ram: a bronze boar's head, like the "samaina" ships of Polycrates, the pirate king of Samos.
 function boarRam(s){
@@ -484,7 +496,7 @@ export function buildShip(key, look = {}, crew = true){
   root.userData.sails = [];
   if (sz[0]){
     // the rig; on a boat built without a mast (the rowboat) it stands forward of the rower
-    const mx = s.mast ? 0 : s.L*.22, rig = new T.Group(); rig.position.x = mx; if (s.flagship) rig.position.y = s.H*.42 + 22; body.add(rig); // the flagship's main mast stands on its high deck
+    const mx = s.mast ? 0 : s.L*.22, rig = new T.Group(); rig.position.x = mx; if (s.flagship) rig.position.y = s.H*.42 + 22; if (s.twoDeck) rig.position.y = s.H*.38; body.add(rig); // the flagship's main mast stands on its high deck
     const mw = s.sailW*sz[0], mh = s.sailH*sz[0], extra = sz[2] ? s.sailH*.42*sz[2] : 0; // a topsail needs a taller mast
     const top = info.deckLevel + mh + 16, mtop = top + extra;
     const mast = mesh(new T.CylinderGeometry(1.6, 2.4, mtop - info.deckLevel + 6, 7), 'mast'); mast.position.set(0, (mtop + info.deckLevel)/2 + 3, 0); rig.add(mast);
@@ -524,9 +536,9 @@ export function buildShip(key, look = {}, crew = true){
   if (s.L >= 100) for (const sg of [1, -1]) torchAt.push([-s.L*.12, info.deckY(.24), sg*info.W(.24)*.95]);
   for (const [x, y, z] of torchAt){ const t = torch(); t.scale.setScalar(.65); t.position.set(x, y, z); t.visible = false; body.add(t); root.userData.torches.push(t); }
   // The player's ship shows its upgrades: the ram it has bought (not the built-in one) and extra planking along the sides.
-  if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/10)), sub = lk.ram - m*10; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.03 + m*.1)); } }
+  if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/10)), sub = lk.ram - m*10; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.03 + m*.1, pc.bottom)); } }
   else if (s.raider && s.ram) body.add(boarRam(s));
-  else if (s.ram) body.add(ram(s));
+  else if (s.ram) body.add(ram(s, '#b8843e', 1, pc.bottom));
   if (lk.plate > 0){ const c = lk.plate >= 10 ? '#e3b341' : lk.plate >= 5 ? '#b07f3c' : '#7a5230', n = 6;
     for (let i=0;i<n;i++) for (const sg of [1, -1]){ const f = -.34 + i*.68/(n - 1), x = f*s.L, w = info.W(Math.abs(f*2));
       const b = mesh(new T.BoxGeometry(s.L*.68/n + 1, s.H*.2, 1.4), c); b.position.set(x, s.H*.28, sg*(w + .5)); b.rotation.y = -sg*f*.35; body.add(b); } }
@@ -539,6 +551,18 @@ export function buildShip(key, look = {}, crew = true){
     const pu = mesh(new T.CircleGeometry(1.4*(s.twin ? 2.2 : 1), 10), s.raider ? '#b8322a' : '#1c1c22', {side:T.DoubleSide}); pu.position.copy(e.position); pu.position.z += sg*.2; pu.position.x += .6; pu.rotation.y = e.rotation.y; body.add(pu);
   }
   if (s.flagship) body.add(flagshipDeck(s, info, pc, sailKey));
+  // the two-deck ship: a fighting deck on posts over the rowers, a railing all round it, and a foresail leaning over the bow
+  if (s.twoDeck){ const dy = info.deckLevel + s.H*.38, dl = s.L*.66, dw = s.B*.84;
+    const deck = mesh(new T.BoxGeometry(dl, 1.6, dw), pc.deck); deck.position.set(-s.L*.02, dy, 0); body.add(deck);
+    const n = 16; for (let k=0;k<=n;k++){ const x = -s.L*.02 - dl/2 + k*dl/n;
+      for (const sg of [1, -1]){ const post = mesh(new T.CylinderGeometry(.5, .5, s.H*.38, 5), pc.wale); post.position.set(x, info.deckLevel + s.H*.19, sg*dw*.48); body.add(post);
+        const rp = mesh(new T.BoxGeometry(.8, 5, .8), pc.wale); rp.position.set(x, dy + 3.2, sg*dw*.5); body.add(rp); } }
+    for (const sg of [1, -1]){ const rail = mesh(new T.BoxGeometry(dl, 1, 1.2), pc.wale); rail.position.set(-s.L*.02, dy + 5.6, sg*dw*.5); body.add(rail);
+      const mid = mesh(new T.BoxGeometry(dl, .6, .8), pc.wale); mid.position.set(-s.L*.02, dy + 3, sg*dw*.5); body.add(mid); }
+    const fm = new T.Group(); fm.position.set(s.L*.3, dy, 0); fm.rotation.z = -.32; body.add(fm);
+    const m2 = mesh(new T.CylinderGeometry(1.1, 1.6, s.sailH*.7 + 12, 6), 'mast'); m2.position.y = (s.sailH*.7 + 12)/2; fm.add(m2);
+    const y2 = mesh(new T.CylinderGeometry(.8, .8, s.sailW*.55 + 8, 6), 'mast'); y2.rotation.x = Math.PI/2; y2.position.set(1.2, s.sailH*.7 + 9, 0); fm.add(y2);
+    const s2 = squareSail(s.sailW*.55, s.sailH*.55, sailTex(sailKey, 'none')); s2.position.set(2.2, s.sailH*.7 + 8, 0); fm.add(s2); root.userData.sails.push(s2); }
   if (s.nets){ const n = mesh(new T.DodecahedronGeometry(6, 0), 'net'); n.scale.set(1.3, .5, 1); n.position.set(-s.L*.3, info.deckLevel + 2, 0); body.add(n); }
   if (s.cargo){ for (let i=0;i<8;i++){ const a = mesh(amphora, '#b06a3d', {flatShading:false}); a.position.set(-8 + (i % 4)*8, info.deckLevel, -7 + Math.floor(i/4)*12); body.add(a); }
     const crate = mesh(new T.BoxGeometry(14, 9, 12), '#9b6b3a'); crate.position.set(s.crateX != null ? s.crateX*s.L : 24, info.deckLevel + 4.5, 0); body.add(crate); }
@@ -562,13 +586,13 @@ export function buildShip(key, look = {}, crew = true){
       if (kind === 'archer'){
         // On long oared warships the archers stand on a gangway down the middle, clear of the rowers on both sides
         // (and of the mast); on small boats they stand at the rails. Half face each side.
-        const mid = s.oarCount >= 9, gy = info.deckLevel + (mid ? 1.2 : 0);
+        const mid = s.oarCount >= 9 && !s.twoDeck, gy = s.twoDeck ? info.deckLevel + s.H*.38 + .8 : info.deckLevel + (mid ? 1.2 : 0);
         if (mid && n){ const walk = mesh(new T.BoxGeometry(s.L*.62, 1.2, 6), pc.deck); walk.position.set(0, gy - .6, 0); body.add(walk); }
         for (let i=0;i<n;i++){
           const sg = i % 2 ? 1 : -1;
           const x = mid ? (n === 1 ? .1 : -.27 + .54*i/(n - 1))*s.L : (-.2 + .45*Math.floor(i/2)/Math.max(1, Math.ceil(n/2) - 1))*s.L;
           const p = person(tunics[(i+1) % 3], 'archer', s.raider ? 'pirate' : lk.helm || 'hoplite'); p.rotation.y = -sg*Math.PI/2;
-          add(p, x, gy, mid ? sg*1.4 : sg*info.W(Math.abs(x/(s.L/2)))*.62);
+          add(p, x, gy, mid ? sg*1.4 : s.twoDeck ? sg*s.B*.36 : sg*info.W(Math.abs(x/(s.L/2)))*.62);
         }
       } else for (let i=0;i<n;i++){
         // First standing crew takes the helm at the stern; the rest work the deck.

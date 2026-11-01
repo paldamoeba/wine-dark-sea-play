@@ -28,6 +28,9 @@ export const SHIPS = [
     desc:'A raider skiff with a ram: three archers and a small hold'},
   {name:'Bandit galley', model:'raider', rank:2, captured:true, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, linen:15, goods:6}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
     desc:'A black pirate galley with a boar\'s head ram: six archers when its benches are full'},
+  // P62: the biggest warship you can build: two decks
+  {name:'Quinquereme', model:'quinquereme', rank:4, speed:205, hull:420, hold:24, cap:{wood:260, bronze:90, linen:40, goods:10}, heavy:6.5, fishTime:3, woodTime:3, storm:0, len:215, beam:62, fighters:10, men:[10, 56], turn:.5,
+    cost:{wood:1000, bronze:200, linen:100, gold:1500}, plans:true, desc:'Two decks: rowers below on two rows of oars, ten archers on the fighting deck above, two sails and a huge ram'},
 ];
 
 // spin = needle speed (radians per second), green = size of the green part (degrees). Bigger fish: faster, smaller.
@@ -79,7 +82,7 @@ export const GOALS = [
   {t:'build', kind:'bireme', n:1, gold:100, text:'Study the plans and build the bireme at Kallisto, your first warship', chapter:true},
   {t:'sink', kind:'galley', n:3, gold:150, text:'Sink 3 raider galleys out in the Open Sea', chapter:true},
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
-  {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp, a pirate fortress (Thasos or Kos) and any city fortress', chapter:true},
+  {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp and the pirate fortresses of Thasos and Kos', chapter:true},
   {t:'build', kind:'trireme', n:1, gold:200, text:'Study the plans and build the trireme, the greatest warship of the Aegean', chapter:true},
   {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, off Kos', chapter:true},
 ];
@@ -137,7 +140,7 @@ export const WAREHOUSE = [
   {cap:{wood:1100, bronze:220, linen:120}, cost:{wood:600, bronze:60, gold:700}},
 ];
 export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry
-export const SHIP_K = [.6, 1, 2, 3];
+export const SHIP_K = [.6, 1, 2, 3, 4.5];
 // The ram: wood levels 1-10, then bronze 1-10, then gold 1-10 (30 in all). The bronze levels are paid in bronze (pay), the gold ones in more drachmae. Damage when your bow hits a ship head-on at speed.
 export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Bronze', color:'#b07f3c', k:2.2, cost:2.5, pay:'bronze'}, {name:'Drachmae', color:'#e3b341', k:4, cost:6, pay:'gold'}],
   base:8, per:2, minSpeed:.45, cooldown:1.2, bump:3};
@@ -161,7 +164,7 @@ export const CAMPS = [
 export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme's plans (so does any city fortress you knock down)
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
 // then build the ship. Both take real time (seconds, running even while the game is closed); a video makes it faster.
-export const PLANS = {1:{pieces:1, study:180, build:120}, 2:{pieces:2, study:900, build:600}, 3:{pieces:3, study:1800, build:1200}};
+export const PLANS = {1:{pieces:1, study:180, build:120}, 2:{pieces:2, study:900, build:600}, 3:{pieces:3, study:1800, build:1200}, 7:{pieces:3, study:2700, build:1800}};
 export const VIDEO_SKIP = 600; // each video takes 10 minutes off studying or building (a placeholder until real ads)
 // Athens and Sparta keep their fortresses and navies this far from Kallisto: the start is neutral (P49).
 export const NEUTRAL_R = 8000; // P52: the fortresses stand far out
