@@ -1,15 +1,15 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS} from './config.js?v=b8d289e';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=b8d289e';
-import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=b8d289e';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=b8d289e';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=b8d289e';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=b8d289e';
-import {board, active, canDeliver, goal} from './quests.js?v=b8d289e';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=b8d289e';
-import {shipPortrait} from './portrait.js?v=b8d289e';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=b8d289e';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS} from './config.js?v=fe8e317';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=fe8e317';
+import {G, ship, holdUsed, lvl, have, canPay, room as roomFor, used as usedOf, capOf} from './state.js?v=fe8e317';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=fe8e317';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=fe8e317';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=fe8e317';
+import {board, active, canDeliver, goal} from './quests.js?v=fe8e317';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=fe8e317';
+import {shipPortrait} from './portrait.js?v=fe8e317';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=fe8e317';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;

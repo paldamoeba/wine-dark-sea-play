@@ -1,17 +1,17 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=b8d289e';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=b8d289e';
-import {G, ship, lvl} from './state.js?v=b8d289e';
-import {men} from './crew.js?v=b8d289e';
-import {scene} from './scene.js?v=b8d289e';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=b8d289e';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=b8d289e';
-import {addTown, figure} from './town.js?v=b8d289e';
-import {makeFire, updateFire, burn} from './fire.js?v=b8d289e';
-import {addGrass} from './grass.js?v=b8d289e';
-import {sinkPose} from './sinking.js?v=b8d289e';
-import {moored} from './fleet.js?v=b8d289e';
-import {placeOnWaves} from './combat.js?v=b8d289e';
+import {SHIPS} from './config.js?v=fe8e317';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=fe8e317';
+import {G, ship, lvl} from './state.js?v=fe8e317';
+import {men} from './crew.js?v=fe8e317';
+import {scene} from './scene.js?v=fe8e317';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=fe8e317';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=fe8e317';
+import {addTown, figure} from './town.js?v=fe8e317';
+import {makeFire, updateFire, burn} from './fire.js?v=fe8e317';
+import {addGrass} from './grass.js?v=fe8e317';
+import {sinkPose} from './sinking.js?v=fe8e317';
+import {moored} from './fleet.js?v=fe8e317';
+import {placeOnWaves} from './combat.js?v=fe8e317';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -232,7 +232,7 @@ function animateRings(t){
   const pulse = .5 + .5*Math.sin(t*2.4);
   ringMat.opacity = .45 + .35*pulse; fillMat.opacity = .05 + .06*pulse;
   for (const g of RINGS){ const u = g.userData, near = Math.hypot(u.x - G.S.x, u.y - G.S.y) < 2600;
-    g.visible = near && !G.dock; if (!g.visible) continue;
+    g.visible = false; continue; // P55: no rings (the Enter harbor button is back)
     g.position.y = waveAt(u.x, u.y, t) + 2.5; u.halo.scale.setScalar(1 + .08*pulse); u.halo.material.opacity = .2*(1 - pulse*.5); }
 }
 function animateDock(dt, t){

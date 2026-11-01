@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=b8d289e';
-import {SPECS} from './ships.js?v=b8d289e';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=b8d289e';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=b8d289e';
-import {W} from './weather.js?v=b8d289e';
-import {steering} from './input.js?v=b8d289e';
-import {toast, showZone} from './ui.js?v=b8d289e';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=b8d289e';
-import {startFish, stopFish} from './fishing.js?v=b8d289e';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=b8d289e';
-import {progress} from './quests.js?v=b8d289e';
-import {startSink} from './sinking.js?v=b8d289e';
-import {sfx} from './audio.js?v=b8d289e';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=fe8e317';
+import {SPECS} from './ships.js?v=fe8e317';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=fe8e317';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=fe8e317';
+import {W} from './weather.js?v=fe8e317';
+import {steering} from './input.js?v=fe8e317';
+import {toast, showZone} from './ui.js?v=fe8e317';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=fe8e317';
+import {startFish, stopFish} from './fishing.js?v=fe8e317';
+import {blessing, rowBoost, fishBoost} from './crew.js?v=fe8e317';
+import {progress} from './quests.js?v=fe8e317';
+import {startSink} from './sinking.js?v=fe8e317';
+import {sfx} from './audio.js?v=fe8e317';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -227,6 +227,7 @@ export function updatePlayer(dt){
   const k = Math.min(1, dt*3.5); G.cam.x += (S.x - G.cam.x)*k; G.cam.y += (S.y - G.cam.y)*k;
   // dockhands come out on the pier as you sail up, before you ask to dock
   G.nearPier = HARBORS.find(h => pierDist(h.pier, S.x, S.y) < TUNING.dockRange*3) || null;
-  harborRings();
-  return null;
+  // P55: back to the button (Nicholas preferred it): near a pier and slow, the "Enter harbor" button shows
+  if (G.v >= TUNING.slowSpeed*2 || G.sheetOpen) return null;
+  return HARBORS.find(h => pierDist(h.pier, S.x, S.y) < TUNING.dockRange) || null;
 }

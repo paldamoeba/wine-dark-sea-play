@@ -1,10 +1,10 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=b8d289e';
-import {ARENA} from './arena.js?v=b8d289e';
-import {enemies} from './combat.js?v=b8d289e';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=b8d289e';
-import {G, ship, isExplored, reveal, save} from './state.js?v=b8d289e';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=fe8e317';
+import {ARENA} from './arena.js?v=fe8e317';
+import {enemies, planReward} from './combat.js?v=fe8e317';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=fe8e317';
+import {G, ship, isExplored, reveal, save} from './state.js?v=fe8e317';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -86,6 +86,9 @@ function anchorGlyph(x, y, fill){ c.save(); c.translate(x, y);
   c.fillStyle = fill; c.strokeStyle = INK; c.lineWidth = 1.5; c.beginPath(); c.arc(0, 0, 8.5, 0, Math.PI*2); c.fill(); c.stroke();
   c.strokeStyle = '#fff8e6'; c.lineWidth = 1.6; c.lineCap = 'round'; c.beginPath(); c.arc(0, -3.6, 1.5, 0, Math.PI*2); c.moveTo(0, -2); c.lineTo(0, 4.5); c.moveTo(-3, -.5); c.lineTo(3, -.5);
   c.moveTo(-4.4, 1.6); c.quadraticCurveTo(-3.5, 5, 0, 5); c.quadraticCurveTo(3.5, 5, 4.4, 1.6); c.stroke(); c.restore(); }
+// ship plans to win here: a little rolled scroll with red ends
+function scrollGlyph(x, y){ c.save(); c.translate(x, y); c.fillStyle = '#f3d27a'; c.strokeStyle = INK; c.lineWidth = 1.3; c.beginPath(); c.rect(-7, -3.5, 14, 7); c.fill(); c.stroke();
+  c.fillStyle = '#b5552c'; c.fillRect(-9, -4.5, 3, 9); c.fillRect(6, -4.5, 3, 9); c.restore(); }
 function towerGlyph(x, y, fill, ruined){ c.save(); c.translate(x, y); c.fillStyle = fill; c.strokeStyle = INK; c.lineWidth = 1.5;
   c.beginPath(); c.moveTo(-6, 7); c.lineTo(-5, -4); c.lineTo(-7, -4); c.lineTo(-7, -9); c.lineTo(-4, -9); c.lineTo(-4, -7); c.lineTo(-1.5, -7); c.lineTo(-1.5, -9); c.lineTo(1.5, -9); c.lineTo(1.5, -7);
   c.lineTo(4, -7); c.lineTo(4, -9); c.lineTo(7, -9); c.lineTo(7, -4); c.lineTo(5, -4); c.lineTo(6, 7); c.closePath(); c.fill(); c.stroke();
@@ -167,7 +170,7 @@ function draw(){
     label('Arena of Rhodes', ax, ay + r + 16, '400 14px Marcellus, Georgia, serif', INK); }
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
   for (const e of enemies){ if (!e.fort || !isExplored(e.x, e.y)) continue; const [fx, fy] = toScreen(e.x, e.y);
-    towerGlyph(fx, fy, e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a', e.dead); }
+    towerGlyph(fx, fy, e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a', e.dead); if (!e.dead && planReward(e)) scrollGlyph(fx + 13, fy - 10); }
   for (const h of HARBORS){ if (!h.is.port && !isExplored(h.dock.x, h.dock.y)) continue;
     const [hx, hy] = toScreen(h.dock.x, h.dock.y); anchorGlyph(hx, hy, h.is.city ? CITIES[h.is.city].color : OCHRE); }
   // the chapter goal: a red ring with a name (pirate fortresses, the pirate king)

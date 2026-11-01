@@ -1,23 +1,23 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=b8d289e';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=b8d289e';
-import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=b8d289e';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=b8d289e';
-import {swapBoat, refreshAllTrees} from './entities.js?v=b8d289e';
-import {setZoom} from './input.js?v=b8d289e';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=b8d289e';
-import {tutHTML} from './tutorial.js?v=b8d289e';
-import {founded, blessing} from './crew.js?v=b8d289e';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=b8d289e';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=b8d289e';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=b8d289e';
-import {effectText, buy} from './upgrades.js?v=b8d289e';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=b8d289e';
-import {GOODS, WAR} from './config.js?v=b8d289e';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=b8d289e';
-import {W, KINDS} from './weather.js?v=b8d289e';
-import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=b8d289e';
-import {setTimeOfDay} from './daynight.js?v=b8d289e';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=fe8e317';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=fe8e317';
+import {G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=fe8e317';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=fe8e317';
+import {swapBoat, refreshAllTrees} from './entities.js?v=fe8e317';
+import {setZoom} from './input.js?v=fe8e317';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=fe8e317';
+import {tutHTML} from './tutorial.js?v=fe8e317';
+import {founded, blessing} from './crew.js?v=fe8e317';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=fe8e317';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=fe8e317';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=fe8e317';
+import {effectText, buy} from './upgrades.js?v=fe8e317';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=fe8e317';
+import {GOODS, WAR} from './config.js?v=fe8e317';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=fe8e317';
+import {W, KINDS} from './weather.js?v=fe8e317';
+import {sfx, SND, STYLES, applyVolumes, playNow} from './audio.js?v=fe8e317';
+import {setTimeOfDay} from './daynight.js?v=fe8e317';
 
 const $ = id => document.getElementById(id);
 
@@ -43,9 +43,9 @@ export function updateUI(dt, nearDock){
   }
   const moored = !!G.dock && G.dock.mode === 'moored', h = nearDock, banned = h && h.is.city && (G.hunted || {})[h.is.city];
   nearHarbor = h;
-  $('dockBtn').hidden = G.sheetOpen || !moored; // P50: you enter a harbor by sailing into its glowing ring; the button only sets sail
+  $('dockBtn').hidden = G.sheetOpen || (moored ? false : !h || !!G.dock);
   $('dockBtn').disabled = !moored && !!banned;
-  $('dockBtn').textContent = 'Set sail';
+  $('dockBtn').textContent = moored ? 'Set sail' : banned ? `${CITIES[h.is.city].name} won't let you dock` : h ? `Enter ${h.is.name} harbor` : '';
   $('harborBtn').hidden = G.sheetOpen || !moored;
   $('hint').hidden = !G.S.hint || G.sheetOpen;
   document.body.classList.toggle('sheeton', !!G.sheetOpen); // menus cover the whole screen: the HUD and little map step aside
@@ -179,7 +179,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 54</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 55</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}

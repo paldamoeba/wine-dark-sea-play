@@ -1,20 +1,20 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=b8d289e';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=b8d289e';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank} from './state.js?v=b8d289e';
-import {scene, screenToSea} from './scene.js?v=b8d289e';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=b8d289e';
-import {makeFire, updateFire, burn} from './fire.js?v=b8d289e';
-import {blessing, fighters} from './crew.js?v=b8d289e';
-import {progress, goal} from './quests.js?v=b8d289e';
-import {arrowK, ramDmg} from './upgrades.js?v=b8d289e';
-import {toast} from './ui.js?v=b8d289e';
-import {sink} from './player.js?v=b8d289e';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=b8d289e';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=b8d289e';
-import {sfx} from './audio.js?v=b8d289e';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=fe8e317';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=fe8e317';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank} from './state.js?v=fe8e317';
+import {scene, screenToSea} from './scene.js?v=fe8e317';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=fe8e317';
+import {makeFire, updateFire, burn} from './fire.js?v=fe8e317';
+import {blessing, fighters} from './crew.js?v=fe8e317';
+import {progress, goal} from './quests.js?v=fe8e317';
+import {arrowK, ramDmg} from './upgrades.js?v=fe8e317';
+import {toast} from './ui.js?v=fe8e317';
+import {sink} from './player.js?v=fe8e317';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=fe8e317';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=fe8e317';
+import {sfx} from './audio.js?v=fe8e317';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -494,6 +494,26 @@ function land(a){
 // Ship plans (blueprints): you need them before the shipyard can build that ship.
 // Ship plans come in pieces (P54): each camp or fortress gives its piece once (S.pieceFrom). With every piece, take them to the
 // Kallisto shipyard to be studied (menus.js / shipyard.js). Pieces for plans you already hold are skipped.
+// What a camp or fortress still holds for you: the ship whose plan piece you'd win there, or 0
+export function planReward(f){
+  if (!f || !f.fort) return 0; const S = G.S;
+  const t = f.camp ? f.camp.plans || 0 : f.owner === 'pirate' ? PIRATE_PLANS : f.city ? 3 : 0; if (!t) return 0;
+  const from = (f.camp ? 'camp:' : 'fort:') + f.isle.name, held = (S.plans || []).includes(t) || (S.owned || []).includes(t) || ((S.pieces || {})[t] || 0) >= PLANS[t].pieces;
+  return held || (S.pieceFrom || []).includes(from) ? 0 : t;
+}
+// A golden scroll of plans floating over every camp and fortress that still holds a piece, so you can spot it from afar
+const scrollMat = new T.MeshBasicMaterial({color:'#f3d27a'}), scrollEnd = new T.MeshBasicMaterial({color:'#b5552c'});
+function scrollModel(){ const g = new T.Group(), roll = new T.Mesh(new T.CylinderGeometry(7, 7, 34, 14), scrollMat); roll.rotation.z = Math.PI/2; g.add(roll);
+  for (const s of [-1, 1]){ const k = new T.Mesh(new T.CylinderGeometry(8.5, 8.5, 3, 14), scrollEnd); k.rotation.z = Math.PI/2; k.position.x = s*17; g.add(k); }
+  const sheet = new T.Mesh(new T.PlaneGeometry(30, 18), new T.MeshBasicMaterial({color:'#fbeec8', side:T.DoubleSide})); sheet.position.set(0, -14, 0); g.add(sheet);
+  const band = new T.Mesh(new T.PlaneGeometry(22, 2), new T.MeshBasicMaterial({color:'#3f6c94', side:T.DoubleSide})); band.position.set(0, -12, .2); g.add(band);
+  return g; }
+function updateScrolls(){
+  for (const e of enemies){ if (!e.fort) continue; const t = !e.dead && planReward(e), d = t && dist(e, G.S);
+    if (t && !e.scroll){ e.scroll = scrollModel(); scene.add(e.scroll); }
+    if (!e.scroll) continue; e.scroll.visible = !!t && d < 4000; if (!e.scroll.visible) continue;
+    e.scroll.position.set(e.x, (e.camp ? 95 : 220) + Math.sin(G.t*1.6)*6, e.y); e.scroll.rotation.y = G.t*.8; e.scroll.scale.setScalar(1 + Math.min(1.5, d/1500)); } // bigger far away
+}
 function givePiece(t, from){
   const S = G.S, need = PLANS[t].pieces, have = (S.pieces || {})[t] || 0;
   if ((S.plans || []).includes(t) || (S.owned || []).includes(t) || have >= need || (S.pieceFrom || []).includes(from)) return;
@@ -763,7 +783,7 @@ addEventListener('keydown', e => { if (e.code === 'Space' && !G.fish && !G.sheet
 
 // Called every frame.
 export function updateCombat(dt){
-  updateAbilities(dt); syncAllies();
+  updateAbilities(dt); syncAllies(); updateScrolls();
   for (const e of enemies){
     if (e.fort){ // forts don't float: they crumble when they fall and rise again when rebuilt
       if (e.dead){ e.sinkT += dt; e.respawn -= dt; e.obj.position.y = 2 - Math.min(70, e.sinkT*10); if (e.respawn <= 0){ respawn(e); e.obj.position.y = 2; } }

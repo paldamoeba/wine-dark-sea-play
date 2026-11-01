@@ -760,3 +760,22 @@ body.big .abilities{zoom:1.5}
 .videobox{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(20,16,12,.72)}
 .videobox div{background:var(--cz-solid);border-radius:18px;padding:22px 26px;text-align:center;box-shadow:var(--cz-shadow);max-width:280px;display:flex;flex-direction:column;gap:6px;color:var(--cz-ink)}
 .videobox small{color:var(--cz-muted)}.videobox em{font:800 34px/1 var(--body);font-style:normal;color:var(--cz-teal)}
+
+/* ==== P55: lighter HUD. No white card: the hull bar, the load bars, coins and weather float on the sea with a soft shadow,
+   smaller, so they cover less. The toolbar buttons each have their own color again. ==== */
+.hud{background:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:0!important;gap:5px!important;min-width:0!important}
+.lifebar .bar{width:150px!important;flex:none!important;height:8px!important;background:rgba(20,30,40,.35)!important;box-shadow:0 1px 3px rgba(0,0,0,.25)!important}
+.loads{gap:3px!important}
+.ld{color:#fff!important;font-size:11px;gap:5px;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+.ld .ic{width:16px;height:16px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}.ld .ic svg{width:15px;height:15px}
+.ld .bar{width:58px;height:5px;background:rgba(20,30,40,.35)!important}
+.ld b{min-width:34px;color:#fff!important}
+.ld.full b{color:#ffb4a5!important}
+.hudbar{border-top:0!important;padding-top:1px!important;gap:10px!important}
+.hi,#wxChip,#goldChip{color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+#wxChip b{color:#eef4f6!important}
+.hi .ic svg,#goldChip .ic svg,.hi.wx span svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+/* toolbar: a different soft color for each button */
+#bagBtn{background:#f6d9a8!important}#goalPill{background:#f5c3b5!important}#chartBtn{background:#bfe0ea!important}#gearBtn{background:#d8d0ee!important}
+.tool{box-shadow:0 3px 0 rgba(0,0,0,.12),0 6px 14px rgba(35,30,25,.18)!important}
+.mission .reward em{color:#9a5a12;font-weight:800}

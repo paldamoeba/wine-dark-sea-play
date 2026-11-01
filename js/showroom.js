@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=b8d289e';
-import {makePost} from './glow.js?v=b8d289e';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=b8d289e';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=b8d289e';
-import {makeFire, updateFire} from './fire.js?v=b8d289e';
-import {updateSmoke} from './smoke.js?v=b8d289e';
-import {addGrass, updateGrass} from './grass.js?v=b8d289e';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=b8d289e';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=fe8e317';
+import {makePost} from './glow.js?v=fe8e317';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=fe8e317';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=fe8e317';
+import {makeFire, updateFire} from './fire.js?v=fe8e317';
+import {updateSmoke} from './smoke.js?v=fe8e317';
+import {addGrass, updateGrass} from './grass.js?v=fe8e317';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=fe8e317';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -234,8 +234,14 @@ function updateSoundScene(dt){
   updateAudio(dt, playing.sea);
 }
 
+// P55 prototype: the warships bigger and heavier (25% longer, 40% wider, a taller hull and bigger sails), to compare.
+const bigger = k => { const s = SPECS[k], key = k + 'XL'; if (!SPECS[key]) SPECS[key] = {...s, L:s.L*1.25, B:s.B*1.4, H:s.H*1.3, rise:s.rise*1.25, sailW:s.sailW*1.15, sailH:s.sailH*1.15}; return key; };
+function sideBySide(k){ const g = new T.Group(), a = buildShip(k), b = buildShip(bigger(k)); a.position.z = -SPECS[k].B*1.6; b.position.z = SPECS[k].B*1.9; g.add(a, b); return g; }
 const GROUPS = {
   ships:{name:'Ships', items:[
+    {name:'Bireme, bigger (prototype)', desc:'A test: the bireme 25% longer, 40% wider, with a taller hull and bigger sail, so it feels like a heavy warship.', make:() => buildShip(bigger('bireme'))},
+    {name:'Trireme, bigger (prototype)', desc:'A test: the trireme made bigger and heavier the same way.', make:() => buildShip(bigger('trireme'))},
+    {name:'Trireme, old and bigger side by side', desc:'In front: the bigger prototype. Behind: the trireme as it is now.', make:() => sideBySide('trireme')},
     ...Object.keys(SPECS).map(k => ({name:k[0].toUpperCase() + k.slice(1), desc:SHIP_INFO[k] || '', make:() => buildShip(k, {}, true)})),
     {name:'Burning ship', desc:'A badly damaged ship catches fire: flames on deck, sparks, and a thick column of smoke that sways as it rises, dark at the bottom and grey at the top.', make:() => {
       const sh = buildShip('raider'), f = makeFire(SPECS.raider.L, SPECS.raider.B, SPECS.raider.H*.9); sh.add(f); sh.userData.fire = f; sh.userData.anim = 'fire'; return sh; }},
