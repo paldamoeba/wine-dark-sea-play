@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=5c3e890';
-import {makePost} from './glow.js?v=5c3e890';
-import {SOUNDS, STYLES, BATTLE, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=5c3e890';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=5c3e890';
-import {makeFire, updateFire} from './fire.js?v=5c3e890';
-import {updateSmoke} from './smoke.js?v=5c3e890';
-import {addGrass, updateGrass} from './grass.js?v=5c3e890';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=5c3e890';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=a77b89b';
+import {makePost} from './glow.js?v=a77b89b';
+import {SOUNDS, STYLES, BATTLE, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=a77b89b';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=a77b89b';
+import {makeFire, updateFire} from './fire.js?v=a77b89b';
+import {updateSmoke} from './smoke.js?v=a77b89b';
+import {addGrass, updateGrass} from './grass.js?v=a77b89b';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=a77b89b';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -248,7 +248,7 @@ const GROUPS = {
     {name:'Burning ship', desc:'A badly damaged ship catches fire: flames on deck, sparks, and a thick column of smoke that sways as it rises, dark at the bottom and grey at the top.', make:() => {
       const sh = buildShip('raider'), f = makeFire(SPECS.raider.L, SPECS.raider.B, SPECS.raider.H*.9); sh.add(f); sh.userData.fire = f; sh.userData.anim = 'fire'; return sh; }},
     {name:'The whole fleet', desc:'Every ship side by side, smallest to largest.', make:() => { const g = new T.Group(); let z = 0;
-      ['rowboat', 'fishing', 'trader', 'merchant', 'penteconter', 'bireme', 'trireme', 'dinghy', 'skiff', 'raider'].forEach(k => { const s = buildShip(k); z += SPECS[k].B*1.4 + 30; s.position.set(-SPECS[k].L/2 + 100, 0, z); g.add(s); z += SPECS[k].B*1.4; });
+      Object.keys(SPECS).filter(k => !/(XL|W)$/.test(k)).sort((a, b) => SPECS[a].L*SPECS[a].B - SPECS[b].L*SPECS[b].B).forEach(k => { /* P64: every ship, smallest to largest */ const s = buildShip(k); z += SPECS[k].B*1.4 + 30; s.position.set(-SPECS[k].L/2 + 100, 0, z); g.add(s); z += SPECS[k].B*1.4; });
       g.position.z = -z/2; const w = new T.Group(); w.add(g); return w; }},
     {name:'Torches at night', desc:'At night every ship lights torches at the bow and stern, and big ships a pair at the rails. Turn Glow on and off to compare.', light:'night', glow:true,
       make:() => { const g = new T.Group(); [['bireme', 0], ['merchant', 140], ['raider', 280]].forEach(([k, z]) => { const sh = buildShip(k); sh.position.z = z - 140; g.add(sh); }); return g; }},

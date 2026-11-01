@@ -59,7 +59,7 @@ export const SPECS = {
   // square sails, oars low down, a great curled stern and a ram. A ghost ship: nobody aboard.
   // P62: the quinquereme, the biggest warship: two rows of oars, a raised fighting deck with a railing over the rowers,
   // a mainsail and a foresail, a big ram. Archers fight from the top deck.
-  quinquereme:{L:215, B:62, H:30, rise:36, oarRows:2, oarCount:18, mast:true, sailW:84, sailH:70, sailMax:15, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, twoDeck:true, crew:[['stand', 1], ['archer', 10]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
+  quinquereme:{L:215, B:62, H:30, rise:36, oarRows:2, oarCount:18, mast:true, sailW:84, sailH:70, sailMax:20, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, twoDeck:true, crew:[['stand', 1], ['archer', 10]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
   flagship:   {L:280, B:96, H:44, rise:30, oarRows:2, oarCount:20, mast:true, sailW:70, sailH:58, sailMax:15, flagship:true, ghost:true, eyes:true, raider:true, crew:[], look:{paint:'king', sail:'plain', flag:'none'}},
 };
 
@@ -510,7 +510,7 @@ export function buildShip(key, look = {}, crew = true){
       const lg = new T.BufferGeometry(); lg.setAttribute('position', new T.Float32BufferAttribute(pts, 3));
       rig.add(new T.LineSegments(lg, new T.LineBasicMaterial({color:P.rope})));
       // the foresail (artemon): a small sail on a mast leaning out over the bow
-      if (sz[1]){ const fw = s.sailW*sz[1], fh = s.sailH*sz[1], fm = new T.Group(); fm.position.set(s.L*.33, info.deckY(.66) - 1, 0); fm.rotation.z = -.42; rig.add(fm);
+      if (sz[1]){ const fw = s.sailW*sz[1], fh = s.sailH*sz[1], fm = new T.Group(); fm.position.set(s.L*.33, info.deckY(.66) - 1, 0); fm.rotation.z = -.12; rig.add(fm); // nearly upright (P64)
         const m2 = mesh(new T.CylinderGeometry(1, 1.5, fh + 14, 6), 'mast'); m2.position.y = (fh + 14)/2; fm.add(m2);
         const y2 = mesh(new T.CylinderGeometry(.8, .8, fw + 8, 6), 'mast'); y2.rotation.x = Math.PI/2; y2.position.set(1.2, fh + 11, 0); fm.add(y2);
         const s2 = squareSail(fw, fh, sailTex(sailKey, 'none')); s2.position.set(2.2, fh + 10, 0); fm.add(s2); root.userData.sails.push(s2); }
@@ -536,7 +536,7 @@ export function buildShip(key, look = {}, crew = true){
   if (s.L >= 100) for (const sg of [1, -1]) torchAt.push([-s.L*.12, info.deckY(.24), sg*info.W(.24)*.95]);
   for (const [x, y, z] of torchAt){ const t = torch(); t.scale.setScalar(.65); t.position.set(x, y, z); t.visible = false; body.add(t); root.userData.torches.push(t); }
   // The player's ship shows its upgrades: the ram it has bought (not the built-in one) and extra planking along the sides.
-  if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/10)), sub = lk.ram - m*10; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.03 + m*.1, pc.bottom)); } }
+  if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/5)), sub = lk.ram - m*5; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.06 + m*.1, pc.bottom)); } }
   else if (s.raider && s.ram) body.add(boarRam(s));
   else if (s.ram) body.add(ram(s, '#b8843e', 1, pc.bottom));
   if (lk.plate > 0){ const c = lk.plate >= 10 ? '#e3b341' : lk.plate >= 5 ? '#b07f3c' : '#7a5230', n = 6;
@@ -559,10 +559,10 @@ export function buildShip(key, look = {}, crew = true){
         const rp = mesh(new T.BoxGeometry(.8, 5, .8), pc.wale); rp.position.set(x, dy + 3.2, sg*dw*.5); body.add(rp); } }
     for (const sg of [1, -1]){ const rail = mesh(new T.BoxGeometry(dl, 1, 1.2), pc.wale); rail.position.set(-s.L*.02, dy + 5.6, sg*dw*.5); body.add(rail);
       const mid = mesh(new T.BoxGeometry(dl, .6, .8), pc.wale); mid.position.set(-s.L*.02, dy + 3, sg*dw*.5); body.add(mid); }
-    const fm = new T.Group(); fm.position.set(s.L*.3, dy, 0); fm.rotation.z = -.32; body.add(fm);
+    if (lk.sailLv === undefined){ const fm = new T.Group(); fm.position.set(s.L*.3, dy, 0); body.add(fm); // upright (your own ship gets its sails from the Sail upgrade)
     const m2 = mesh(new T.CylinderGeometry(1.1, 1.6, s.sailH*.7 + 12, 6), 'mast'); m2.position.y = (s.sailH*.7 + 12)/2; fm.add(m2);
     const y2 = mesh(new T.CylinderGeometry(.8, .8, s.sailW*.55 + 8, 6), 'mast'); y2.rotation.x = Math.PI/2; y2.position.set(1.2, s.sailH*.7 + 9, 0); fm.add(y2);
-    const s2 = squareSail(s.sailW*.55, s.sailH*.55, sailTex(sailKey, 'none')); s2.position.set(2.2, s.sailH*.7 + 8, 0); fm.add(s2); root.userData.sails.push(s2); }
+    const s2 = squareSail(s.sailW*.55, s.sailH*.55, sailTex(sailKey, 'none')); s2.position.set(2.2, s.sailH*.7 + 8, 0); fm.add(s2); root.userData.sails.push(s2); } }
   if (s.nets){ const n = mesh(new T.DodecahedronGeometry(6, 0), 'net'); n.scale.set(1.3, .5, 1); n.position.set(-s.L*.3, info.deckLevel + 2, 0); body.add(n); }
   if (s.cargo){ for (let i=0;i<8;i++){ const a = mesh(amphora, '#b06a3d', {flatShading:false}); a.position.set(-8 + (i % 4)*8, info.deckLevel, -7 + Math.floor(i/4)*12); body.add(a); }
     const crate = mesh(new T.BoxGeometry(14, 9, 12), '#9b6b3a'); crate.position.set(s.crateX != null ? s.crateX*s.L : 24, info.deckLevel + 4.5, 0); body.add(crate); }
@@ -578,6 +578,7 @@ export function buildShip(key, look = {}, crew = true){
     let seated = 0;
     root.userData.oars.filter(o => o.r === 0).forEach((o, i) => {
       if (s.oarCount === 1 && o.sg < 0) return; // the rowboat: one rower works both oars
+      if (s.twoDeck) return; // on the two-deck ship the rowers are hidden under the fighting deck
       if (lay && seated >= lay.rowers) return; seated++;
       const p = person(tunics[i % 3], 'row'); p.rotation.y = Math.PI; p.traverse(m => m.castShadow = false);
       add(p, o.x, info.deckLevel, s.oarCount === 1 ? 0 : o.sg*info.W(Math.abs(o.x/(s.L/2)))*.5, o.ph);

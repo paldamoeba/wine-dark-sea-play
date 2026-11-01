@@ -1,16 +1,16 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES} from './config.js?v=5c3e890';
-import {G, lvl, ship, pay, rank} from './state.js?v=5c3e890';
-import {SPECS, sailSizes, crewLayout} from './ships.js?v=5c3e890';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES} from './config.js?v=a77b89b';
+import {G, lvl, ship, pay, rank} from './state.js?v=a77b89b';
+import {SPECS, sailSizes, crewLayout} from './ships.js?v=a77b89b';
 
-export const ramMax = () => UPGRADE_MAX*RAM.mats.length;
+export const ramMax = () => RAM.lv*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
 // (the rowboat gets one small sail, the fishing boat and bireme two, the trireme three).
 export const upKeys = () => Object.keys(UPGRADES).filter(k => !(UPGRADES[k].minTier && rank() < UPGRADES[k].minTier) && !(k === 'sail' && !SPECS[ship().model].sailMax));
 export const maxOf = k => k === 'ram' ? ramMax() : k === 'sail' ? SPECS[ship().model].sailMax : k === 'seats' ? crewLevels() : UPGRADE_MAX;
 export const sailCount = (l = lvl('sail')) => sailSizes(SPECS[ship().model], l).filter(Boolean).length;
 // The ram's material and its level within that material (1-10). Level 0 = no ram.
-export function ramMat(l = lvl('ram')){ if (!l) return null; const m = Math.min(RAM.mats.length - 1, Math.floor((l - 1)/UPGRADE_MAX)); return {...RAM.mats[m], i:m, sub:l - m*UPGRADE_MAX}; }
+export function ramMat(l = lvl('ram')){ if (!l) return null; const m = Math.min(RAM.mats.length - 1, Math.floor((l - 1)/RAM.lv)); return {...RAM.mats[m], i:m, sub:l - m*RAM.lv}; }
 // Damage of a full-speed head-on hit with your ram (0 without one).
 export function ramDmg(l = lvl('ram')){ const m = ramMat(l); return m ? Math.round((RAM.base + RAM.per*m.sub)*m.k) : 0; }
 export const arrowK = () => 1 + UPGRADES.arrows.each*lvl('arrows');
@@ -25,7 +25,7 @@ export function costOf(k){
   const l = lvl(k), u = UPGRADES[k]; if (l >= maxOf(k)) return null;
   if (k === 'seats') return {gold:CREW_COST[l] || CREW_COST[3]};
   const n = l + 1, sk = u.ship ? SHIP_K[rank()] : 1;
-  const step = k === 'ram' ? ramMat(n).sub : n, mk = k === 'ram' ? ramMat(n).cost : 1, c = {};
+  const step = k === 'ram' ? ramMat(n).sub*2 : n, mk = k === 'ram' ? ramMat(n).cost : 1, c = {};
   for (const m in u.cost) c[m] = Math.round(u.cost[m]*step*sk*mk);
   // the bronze ram is paid in bronze instead of wood (5 wood = 1 bronze); the golden ram in drachmae alone
   const rp = k === 'ram' && ramMat(n).pay; if (rp === 'bronze'){ c.bronze = Math.round(c.wood/5/mk*1.5); delete c.wood; } else if (rp === 'gold'){ c.gold += c.wood; delete c.wood; }

@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE} from './config.js?v=5c3e890';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=5c3e890';
-import {sfx} from './audio.js?v=5c3e890';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE} from './config.js?v=a77b89b';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=a77b89b';
+import {sfx} from './audio.js?v=a77b89b';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -74,7 +74,7 @@ export function unload(){ const S = G.S, m = k => { const n = Math.min(S.cargo[k
 
 export function newSave(){
   return {version:SAVE_VERSION, econ:2, tier:0, gold:0, ware:0, bronze:0, linen:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, bronze:0, linen:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},
-    x:START.x, y:START.y, a:START.a, map:MAP.key, hull:SHIPS[0].hull, hint:true, playSeconds:0, world:null, explored:null, look:{}, p49:true, plans:[0], camps:[]};
+    x:START.x, y:START.y, a:START.a, map:MAP.key, hull:SHIPS[0].hull, hint:true, playSeconds:0, world:null, explored:null, look:{}, p49:true, ram15:true, plans:[0], camps:[]};
 }
 
 function read(key){ try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; } }
@@ -91,6 +91,7 @@ function migrate(o){
   if (!o.econ){ o.ware = ((o.ware || 0) + ((o.cargo && o.cargo.wood) || 0))*5; o.cargo.wood = 0; o.econ = 2; }
   // prototype 49: two bandit camp goals were added (before the fishing boat and before the bireme), ships need blueprints,
   // and the hired sailors became each ship's own crew (old crew quarters levels count as Crew levels; hires are refunded)
+  if (!o.ram15){ o.ram15 = true; o.ram = Math.ceil((o.ram || 0)/2); } // P64: the ram went from 30 levels to 15
   if (!o.p49){ o.p49 = true; const g = o.goal || 0; o.goal = g < 7 ? g : g === 7 ? 8 : g + 2;
     const own = o.owned || Array.from({length:(o.tier || 0) + 1}, (_, i) => i); o.plans = [...new Set([0, ...own])];
     if (o.crew && o.crew.length){ o.gold = (o.gold || 0) + 30*o.crew.length; o.crewRefund = o.crew.length; } o.crew = []; }  return {...base, ...o, cargo:{...base.cargo, ...o.cargo}, look:{...(o.look || {})}};

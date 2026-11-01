@@ -1,16 +1,16 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE} from './config.js?v=5c3e890';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=5c3e890';
-import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=5c3e890';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5c3e890';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=5c3e890';
-import {planClues} from './combat.js?v=5c3e890';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=5c3e890';
-import {board, active, canDeliver, goal} from './quests.js?v=5c3e890';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=5c3e890';
-import {shipPortrait} from './portrait.js?v=5c3e890';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=5c3e890';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM} from './config.js?v=a77b89b';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=a77b89b';
+import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=a77b89b';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=a77b89b';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=a77b89b';
+import {planClues} from './combat.js?v=a77b89b';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=a77b89b';
+import {board, active, canDeliver, goal} from './quests.js?v=a77b89b';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=a77b89b';
+import {shipPortrait} from './portrait.js?v=a77b89b';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=a77b89b';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -227,7 +227,7 @@ export function shipPic(model, look = {}){
   const sail = s.mast ? (() => { const sw = s.sailW*sc*.95, sh = s.sailH*sc, top = y - H - sh - 14, st = SAILS[lk.sail] || SAILS.plain;
     const stripes = (st.stripes || ['#ece2cb']).map((c, i, a) => `<rect x="${100 - sw/2 + i*sw/a.length}" y="${top}" width="${sw/a.length + .5}" height="${sh}" fill="${c}"/>`).join('');
     return `<path d="M100 ${y - H} V${top - 6}" stroke="#6e3d1e" stroke-width="3"/><path d="M${100 - sw/2 - 4} ${top} H${100 + sw/2 + 4}" stroke="#6e3d1e" stroke-width="2.5"/><g>${stripes}</g>`; })() : '';
-  const ram = lk.ram > 0 ? `<path d="M${x1 - 2} ${y - H*.25} L${x1 + 10} ${y - H*.1} L${x1 - 2} ${y + 2}Z" fill="${['#8a5a30', '#b07f3c', '#e3b341'][Math.min(2, Math.floor((lk.ram - 1)/10))]}"/>` : s.ram && lk.ram === undefined ? `<path d="M${x1 - 2} ${y - H*.25} L${x1 + 10} ${y - H*.1} L${x1 - 2} ${y + 2}Z" fill="#b07f3c"/>` : '';
+  const ram = lk.ram > 0 ? `<path d="M${x1 - 2} ${y - H*.25} L${x1 + 10} ${y - H*.1} L${x1 - 2} ${y + 2}Z" fill="${['#8a5a30', '#b07f3c', '#e3b341'][Math.min(2, Math.floor((lk.ram - 1)/5))]}"/>` : s.ram && lk.ram === undefined ? `<path d="M${x1 - 2} ${y - H*.25} L${x1 + 10} ${y - H*.1} L${x1 - 2} ${y + 2}Z" fill="#b07f3c"/>` : '';
   const topY = Math.min(y - H - up - 6, s.mast ? y - H - s.sailH*sc - 24 : 99) - 4;
   return `<svg viewBox="0 ${topY} 200 ${90 - topY}" class="shippic" aria-hidden="true"><path d="M0 76 Q50 72 100 76 T200 76 V90 H0Z" fill="${SEA}" opacity=".35"/>${oars}${sail}${hull}${ram}</svg>`;
 }
@@ -368,8 +368,8 @@ function upgradesCard(){
   const k = sel.up, u = UPGRADES[k], l = lvl(k), c = costOf(k), ok = canPay(c), m = k === 'ram' ? ramMat(l) : null;
   const short = l => k === 'ram' ? (ramMat(l) ? `${ramDmg(l)} damage` : 'no ram') : effectText(k, l);
   const next = c ? short(l + 1) : '';
-  const detail = `<div class="updetail"><div class="uh"><span class="uic">${UP_IC[k]()}</span><div><b>${u.label}</b><span class="lv">${k === 'ram' ? (m ? `${m.name} ram · level ${m.sub} of 10` : 'No ram yet') : `Level ${l} of ${maxOf(k)}`}</span></div></div>
-      ${pips(k === 'ram' ? (m ? m.sub : 0) : l, k === 'ram' ? 10 : maxOf(k))}${k === 'ram' ? `<span class="mats">${['Wood', 'Bronze', 'Drachmae'].map((n, i) => `<i class="${m && m.i >= i ? 'on' : ''}" style="--c:${['#8a5a30', '#b07f3c', '#e3b341'][i]}">${n}</i>`).join('')}</span>` : ''}
+  const detail = `<div class="updetail"><div class="uh"><span class="uic">${UP_IC[k]()}</span><div><b>${u.label}</b><span class="lv">${k === 'ram' ? (m ? `${m.name} ram · level ${m.sub} of 5` : 'No ram yet') : `Level ${l} of ${maxOf(k)}`}</span></div></div>
+      ${pips(k === 'ram' ? (m ? m.sub : 0) : l, k === 'ram' ? RAM.lv : maxOf(k))}${k === 'ram' ? `<span class="mats">${['Wood', 'Bronze', 'Gold'].map((n, i) => `<i class="${m && m.i >= i ? 'on' : ''}" style="--c:${['#8a5a30', '#b07f3c', '#e3b341'][i]}">${n}</i>`).join('')}</span>` : ''}
       <small>${u.desc}.${u.ship ? ' Stays with this ship.' : ' Comes with you to any ship.'}</small>
       <p class="eff"><span>Now: ${short(l)}</span>${c ? ` → <b>${next}</b>` : ''}</p>
       ${c ? `<div class="btnrow"><div class="cost">${costChips(c)}</div><button class="btn ${ok ? 'gold' : ''}" data-act="upgrade" data-k="${k}" ${ok ? '' : 'disabled'}>Upgrade</button></div>` : '<span class="tag on">Fully upgraded</span>'}</div>`;
@@ -441,7 +441,7 @@ function holdTab(){
 }
 function shipTab(){
   const S = G.S, sh = ship(), bl = S.bless || 0;
-  const ups = upKeys().map(k => `<div class="uprow"><span class="uic">${UP_IC[k]()}</span><span>${UPGRADES[k].label}</span>${pips(k === 'ram' ? (ramMat() ? ramMat().sub : 0) : lvl(k), 10)}</div>`).join('');
+  const ups = upKeys().map(k => `<div class="uprow"><span class="uic">${UP_IC[k]()}</span><span>${UPGRADES[k].label}</span>${pips(k === 'ram' ? (ramMat() ? ramMat().sub : 0) : lvl(k), k === 'ram' ? RAM.lv : maxOf(k))}</div>`).join('');
   return card(sh.name, `${shipImg(sh.model, {...S.look, ram:lvl('ram'), men:men()})}
       <div class="line">${IC.hull}<div><b>Hull ${Math.ceil(S.hull)} / ${sh.hull}</b>${bar(S.hull/sh.hull, S.hull/sh.hull < .35 ? 'low' : '')}</div></div>
       <div class="stats big">${IC.speed} ${sh.speed} ${IC.hold} ${sh.hold} ${IC.archer} ${fighters()} ${IC.rower} ${layout().rowers} ${IC.crew} ${men()}/${sh.men[1]}</div>

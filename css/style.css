@@ -814,3 +814,4 @@ body.big .abilities{zoom:1.5}
 .sw{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 6px;border:0;border-radius:12px;background:#f8f3ea;cursor:pointer;font:inherit}
 .sw svg{width:46px;height:32px}.sw small{font:700 10.5px/1.15 var(--body);color:var(--cz-ink);text-align:center}
 .sw.on{background:#fff;box-shadow:0 0 0 2.5px var(--cz-teal),0 2px 6px rgba(35,30,25,.12)}
+.mission .mlv{color:#e3a33a;font-size:12px;letter-spacing:-1px}.mission .mlv i{color:#d8ccb6;font-style:normal}

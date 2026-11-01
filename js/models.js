@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=5c3e890';
+import {hash} from './world.js?v=a77b89b';
 
-import {smokeColumn} from './smoke.js?v=5c3e890';
+import {smokeColumn} from './smoke.js?v=a77b89b';
 const T = window.THREE;
-import {mat} from './ships.js?v=5c3e890';
+import {mat} from './ships.js?v=a77b89b';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }

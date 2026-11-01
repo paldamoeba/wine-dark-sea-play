@@ -1,11 +1,11 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=5c3e890';
-import {FORTS} from './config.js?v=5c3e890';
-import {CITIES} from './world.js?v=5c3e890';
-import {enemies, hostile, planReward} from './combat.js?v=5c3e890';
-import {SHIPS, PLANS} from './config.js?v=5c3e890';
-import {sfx} from './audio.js?v=5c3e890';
+import {G} from './state.js?v=a77b89b';
+import {FORTS} from './config.js?v=a77b89b';
+import {CITIES} from './world.js?v=a77b89b';
+import {enemies, hostile, planReward} from './combat.js?v=a77b89b';
+import {SHIPS, PLANS} from './config.js?v=a77b89b';
+import {sfx} from './audio.js?v=a77b89b';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
@@ -31,6 +31,7 @@ export function updateFortWatch(dt){
   const prize = planReward(f), key = f.isle.name + sunk + Math.round(wall*20) + f.dead + prize;
   if (key !== last){ last = key;
     // P60: one short line: name, a thin bar for the walls (or "fallen"), the guard ships (crossed out when sunk), a scroll if it holds plans
-    m.innerHTML = `<b class="mt">${f.isle.name}</b>${f.dead ? '<em class="done">✓</em>' : `<span class="mbar"><i style="width:${wall*100}%"></i></span>`}<span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span>${prize ? '<span class="mscroll" title="Holds ship plans">📜</span>' : ''}`; }
+    const lv = f.camp ? f.camp.lv || 1 : f.tier || 2;
+    m.innerHTML = `<span class="mlv" title="Level ${lv}">${'★'.repeat(lv)}<i>${'★'.repeat(3 - lv)}</i></span><b class="mt">${f.isle.name}</b>${f.dead ? '<em class="done">✓</em>' : `<span class="mbar"><i style="width:${wall*100}%"></i></span>`}<span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span>${prize ? '<span class="mscroll" title="Holds ship plans">📜</span>' : ''}`; }
   m.hidden = false;
 }

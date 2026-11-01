@@ -142,8 +142,8 @@ export const WAREHOUSE = [
 export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry
 export const SHIP_K = [.6, 1, 2, 3, 4.5];
 // The ram: wood levels 1-10, then bronze 1-10, then gold 1-10 (30 in all). The bronze levels are paid in bronze (pay), the gold ones in more drachmae. Damage when your bow hits a ship head-on at speed.
-export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Bronze', color:'#b07f3c', k:2.2, cost:2.5, pay:'bronze'}, {name:'Drachmae', color:'#e3b341', k:4, cost:6, pay:'gold'}],
-  base:8, per:2, minSpeed:.45, cooldown:1.2, bump:3};
+export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Bronze', color:'#b07f3c', k:2.2, cost:2.5, pay:'bronze'}, {name:'Gold', color:'#e3b341', k:4, cost:6, pay:'gold'}],
+  base:8, per:4, lv:5, minSpeed:.45, cooldown:1.2, bump:3}; // P64: 5 levels each of wood, bronze and gold (15 in all), like the sails
 
 // Captains: hire one for a ship you're not sailing and it goes out fishing on its own, bringing back gold.
 // One trip: tripSeconds at sea, then restSeconds moored at Kallisto. Pay per trip = hold × perHold, plus 4% per upgrade level on that ship.
@@ -156,10 +156,10 @@ export const CAPTAIN = {cost:60, grow:2.5, // 60, 150, 380, 940...
 // Bandit camps on the wild islands near Kallisto: a palisade with archers and one mothership guarding it. Easier than a
 // fortress, no catapults. Burn one and it stays burnt; some give ship blueprints (plans = SHIPS index).
 export const CAMPS = [
-  {isle:'Ikaria',  hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[50, 70],   wood:30,  bronze:2,  plans:1},
-  {isle:'Tinos',   hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[110, 150], wood:70,  bronze:8,  plans:2},
-  {isle:'Syros',   plans:2, hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
-  {isle:'Ios',     plans:3, hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
+  {isle:'Ikaria',  lv:1, hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[50, 70],   wood:30,  bronze:2,  plans:1},
+  {isle:'Tinos',   lv:2, hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[110, 150], wood:70,  bronze:8,  plans:2},
+  {isle:'Syros',   lv:2, plans:2, hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
+  {isle:'Ios',     lv:3, plans:3, hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
 ];
 export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme's plans (so does any city fortress you knock down)
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
@@ -255,8 +255,16 @@ export const ENEMIES = {
   // navies: one kind per city. A patrol switches city when its island changes hands.
   athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:167, beam:49},
   sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:141, beam:44},
+  // P64: the two-deck quinqueremes: the navies' heaviest ships (guarding their strongest fortresses) and a pirate one
+  athensQ:  {name:'Athenian quinquereme', side:'navy', city:'athens', model:'quinquereme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[180, 260], wood:120, bronze:20, len:215, beam:62},
+  spartaQ:  {name:'Spartan quinquereme', side:'navy', city:'sparta', model:'quinquereme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[180, 260], wood:120, bronze:20, len:215, beam:62},
+  pirateQ:  {name:'Pirate quinquereme', model:'quinquereme', look:{paint:'raider', sail:'blood', flag:'none', helm:'pirate'}, hull:480, speed:125, turn:.42, fighters:8, dmg:3.2, sight:650, leash:1300, gold:[200, 300], wood:120, bronze:18, len:215, beam:62},
 };
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
+// P64: three levels of fortress (by how far out they stand) and of bandit camp. Level 3 fortresses are guarded by quinqueremes.
+export const FORT_LV = [null, {hull:650, fighters:5, dmg:2, guards:1, gold:[200, 320]}, {hull:900, fighters:7, dmg:2.5, guards:2, gold:[320, 520]}, {hull:1300, fighters:9, dmg:3.2, guards:2, gold:[500, 800], big:true}];
+// enemy ship levels: 0 near Kallisto, 1 further, 2 far out. Bigger sails, bigger rams, fuller crews, tougher hulls.
+export const SHIP_LV = {near:9000, far:16000, hull:[1, 1.3, 1.7], dmg:[1, 1.15, 1.35], gold:[1, 1.4, 2], sail:[3, 8, 14], ram:[2, 7, 12], crew:[.45, .7, 1]};
 export const WITNESS = {
   crimeSeconds: 6,  // after you shoot a merchant or navy ship, any navy ship that sees you or the victim in this time joins in
   forget: 8,        // seconds out of sight (or in the Shallows) before an angry navy ship gives up

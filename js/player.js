@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=5c3e890';
-import {SPECS} from './ships.js?v=5c3e890';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=5c3e890';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=5c3e890';
-import {W} from './weather.js?v=5c3e890';
-import {steering} from './input.js?v=5c3e890';
-import {toast, showZone} from './ui.js?v=5c3e890';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=5c3e890';
-import {startFish, stopFish} from './fishing.js?v=5c3e890';
-import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=5c3e890';
-import {progress} from './quests.js?v=5c3e890';
-import {startSink} from './sinking.js?v=5c3e890';
-import {sfx} from './audio.js?v=5c3e890';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=a77b89b';
+import {SPECS} from './ships.js?v=a77b89b';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=a77b89b';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=a77b89b';
+import {W} from './weather.js?v=a77b89b';
+import {steering} from './input.js?v=a77b89b';
+import {toast, showZone} from './ui.js?v=a77b89b';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=a77b89b';
+import {startFish, stopFish} from './fishing.js?v=a77b89b';
+import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=a77b89b';
+import {progress} from './quests.js?v=a77b89b';
+import {startSink} from './sinking.js?v=a77b89b';
+import {sfx} from './audio.js?v=a77b89b';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
