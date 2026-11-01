@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=e3c0bca';
-import {SPECS} from './ships.js?v=e3c0bca';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=e3c0bca';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=e3c0bca';
-import {W} from './weather.js?v=e3c0bca';
-import {steering} from './input.js?v=e3c0bca';
-import {toast, showZone} from './ui.js?v=e3c0bca';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=e3c0bca';
-import {startFish, stopFish} from './fishing.js?v=e3c0bca';
-import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=e3c0bca';
-import {progress} from './quests.js?v=e3c0bca';
-import {startSink} from './sinking.js?v=e3c0bca';
-import {sfx} from './audio.js?v=e3c0bca';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=5c3e890';
+import {SPECS} from './ships.js?v=5c3e890';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=5c3e890';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=5c3e890';
+import {W} from './weather.js?v=5c3e890';
+import {steering} from './input.js?v=5c3e890';
+import {toast, showZone} from './ui.js?v=5c3e890';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=5c3e890';
+import {startFish, stopFish} from './fishing.js?v=5c3e890';
+import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=5c3e890';
+import {progress} from './quests.js?v=5c3e890';
+import {startSink} from './sinking.js?v=5c3e890';
+import {sfx} from './audio.js?v=5c3e890';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -42,8 +42,6 @@ export function rowNow(){ if (!hasSail() || G.rowT > 0 || G.rowCd > 0 || G.dock 
   G.rowT = ROW.secs; G.rowCd = ROW.cd; sfx('horn'); if (!G.S.rowTip){ G.S.rowTip = true; toast('Row! Ram at full speed', 4.5); } return true; }
 addEventListener('keydown', e => { if (e.key === 'Shift' && !G.sheetOpen && !G.mapOpen) rowNow(); });
 function move(dt, sh){
-  // P61: hold the joystick out past its rim (thumb pushed all the way) for half a second to Row!
-  if (G.joy && G.joy.raw > 1.3) { if ((G.rimT = (G.rimT || 0) + dt) > .5 && !(G.rowT > 0)){ rowNow(); G.rimT = 0; } } else G.rimT = 0;
   G.rowT = Math.max(0, (G.rowT || 0) - dt); G.rowCd = Math.max(0, (G.rowCd || 0) - dt);
   G.rowing = !hasSail() || G.rowT > 0; // oars in the water (for the oars' look and the sound)
   const S = G.S, [ix, iy] = steering(S), mag = Math.hypot(ix, iy);

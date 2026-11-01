@@ -1,16 +1,16 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE} from './config.js?v=e3c0bca';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=e3c0bca';
-import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=e3c0bca';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=e3c0bca';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=e3c0bca';
-import {planClues} from './combat.js?v=e3c0bca';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=e3c0bca';
-import {board, active, canDeliver, goal} from './quests.js?v=e3c0bca';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=e3c0bca';
-import {shipPortrait} from './portrait.js?v=e3c0bca';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=e3c0bca';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE} from './config.js?v=5c3e890';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=5c3e890';
+import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=5c3e890';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5c3e890';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=5c3e890';
+import {planClues} from './combat.js?v=5c3e890';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=5c3e890';
+import {board, active, canDeliver, goal} from './quests.js?v=5c3e890';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys} from './upgrades.js?v=5c3e890';
+import {shipPortrait} from './portrait.js?v=5c3e890';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=5c3e890';
 
 const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -257,9 +257,9 @@ export const woodPrice = h => h.free ? FREEPORT.wood : TIMBER.at[h.is.name] || T
 export const matPrice = (h, k) => k === 'wood' ? woodPrice(h) : k === 'linen' ? LINEN.at[h.is.name] || LINEN.price : h.free ? BRONZE.free : BRONZE.at[h.is.name] || null;
 export const matStep = k => k === 'wood' ? 10 : 1; // wood is sold in bundles of 10
 export function harborHTML(h){
-  const home = h.is.port, list = home ? [['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['yard', 'Shipyard', IC.yard], ['crew', 'Crew', IC.crew]]
+  const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['crew', 'Crew', IC.crew]] // P63: Kallisto opens on the shipyard
     : h.free ? [['market', 'Market', IC.market], ['dock', 'Dock', IC.dock]] : [['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['dock', 'Dock', IC.dock]];
-  if (!list.some(([k]) => k === tabs.port)) tabs.port = 'market';
+  if (!list.some(([k]) => k === tabs.port)) tabs.port = list[0][0];
   const t = tabs.port, body = t === 'jobs' ? jobsTab(h) : t === 'yard' ? yardTab() : t === 'crew' ? crewTab() : t === 'dock' ? dockTab() : marketTab(h);
   const sub = home ? 'Your home harbor' : h.free ? 'Your free port: cheaper goods, cheap timber, purple dye' : h.is.city ? `Flies the flag of ${CITIES[h.is.city].name}` : 'A free harbor: no city rules it';
   return `<div class="mtop">${top(`${h.is.name}<small>${sub}</small>`, '<button class="btn gold" data-act="sail">Set sail</button>')}${res()}${tabBar(list, t, 'port')}</div><div class="mbody">${body}</div>`;

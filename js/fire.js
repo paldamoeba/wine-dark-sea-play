@@ -1,5 +1,5 @@
 // Fire and smoke on badly damaged ships. Starts below FIRE_AT of the hull and grows as the hull drops.
-import {smokeColumn} from './smoke.js?v=e3c0bca';
+import {smokeColumn} from './smoke.js?v=5c3e890';
 const T = window.THREE;
 export const FIRE_AT = .4;
 

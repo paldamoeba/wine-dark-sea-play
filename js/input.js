@@ -1,10 +1,10 @@
 // Touch, mouse and keyboard. Double tap = sail there (a single tap only marks the spot). Press and drag = joystick.
 // Volley: while one thumb steers, a quick tap with another finger anywhere; or a double tap on your own ship.
 // Two fingers moving apart or together: zoom in and out a little.
-import {G, ship, saveSettings} from './state.js?v=e3c0bca';
-import {landDist} from './world.js?v=e3c0bca';
-import {canvas, screenToSea} from './scene.js?v=e3c0bca';
-import {hideHint, toast} from './ui.js?v=e3c0bca';
+import {G, ship, saveSettings} from './state.js?v=5c3e890';
+import {landDist} from './world.js?v=5c3e890';
+import {canvas, screenToSea} from './scene.js?v=5c3e890';
+import {hideHint, toast} from './ui.js?v=5c3e890';
 
 export const JOY_RADIUS = 58;
 const keys = new Set();

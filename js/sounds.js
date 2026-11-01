@@ -1,10 +1,10 @@
 // Tells the sound engine what is going on around the ship each frame: speed, weather, land, wrecks, fights, harbors.
-import {G, ship, lvl} from './state.js?v=e3c0bca';
-import {SHIPS} from './config.js?v=e3c0bca';
-import {landDist, WRECKS} from './world.js?v=e3c0bca';
-import {W, KINDS} from './weather.js?v=e3c0bca';
-import {combatState} from './combat.js?v=e3c0bca';
-import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=e3c0bca';
+import {G, ship, lvl} from './state.js?v=5c3e890';
+import {SHIPS} from './config.js?v=5c3e890';
+import {landDist, WRECKS} from './world.js?v=5c3e890';
+import {W, KINDS} from './weather.js?v=5c3e890';
+import {combatState} from './combat.js?v=5c3e890';
+import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=5c3e890';
 
 Object.assign(SND, G.settings.sound || {}); applyVolumes();
 

@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=e3c0bca';
-import {G, isExplored} from './state.js?v=e3c0bca';
-import {fogLayer, islandPath} from './map.js?v=e3c0bca';
-import {view, project, screenToSea} from './scene.js?v=e3c0bca';
-import {JOY_RADIUS} from './input.js?v=e3c0bca';
-import {enemies, combatState, capture} from './combat.js?v=e3c0bca';
-import {drawFish} from './fishing.js?v=e3c0bca';
-import {whale} from './wildlife.js?v=e3c0bca';
-import {SHORE_FISH} from './config.js?v=e3c0bca';
-import {W as WIND} from './weather.js?v=e3c0bca';
-import {bottle} from './quests.js?v=e3c0bca';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=e3c0bca';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=5c3e890';
+import {G, isExplored} from './state.js?v=5c3e890';
+import {fogLayer, islandPath} from './map.js?v=5c3e890';
+import {view, project, screenToSea} from './scene.js?v=5c3e890';
+import {JOY_RADIUS} from './input.js?v=5c3e890';
+import {enemies, combatState, capture} from './combat.js?v=5c3e890';
+import {drawFish} from './fishing.js?v=5c3e890';
+import {whale} from './wildlife.js?v=5c3e890';
+import {SHORE_FISH} from './config.js?v=5c3e890';
+import {W as WIND} from './weather.js?v=5c3e890';
+import {bottle} from './quests.js?v=5c3e890';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=5c3e890';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -218,8 +218,6 @@ export function drawOverlay(fps){
     c.fillStyle = 'rgba(247,238,214,.18)'; c.strokeStyle = 'rgba(247,238,214,.6)'; c.lineWidth = 2;
     c.beginPath(); c.arc(j.bx, j.by, JOY_RADIUS, 0, Math.PI*2); c.fill(); c.stroke();
     c.fillStyle = 'rgba(247,238,214,.85)'; c.beginPath(); c.arc(j.bx + j.vx*JOY_RADIUS, j.by + j.vy*JOY_RADIUS, 24, 0, Math.PI*2); c.fill();
-    // P61: pushed past the rim: a blue ring fills up around it; full = Row!
-    if (j.raw > 1.3 && !(G.rowT > 0) && !(G.rowCd > 0)){ c.strokeStyle = '#5ec3e8'; c.lineWidth = 5; c.lineCap = 'round'; c.beginPath(); c.arc(j.bx, j.by, JOY_RADIUS + 6, -Math.PI/2, -Math.PI/2 + Math.min(1, (G.rimT || 0)/.5)*Math.PI*2); c.stroke(); }
     if (G.rowT > 0){ c.strokeStyle = 'rgba(94,195,232,.7)'; c.lineWidth = 4; c.beginPath(); c.arc(j.bx, j.by, JOY_RADIUS + 6, 0, Math.PI*2); c.stroke(); }
   }
 
