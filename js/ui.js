@@ -1,23 +1,23 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=356bdbb';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=356bdbb';
-import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=356bdbb';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=356bdbb';
-import {swapBoat, refreshAllTrees} from './entities.js?v=356bdbb';
-import {setZoom} from './input.js?v=356bdbb';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=356bdbb';
-import {tutHTML} from './tutorial.js?v=356bdbb';
-import {founded, blessing} from './crew.js?v=356bdbb';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=356bdbb';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=356bdbb';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=356bdbb';
-import {effectText, buy} from './upgrades.js?v=356bdbb';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=356bdbb';
-import {GOODS, WAR} from './config.js?v=356bdbb';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=356bdbb';
-import {W, KINDS} from './weather.js?v=356bdbb';
-import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=356bdbb';
-import {setTimeOfDay} from './daynight.js?v=356bdbb';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=e273bb2';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=e273bb2';
+import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=e273bb2';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=e273bb2';
+import {swapBoat, refreshAllTrees} from './entities.js?v=e273bb2';
+import {setZoom} from './input.js?v=e273bb2';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=e273bb2';
+import {tutHTML} from './tutorial.js?v=e273bb2';
+import {founded, blessing} from './crew.js?v=e273bb2';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=e273bb2';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=e273bb2';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=e273bb2';
+import {effectText, buy} from './upgrades.js?v=e273bb2';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=e273bb2';
+import {GOODS, WAR} from './config.js?v=e273bb2';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=e273bb2';
+import {W, KINDS} from './weather.js?v=e273bb2';
+import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=e273bb2';
+import {setTimeOfDay} from './daynight.js?v=e273bb2';
 
 const $ = id => document.getElementById(id);
 
@@ -27,7 +27,7 @@ export function toast(msg, dur=1.8){ toastEl.textContent = msg; toastEl.hidden =
 let zoneT = 0;
 export function showZone(z){
   $('zoneName').textContent = ZONES[z].name;
-  $('zoneSub').textContent = z === 2 && SHIPS[G.S.tier].rank >= 2 ? `Your ${ship().name.toLowerCase()} can take it.` : ZONES[z].sub;
+  $('zoneSub').textContent = ''; // P58: just the name, less text
   $('zone').style.opacity = 1; zoneT = 3; sfx('zone');
 }
 export function hideHint(){ if (G.S.hint){ G.S.hint = false; $('hint').hidden = true; } }
@@ -61,8 +61,8 @@ export function updateUI(dt, nearDock){
   // the shipyard's clocks: live countdowns in the menu, and news when a study or a build is done
   for (const el of document.querySelectorAll('[data-until]')) el.textContent = mmss(Math.max(0, +el.dataset.until - Date.now()/1000));
   for (const d of checkYard()){ const n = SHIPS[d.t]; sfx('fanfare');
-    if (d.what === 'study') toast(`The ${n.name.toLowerCase()}'s plans are studied! Build it at the Kallisto shipyard.`, 4.5);
-    else { progress('build', n.model); document.dispatchEvent(new Event('fleetmoved')); toast(`Your ${n.name.toLowerCase()} is finished! It's moored at Kallisto. Sail it from the shipyard.`, 5); }
+    if (d.what === 'study') toast('Plans studied!', 4.5);
+    else { progress('build', n.model); document.dispatchEvent(new Event('fleetmoved')); toast(`${n.name} built!`, 5); }
     if (G.sheetOpen) render(); }
   if (zoneT > 0){ zoneT -= dt; if (zoneT <= 0) $('zone').style.opacity = 0; }
 }
@@ -181,7 +181,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 57</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 58</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -231,9 +231,9 @@ sheetEl.addEventListener('click', e => {
   if (a === 'drop'){ drop(+b.dataset.i); toast('Job dropped'); }
   if (a === 'found' && S.gold >= CREW.foundCost){
     S.crewName = ($('crewName').value.trim() || 'The Sea Swallows').slice(0, 24); S.gold -= CREW.foundCost;
-    S.look = {...S.look, flag:$('crewGod').value}; S.crew = []; swapBoat(); sfx('fanfare'); toast(`${S.crewName} sail under the flag of ${GODS[S.look.flag].name}!`, 3.5);
+    S.look = {...S.look, flag:$('crewGod').value}; S.crew = []; swapBoat(); sfx('fanfare'); toast(S.crewName + '!', 2.5);
   }
-  if (a === 'toss'){ const k = b.dataset.k; if (S.cargo[k] > 0){ S.cargo[k]--; toast(`Threw 1 ${FISH[k] ? FISH[k].label.toLowerCase() : GOODS[k].label.toLowerCase()} overboard`); } }
+  if (a === 'toss'){ const k = b.dataset.k; if (S.cargo[k] > 0){ S.cargo[k]--; toast('Thrown overboard'); } }
   if (a === 'tutnext' || a === 'tutback'){ tutPage += a === 'tutnext' ? 1 : -1; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'tutdone'){ closeSheet(); toast('Fair winds!', 2); return; }
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
@@ -242,15 +242,15 @@ sheetEl.addEventListener('click', e => {
     if (p !== null && S.gold >= cost){ sfx('buy'); S.gold -= cost; addMat(k, n); toast(`Bought ${n} ${k} for the warehouse`, 2); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k;
     if (a === 'buygood' && room('goods') && S.gold >= goodPrice(h, k) && canBuyGood(h, k)){ S.gold -= goodPrice(h, k); S.cargo[k] = (S.cargo[k] || 0) + 1; sfx('buy'); }
-    if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; sfx('coins'); toast(`Sold ${S.cargo[k]} ${GOODS[k].label.toLowerCase()} for ${g} drachmae`, 2.4); S.cargo[k] = 0; progress('trade'); } }
-  if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]); S.gold += g; if (g) sfx('coins'); for (const k in FISH) S.cargo[k] = 0; toast(`Sold the catch for ${g} drachmae`); progress('sell'); }
+    if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); S.gold += g; sfx('coins'); toast(`+${g}`, 2.4); S.cargo[k] = 0; progress('trade'); } }
+  if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]); S.gold += g; if (g) sfx('coins'); for (const k in FISH) S.cargo[k] = 0; toast(`+${g}`); progress('sell'); }
   if (a === 'repair'){ const cost = Math.min(Math.ceil((sh.hull - S.hull)/TUNING.repairPerGold), S.gold); S.gold -= cost; S.hull = Math.min(sh.hull, S.hull + cost*TUNING.repairPerGold); if (cost) sfx('hammer'); }
-  if (a === 'build'){ const t = +b.dataset.t; if (startBuild(t)){ sfx('hammer'); toast(`The shipwrights start on your ${SHIPS[t].name.toLowerCase()}`, 3); } }
-  if (a === 'study'){ const t = +b.dataset.t; if (startStudy(t)){ sfx('buy'); toast(`The shipwrights start studying the ${SHIPS[t].name.toLowerCase()}'s plans`, 3); } }
+  if (a === 'build'){ const t = +b.dataset.t; if (startBuild(t)){ sfx('hammer'); toast('Building', 3); } }
+  if (a === 'study'){ const t = +b.dataset.t; if (startStudy(t)){ sfx('buy'); toast('Studying the plans', 3); } }
   if (a === 'video'){ const k = b.dataset.k; playVideo(() => { watchedVideo(k); render(); }); }
-  if (a === 'captain'){ const n = hireCaptain(+b.dataset.t); if (n){ toast(`${n} takes your ${SHIPS[+b.dataset.t].name.toLowerCase()} out fishing`, 3); document.dispatchEvent(new Event('fleetmoved')); } }
-  if (a === 'collect'){ sfx('coins'); toast(`+${S.purse} drachmae from your captains`, 2.5); S.gold += S.purse; S.purse = 0; }
-  if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(`You go aboard your ${SHIPS[t].name.toLowerCase()}`, 2.4); } }
+  if (a === 'captain'){ const n = hireCaptain(+b.dataset.t); if (n){ toast(`${n} sets out`, 3); document.dispatchEvent(new Event('fleetmoved')); } }
+  if (a === 'collect'){ sfx('coins'); toast(`+${S.purse}`, 2.5); S.gold += S.purse; S.purse = 0; }
+  if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(SHIPS[t].name, 2.4); } }
   if (a === 'quality'){ G.settings.quality = b.dataset.v; G.settings.detected = null; applyQuality(b.dataset.v === 'auto' ? 'high' : b.dataset.v); G.autoCheck = b.dataset.v === 'auto'; saveSettings(); }
   if (a === 'speed'){ G.settings.dev.speed = +b.dataset.v; saveSettings(); }
   if (a === 'teleport'){ G.settings.dev.teleport = !G.settings.dev.teleport; saveSettings(); }
@@ -262,8 +262,8 @@ sheetEl.addEventListener('click', e => {
   if (a === 'revealall'){ revealAll(); toast('Whole chart revealed'); }
   if (a === 'bottle'){ document.dispatchEvent(new Event('bottle')); closeSheet(); return; }
   if (a === 'selup'){ sel.up = b.dataset.k; render(); return; }
-  if (a === 'wartake' && G.council){ const o = WAR.offers[+b.dataset.i]; S.war = {...o, city:G.council.city, foe:rival(G.council.city), got:0}; toast('Contract taken. Good hunting.', 2.5); }
-  if (a === 'warclaim' && S.war && S.war.got >= S.war.n){ S.gold += S.war.gold; sfx('coins'); toast(`${CITIES[S.war.city].name} pays you ${S.war.gold} drachmae.`, 3); S.war = null; }
+  if (a === 'wartake' && G.council){ const o = WAR.offers[+b.dataset.i]; S.war = {...o, city:G.council.city, foe:rival(G.council.city), got:0}; toast('Contract taken', 2); }
+  if (a === 'warclaim' && S.war && S.war.got >= S.war.n){ S.gold += S.war.gold; sfx('coins'); toast(`+${S.war.gold}`, 3); S.war = null; }
   if (a === 'wardrop'){ S.war = null; }
   if (a === 'tab'){ tabs[b.dataset.sheet] = b.dataset.t; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'treasure'){ document.dispatchEvent(new Event('treasure')); closeSheet(); return; }
@@ -311,9 +311,9 @@ $('dockBtn').addEventListener('click', () => {
 });
 $('harborBtn').addEventListener('click', openPort);
 // P49: hired sailors became each ship's own crew; say so once to players who had some
-setTimeout(() => { const S = G.S; if (S && S.crewRefund){ toast(`Crews now belong to each ship: hire hands with the Crew upgrade at the shipyard. Your ${S.crewRefund} sailor${S.crewRefund > 1 ? 's were' : ' was'} paid back in drachmae.`, 7); delete S.crewRefund; save(); } }, 4000);
+setTimeout(() => { const S = G.S; if (S && S.crewRefund){ toast(`Sailors paid back: +${30*S.crewRefund}`, 7); delete S.crewRefund; save(); } }, 4000);
 // docking: wood and bronze aboard go to the warehouse first, so the shipyard can use them
-document.addEventListener('docked', () => { const [w, b] = unload(); if (w || b){ toast(`Unloaded ${[w && w + ' wood', b && b + ' bronze'].filter(Boolean).join(' and ')} for the Kallisto warehouse`, 2.6); save(); } openPort(); });
+document.addEventListener('docked', () => { const [w, b] = unload(); if (w || b){ toast(`Unloaded ${[w && w + ' wood', b && b + ' bronze'].filter(Boolean).join(', ')}`, 2.6); save(); } openPort(); });
 $('goalPill').addEventListener('click', () => { if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });
 $('bagBtn').addEventListener('click', () => sheet === 'inv' ? closeSheet() : openSheet('inv'));
 $('gearBtn').addEventListener('click', () => sheet === 'settings' ? closeSheet() : openSheet('settings'));

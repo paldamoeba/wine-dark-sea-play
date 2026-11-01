@@ -1,11 +1,11 @@
 // Fishing minigame: a needle spins around a ring over your boat. Tap (or press Space) while it is in the green part.
 // Bigger fish have a smaller green part and a faster needle (see FISH in config.js).
-import {FISH} from './config.js?v=356bdbb';
-import {G, ship, holdUsed, save, gain} from './state.js?v=356bdbb';
-import {toast} from './ui.js?v=356bdbb';
-import {blessing, fishBoost} from './crew.js?v=356bdbb';
-import {progress} from './quests.js?v=356bdbb';
-import {sfx} from './audio.js?v=356bdbb';
+import {FISH} from './config.js?v=e273bb2';
+import {G, ship, holdUsed, save, gain} from './state.js?v=e273bb2';
+import {toast} from './ui.js?v=e273bb2';
+import {blessing, fishBoost} from './crew.js?v=e273bb2';
+import {progress} from './quests.js?v=e273bb2';
+import {sfx} from './audio.js?v=e273bb2';
 
 const TAU = Math.PI*2;
 const angDiff = (a, b) => ((a - b + Math.PI*3) % TAU) - Math.PI;
@@ -13,7 +13,7 @@ const angDiff = (a, b) => ((a - b + Math.PI*3) % TAU) - Math.PI;
 export function startFish(spot){
   const f = FISH[spot.kind];
   G.fish = {ref:spot, ang:Math.random()*TAU, speed:f.spin, size:f.green*(blessing().green || 1)*(1 + (fishBoost() - 1)*.6)*(1 + .35*G.stormK)*Math.PI/180, g:Math.random()*TAU, cool:0, flash:0, ok:false, next:false};
-  if (!G.S.fishHint){ G.S.fishHint = true; toast('Tap when the needle is in the green', 3); }
+  if (!G.S.fishHint){ G.S.fishHint = true; toast('Tap in the green', 3); }
 }
 export function stopFish(){ G.fish = null; }
 

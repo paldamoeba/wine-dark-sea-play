@@ -48,15 +48,16 @@ export const SPECS = {
   fishing:    {L:64, B:23, H:12, rise:9, mast:true, sailW:34, sailH:28, sailMax:10, hats:true, nets:true, crew:[['stand', 2]], look:{paint:'gold', sail:'ochre', flag:'artemis'}},
   merchant:   {L:110, B:44, H:22, rise:14, mast:true, sailW:64, sailH:52, sailMax:20, hats:true, cargo:true, cabin:true, crew:[['stand', 3]], crewAt:[[-.45, 0], [.37, 0], [-.12, .32]], look:{paint:'white', sail:'plain', flag:'hermes'}},
   penteconter:{L:150, B:22, H:13, rise:18, oarRows:1, oarCount:11, mast:true, sailW:44, sailH:38, sailMax:10, ram:true, eyes:true, fans:true, crew:[['stand', 1]], look:{paint:'black', sail:'bwr', flag:'apollo'}},
-  bireme:     {L:160, B:30, H:18, rise:26, oarRows:1, oarCount:14, mast:true, sailW:62, sailH:52, sailMax:10, ram:true, fans:true, eyes:true, crew:[['stand', 1], ['archer', 4]], look:{paint:'gold', sail:'bwr', flag:'poseidon'}},
-  trireme:    {L:190, B:34, H:21, rise:32, oarRows:1, oarCount:16, mast:true, sailW:74, sailH:60, sailMax:15, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, outrigger:true, canopy:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
+  bireme:     {L:141, B:44, H:20, rise:26, oarRows:1, oarCount:14, mast:true, sailW:62, sailH:52, sailMax:10, ram:true, fans:true, eyes:true, crew:[['stand', 1], ['archer', 4]], look:{paint:'gold', sail:'bwr', flag:'poseidon'}},
+  trireme:    {L:167, B:49, H:23, rise:32, oarRows:1, oarCount:16, mast:true, sailW:74, sailH:60, sailMax:15, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, outrigger:true, canopy:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
   raider:     {L:135, B:28, H:16, rise:22, oarRows:1, oarCount:9, mast:true, sailW:56, sailH:46, sailMax:10, ram:true, fans:true, eyes:true, raider:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'raider', sail:'blood', flag:'none'}},
   trader:     {L:84, B:36, H:18, rise:12, mast:true, sailW:50, sailH:42, sailMax:15, hats:true, cargo:true, crateX:-.25, crew:[['stand', 2]], crewAt:[[-.4, 0], [.33, 0]], look:{paint:'oak', sail:'ochre', flag:'hermes'}}, // a small round trading ship
   dinghy:     {L:44, B:17, H:9, rise:6, oarRows:1, oarCount:2, mast:true, sailW:20, sailH:18, sailMax:5, raider:true, crew:[['archer', 1]], look:{paint:'raider', sail:'blood', flag:'none'}},
   skiff:      {L:72, B:22, H:12, rise:12, oarRows:1, oarCount:3, mast:true, sailW:34, sailH:28, sailMax:10, fans:true, ram:true, raider:true, crew:[['archer', 3]], look:{paint:'raider', sail:'blood', flag:'none'}},
-  // P57: Polycrates' flagship, a ghost ship (inspired by the great twin-hulled ships of old): two long hulls side by side under one
-  // huge flat deck with lattice railings, so you never see who rows. No people anywhere. Curled posts at both ends of each hull, two rams.
-  flagship:   {L:300, B:46, H:30, rise:40, oarRows:2, oarCount:24, twin:56, flagship:true, ghost:true, eyes:true, raider:true, crew:[], look:{paint:'king', sail:null, flag:'none'}},
+  // P58: Polycrates' flagship, a floating fortress (inspired by the great ships of Syracuse and Ptolemy, our own design): a very tall,
+  // wide hull with a row of statues along each side, a flat upper deck with towers at the corners and a long hall, three masts with
+  // square sails, oars low down, a great curled stern and a ram. A ghost ship: nobody aboard.
+  flagship:   {L:280, B:96, H:44, rise:30, oarRows:2, oarCount:20, mast:true, sailW:70, sailH:58, sailMax:15, flagship:true, ghost:true, eyes:true, raider:true, crew:[], look:{paint:'king', sail:'plain', flag:'none'}},
 };
 
 // ---------- materials ----------
@@ -425,27 +426,39 @@ export function crewLayout(s, m){
   let a = Math.min(A, Math.ceil(rest/3)); const r = Math.min(2*O, rest - a); a = Math.min(A, rest - r);
   return {stand:helm, archers:a, rowers:r, pairs:Math.ceil(r/2)};
 }
-// The flagship's deck: one huge flat platform over both hulls (it overhangs them, hiding the rowers), dark planks with faint seams,
-// lattice railings all round, tall curled posts rising at the bow and stern of each hull, and a bronze ram on each hull.
-function flagshipDeck(s, info, pc){
-  const g = new T.Group(), y = info.deckY(.3) + 3, Wd = s.twin*2 + s.B*1.25, Ld = s.L*.74, wood = '#3a2a22', seam = '#2a1e18', rail = pc.wale || '#e3ad48';
+// The flagship's upper works: a flat deck high above the water, a row of white statues holding up the rail along each side,
+// four corner towers and two middle towers with crenellations and pointed red roofs, a long hall with green walls, two extra masts
+// (fore and aft) with square sails, a great golden curl at the stern and a bronze ram.
+function flagshipDeck(s, info, pc, sailKey){
+  const g = new T.Group(), y = info.deckLevel + s.H*.42, W = s.B*.92, L = s.L*.8, gold = '#e3ad48', stone = '#d9cdb4', red = '#b8402f', wood = '#5a3d2a';
   const box = (w, h, d, c, x, yy, z) => { const m = mesh(new T.BoxGeometry(w, h, d), c); m.position.set(x, yy, z); g.add(m); return m; };
-  box(Ld, 4, Wd, wood, 0, y, 0);
-  for (let k=1;k<12;k++) box(Ld, .5, .9, seam, 0, y + 2.1, -Wd/2 + k*Wd/12); // plank seams
-  box(Ld + 2, 3, Wd + 2, pc.top || '#1f1c24', 0, y - 3, 0); // a dark lip under the edge
-  // lattice railings: posts and crossed bars along all four edges
-  const H = 9, edge = (x0, z0, x1, z1) => { const n = Math.max(2, Math.round(Math.hypot(x1 - x0, z1 - z0)/14));
-    for (let k=0;k<=n;k++){ const x = x0 + (x1 - x0)*k/n, z = z0 + (z1 - z0)*k/n; box(1.6, H, 1.6, rail, x, y + 2 + H/2, z);
-      if (k < n){ const nx = x0 + (x1 - x0)*(k + 1)/n, nz = z0 + (z1 - z0)*(k + 1)/n, len = Math.hypot(nx - x, nz - z), ang = Math.atan2(nz - z, nx - x);
-        for (const sgn of [1, -1]){ const b = box(Math.hypot(len, H), .9, .9, rail, (x + nx)/2, y + 2 + H/2, (z + nz)/2); b.rotation.set(0, -ang, sgn*Math.atan2(H, len)); } } }
-    box(Math.hypot(x1 - x0, z1 - z0), 1.4, 2, rail, (x0 + x1)/2, y + 2 + H, (z0 + z1)/2).rotation.y = -Math.atan2(z1 - z0, x1 - x0); };
-  const hx = Ld/2 - 2, hz = Wd/2 - 2; edge(-hx, -hz, hx, -hz); edge(-hx, hz, hx, hz); edge(-hx, -hz, -hx, hz); edge(hx, -hz, hx, hz);
-  // curled posts: bow posts curl forward, stern posts curl back over the deck, one on each hull
-  for (const z of [-s.twin, s.twin]) for (const end of [1, -1]){ const pts = [];
-    for (let k=0;k<=22;k++){ const u = k/22, a = u*Math.PI*1.6; pts.push([end*(s.L*.48 + Math.sin(a)*16*u - (end < 0 ? 6*u : 0)), info.deckY(1) - 6 + (1 - Math.cos(a))*22 + u*18, z]); }
-    g.add(tube(pts, 4.2, end > 0 ? pc.top || '#1f1c24' : rail, 9)); }
-  // a bronze ram low on each bow
-  for (const z of [-s.twin, s.twin]){ const r = mesh(new T.ConeGeometry(4.5, 38, 10), '#b07f3c'); r.rotation.z = -Math.PI/2; r.position.set(s.L*.5 + 16, s.H*.05, z); g.add(r); }
+  // the high flat deck and its thick edge
+  box(L, 4, W, '#8a6a48', 0, y, 0); box(L + 3, 6, W + 3, wood, 0, y - 4, 0);
+  // statues all along both sides, under the rail (white figures with arms up, holding the deck)
+  const n = 13; for (let k=0;k<n;k++){ const x = -L/2 + 12 + k*(L - 24)/(n - 1);
+    for (const sg of [1, -1]){ const z = sg*(info.W(Math.abs(x)/(s.L/2))*.98 + 1.2), f = new T.Group(); f.position.set(x, y - 18, z); g.add(f);
+      const body = mesh(new T.CylinderGeometry(2.2, 2.8, 11, 8), '#eee6d6', {flatShading:false}); body.position.y = 5.5; f.add(body);
+      const head = mesh(new T.SphereGeometry(2.2, 10, 8), '#eee6d6', {flatShading:false}); head.position.y = 12.5; f.add(head);
+      for (const ax of [-1, 1]){ const arm = mesh(new T.CylinderGeometry(.7, .8, 7, 6), '#eee6d6'); arm.position.set(0, 14.5, ax*2); arm.rotation.x = ax*.35; f.add(arm); } } }
+  // crenellated rail on the deck edge
+  for (const sg of [1, -1]) for (let k=0;k<22;k++) box(6, 4, 2, stone, -L/2 + 6 + k*(L - 12)/21, y + 4, sg*(W/2 - 1));
+  // towers: four corners and two in the middle of the sides
+  const tower = (x, z, h) => { box(15, h, 15, stone, x, y + 2 + h/2, z); for (let k=1;k<3;k++) box(15.6, 1.2, 15.6, gold, x, y + 2 + k*h/3, z);
+    for (const [dx, dz] of [[-6, -6], [6, -6], [-6, 6], [6, 6]]) box(3.4, 3.4, 3.4, stone, x + dx, y + 2 + h + 1.7, z + dz);
+    const cap = mesh(new T.ConeGeometry(9.5, 15, 4), red); cap.rotation.y = Math.PI/4; cap.position.set(x, y + 2 + h + 9, z); g.add(cap);
+    const tip = mesh(new T.ConeGeometry(1.2, 9, 6), gold); tip.position.set(x, y + 2 + h + 20, z); g.add(tip); };
+  for (const [fx, fz, h] of [[.42, .38, 34], [.42, -.38, 34], [-.38, .38, 30], [-.38, -.38, 30], [.02, .4, 24], [.02, -.4, 24]]) tower(fx*L, fz*W, h);
+  // a long hall in the middle with green walls and a red roof
+  box(L*.32, 13, W*.34, '#5f8f7a', -L*.06, y + 8.5, 0);
+  for (const sg of [1, -1]){ const r = box(L*.34, 1.6, W*.21, red, -L*.06, y + 18, sg*W*.08); r.rotation.x = sg*.42; }
+  // fore and aft masts with square sails (the main mast comes from the ship builder)
+  for (const [x, k] of [[L*.3, .8], [-L*.32, .85]]){ const mh = 90*k; const m = mesh(new T.CylinderGeometry(1.6, 2.4, mh, 7), 'mast'); m.position.set(x, y + mh/2, 0); g.add(m);
+    const yard = mesh(new T.CylinderGeometry(1.1, 1.1, s.sailW*k + 12, 6), 'mast'); yard.rotation.x = Math.PI/2; yard.position.set(x + 1.6, y + mh - 4, 0); g.add(yard);
+    const sl = squareSail(s.sailW*k, s.sailH*k, sailTex(sailKey, 'none')); sl.position.set(x + 2.8, y + mh - 5, 0); g.add(sl); }
+  // the great curl at the stern and the ram
+  const curl = []; for (let k=0;k<=24;k++){ const u = k/24, a = u*Math.PI*1.7; curl.push([-s.L*.5 - 4 + Math.sin(a)*34*u, info.deckY(1) - 6 + (1 - Math.cos(a))*32 + u*12, 0]); }
+  g.add(tube(curl, 7, gold, 10));
+  const ram = mesh(new T.ConeGeometry(6, 44, 10), '#b07f3c'); ram.rotation.z = -Math.PI/2; ram.position.set(s.L*.5 + 18, s.H*.05, 0); g.add(ram);
   return g;
 }
 
@@ -471,7 +484,7 @@ export function buildShip(key, look = {}, crew = true){
   root.userData.sails = [];
   if (sz[0]){
     // the rig; on a boat built without a mast (the rowboat) it stands forward of the rower
-    const mx = s.mast ? 0 : s.L*.22, rig = new T.Group(); rig.position.x = mx; body.add(rig);
+    const mx = s.mast ? 0 : s.L*.22, rig = new T.Group(); rig.position.x = mx; if (s.flagship) rig.position.y = s.H*.42 + 22; body.add(rig); // the flagship's main mast stands on its high deck
     const mw = s.sailW*sz[0], mh = s.sailH*sz[0], extra = sz[2] ? s.sailH*.42*sz[2] : 0; // a topsail needs a taller mast
     const top = info.deckLevel + mh + 16, mtop = top + extra;
     const mast = mesh(new T.CylinderGeometry(1.6, 2.4, mtop - info.deckLevel + 6, 7), 'mast'); mast.position.set(0, (mtop + info.deckLevel)/2 + 3, 0); rig.add(mast);
@@ -525,7 +538,7 @@ export function buildShip(key, look = {}, crew = true){
     const e = mesh(new T.CircleGeometry(2.8*(s.twin ? 2.2 : 1), 14), 'white', {side:T.DoubleSide}); e.position.set(x, s.H*.15 + s.rise*.12, sg*(w + .6 + (s.twin || 0))); e.rotation.y = sg > 0 ? .45 : Math.PI - .45; body.add(e);
     const pu = mesh(new T.CircleGeometry(1.4*(s.twin ? 2.2 : 1), 10), s.raider ? '#b8322a' : '#1c1c22', {side:T.DoubleSide}); pu.position.copy(e.position); pu.position.z += sg*.2; pu.position.x += .6; pu.rotation.y = e.rotation.y; body.add(pu);
   }
-  if (s.flagship) body.add(flagshipDeck(s, info, pc));
+  if (s.flagship) body.add(flagshipDeck(s, info, pc, sailKey));
   if (s.nets){ const n = mesh(new T.DodecahedronGeometry(6, 0), 'net'); n.scale.set(1.3, .5, 1); n.position.set(-s.L*.3, info.deckLevel + 2, 0); body.add(n); }
   if (s.cargo){ for (let i=0;i<8;i++){ const a = mesh(amphora, '#b06a3d', {flatShading:false}); a.position.set(-8 + (i % 4)*8, info.deckLevel, -7 + Math.floor(i/4)*12); body.add(a); }
     const crate = mesh(new T.BoxGeometry(14, 9, 12), '#9b6b3a'); crate.position.set(s.crateX != null ? s.crateX*s.L : 24, info.deckLevel + 4.5, 0); body.add(crate); }

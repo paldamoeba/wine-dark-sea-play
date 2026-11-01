@@ -1,10 +1,10 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=356bdbb';
-import {ARENA} from './arena.js?v=356bdbb';
-import {enemies, planReward} from './combat.js?v=356bdbb';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=356bdbb';
-import {G, ship, isExplored, reveal, save} from './state.js?v=356bdbb';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=e273bb2';
+import {ARENA} from './arena.js?v=e273bb2';
+import {enemies, planReward} from './combat.js?v=e273bb2';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=e273bb2';
+import {G, ship, isExplored, reveal, save} from './state.js?v=e273bb2';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -170,7 +170,7 @@ function draw(){
     label('Arena of Rhodes', ax, ay + r + 16, '400 14px Marcellus, Georgia, serif', INK); }
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
   for (const e of enemies){ if (!e.fort || !isExplored(e.x, e.y)) continue; const [fx, fy] = toScreen(e.x, e.y);
-    towerGlyph(fx, fy, e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a', e.dead); if (!e.dead && planReward(e)) scrollGlyph(fx + 13, fy - 10); }
+    towerGlyph(fx, fy, e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a', e.dead); }
   for (const h of HARBORS){ if (!h.is.port && !isExplored(h.dock.x, h.dock.y)) continue;
     const [hx, hy] = toScreen(h.dock.x, h.dock.y); anchorGlyph(hx, hy, h.is.city ? CITIES[h.is.city].color : OCHRE); }
   // the chapter goal: a red ring with a name (pirate fortresses, the pirate king)

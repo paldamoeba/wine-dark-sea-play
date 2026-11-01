@@ -1,10 +1,10 @@
 // Weather: fair, calm, windy or stormy, each for a few minutes. Storms are announced a little before they hit.
 // wave = how big the waves are; storm = dark sky, rain and lightning (0 to 1).
 // Storms wear down small boats outside the Shallows, but fish bite faster in them: a reward for the brave.
-import {G} from './state.js?v=356bdbb';
-import {WEATHER_WAVES} from './world.js?v=356bdbb';
-import {toast} from './ui.js?v=356bdbb';
-import {sfx} from './audio.js?v=356bdbb';
+import {G} from './state.js?v=e273bb2';
+import {WEATHER_WAVES} from './world.js?v=e273bb2';
+import {toast} from './ui.js?v=e273bb2';
+import {sfx} from './audio.js?v=e273bb2';
 
 export const KINDS = {
   fair:  {label:'Fair',   wave:1,   storm:0,   wind:.55, dur:[150, 280], icon:'☀'},
@@ -22,12 +22,10 @@ function pick(from){ let r = Math.random(); for (const [k, p] of NEXT[from]){ if
 export function updateWeather(dt){
   if (!W.next) W.next = pick(W.kind);
   W.t -= dt;
-  if (W.next === 'storm' && !W.warned && W.t < WARN){ W.warned = true; toast('The sky darkens to the west. A storm is coming: small boats should head for the Shallows.', 5); sfx('warn'); }
+  if (W.next === 'storm' && !W.warned && W.t < WARN){ W.warned = true; toast('A storm is coming', 5); sfx('warn'); }
   if (W.t <= 0){
     W.kind = W.next; W.next = null; W.warned = false; W.t = rand(KINDS[W.kind].dur);
-    if (W.kind === 'calm') toast('The wind drops. A calm, glassy sea.', 3);
-    if (W.kind === 'mist') toast('A soft mist rolls over the sea.', 3);
-    if (W.kind === 'windy') toast('The wind picks up. Bigger waves.', 3);
+    // (P58: no message for calm, mist or wind: the weather chip shows it)
     if (W.kind === 'fair' && G.stormK > .3) toast('The storm passes.', 3);
   }
   const k = KINDS[W.kind], f = Math.min(1, dt*.25); // weather changes slowly

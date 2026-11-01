@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=356bdbb';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=356bdbb';
-import {G, save} from './state.js?v=356bdbb';
-import {scene} from './scene.js?v=356bdbb';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=356bdbb';
-import {toast} from './ui.js?v=356bdbb';
-import {combatState} from './combat.js?v=356bdbb';
-import {sfx} from './audio.js?v=356bdbb';
+import {WILDLIFE} from './config.js?v=e273bb2';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=e273bb2';
+import {G, save} from './state.js?v=e273bb2';
+import {scene} from './scene.js?v=e273bb2';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=e273bb2';
+import {toast} from './ui.js?v=e273bb2';
+import {combatState} from './combat.js?v=e273bb2';
+import {sfx} from './audio.js?v=e273bb2';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -22,7 +22,7 @@ function spawnWhale(){
     const a = S.a + (Math.random() - .5)*2.2, d = 300 + Math.random()*140, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
     if (!openSea(x, y, 650)) continue; // whales keep well away from land
     Object.assign(W, {state:'rise', x, y, a:Math.random()*6.28, t:0, blessed:false, puff:1});
-    W.obj.visible = true; toast('A whale is surfacing! Sail close to it.', 3.5); sfx('whale', W);
+    W.obj.visible = true; toast('A whale!', 3.5); sfx('whale', W);
     return true;
   }
   return false;
@@ -61,7 +61,7 @@ function updateWhale(dt){
   // the blessing
   if (!W.blessed && W.state !== 'dive' && Math.hypot(S.x - W.x, S.y - W.y) < WILDLIFE.whaleNear){
     W.blessed = true; S.bless = WILDLIFE.blessSeconds; save(); sfx('blessing');
-    toast(`Poseidon's blessing! Faster sailing and quicker work for ${Math.round(WILDLIFE.blessSeconds/60)} minutes.`, 4.5);
+    toast(`Poseidon's blessing!`, 4.5);
   }
 }
 // Builder tool / test: make the whale come up now.
@@ -114,14 +114,14 @@ function updateKraken(dt){
     for (let k=0;k<20;k++){ const a = S.a + (Math.random() - .5)*1.2, d = 600 + Math.random()*80, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
       if (!openSea(x, y, 600)) continue;
       Object.assign(K, {state:'rise', x, y, t:0}); K.obj.visible = true; K.obj.rotation.y = -Math.atan2(S.y - y, S.x - x); // it faces you
-      toast('Something huge stirs in the water ahead...', 3.5); sfx('kraken', K); return; }
+      toast('Something stirs...', 3.5); sfx('kraken', K); return; }
     K.wait = 10; return;
   }
   K.t += dt; const d = Math.hypot(S.x - K.x, S.y - K.y);
   if (K.state === 'rise'){ K.rise = Math.min(1, K.t/2.5); if (K.rise >= 1){ K.state = 'show'; K.t = 0; } }
   else if (K.state === 'show' && (d < WILDLIFE.krakenNear || K.t > WILDLIFE.krakenStay)){ K.state = 'dive'; K.t = 0; sfx('bigsplash', K); sfx('kraken', K, .6);
     if (d < WILDLIFE.krakenNear){ S.kraken = (S.kraken || 0) + 1; S.gold += WILDLIFE.krakenGold; save();
-      toast(S.kraken === 1 ? `The kraken slips back into the deep! Few sailors have ever seen it. Your story earns you ${WILDLIFE.krakenGold} drachmae in the harbors.` : `The kraken dives again! +${WILDLIFE.krakenGold} drachmae for the story.`, 5); } }
+      toast(`The kraken! +${WILDLIFE.krakenGold}`, 3); } }
   else if (K.state === 'dive'){ K.rise = Math.max(0, 1 - K.t/2); if (K.rise <= 0){ K.state = 'gone'; K.obj.visible = false; K.wait = rand(WILDLIFE.krakenEvery); } }
   K.obj.position.set(K.x, waveAt(K.x, K.y, G.t), K.y);
   // each tentacle rises (and sinks) a moment after the last, and sways on its own

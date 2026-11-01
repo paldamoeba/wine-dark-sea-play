@@ -1,11 +1,11 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=356bdbb';
-import {FORTS} from './config.js?v=356bdbb';
-import {CITIES} from './world.js?v=356bdbb';
-import {enemies, hostile, planReward} from './combat.js?v=356bdbb';
-import {SHIPS, PLANS} from './config.js?v=356bdbb';
-import {sfx} from './audio.js?v=356bdbb';
+import {G} from './state.js?v=e273bb2';
+import {FORTS} from './config.js?v=e273bb2';
+import {CITIES} from './world.js?v=e273bb2';
+import {enemies, hostile, planReward} from './combat.js?v=e273bb2';
+import {SHIPS, PLANS} from './config.js?v=e273bb2';
+import {sfx} from './audio.js?v=e273bb2';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
@@ -19,8 +19,8 @@ export function updateFortWatch(dt){
     const d = Math.hypot(f.x - G.S.x, f.y - G.S.y) - (f.camp ? WARN - 900 : 0); if (d < bd){ bd = d; best = f; } } // camps have no catapults: the warning comes closer
   if (best && best !== inside && !best.dead){ // just sailed into its waters
     const who = best.city ? CITIES[best.city].name : 'Pirate';
-    if (best.camp) $('cautionText').innerHTML = `<b>Bandits!</b>They shoot even in the Shallows.${best.camp.plans ? ' Their camp holds ship plans.' : ''}`; else
-    $('cautionText').innerHTML = `<b>Caution: ${who === 'Pirate' ? 'pirate' : who + "'s"} waters</b>Sail closer to the ${best.isle.name} fortress and its catapults and guard ships will attack you.`;
+    if (best.camp) $('cautionText').innerHTML = '<b>Bandits!</b>'; else
+    $('cautionText').innerHTML = `<b>${who === 'Pirate' ? 'Pirate' : who + "'s"} fortress!</b>`;
     $('caution').hidden = false; cautionT = 5; sfx('warn');
   }
   inside = best;

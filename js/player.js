@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=356bdbb';
-import {SPECS} from './ships.js?v=356bdbb';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=356bdbb';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=356bdbb';
-import {W} from './weather.js?v=356bdbb';
-import {steering} from './input.js?v=356bdbb';
-import {toast, showZone} from './ui.js?v=356bdbb';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=356bdbb';
-import {startFish, stopFish} from './fishing.js?v=356bdbb';
-import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=356bdbb';
-import {progress} from './quests.js?v=356bdbb';
-import {startSink} from './sinking.js?v=356bdbb';
-import {sfx} from './audio.js?v=356bdbb';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=e273bb2';
+import {SPECS} from './ships.js?v=e273bb2';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=e273bb2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=e273bb2';
+import {W} from './weather.js?v=e273bb2';
+import {steering} from './input.js?v=e273bb2';
+import {toast, showZone} from './ui.js?v=e273bb2';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=e273bb2';
+import {startFish, stopFish} from './fishing.js?v=e273bb2';
+import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=e273bb2';
+import {progress} from './quests.js?v=e273bb2';
+import {startSink} from './sinking.js?v=e273bb2';
+import {sfx} from './audio.js?v=e273bb2';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -24,7 +24,7 @@ function washUp(){
   const S = G.S, name = ship().name.toLowerCase(); G.sinking = null;
   for (const k in S.cargo) S.cargo[k] = 0; S.bless = 0; S.hull = Math.round(ship().hull*COMBAT.washUpHull); S.x = START.x; S.y = START.y; S.a = START.a;
   G.v = 0; G.dest = null; G.flash = 0; G.cam = {x:S.x, y:S.y}; ringArmed = false; moorAt(HARBORS[0]); // towed in to the Kallisto pier
-  toast(`Your ${name} broke apart. You were towed home to Kallisto without your cargo, the hull badly patched. Repair it at the shipyard.`, 4.5); save();
+  toast('Sunk! Towed home to Kallisto', 4.5); save();
 }
 
 // The wind: a ship with a sail goes up to 20% faster with the wind behind it and a little slower sailing into it.
@@ -33,13 +33,13 @@ function windBoost(){
   const S = G.S, sails = SPECS[ship().model].mast || lvl('sail') > 0;
   if (!sails){ G.windFill = 0; return 1; }
   const along = Math.cos(S.a - W.windA), k = W.windK; G.windFill = Math.max(0, along)*k;
-  if (!S.windTip && G.windFill > .45 && G.v > 40){ S.windTip = true; toast('The wind fills your sail! With the wind at your back you sail faster.', 4.5); }
+  if (!S.windTip && G.windFill > .45 && G.v > 40){ S.windTip = true; toast('Wind at your back!', 4.5); }
   return 1 + k*(along > 0 ? .2*along : .08*along);
 }
 // ---- Row! (P56): a 5-second burst of everyone rowing, to catch a ship or ram it at full speed; then a rest ----
 export const ROW = {secs:5, cd:14};
 export function rowNow(){ if (!hasSail() || G.rowT > 0 || G.rowCd > 0 || G.dock || G.sinking) return false;
-  G.rowT = ROW.secs; G.rowCd = ROW.cd; sfx('horn'); if (!G.S.rowTip){ G.S.rowTip = true; toast('Row! Everyone pulls hard for a few seconds. Ram a ship at this speed for big damage.', 4.5); } return true; }
+  G.rowT = ROW.secs; G.rowCd = ROW.cd; sfx('horn'); if (!G.S.rowTip){ G.S.rowTip = true; toast('Row! Ram at full speed', 4.5); } return true; }
 addEventListener('keydown', e => { if (e.key === 'Shift' && !G.sheetOpen && !G.mapOpen) rowNow(); });
 function move(dt, sh){
   G.rowT = Math.max(0, (G.rowT || 0) - dt); G.rowCd = Math.max(0, (G.rowCd || 0) - dt);
@@ -112,7 +112,7 @@ function gather(dt, sh){
 
 // The first time a kind fills up, say where to take it.
 function fullTip(k){ const S = G.S; S.fullTips = S.fullTips || {}; if (S.fullTips[k]) return; S.fullTips[k] = true;
-  toast(`No more room for ${k}. Dock at any harbor and it goes to the Kallisto warehouse.`, 4.5); }
+  toast(`${k[0].toUpperCase() + k.slice(1)} full. Unload at a harbor`, 4.5); }
 
 function moveSpot(s){
   const S = G.S;
@@ -202,7 +202,7 @@ function harborRings(){
   if (near > RING_R || !ringArmed || G.sheetOpen) return;
   ringArmed = false;
   const banned = hit.is.city && (G.hunted || {})[hit.is.city];
-  if (banned){ toast(`${hit.is.city === 'athens' ? 'Athens' : 'Sparta'} won't let you dock while they hunt you`, 3); return; }
+  if (banned){ toast('They won\'t let you dock', 3); return; }
   document.dispatchEvent(new CustomEvent('dock', {detail:hit}));
 }
 
@@ -223,8 +223,8 @@ export function updatePlayer(dt){
   const storm = G.stormK > .5 ? G.stormK : 0, waves = z === 2 ? 1 + depth/1500 + storm : z === 1 ? storm*.5 : 0;
   if (waves > 0 && sh.storm > 0){
     S.hull -= sh.storm * waves * (blessing().wave || 1) * dt;
-    if (z === 1 && !S.stormTip){ S.stormTip = true; toast('The storm is wearing down your hull. The Shallows around Kallisto stay calm.', 5); }
-    if (z === 2 && !S.waveTip){ S.waveTip = true; toast('Big waves! They slowly wear down a small hull. Head back to calmer water to stay afloat.', 5); }
+    if (z === 1 && !S.stormTip){ S.stormTip = true; toast('The storm hurts your hull', 5); }
+    if (z === 2 && !S.waveTip){ S.waveTip = true; toast('Big waves hurt small hulls', 5); }
     if (S.hull <= 0){ sink(); return null; }
   }
   G.flash = Math.max(0, G.flash - dt*2.5);

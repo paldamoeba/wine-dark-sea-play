@@ -17,9 +17,9 @@ export const SHIPS = [
   {name:'Rowboat',      model:'rowboat', rank:0, speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, goods:3}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:2, men:[1, 2], turn:1.6},
   {name:'Fishing Boat', model:'fishing', rank:1, speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, goods:6}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:4, men:[1, 4], turn:1.3, cost:{wood:150, linen:10, gold:60}, plans:true,
     desc:'A sail, more speed, room for a crew of four, steadier in big waves'},
-  {name:'Bireme',       model:'bireme',  rank:2, speed:165, hull:170, hold:16, cap:{wood:140, bronze:40, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:160, beam:30, fighters:4, men:[6, 33], turn:.75, cost:{wood:300, bronze:30, linen:20, gold:250}, plans:true,
+  {name:'Bireme',       model:'bireme',  rank:2, speed:165, hull:170, hold:16, cap:{wood:140, bronze:40, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:141, beam:44, fighters:4, men:[6, 33], turn:.75, cost:{wood:300, bronze:30, linen:20, gold:250}, plans:true,
     desc:'A warship. Benches for 28 rowers and four archers, a hull that shrugs off big waves, but a small hold'},
-  {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:190, beam:34, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, linen:40, gold:600}, plans:true,
+  {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:167, beam:49, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, linen:40, gold:600}, plans:true,
     desc:'The greatest warship of the Aegean: benches for 32 rowers, six archers, an outrigger and a big bronze ram'},
   // bandit ships you capture (combat.js): never built, only taken
   {name:'Bandit boat',   model:'dinghy', rank:0, captured:true, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, goods:2}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
@@ -88,7 +88,7 @@ export const STARTER_GOALS = 8; // the first eight goals teach the basics; past 
 // fireEvery: seconds between his flaming volleys (they set your ship alight for burnSeconds). At half hull he calls two more skiffs.
 // He never heals, so you can always sail home, repair and come back.
 export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'flagship', scale:1, hull:1300, speed:125, turn:.42, fighters:8, dmg:2.2, sight:900, leash:2600,
-  gold:[1200, 1200], wood:200, bronze:60, len:300, beam:160, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2};
+  gold:[1200, 1200], wood:200, bronze:60, len:280, beam:96, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2};
 // Fire arrows: a ship hit by one burns for burnSeconds, losing dps(level) hull a second.
 // P50: abilities in the bar at the bottom of the screen. fire: seconds of flaming arrows, then a cooldown.
 // chain: how long a ship stays dismasted (grows with the Chain shot level) and how slow it goes meanwhile.
@@ -242,8 +242,8 @@ export const ENEMIES = {
   // side: pirate (always hostile), merchant (peaceful, flees), navy (hunts pirates; hunts you only if one of them saw you raid)
   merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:64, turn:.5, fighters:0, dmg:0, sight:450, gold:[45, 75], wood:30, len:110, beam:44},
   // navies: one kind per city. A patrol switches city when its island changes hands.
-  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:190, beam:34},
-  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:160, beam:30},
+  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:167, beam:49},
+  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, len:141, beam:44},
 };
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 export const WITNESS = {

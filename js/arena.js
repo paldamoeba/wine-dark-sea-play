@@ -2,15 +2,15 @@
 // The landward side of the ring runs up onto the island; the gate faces the open sea, and the Colossus stands astride it,
 // facing out. You sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round won.
 // The crowd on the walls cheers. The Colossus turns see-through while you're inside so he never blocks the fight.
-import {ISLANDS, landDist} from './world.js?v=356bdbb';
-import {G, save} from './state.js?v=356bdbb';
-import {scene} from './scene.js?v=356bdbb';
-import {mat} from './ships.js?v=356bdbb';
-import {figure} from './town.js?v=356bdbb';
-import {buildColossus, buildGladiator} from './monuments.js?v=356bdbb';
-import {spawnArena, clearArena, enemies} from './combat.js?v=356bdbb';
-import {toast} from './ui.js?v=356bdbb';
-import {sfx} from './audio.js?v=356bdbb';
+import {ISLANDS, landDist} from './world.js?v=e273bb2';
+import {G, save} from './state.js?v=e273bb2';
+import {scene} from './scene.js?v=e273bb2';
+import {mat} from './ships.js?v=e273bb2';
+import {figure} from './town.js?v=e273bb2';
+import {buildColossus, buildGladiator} from './monuments.js?v=e273bb2';
+import {spawnArena, clearArena, enemies} from './combat.js?v=e273bb2';
+import {toast} from './ui.js?v=e273bb2';
+import {sfx} from './audio.js?v=e273bb2';
 
 const T = window.THREE;
 const R = 780, WALL_H = 58, WALL_T = 26, N = 72, GATE = .17; // radius, wall height and thickness, wall pieces, half the gate's opening (radians)
@@ -113,7 +113,7 @@ function spawnSpot(i, n){
 function startRound(){
   const list = ROUNDS[Math.min(A.round, ROUNDS.length - 1)];
   A.foes = list.map((k, i) => { const p = spawnSpot(i, list.length); return spawnArena(k, p.x, p.y, {x:ARENA.x, y:ARENA.y}); });
-  A.on = true; sfx('horn'); sfx('crowd'); toast(`Round ${A.round + 1}! ${list.length} champions sail out. The crowd roars.`, 3);
+  A.on = true; sfx('horn'); sfx('crowd'); toast(`Round ${A.round + 1}!`, 3);
 }
 function endGames(msg){ clearArena(); A.on = false; A.foes = []; A.round = 0; if (msg){ toast(msg, 4); sfx('crowd'); } }
 btn && btn.addEventListener('click', () => { if (!A.on) startRound(); });
@@ -132,7 +132,7 @@ export function updateArena(dt){
     if (!inArena(S, -60)){ endGames('You fled the arena. The crowd boos.'); return; }
     if (A.foes.every(e => e.dead)){
       const prize = PRIZE*(A.round + 1); S.gold += prize; A.round++; S.arenaBest = Math.max(S.arenaBest || 0, A.round); A.on = false; save();
-      toast(`Round ${A.round} won! +${prize} drachmae. The crowd throws flowers.`, 4);
+      toast(`Round won! +${prize}`, 4);
     }
   }
   if (btn){ btn.hidden = !inside || A.on || G.sheetOpen || G.sinking; if (!btn.hidden) btn.textContent = A.round ? `Next round · ${A.round + 1}` : 'Start the games'; }
