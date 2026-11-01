@@ -1,7 +1,7 @@
 // Clouds: soft white puffs drifting between the camera and the sea. A few on fair days, many in mist (instead of one white
 // fog over everything), grey in storms. They wrap around the camera so there are always some nearby.
-import {G} from './state.js?v=260b261';
-import {scene, camera} from './scene.js?v=260b261';
+import {G} from './state.js?v=fe97fed';
+import {scene, camera} from './scene.js?v=fe97fed';
 
 const T = window.THREE;
 const N = 22, R = 1100;
@@ -21,6 +21,7 @@ const clouds = Array.from({length:N}, (_, i) => {
 const WANT = {fair:.3, calm:.18, windy:.45, storm:.7, mist:1};
 const WHITE = new T.Color('#ffffff'), GREY = new T.Color('#8c97a0');
 export const CLOUDS = clouds;
+const V = new T.Vector3();
 export function updateClouds(dt, kind){
   const want = WANT[kind] ?? .3, wind = kind === 'windy' || kind === 'storm' ? 40 : 14, cx = G.cam.x, cz = G.cam.y;
   for (const c of clouds){ const u = c.userData;
@@ -29,9 +30,11 @@ export function updateClouds(dt, kind){
     if (u.x - cx > R) u.x -= 2*R; if (u.x - cx < -R) u.x += 2*R; if (u.z - cz > R) u.z -= 2*R; if (u.z - cz < -R) u.z += 2*R;
     // at a fraction of the camera's height, slide toward the camera so the cloud sits over the sea you're looking at
     c.position.set(u.x + (camera.position.x - cx)*u.y, camera.position.y*u.y, u.z + (camera.position.z - cz)*u.y); c.scale.setScalar(camera.position.y/950); // always partway between the camera and the sea
-    // clouds thin out right over your boat so they never hide it
-    const clear = Math.min(1, Math.max(0, (Math.hypot(u.x - cx, u.z - cz) - 260)/320));
-    const target = u.rank < want ? (kind === 'mist' ? .32 : .4)*clear : 0;
+    // P60: clouds only drift along the edges of the screen. Measured where the cloud actually shows on screen (it sits between
+    // the camera and the sea, so a cloud far out on the sea can still hang right in front of the view and wash it all out white).
+    V.copy(c.position).project(camera); const sd = Math.hypot(V.x, V.y*1.3);
+    const clear = V.z > 1 ? 0 : Math.min(1, Math.max(0, (sd - .55)/.45));
+    const target = u.rank < want ? (kind === 'mist' ? .3 : .32)*clear : 0;
     u.m.opacity += (target - u.m.opacity)*Math.min(1, dt*.4);
     u.m.color.copy(WHITE).lerp(GREY, G.stormK || 0).multiplyScalar(1 - .72*(G.night || 0)); // dark at night, so they don't glow
     c.visible = u.m.opacity > .01;

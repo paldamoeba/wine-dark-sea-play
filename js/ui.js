@@ -1,24 +1,24 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=260b261';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=260b261';
-import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=260b261';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=260b261';
-import {swapBoat, refreshAllTrees} from './entities.js?v=260b261';
-import {setZoom} from './input.js?v=260b261';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=260b261';
-import {tutHTML} from './tutorial.js?v=260b261';
-import {founded, blessing} from './crew.js?v=260b261';
-import {WHALE} from './wildlife.js?v=260b261';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=260b261';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=260b261';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=260b261';
-import {effectText, buy} from './upgrades.js?v=260b261';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=260b261';
-import {GOODS, WAR} from './config.js?v=260b261';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=260b261';
-import {W, KINDS} from './weather.js?v=260b261';
-import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=260b261';
-import {setTimeOfDay} from './daynight.js?v=260b261';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER} from './config.js?v=fe97fed';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=fe97fed';
+import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS} from './state.js?v=fe97fed';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=fe97fed';
+import {swapBoat, refreshAllTrees} from './entities.js?v=fe97fed';
+import {setZoom} from './input.js?v=fe97fed';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=fe97fed';
+import {tutHTML} from './tutorial.js?v=fe97fed';
+import {founded, blessing} from './crew.js?v=fe97fed';
+import {WHALE} from './wildlife.js?v=fe97fed';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=fe97fed';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=fe97fed';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=fe97fed';
+import {effectText, buy} from './upgrades.js?v=fe97fed';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=fe97fed';
+import {GOODS, WAR} from './config.js?v=fe97fed';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=fe97fed';
+import {W, KINDS} from './weather.js?v=fe97fed';
+import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=fe97fed';
+import {setTimeOfDay} from './daynight.js?v=fe97fed';
 
 const $ = id => document.getElementById(id);
 
@@ -71,7 +71,7 @@ export function updateUI(dt, nearDock){
 }
 
 // What the ship carries: one short bar for each kind, stacked under the hull bar. Bronze and goods show once you have some.
-const LOAD_IC = {fish:() => IC.fish(), wood:() => IC.wood, bronze:() => IC.bronze, goods:() => GOOD_IC('wine')};
+const LOAD_IC = {fish:() => IC.fish(), wood:() => IC.wood, bronze:() => IC.bronze, linen:() => IC.linen, goods:() => GOOD_IC('wine')};
 function drawLoads(){
   const S = G.S, rows = LOADS; // P59: every kind, always
   $('loads').innerHTML = rows.map(k => { const u = used(k), c = capOf(k), p = Math.min(100, u/c*100);
@@ -184,7 +184,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 59</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 60</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -318,7 +318,7 @@ setTimeout(() => { const S = G.S; if (S && S.crewRefund){ toast(`Sailors paid ba
 // tapping the blessing icon explains it
 $('blessChip').addEventListener('click', () => toast(G.S.bless ? "Poseidon's blessing: faster sailing and quicker work" : 'A whale! Sail close for Poseidon\'s blessing', 3));
 // docking: wood and bronze aboard go to the warehouse first, so the shipyard can use them
-document.addEventListener('docked', () => { const [w, b] = unload(); if (w || b){ toast(`Unloaded ${[w && w + ' wood', b && b + ' bronze'].filter(Boolean).join(', ')}`, 2.6); save(); } openPort(); });
+document.addEventListener('docked', () => { const [w, b, l] = unload(); if (w || b || l) save(); openPort(); }); // unloaded quietly: the warehouse numbers in the menu show it
 $('goalPill').addEventListener('click', () => { if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });
 $('bagBtn').addEventListener('click', () => sheet === 'inv' ? closeSheet() : openSheet('inv'));
 $('gearBtn').addEventListener('click', () => sheet === 'settings' ? closeSheet() : openSheet('settings'));

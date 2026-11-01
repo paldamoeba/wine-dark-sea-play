@@ -14,19 +14,19 @@ export const SHIPS = [
 // men = [start, most]: the crew it comes with and the most it can carry (the Crew upgrade adds the rest). On oared ships
 // speed is with every bench filled; with few rowers they're much slower (crew.js rowBoost). fighters = archers with a full crew.
 // plans = needs a blueprint (won from a bandit camp or a pirate fortress) before you can build it.
-  {name:'Rowboat',      model:'rowboat', rank:0, speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, goods:3}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:2, men:[1, 2], turn:1.6},
-  {name:'Fishing Boat', model:'fishing', rank:1, speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, goods:6}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:4, men:[1, 4], turn:1.3, cost:{wood:150, linen:10, gold:60}, plans:true,
+  {name:'Rowboat',      model:'rowboat', rank:0, speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, linen:6, goods:3}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:2, men:[1, 2], turn:1.6},
+  {name:'Fishing Boat', model:'fishing', rank:1, speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, linen:12, goods:6}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:4, men:[1, 4], turn:1.3, cost:{wood:150, linen:10, gold:60}, plans:true,
     desc:'A sail, more speed, room for a crew of four, steadier in big waves'},
-  {name:'Bireme',       model:'bireme',  rank:2, speed:165, hull:170, hold:16, cap:{wood:140, bronze:40, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:141, beam:44, fighters:4, men:[6, 33], turn:.75, cost:{wood:300, bronze:30, linen:20, gold:250}, plans:true,
+  {name:'Bireme',       model:'bireme',  rank:2, speed:165, hull:170, hold:16, cap:{wood:140, bronze:40, linen:20, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:141, beam:44, fighters:4, men:[6, 33], turn:.75, cost:{wood:300, bronze:30, linen:20, gold:250}, plans:true,
     desc:'A warship. Benches for 28 rowers and four archers, a hull that shrugs off big waves, but a small hold'},
-  {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:167, beam:49, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, linen:40, gold:600}, plans:true,
+  {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, linen:30, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:167, beam:49, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, linen:40, gold:600}, plans:true,
     desc:'The greatest warship of the Aegean: benches for 32 rowers, six archers, an outrigger and a big bronze ram'},
   // bandit ships you capture (combat.js): never built, only taken
-  {name:'Bandit boat',   model:'dinghy', rank:0, captured:true, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, goods:2}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
+  {name:'Bandit boat',   model:'dinghy', rank:0, captured:true, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, linen:4, goods:2}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
     desc:'A quick little raider boat with a blood-red sail'},
-  {name:'Bandit skiff',  model:'skiff',  rank:1, captured:true, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, goods:4}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
+  {name:'Bandit skiff',  model:'skiff',  rank:1, captured:true, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, linen:8, goods:4}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
     desc:'A raider skiff with a ram: three archers and a small hold'},
-  {name:'Bandit galley', model:'raider', rank:2, captured:true, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, goods:6}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
+  {name:'Bandit galley', model:'raider', rank:2, captured:true, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, linen:15, goods:6}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
     desc:'A black pirate galley with a boar\'s head ram: six archers when its benches are full'},
 ];
 

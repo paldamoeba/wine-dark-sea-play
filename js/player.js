@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=260b261';
-import {SPECS} from './ships.js?v=260b261';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=260b261';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=260b261';
-import {W} from './weather.js?v=260b261';
-import {steering} from './input.js?v=260b261';
-import {toast, showZone} from './ui.js?v=260b261';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=260b261';
-import {startFish, stopFish} from './fishing.js?v=260b261';
-import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=260b261';
-import {progress} from './quests.js?v=260b261';
-import {startSink} from './sinking.js?v=260b261';
-import {sfx} from './audio.js?v=260b261';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=fe97fed';
+import {SPECS} from './ships.js?v=fe97fed';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=fe97fed';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=fe97fed';
+import {W} from './weather.js?v=fe97fed';
+import {steering} from './input.js?v=fe97fed';
+import {toast, showZone} from './ui.js?v=fe97fed';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=fe97fed';
+import {startFish, stopFish} from './fishing.js?v=fe97fed';
+import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=fe97fed';
+import {progress} from './quests.js?v=fe97fed';
+import {startSink} from './sinking.js?v=fe97fed';
+import {sfx} from './audio.js?v=fe97fed';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -106,6 +106,7 @@ function gather(dt, sh){
     const [gc, g0, g1] = ws.gold;
     if (Math.random() < gc){ const c = g0 + Math.floor(Math.random()*(g1 - g0 + 1)); S.gold += c; gain('coin', c); }
     if (ws.goods && Math.random() < ws.goods){ const k = Math.random() < .5 ? 'wine' : 'oil'; if (putAboard(k)) gain(k); }
+    if (Math.random() < .25){ const l = putAboard('linen', 1 + Math.floor(Math.random()*2)); if (l) gain('linen', l); } // torn sails: linen
     if (!r.stock) toast('The wreck slips under the waves', 2.4);
   }
 }

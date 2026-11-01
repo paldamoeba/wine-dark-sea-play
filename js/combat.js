@@ -1,21 +1,21 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. Pirates and navy ships never enter the Shallows, so home water is always safe.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=260b261';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=260b261';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored} from './state.js?v=260b261';
-import {scene, screenToSea, setLair} from './scene.js?v=260b261';
-import {wreckModel} from './models.js?v=260b261';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=260b261';
-import {makeFire, updateFire, burn} from './fire.js?v=260b261';
-import {blessing, fighters, hasSail} from './crew.js?v=260b261';
-import {progress, goal} from './quests.js?v=260b261';
-import {arrowK, ramDmg} from './upgrades.js?v=260b261';
-import {toast} from './ui.js?v=260b261';
-import {sink, rowNow, ROW} from './player.js?v=260b261';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=260b261';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=260b261';
-import {sfx} from './audio.js?v=260b261';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS} from './config.js?v=fe97fed';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist} from './world.js?v=fe97fed';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored} from './state.js?v=fe97fed';
+import {scene, screenToSea, setLair} from './scene.js?v=fe97fed';
+import {wreckModel} from './models.js?v=fe97fed';
+import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=fe97fed';
+import {makeFire, updateFire, burn} from './fire.js?v=fe97fed';
+import {blessing, fighters, hasSail} from './crew.js?v=fe97fed';
+import {progress, goal} from './quests.js?v=fe97fed';
+import {arrowK, ramDmg} from './upgrades.js?v=fe97fed';
+import {toast} from './ui.js?v=fe97fed';
+import {sink, rowNow, ROW} from './player.js?v=fe97fed';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=fe97fed';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=fe97fed';
+import {sfx} from './audio.js?v=fe97fed';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -594,6 +594,7 @@ function updateLoot(dt){
       // What's left over (and any bronze) goes aboard, as much as there's room for.
       const ph = TUNING.plankHull, cap = ship().hull*COMBAT.patchTo, need = Math.ceil(Math.max(0, cap - S.hull)/ph), patch = Math.min(need, l.wood), wood = putAboard('wood', l.wood - patch), bronze = putAboard('bronze', l.bronze);
       S.hull = Math.max(S.hull, Math.min(cap, S.hull + patch*ph)); S.gold += l.gold; l.life = 0;
+      if (l.goods){ const ln = putAboard('linen', 2 + Math.floor(Math.random()*3)); if (ln) gain('linen', ln); } // merchants carry sailcloth
       if (l.goods){ const n = putAboard(l.goods.k, l.goods.n); if (n) setTimeout(() => toast(`+${n} ${l.goods.k === 'oil' ? 'olive oil' : l.goods.k}`, 2.6), 3000); }
       gain('coin', l.gold); if (wood) gain('wood', wood); if (bronze) gain('bronze', bronze); if (l.goods) gain(l.goods.k, l.goods.n);
       save();

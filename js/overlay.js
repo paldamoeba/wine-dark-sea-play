@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=260b261';
-import {G, isExplored} from './state.js?v=260b261';
-import {fogLayer, islandPath} from './map.js?v=260b261';
-import {view, project, screenToSea} from './scene.js?v=260b261';
-import {JOY_RADIUS} from './input.js?v=260b261';
-import {enemies, combatState, capture} from './combat.js?v=260b261';
-import {drawFish} from './fishing.js?v=260b261';
-import {whale} from './wildlife.js?v=260b261';
-import {SHORE_FISH} from './config.js?v=260b261';
-import {W as WIND} from './weather.js?v=260b261';
-import {bottle} from './quests.js?v=260b261';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=260b261';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=fe97fed';
+import {G, isExplored} from './state.js?v=fe97fed';
+import {fogLayer, islandPath} from './map.js?v=fe97fed';
+import {view, project, screenToSea} from './scene.js?v=fe97fed';
+import {JOY_RADIUS} from './input.js?v=fe97fed';
+import {enemies, combatState, capture} from './combat.js?v=fe97fed';
+import {drawFish} from './fishing.js?v=fe97fed';
+import {whale} from './wildlife.js?v=fe97fed';
+import {SHORE_FISH} from './config.js?v=fe97fed';
+import {W as WIND} from './weather.js?v=fe97fed';
+import {bottle} from './quests.js?v=fe97fed';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=fe97fed';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -44,8 +44,7 @@ function buildMini(){
   for (let y=0;y<s;y++) for (let x=0;x<s;x++){ const z = zoneAt(x/k, y/k), col = z === 0 ? [122,206,198] : z === 1 ? [70,154,192] : [46,100,142]; img.data.set([...col, 255], (y*s+x)*4); }
   g.putImageData(img, 0, 0);
   ISLANDS.forEach(i => { islandPath(g, i, 0, k); g.strokeStyle = 'rgba(225,245,238,.55)'; g.lineWidth = 7; g.stroke(); });
-  ISLANDS.forEach(i => { islandPath(g, i, 0, k); g.fillStyle = '#efdcaa'; g.fill(); g.strokeStyle = '#6b5236'; g.lineWidth = 1.6; g.stroke();
-    if (i.tiers[1]){ islandPath(g, i, 1, k); g.fillStyle = '#9fbe62'; g.fill(); } if (i.tiers[2]){ islandPath(g, i, 2, k); g.fillStyle = '#b4a888'; g.fill(); } });
+  // (P60: the islands themselves are drawn sharp each time in drawMini, not into this small picture)
   mini = m;
 }
 const topInset = () => parseFloat(getComputedStyle(document.documentElement).paddingTop) || 0;
@@ -225,8 +224,9 @@ export function drawOverlay(fps){
   if (!mini) buildMini();
   const ms = 112*(G.uik || 1), cx = W - ms/2 - 12 - 6*(G.uik || 1), cy = 10 + 8*(G.uik || 1) + ms/2 + topInset(); // room for the compass rim
   // the minimap is drawn into its own small canvas only every third frame, then copied: it's one of the slower things to draw
-  if (!miniCv){ miniCv = document.createElement('canvas'); miniCv.width = miniCv.height = ms*2; }
-  if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
+  const md = Math.min(3, view.DPR || 1), mpx = Math.round(ms*md); // drawn at the screen's full sharpness
+  if (!miniCv || miniCv.width !== mpx){ miniCv = document.createElement('canvas'); miniCv.width = miniCv.height = mpx; }
+  if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(md, 0, 0, md, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
   c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
   // a round wooden frame, with a little N where north is (the map is turned like the camera, so north is up and to the right)
   // P57: a wooden compass. A thick wooden rim with grain and a soft shadow, a thin brass ring inside it, tick marks all round
@@ -271,6 +271,10 @@ function drawMini(c, cx, cy, ms, S){
   c.fillStyle = '#dccaa2'; c.fillRect(cx - ms/2, cy - ms/2, ms, ms); // unexplored water is blank paper, like on the chart
   c.translate(cx, cy); c.translate(-S.x*k, -S.y*k);
   c.drawImage(mini, 0, 0, WORLD*k, WORLD*k);
+  // P60: nearby islands as sharp outlines (the world picture is too coarse for a phone screen)
+  for (const i of ISLANDS){ if (Math.abs(i.x - S.x) > MINI_RANGE + i.r || Math.abs(i.y - S.y) > MINI_RANGE + i.r) continue;
+    islandPath(c, i, 0, k); c.fillStyle = '#efdcaa'; c.fill(); c.strokeStyle = '#6b5236'; c.lineWidth = 1; c.stroke();
+    if (i.tiers[1]){ islandPath(c, i, 1, k); c.fillStyle = '#9fbe62'; c.fill(); } if (i.tiers[2]){ islandPath(c, i, 2, k); c.fillStyle = '#b4a888'; c.fill(); } }
   c.drawImage(fogLayer('#dccaa2'), 0, 0, WORLD*k, WORLD*k);
   c.strokeStyle = '#3e2b1c'; c.lineWidth = 1;
   for (const h of HARBORS){ c.fillStyle = h.is.city ? CITIES[h.is.city].color : '#d48a2a'; c.beginPath(); c.arc(h.dock.x*k, h.dock.y*k, 3, 0, Math.PI*2); c.fill(); c.stroke(); }

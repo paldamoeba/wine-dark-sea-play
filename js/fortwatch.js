@@ -1,11 +1,11 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=260b261';
-import {FORTS} from './config.js?v=260b261';
-import {CITIES} from './world.js?v=260b261';
-import {enemies, hostile, planReward} from './combat.js?v=260b261';
-import {SHIPS, PLANS} from './config.js?v=260b261';
-import {sfx} from './audio.js?v=260b261';
+import {G} from './state.js?v=fe97fed';
+import {FORTS} from './config.js?v=fe97fed';
+import {CITIES} from './world.js?v=fe97fed';
+import {enemies, hostile, planReward} from './combat.js?v=fe97fed';
+import {SHIPS, PLANS} from './config.js?v=fe97fed';
+import {sfx} from './audio.js?v=fe97fed';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
@@ -30,8 +30,7 @@ export function updateFortWatch(dt){
   const f = best, sunk = f.guards.filter(g => g.dead).length, n = f.guards.length, wall = f.dead ? 0 : Math.max(0, f.hull/f.spec.hull);
   const prize = planReward(f), key = f.isle.name + sunk + Math.round(wall*20) + f.dead + prize;
   if (key !== last){ last = key;
-    m.innerHTML = `<b class="mt">${f.camp ? 'Bandit camp' : (f.city ? CITIES[f.city].name + "'s" : 'Pirate') + ' fortress'} · ${f.isle.name}</b>
-      <div class="mrow"><span>${f.camp ? 'Camp' : 'Walls'}</span>${f.dead ? `<em class="done">${f.camp ? 'Burnt' : 'Fallen'}</em>` : `<div class="mbar"><i style="width:${wall*100}%"></i></div>`}</div>
-      <div class="mrow"><span>${f.camp ? 'Mothership' : 'Guard ships'}</span><span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span><em>${sunk} of ${n} sunk</em></div>${prize ? `<div class="mrow reward"><span>Reward</span><em>📜 ${PLANS[prize].pieces > 1 ? 'A piece of the' : 'The'} ${SHIPS[prize].name.toLowerCase()} plans</em></div>` : ''}`; }
+    // P60: one short line: name, a thin bar for the walls (or "fallen"), the guard ships (crossed out when sunk), a scroll if it holds plans
+    m.innerHTML = `<b class="mt">${f.isle.name}</b>${f.dead ? '<em class="done">✓</em>' : `<span class="mbar"><i style="width:${wall*100}%"></i></span>`}<span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span>${prize ? '<span class="mscroll" title="Holds ship plans">📜</span>' : ''}`; }
   m.hidden = false;
 }

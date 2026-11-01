@@ -791,3 +791,16 @@ body.big .abilities{zoom:1.5}
 /* P59: card titles in the same round font as "Your bag": no capitals, no letter spacing */
 .sheet.menu .card h3{font-family:var(--body)!important;font-weight:800;font-size:16px;letter-spacing:0;text-transform:none;color:var(--cz-ink)!important}
 .sheet.menu .card h3::after{opacity:.25}
+/* P60: numbers and icons on one line in buttons and chips (they sat at different heights) */
+.sheet.menu .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;line-height:1}
+.chipc{line-height:1;gap:4px}.chipc svg{display:block}
+/* P60: the fortress / camp bar is one small line near the bottom, above the ability buttons */
+.mission{top:auto!important;bottom:calc(98px + env(safe-area-inset-bottom,0px))!important;left:50%!important;transform:translateX(-50%)!important;min-width:0!important;max-width:calc(100vw - 150px)!important;
+  display:flex!important;align-items:center;gap:8px;padding:6px 12px!important;border-radius:999px!important;white-space:nowrap}
+.mission[hidden]{display:none!important}
+.mission .mt{font:800 13px/1 var(--body)!important;color:var(--cz-ink)!important}
+.mission .mbar{display:block;width:70px;height:6px;border-radius:3px;background:var(--cz-track);overflow:hidden}.mission .mbar i{display:block;height:100%;background:var(--cz-coral);border-radius:3px}
+.mission .mships{display:flex;gap:2px}.mission .mships svg{width:18px;height:12px}
+.mission .done{color:#5fb35a;font:900 14px/1 var(--body);font-style:normal}
+.mission .mscroll{font-size:14px;line-height:1}
+.caution{width:auto!important;padding:8px 16px 8px 10px!important;gap:8px!important}.caution .cic{width:26px!important;height:26px!important;font-size:16px!important}.caution p b{margin:0!important}
