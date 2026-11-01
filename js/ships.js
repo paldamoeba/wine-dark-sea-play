@@ -54,6 +54,9 @@ export const SPECS = {
   trader:     {L:84, B:36, H:18, rise:12, mast:true, sailW:50, sailH:42, sailMax:15, hats:true, cargo:true, crateX:-.25, crew:[['stand', 2]], crewAt:[[-.4, 0], [.33, 0]], look:{paint:'oak', sail:'ochre', flag:'hermes'}}, // a small round trading ship
   dinghy:     {L:44, B:17, H:9, rise:6, oarRows:1, oarCount:2, mast:true, sailW:20, sailH:18, sailMax:5, raider:true, crew:[['archer', 1]], look:{paint:'raider', sail:'blood', flag:'none'}},
   skiff:      {L:72, B:22, H:12, rise:12, oarRows:1, oarCount:3, mast:true, sailW:34, sailH:28, sailMax:10, fans:true, ram:true, raider:true, crew:[['archer', 3]], look:{paint:'raider', sail:'blood', flag:'none'}},
+  // P56: Polycrates' flagship, the pirate king's floating fortress (our own design, inspired by the great ancient ships): two rows of oars,
+  // four towers, a red-roofed hall on deck, a tall column with a golden orb, a huge curled stern and a triple ram
+  flagship:   {L:290, B:86, H:32, rise:46, oarRows:2, oarCount:22, mast:true, sailW:80, sailH:64, sailMax:15, flagship:true, fans:true, eyes:true, raider:true, crew:[['stand', 1], ['archer', 8]], look:{paint:'king', sail:'blood', flag:'none'}},
 };
 
 // ---------- materials ----------
@@ -422,6 +425,33 @@ export function crewLayout(s, m){
   let a = Math.min(A, Math.ceil(rest/3)); const r = Math.min(2*O, rest - a); a = Math.min(A, rest - r);
   return {stand:helm, archers:a, rowers:r, pairs:Math.ceil(r/2)};
 }
+// The flagship's deck: a long hall with green walls and red tile roofs, four square towers with red caps at the corners,
+// a tall column with a golden orb near the stern, a big golden curl rising from the stern, and three ram spikes at the bow.
+function flagshipDeck(s, info, pc){
+  const g = new T.Group(), y = info.deckLevel, gold = '#e3ad48', red = '#b8402f', wall = '#5f8f7a', stone = '#d9cdb4';
+  const box = (w, h, d, c, x, yy, z) => { const m = mesh(new T.BoxGeometry(w, h, d), c); m.position.set(x, yy, z); g.add(m); return m; };
+  // the hall on deck
+  box(s.L*.42, 13, s.B*.42, wall, -s.L*.04, y + 6.5, 0);
+  for (const sg of [1, -1]){ const r = box(s.L*.44, 1.6, s.B*.27, red, -s.L*.04, y + 15.5, sg*s.B*.1); r.rotation.x = sg*.42; }
+  for (let k=0;k<9;k++) for (const sg of [1, -1]) box(1.6, 12, 1.6, gold, -s.L*.24 + k*s.L*.05, y + 6, sg*s.B*.215); // little gold pillars along the hall
+  // four towers
+  for (const [fx, fz] of [[.3, .3], [.3, -.3], [-.3, .3], [-.3, -.3]]){ const x = fx*s.L, z = fz*s.B, h = 44;
+    box(11, h, 11, stone, x, y + h/2, z);
+    for (let k=1;k<4;k++) box(11.4, 1.2, 11.4, gold, x, y + k*h/4, z);
+    const cap = mesh(new T.ConeGeometry(8.8, 12, 4), red); cap.rotation.y = Math.PI/4; cap.position.set(x, y + h + 6, z); g.add(cap);
+    const tip = mesh(new T.ConeGeometry(1.2, 9, 6), gold); tip.position.set(x, y + h + 15, z); g.add(tip); }
+  // the column with a golden orb
+  const col = mesh(new T.CylinderGeometry(4, 5, 70, 12), stone); col.position.set(-s.L*.16, y + 35, 0); g.add(col);
+  for (let k=1;k<5;k++){ const r = mesh(new T.CylinderGeometry(5.2, 5.2, 1.4, 12), gold); r.position.set(-s.L*.16, y + k*14, 0); g.add(r); }
+  const orb = mesh(new T.SphereGeometry(8, 18, 14), gold, {flatShading:false}); orb.position.set(-s.L*.16, y + 79, 0); g.add(orb);
+  // the great curled stern, golden
+  const curl = []; for (let k=0;k<=24;k++){ const u = k/24, a = u*Math.PI*1.7; curl.push([-s.L*.5 - 4 + Math.sin(a)*30*u, info.deckY(1) - 4 + (1 - Math.cos(a))*28 + u*10, 0]); }
+  g.add(tube(curl, 6.5, gold, 10));
+  // three ram spikes at the bow, low over the water
+  for (const k of [-1, 0, 1]){ const r = mesh(new T.ConeGeometry(3.2, 34, 8), '#8a8f96'); r.rotation.z = -Math.PI/2; r.position.set(s.L*.5 + 14, s.H*.1 + k*5, k*4); g.add(r); }
+  return g;
+}
+
 // Build a ship. look = {paint, sail, flag, helm (the archers' helmet), sailLv (the player's sail upgrades), men (crew size; all benches full if not given)}; crew = show the crew.
 export function buildShip(key, look = {}, crew = true){
   const s = SPECS[key], lk = {...s.look, ...look}, root = new T.Group(), body = new T.Group(); root.add(body);
@@ -495,6 +525,7 @@ export function buildShip(key, look = {}, crew = true){
     const e = mesh(new T.CircleGeometry(2.8, 14), 'white', {side:T.DoubleSide}); e.position.set(x, s.H*.15 + s.rise*.12, sg*(w + .6)); e.rotation.y = sg > 0 ? .45 : Math.PI - .45; body.add(e);
     const pu = mesh(new T.CircleGeometry(1.4, 10), s.raider ? '#b8322a' : '#1c1c22', {side:T.DoubleSide}); pu.position.copy(e.position); pu.position.z += sg*.2; pu.position.x += .6; pu.rotation.y = e.rotation.y; body.add(pu);
   }
+  if (s.flagship) body.add(flagshipDeck(s, info, pc));
   if (s.nets){ const n = mesh(new T.DodecahedronGeometry(6, 0), 'net'); n.scale.set(1.3, .5, 1); n.position.set(-s.L*.3, info.deckLevel + 2, 0); body.add(n); }
   if (s.cargo){ for (let i=0;i<8;i++){ const a = mesh(amphora, '#b06a3d', {flatShading:false}); a.position.set(-8 + (i % 4)*8, info.deckLevel, -7 + Math.floor(i/4)*12); body.add(a); }
     const crate = mesh(new T.BoxGeometry(14, 9, 12), '#9b6b3a'); crate.position.set(s.crateX != null ? s.crateX*s.L : 24, info.deckLevel + 4.5, 0); body.add(crate); }
@@ -542,11 +573,13 @@ export function buildShip(key, look = {}, crew = true){
 
 // Oars row, sail breathes, flags flutter.
 export function animateShip(root, t, speed){
-  const row = Math.min(1, .25 + speed/60);
-  root.userData.oars.forEach(o => { o.piv.rotation.y = o.sg*Math.sin(t*2.6 + o.ph)*.4*row; });
+  // P56: the player's ship under sail keeps its oars raised out of the water (userData.stow); a Row! burst (userData.burst) pulls fast and hard
+  const stow = root.userData.stow, f = root.userData.burst ? 4.4 : 2.6, row = stow ? 0 : Math.min(1, .25 + speed/60) * (root.userData.burst ? 1.25 : 1);
+  root.userData.oars.forEach(o => { o.piv.rotation.y = o.sg*Math.sin(t*f + o.ph)*.4*row; if (o.rx0 == null) o.rx0 = o.piv.rotation.x;
+    o.piv.rotation.x += ((stow ? o.rx0 + o.sg*.55 : o.rx0) - o.piv.rotation.x)*.08; });
   // Rowers rock in time with the oars; archers lean in when the ship is fighting.
   for (const c of root.userData.crew || []){ const {inner, pose} = c.p.userData;
-    if (pose === 'row') inner.rotation.z = Math.sin(t*2.6 + c.ph)*.25*row;                                  // rocking with the oar
+    if (pose === 'row') inner.rotation.z = Math.sin(t*f + c.ph)*.25*row;                                  // rocking with the oar
     else if (pose === 'archer') inner.rotation.z = root.userData.firing ? -.18*(.5 + .5*Math.sin(t*5 + c.ph*9)) : 0; } // leaning in to shoot
   const fill = root.userData.windFill || 0; // the player's sail bellies out more with the wind behind it
   (root.userData.sails || []).forEach((sl, i) => { sl.scale.x = 1 + Math.min(.9, speed/80) + fill*.7 + Math.sin(t*(1.3 + fill*2) + i)*(.06 + fill*.04); });

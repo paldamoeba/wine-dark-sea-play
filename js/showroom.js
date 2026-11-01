@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=fe8e317';
-import {makePost} from './glow.js?v=fe8e317';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=fe8e317';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=fe8e317';
-import {makeFire, updateFire} from './fire.js?v=fe8e317';
-import {updateSmoke} from './smoke.js?v=fe8e317';
-import {addGrass, updateGrass} from './grass.js?v=fe8e317';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=fe8e317';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=3c87495';
+import {makePost} from './glow.js?v=3c87495';
+import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=3c87495';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=3c87495';
+import {makeFire, updateFire} from './fire.js?v=3c87495';
+import {updateSmoke} from './smoke.js?v=3c87495';
+import {addGrass, updateGrass} from './grass.js?v=3c87495';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=3c87495';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -236,9 +236,16 @@ function updateSoundScene(dt){
 
 // P55 prototype: the warships bigger and heavier (25% longer, 40% wider, a taller hull and bigger sails), to compare.
 const bigger = k => { const s = SPECS[k], key = k + 'XL'; if (!SPECS[key]) SPECS[key] = {...s, L:s.L*1.25, B:s.B*1.4, H:s.H*1.3, rise:s.rise*1.25, sailW:s.sailW*1.15, sailH:s.sailH*1.15}; return key; };
-function sideBySide(k){ const g = new T.Group(), a = buildShip(k), b = buildShip(bigger(k)); a.position.z = -SPECS[k].B*1.6; b.position.z = SPECS[k].B*1.9; g.add(a, b); return g; }
+// P56 prototype: the same size class, just wider and a little shorter (Nicholas: the warships look too skinny and too long)
+const wider = k => { const s = SPECS[k], key = k + 'W'; if (!SPECS[key]) SPECS[key] = {...s, L:s.L*.88, B:s.B*1.45, H:s.H*1.1}; return key; };
+function sideBySide(k, alt = bigger){ const g = new T.Group(), a = buildShip(k), b = buildShip(alt(k)); a.position.z = -SPECS[k].B*1.6; b.position.z = SPECS[k].B*1.9; g.add(a, b); return g; }
 const GROUPS = {
   ships:{name:'Ships', items:[
+    {name:'The pirate king\'s flagship', desc:'Polycrates\' floating fortress, waiting in the wine-dark water off Kos: two rows of oars, four towers, a red-roofed hall, a column with a golden orb, a great curled stern and a triple ram.', make:() => buildShip('flagship', {paint:'king', sail:'purple'})},
+    {name:'Bireme, wider (prototype)', desc:'A test: the bireme 45% wider and a little shorter (88% of the length), so it looks less skinny. Same size class.', make:() => buildShip(wider('bireme'))},
+    {name:'Trireme, wider (prototype)', desc:'A test: the trireme 45% wider and a little shorter.', make:() => buildShip(wider('trireme'))},
+    {name:'Bireme, old and wider side by side', desc:'In front: the wider prototype. Behind: the bireme as it is now.', make:() => sideBySide('bireme', wider)},
+    {name:'Trireme, old and wider side by side', desc:'In front: the wider prototype. Behind: the trireme as it is now.', make:() => sideBySide('trireme', wider)},
     {name:'Bireme, bigger (prototype)', desc:'A test: the bireme 25% longer, 40% wider, with a taller hull and bigger sail, so it feels like a heavy warship.', make:() => buildShip(bigger('bireme'))},
     {name:'Trireme, bigger (prototype)', desc:'A test: the trireme made bigger and heavier the same way.', make:() => buildShip(bigger('trireme'))},
     {name:'Trireme, old and bigger side by side', desc:'In front: the bigger prototype. Behind: the trireme as it is now.', make:() => sideBySide('trireme')},

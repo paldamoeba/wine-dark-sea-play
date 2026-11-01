@@ -1,17 +1,17 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=fe8e317';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=fe8e317';
-import {G, ship, lvl} from './state.js?v=fe8e317';
-import {men} from './crew.js?v=fe8e317';
-import {scene} from './scene.js?v=fe8e317';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=fe8e317';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=fe8e317';
-import {addTown, figure} from './town.js?v=fe8e317';
-import {makeFire, updateFire, burn} from './fire.js?v=fe8e317';
-import {addGrass} from './grass.js?v=fe8e317';
-import {sinkPose} from './sinking.js?v=fe8e317';
-import {moored} from './fleet.js?v=fe8e317';
-import {placeOnWaves} from './combat.js?v=fe8e317';
+import {SHIPS} from './config.js?v=3c87495';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=3c87495';
+import {G, ship, lvl} from './state.js?v=3c87495';
+import {men} from './crew.js?v=3c87495';
+import {scene} from './scene.js?v=3c87495';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=3c87495';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=3c87495';
+import {addTown, figure} from './town.js?v=3c87495';
+import {makeFire, updateFire, burn} from './fire.js?v=3c87495';
+import {addGrass} from './grass.js?v=3c87495';
+import {sinkPose} from './sinking.js?v=3c87495';
+import {moored} from './fleet.js?v=3c87495';
+import {placeOnWaves} from './combat.js?v=3c87495';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -306,7 +306,7 @@ export function animateEntities(dt){
   boat.position.set(S.x, wh + sh.len*.05 - sp.depth, S.y);
   boat.rotation.order = 'YXZ'; boat.rotation.y = -S.a; boat.rotation.z = Math.atan(pitch) + sp.pitch; boat.rotation.x = Math.atan(roll)*.8 + sp.roll + Math.sin(G.kick*50)*G.kick + G.heel;
   boat.userData.firing = !!G.firing;
-  boat.userData.windFill = G.windFill || 0; animateShip(boat, t, G.v);
+  boat.userData.windFill = G.windFill || 0; boat.userData.stow = !G.rowing && !G.dock; boat.userData.burst = G.rowT > 0; animateShip(boat, t, G.v);
   updateFire(boat.userData.fire, Math.max(burn(S.hull, ship().hull), G.burnT > 0 ? .6 : 0), t); // also while burning from a flaming volley
   for (const f of fleet) animateShip(f, t, 0);
   showHomeFleet();

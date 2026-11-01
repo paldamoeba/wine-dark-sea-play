@@ -1,10 +1,10 @@
 // Tells the sound engine what is going on around the ship each frame: speed, weather, land, wrecks, fights, harbors.
-import {G, ship, lvl} from './state.js?v=fe8e317';
-import {SHIPS} from './config.js?v=fe8e317';
-import {landDist, WRECKS} from './world.js?v=fe8e317';
-import {W, KINDS} from './weather.js?v=fe8e317';
-import {combatState} from './combat.js?v=fe8e317';
-import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=fe8e317';
+import {G, ship, lvl} from './state.js?v=3c87495';
+import {SHIPS} from './config.js?v=3c87495';
+import {landDist, WRECKS} from './world.js?v=3c87495';
+import {W, KINDS} from './weather.js?v=3c87495';
+import {combatState} from './combat.js?v=3c87495';
+import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=3c87495';
 
 Object.assign(SND, G.settings.sound || {}); applyVolumes();
 
@@ -26,7 +26,7 @@ export function updateSounds(dt){
     speed: G.sinking || G.dock ? 0 : Math.min(1, Math.abs(G.v)/(ship().speed || 1)),
     waves: k.wave*(G.dock ? .5 : 1), storm: G.stormK || 0, rain: Math.max(0, (G.stormK - .35)/.65),
     wind: Math.min(1, (k.wave - .5)*.6 + G.stormK*.5 + .15), night, land: near.land, gulls: near.gulls,
-    fire: G.fireNear || 0, rowing: !!ROWED[sh.model] && !G.dock, sail: !ROWED[sh.model] || lvl('sail') > 0, docked: !!G.dock,
+    fire: G.fireNear || 0, rowing: !!G.rowing && !G.dock, burst: G.rowT > 0, sail: !ROWED[sh.model] || lvl('sail') > 0, docked: !!G.dock,
   });
   musicMood(combatState.threat || combatState.target ? 'battle' : G.dock ? 'harbor' : night > .6 ? 'night' : 'day');
 }

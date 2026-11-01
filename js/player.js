@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=fe8e317';
-import {SPECS} from './ships.js?v=fe8e317';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=fe8e317';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=fe8e317';
-import {W} from './weather.js?v=fe8e317';
-import {steering} from './input.js?v=fe8e317';
-import {toast, showZone} from './ui.js?v=fe8e317';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=fe8e317';
-import {startFish, stopFish} from './fishing.js?v=fe8e317';
-import {blessing, rowBoost, fishBoost} from './crew.js?v=fe8e317';
-import {progress} from './quests.js?v=fe8e317';
-import {startSink} from './sinking.js?v=fe8e317';
-import {sfx} from './audio.js?v=fe8e317';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=3c87495';
+import {SPECS} from './ships.js?v=3c87495';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=3c87495';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=3c87495';
+import {W} from './weather.js?v=3c87495';
+import {steering} from './input.js?v=3c87495';
+import {toast, showZone} from './ui.js?v=3c87495';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=3c87495';
+import {startFish, stopFish} from './fishing.js?v=3c87495';
+import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=3c87495';
+import {progress} from './quests.js?v=3c87495';
+import {startSink} from './sinking.js?v=3c87495';
+import {sfx} from './audio.js?v=3c87495';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -36,7 +36,14 @@ function windBoost(){
   if (!S.windTip && G.windFill > .45 && G.v > 40){ S.windTip = true; toast('The wind fills your sail! With the wind at your back you sail faster.', 4.5); }
   return 1 + k*(along > 0 ? .2*along : .08*along);
 }
+// ---- Row! (P56): a 5-second burst of everyone rowing, to catch a ship or ram it at full speed; then a rest ----
+export const ROW = {secs:5, cd:14};
+export function rowNow(){ if (!hasSail() || G.rowT > 0 || G.rowCd > 0 || G.dock || G.sinking) return false;
+  G.rowT = ROW.secs; G.rowCd = ROW.cd; sfx('horn'); if (!G.S.rowTip){ G.S.rowTip = true; toast('Row! Everyone pulls hard for a few seconds. Ram a ship at this speed for big damage.', 4.5); } return true; }
+addEventListener('keydown', e => { if (e.key === 'Shift' && !G.sheetOpen && !G.mapOpen) rowNow(); });
 function move(dt, sh){
+  G.rowT = Math.max(0, (G.rowT || 0) - dt); G.rowCd = Math.max(0, (G.rowCd || 0) - dt);
+  G.rowing = !hasSail() || G.rowT > 0; // oars in the water (for the oars' look and the sound)
   const S = G.S, [ix, iy] = steering(S), mag = Math.hypot(ix, iy);
   let target = 0, turn = 0; const heavy = sh.heavy || 2;
   if (!G.sheetOpen && mag > .06){
@@ -44,7 +51,7 @@ function move(dt, sh){
     turn = Math.max(-1, Math.min(1, diff*1.4)) * sh.turn;
     // a sharp turn slows the boat down; it picks up speed again once it points the right way
     const ahead = Math.max(0, Math.cos(diff));
-    target = sh.speed * G.settings.dev.speed * mag * (.25 + .75*ahead*ahead) * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost();
+    target = sh.speed * G.settings.dev.speed * mag * (.25 + .75*ahead*ahead) * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost() * (G.rowT > 0 ? rowBurst() : 1);
   }
   // weight: a heavy ship takes a while to swing round and to get going, and glides on a long way when you stop rowing
   G.turnRate = (G.turnRate || 0) + (turn - (G.turnRate || 0)) * Math.min(1, dt*3.2/Math.sqrt(heavy)); S.a += G.turnRate * dt;

@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS} from './config.js?v=fe8e317';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=fe8e317';
-import {sfx} from './audio.js?v=fe8e317';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS} from './config.js?v=3c87495';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=3c87495';
+import {sfx} from './audio.js?v=3c87495';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -137,9 +137,13 @@ export function resetSave(){
   save();
 }
 
+export const PUBLIC = /github\.io$/.test(location.hostname); // the public play link
 export function loadSettings(){
   const saved = read(SETTINGS_KEY) || {};
   const {dev, ...rest} = saved;
+  // P56: the public play link (GitHub) is always the normal game; the claude.ai page starts with the builder tools on
+  // (you can still switch them off there, and it remembers)
+  if (PUBLIC){ rest.builder = false; rest.showBuilder = false; } else if (!rest.builderP56){ rest.builder = true; rest.showBuilder = true; rest.builderP56 = true; }
   if (!rest.camP48){ rest.angle = 'low'; rest.camP48 = true; } // P48: the low camera became the default, once for everyone
   G.settings = {quality:'auto', detected:null, showFps:false, builder:false, angle:'low', ...rest, // a new player starts with builder tools off
     // Builder tools: only for making the game, removed before release.

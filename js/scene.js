@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=fe8e317';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=fe8e317';
-import {G} from './state.js?v=fe8e317';
-import {TOD, updateDayNight} from './daynight.js?v=fe8e317';
-import {showGrass} from './grass.js?v=fe8e317';
+import {QUALITY, SHIPS} from './config.js?v=3c87495';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=3c87495';
+import {G} from './state.js?v=3c87495';
+import {TOD, updateDayNight} from './daynight.js?v=3c87495';
+import {showGrass} from './grass.js?v=3c87495';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -60,7 +60,7 @@ const bedMat = new T.MeshBasicMaterial({vertexColors:true, color:'#8fa6b8', fog:
 const LOOKS = {classic:['#2b8e8f', '#175c7c', '#1b4a63', '#5cc2b2'], bright:['#35a6d8', '#1d72cc', '#1a5fb4', '#7fd3e2']};
 const CCOLD = new T.Color('#3d6f8f'), CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
 const waterMat = new T.MeshPhongMaterial({color:'#ffffff', vertexColors:true, specular:'#000000', shininess:1, transparent:true, opacity:.8});
-const foamU = {uNight:{value:0}, uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
+const foamU = {uLair:{value:new T.Vector3(0, 0, 0)}, uNight:{value:0}, uTime:{value:0}, uFoam:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
 // the same swells as waveH() in world.js, written for the graphics card, with their slope (for the light) and smaller waves on top
 const WAVES_GLSL = `
   vec3 swell(vec2 p0, float A, float t, float shore){ // height, slope along x, slope along z (keep in step with waterY() in world.js)
@@ -79,7 +79,7 @@ waterMat.onBeforeCompile = sh => {
       vec3 objectNormal = normalize(vec3(-sw.y, 1., -sw.z));`)
     .replace('#include <begin_vertex>', `vec3 transformed = position; transformed.y += sw.x; vH = sw.x; vAmp = max(A, .5);
       vWorld = (modelMatrix*vec4(transformed, 1.0)).xyz;`);
-  sh.fragmentShader = `varying vec3 vWorld; varying float vH, vAmp; uniform float uTime, uFoam, uGlint, uStorm, uWave, uNight; uniform vec3 uSun, uSky;
+  sh.fragmentShader = `varying vec3 vWorld; varying float vH, vAmp; uniform float uTime, uFoam, uGlint, uStorm, uWave, uNight; uniform vec3 uSun, uSky, uLair;
     vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
     float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
       for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(mod(i + g, 256.)); // wrapped so the hash never gets numbers too big for phone GPUs (that turned the far south black)
@@ -101,7 +101,10 @@ waterMat.onBeforeCompile = sh => {
       float hk = clamp(vH/vAmp, -1., 1.);
       diffuseColor.rgb *= .8*mix(.8, 1.14, smoothstep(-1., 1., hk)); // (the light here is smooth, not banded, so a little darker to match the old look)
       diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*vec3(.92, 1.06, 1.04), smoothstep(.3, 1., hk)*.6);
-      diffuseColor.rgb *= (.93 + .12*vnoise(vWorld.xz/520. + uTime*.01))*(1. + uNight*.08); // a touch brighter at night so you can still read the water`)
+      diffuseColor.rgb *= (.93 + .12*vnoise(vWorld.xz/520. + uTime*.01))*(1. + uNight*.08); // a touch brighter at night so you can still read the water
+      // P56: the wine-dark sea around the pirate king's lair (uLair = x, z, radius): deep wine red, crests a little lighter
+      if (uLair.z > 0.){ float lk = 1. - smoothstep(uLair.z*.55, uLair.z, length(vWorld.xz - uLair.xy));
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(.24, .04, .12), vec3(.46, .12, .22), smoothstep(-1., 1., hk)), lk*.9); }`)
     .replace('#include <dithering_fragment>', `#include <dithering_fragment>
       vec3 foamC = mix(vec3(.94, .98, 1.), vec3(.32, .62, .68), uStorm);
       foamC = mix(foamC, vec3(.42, .55, .78), uNight*.7); // moonlit foam: softer and bluer
@@ -125,8 +128,12 @@ waterMat.onBeforeCompile = sh => {
       vec3 nrm = normalize(vec3(sin(w.x*.045 + uTime*1.7)*.16 + sin((w.x + w.y)*.11 - uTime*2.3)*.08 - rp.x, 1., cos(w.y*.05 - uTime*1.4)*.16 + sin((w.x - w.y)*.09 + uTime*2.1)*.08 - rp.y));
       vec3 Rf = reflect(-uSun, nrm);
       float sp = max(dot(Rf, Vv), 0.), sheen = pow(sp, 24.)*.12, twinkle = pow(sp, 260.)*.45;
-      gl_FragColor.rgb += mix(vec3(1., .96, .86), vec3(.78, .86, 1.), uNight)*(sheen + twinkle)*uGlint;`);
+      gl_FragColor.rgb += mix(vec3(1., .96, .86), vec3(.78, .86, 1.), uNight)*(sheen + twinkle)*uGlint;
+      // the wine-dark sea, again after the sky's reflection, so it stays deep red and doesn't wash out to lilac
+      if (uLair.z > 0.){ float lw = 1. - smoothstep(uLair.z*.55, uLair.z, length(vWorld.xz - uLair.xy)); gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb*vec3(.62, .28, .38) + vec3(.06, 0., .02), lw*.85); }`);
 };
+// P56: where the wine-dark water is (the pirate king's lair); r = 0 turns it off
+export function setLair(x, y, r){ foamU.uLair.value.set(x, y, r); }
 export function setSeaLook(bright){ const L = LOOKS[bright ? 'bright' : 'classic']; CSH.set(L[0]); CSEA.set(L[1]); CST.set(L[2]); CLAG.set(L[3]); foamU.uFoam.value = bright ? 1 : 0; SKY.set(bright ? '#b8def0' : '#a9c9cf'); }
 setSeaLook(!G.settings || G.settings.bright !== false);
 // Colors and wave sizes only depend on where a point is, so they're worked out again only when the water tile moves

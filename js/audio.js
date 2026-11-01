@@ -167,7 +167,8 @@ export const SOUNDS = {
   gull:{name:'Gull calls', gap:.4, sea:true, play:(t, d) => gullCry(t, d)},
   thunder:{name:'Thunder', gap:1, sea:true, play:(t, d) => { noise(t, .25, d, {type:'highpass', f:900, peak:.35}); noise(t + .05, 3.2, d, {type:'lowpass', f:260, f2:60, peak:1, buf:brownBuf, a:.08}); noise(t + .6, 2.2, d, {type:'lowpass', f:180, f2:50, peak:.6, buf:brownBuf, a:.3}); }},
   creak:{name:'Hull creaks', gap:.5, sea:true, play:(t, d) => creakAt(t, d, .35)},
-  oar:{name:'Oar stroke', gap:.15, sea:true, play:(t, d) => { noise(t, .18, d, {f:1300, f2:700, q:1.2, peak:.14, a:.02}); noise(t + .14, .35, d, {type:'highpass', f:3000, peak:.04, a:.05}); osc('sine', 600 + Math.random()*300, t + .25, .05, d, .03, .002, 1100); }},
+  oar:{name:'Oar stroke', gap:.15, sea:true, play:(t, d) => { noise(t, .4, d, {type:'lowpass', f:900, f2:400, peak:.09, a:.08}); noise(t + .22, .5, d, {f:1800, f2:900, q:.8, peak:.035, a:.12}); }}, // a soft swish of water, no click
+  drum:{name:'Rowing drum', gap:.2, play:(t, d) => { osc('sine', 82, t, .22, d, .5, .004, 55); noise(t, .06, d, {type:'lowpass', f:500, peak:.2}); }},
   sail:{name:'Sail flaps', gap:.6, sea:true, play:(t, d) => { for (let i=0;i<3;i++) noise(t + i*.09, .12, d, {f:500, f2:300, q:.8, peak:.5 - i*.12, buf:pinkBuf}); }},
   bottle:{name:'Bottle opened', play:(t, d) => { osc('sine', 2400, t, .3, d, .2); osc('sine', 3900, t + .05, .2, d, .1); osc('sine', 700, t + .4, .06, d, .22, .001, 300); noise(t + .4, .05, d, {type:'highpass', f:2000, peak:.3}); }},
   treasure:{name:'Treasure found', play:(t, d) => { creakAt(t, d, .4); SOUNDS.coins.play(t + .3, d); SOUNDS.chime.play(t + .5, d); }},
@@ -207,7 +208,7 @@ function buildBeds(){
 }
 // The game calls this every frame with what is going on around the ship.
 // a = {speed 0..1, waves 0..2, storm 0..1, wind 0..1, rain 0..1, night 0..1, gulls 0..1, fire 0..1, rowing, sail, docked}
-const QUIET = {speed:0, waves:1, storm:0, wind:0, rain:0, night:0, land:0, gulls:0, fire:0, rowing:false, sail:false, docked:false};
+const QUIET = {speed:0, waves:1, storm:0, wind:0, rain:0, night:0, land:0, gulls:0, fire:0, rowing:false, burst:false, sail:false, docked:false};
 let swell = 0, windWander = 0, nextGull = 4, nextCreak = 3, oarT = 0, nextCricket = 1, nextCrackle = .5, nextSail = 5;
 export function updateAudio(dt, a){
   if (!ctx || !beds || !SND.on || (ctx.state !== 'running' && fakeT === null)) return;
@@ -229,7 +230,8 @@ export function updateAudio(dt, a){
   // the hull creaks as the boat rolls, more in big waves
   if ((nextCreak -= dt) <= 0){ nextCreak = 3 + Math.random()*7/(.6 + a.waves*.5); if (!a.docked || Math.random() < .3){ const g = place(sea, null, .5 + a.waves*.3); if (g) creakAt(t, g, .35); } }
   // oars dip in time with the stroke
-  if (a.rowing && a.speed > .08){ oarT += dt*(.55 + a.speed*.6); if (oarT >= 1){ oarT -= 1; const g = place(sea, null, .5 + a.speed*.5); if (g) SOUNDS.oar.play(t, g); } }
+  // P56: a slow, soft stroke while someone rows (about one every 2 seconds); a Row! burst is quicker, with a drum keeping time
+  if (a.rowing && a.speed > .08){ oarT += dt*(a.burst ? 1.25 : .32 + a.speed*.18); if (oarT >= 1){ oarT -= 1; const g = place(sea, null, (.35 + a.speed*.3)*(a.burst ? 1.2 : 1)); if (g){ SOUNDS.oar.play(t, g); if (a.burst) SOUNDS.drum && SOUNDS.drum.play(t, g); } } }
   if (a.sail && a.speed > .3 && (nextSail -= dt) <= 0){ nextSail = 6 + Math.random()*10; const g = place(sea, null, .4 + a.wind*.6); if (g) SOUNDS.sail.play(t, g); }
   // crickets at night, from the islands
   if (a.night > .5 && a.land > .2 && (nextCricket -= dt) <= 0){ nextCricket = .5 + Math.random()*1.4; const g = place(sea, null, .1*a.land); if (g) cricket(t, g); }

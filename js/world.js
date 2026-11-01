@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R} from './config.js?v=fe8e317';
-import {MAPDATA} from './mapdata.js?v=fe8e317';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R} from './config.js?v=3c87495';
+import {MAPDATA} from './mapdata.js?v=3c87495';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -13,7 +13,7 @@ export const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x-a)/(b-a
 // Saves from before map D became the default move to D once.
 const DEV = (() => { try { const s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
   if (s && !s.mapD){ s.mapD = true; if (s.dev && s.dev.map === 'B') s.dev.map = 'D'; localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
-  return s.builder ? s.dev || {} : {}; } catch(e){ return {}; } })();
+  return s.builder && !/github\.io$/.test(location.hostname) ? s.dev || {} : {}; } catch(e){ return {}; } })(); // the public play link never uses builder maps
 const id = DEV.map === 'old' || MAPDATA[DEV.map] ? DEV.map : 'D';
 // The distance slider is relative to SPREAD_BASE: 1× on the slider = islands twice as far apart as the map data.
 const SPREAD_BASE = 3.4; // P52: a bigger map, islands a quarter further apart again (P44 was 2.7)
