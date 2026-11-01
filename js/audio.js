@@ -255,6 +255,15 @@ export const STYLES = {
   lyre:  {name:'Greek lyre (the old music)', desc:'The first music: a lyre, a drone and a flute in an old Greek mode.'},
 };
 if (!STYLES[SND.style]) SND.style = 'piano';
+// P57: the fight has its own music, chosen apart from the calm style. Drums lead; the old calm battle music is still there.
+export const BATTLE = {
+  war:   {name:'War drums', desc:'Big booming drums and rattling toms, a low drone underneath. No tune at all: just the beat of the fight.'},
+  horn:  {name:'Drums and horns', desc:'The war drums with low bronze horns calling out over them.'},
+  strings:{name:'Drums and low strings', desc:'The drums with low strings driving underneath, short and urgent.'},
+  ship:  {name:'Rowing drum', desc:'A ship\'s rowing drum: steady deep beats that speed up, with sticks clacking and a deep chant-like hum.'},
+  calm:  {name:'Calm (the old one)', desc:'The calm battle music from before: your music style with a soft frame drum.'},
+};
+if (!BATTLE[SND.battle]) SND.battle = 'war';
 
 // sounds rendered once per note and kept (a piano, a music box)
 const bufs = new Map();
@@ -347,7 +356,9 @@ function updateMusic(dt, a){
   if (st === 'lyre') return lyreMusic(dt);
   const t = now(), S = STYLES[st];
   if (M.rest > 0){ M.rest -= dt; if (M.rest > 0) return; M.bar = 0; M.step = 0; M.next = t + .1; M.tune = null; }
-  if (M.want !== M.mood && M.step % 8 === 0){ M.mood = M.want; M.bar = 0; M.tune = null; }
+  if (M.want !== M.mood && (M.step % 8 === 0 || M.want === 'battle' || M.mood === 'battle')){ M.mood = M.want; M.bar = 0; M.tune = null; B.step = 0; B.next = t + .05; M.next = t + .05; } // fights start (and end) right away
+  const bst = M.bstyle || SND.battle;
+  if (M.mood === 'battle' && bst !== 'calm') return battleMusic(t, bst);
   const sg = SONGS[M.mood], beat = 60/sg.bpm/2, w = musicWet, root = sg.root;
   if (M.next < t - .5) M.next = t + .05;
   while (M.next < t + .3){
@@ -377,6 +388,39 @@ function updateMusic(dt, a){
     if (M.mood !== 'battle' && !M.noRest && M.playing >= 24 && M.step % 8 === 0){ M.playing = 0; M.rest = 20 + Math.random()*30; break; }
   }
 }
+// ---- the drum-led fight music (P57). 16 steps (two bars of eighths) at 108 beats a minute. ----
+// boom: a big deep drum that drops in pitch; tom: a smaller drum; clack: sticks on the drum's rim
+function boom(t, d, v = 1){ osc('sine', 118, t, .7, d, .62*v, .004, 42); osc('sine', 62, t, .9, d, .3*v, .01, 38); noise(t, .14, d, {type:'lowpass', f:300, peak:.3*v, buf:brownBuf}); }
+function tom(t, d, f = 150, v = 1){ osc('sine', f, t, .28, d, .32*v, .003, f*.6); noise(t, .05, d, {type:'lowpass', f:900, peak:.12*v}); }
+function clack(t, d, v = 1){ osc('triangle', 820, t, .03, d, .1*v, .001, 700); noise(t, .025, d, {f:3200, q:2, peak:.14*v}); }
+// a low bronze horn: three detuned saws through a soft filter, swelling in
+function horn(m, t, dur, d, vol){ const fl = ctx.createBiquadFilter(), g = ctx.createGain(); fl.type = 'lowpass'; fl.frequency.setValueAtTime(380, t); fl.frequency.linearRampToValueAtTime(1100, t + dur*.4); fl.Q.value = .7;
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + .18); g.gain.setValueAtTime(vol, t + dur*.7); g.gain.exponentialRampToValueAtTime(.0001, t + dur + .3);
+  fl.connect(g); g.connect(d); [-7, 0, 6].forEach(c => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midi(m); o.detune.value = c; o.connect(fl); o.start(t); o.stop(t + dur + .4); }); }
+const B = {next:0, step:0};
+const BROOT = 38; // D, low
+const BOOMS = [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0], TOMS = [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1];
+function battleMusic(t, st){
+  const w = musicWet, bpm = st === 'ship' ? 84 + Math.min(40, (B.step/16)*2) : 108, beat = 60/bpm/2; // the rowing drum slowly speeds up
+  if (B.next < t - .5) B.next = t + .05;
+  while (B.next < t + .3){
+    const s = B.step % 16, bar = Math.floor(B.step/16), nt = B.next, fill = bar % 4 === 3;
+    if (st === 'ship'){
+      if (s % 4 === 0) boom(nt, w, s === 0 ? 1 : .75);
+      if (s % 4 === 2) clack(nt, w, .9);
+      if (s === 0 && bar % 2 === 0) strings([BROOT, BROOT + 7], nt, beat*16*.97, w, .03); // a deep hum, like rowers chanting
+    } else {
+      if (BOOMS[s] || (fill && s === 14)) boom(nt, w, s === 0 ? 1 : .8);
+      if (fill ? s >= 10 && s % 1 === 0 && s !== 14 : TOMS[s]) tom(nt, w, fill ? 210 - (s - 10)*14 : 150, fill ? .9 : .7);
+      if (s % 2 === 1) clack(nt, w, .45);
+      if (s === 0 && bar % 2 === 0) strings([BROOT, BROOT + 7], nt, beat*32*.97, w, .02); // a low drone under everything
+      if (st === 'horn' && (bar % 4 === 0 || bar % 4 === 2) && (s === 0 || s === 6)) horn(BROOT + 12 + (s === 6 ? (bar % 4 === 2 ? 5 : 7) : 0), nt, beat*(s === 0 ? 5 : 8), w, .09);
+      if (st === 'strings' && s % 2 === 0){ const fig = [0, 0, 3, 0, 5, 3, 7, 5][(s/2) % 8] + (bar % 4 === 2 ? -2 : 0); bowed(midi(BROOT + 12 + fig), nt, beat*1.6, w, .1, 900); }
+    }
+    B.next += beat; B.step++;
+  }
+}
+export function battleMusicReset(){ B.step = 0; B.next = 0; }
 function softDrum(t, d, low){ const g = ctx.createGain(); g.gain.value = low ? .5 : .3; g.connect(d); drum(t, g, low); }
 // The fight: still calm, but with a heartbeat under it. Low frame drums (boom, boom, tak), plucked strings repeating a short
 // figure, and a soft shaker on the off-beats.
@@ -445,7 +489,7 @@ function lyreMusic(dt){
   }
 }
 // The showroom plays the music on its own, without the game around it.
-export function testMusic(mood, noRest = false, style = null){ M.style = style; M.noRest = noRest; M.tune = null; M.want = M.mood = mood; M.rest = 0; M.playing = 0; M.bar = 0; M.step = 0; if (M.drone) droneStop(); }
+export function testMusic(mood, noRest = false, style = null, bstyle = null){ M.bstyle = bstyle; B.step = 0; B.next = 0; M.style = style; M.noRest = noRest; M.tune = null; M.want = M.mood = mood; M.rest = 0; M.playing = 0; M.bar = 0; M.step = 0; if (M.drone) droneStop(); }
 export function stopMusic(){ M.rest = 1e9; droneStop(); }
 export function musicResting(){ return M.rest > 0; }
 // For checking the sea: record secs of the background sounds for a situation a (used by the tests).
@@ -457,10 +501,10 @@ export async function renderAmbient(a, secs = 10){
   return off.startRendering();
 }
 // For checking the music: record secs of a mood offline (used by the tests).
-export async function renderMusic(mood, secs = 20, style = null){
+export async function renderMusic(mood, secs = 20, style = null, bstyle = null){
   const keep = {ctx, out, musicBus, musicWet, sfxBus, seaBus, verb}, m = {...M};
   const off = new OfflineAudioContext(2, Math.ceil(44100*secs), 44100); init(off, false);
-  Object.assign(M, {drone:null, playing:0, cur:null}); testMusic(mood, true, style);
+  Object.assign(M, {drone:null, playing:0, cur:null}); testMusic(mood, true, style, bstyle);
   try { for (fakeT = 0; fakeT < secs - 1; fakeT += .1) updateMusic(.1, {}); if (M.drone) M.drone.os.forEach(o => o.stop(secs)); }
   finally { fakeT = null; ({ctx, out, musicBus, musicWet, sfxBus, seaBus, verb} = keep); Object.assign(M, m); }
   return off.startRendering();

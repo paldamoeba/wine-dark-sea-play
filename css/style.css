@@ -780,3 +780,4 @@ body.big .abilities{zoom:1.5}
 .tool{box-shadow:0 3px 0 rgba(0,0,0,.12),0 6px 14px rgba(35,30,25,.18)!important}
 .mission .reward em{color:#9a5a12;font-weight:800}
 .ab.row{--c:#3f8fb0;--c2:#2c6b86}
+.mapbtn{top:calc(18px + env(safe-area-inset-top,0px))!important;right:18px!important}body.big .mapbtn{top:calc(22px + env(safe-area-inset-top,0px))!important;right:21px!important}

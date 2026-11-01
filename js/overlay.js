@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=3c87495';
-import {G, isExplored} from './state.js?v=3c87495';
-import {fogLayer, islandPath} from './map.js?v=3c87495';
-import {view, project, screenToSea} from './scene.js?v=3c87495';
-import {JOY_RADIUS} from './input.js?v=3c87495';
-import {enemies, combatState, capture} from './combat.js?v=3c87495';
-import {drawFish} from './fishing.js?v=3c87495';
-import {whale} from './wildlife.js?v=3c87495';
-import {SHORE_FISH} from './config.js?v=3c87495';
-import {W as WIND} from './weather.js?v=3c87495';
-import {bottle} from './quests.js?v=3c87495';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=3c87495';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=356bdbb';
+import {G, isExplored} from './state.js?v=356bdbb';
+import {fogLayer, islandPath} from './map.js?v=356bdbb';
+import {view, project, screenToSea} from './scene.js?v=356bdbb';
+import {JOY_RADIUS} from './input.js?v=356bdbb';
+import {enemies, combatState, capture} from './combat.js?v=356bdbb';
+import {drawFish} from './fishing.js?v=356bdbb';
+import {whale} from './wildlife.js?v=356bdbb';
+import {SHORE_FISH} from './config.js?v=356bdbb';
+import {W as WIND} from './weather.js?v=356bdbb';
+import {bottle} from './quests.js?v=356bdbb';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=356bdbb';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -223,18 +223,30 @@ export function drawOverlay(fps){
 
   // round minimap, turned to match the camera, showing the sea around the ship (MINI_RANGE world units to the edge)
   if (!mini) buildMini();
-  const ms = 112*(G.uik || 1), cx = W - ms/2 - 12, cy = 10 + ms/2 + topInset();
+  const ms = 112*(G.uik || 1), cx = W - ms/2 - 12 - 6*(G.uik || 1), cy = 10 + 8*(G.uik || 1) + ms/2 + topInset(); // room for the compass rim
   // the minimap is drawn into its own small canvas only every third frame, then copied: it's one of the slower things to draw
   if (!miniCv){ miniCv = document.createElement('canvas'); miniCv.width = miniCv.height = ms*2; }
   if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(2, 0, 0, 2, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
   c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
   // a round wooden frame, with a little N where north is (the map is turned like the camera, so north is up and to the right)
-  // P50: a soft cream ring with a gentle shadow (the wooden frame is gone), and a small N
-  c.save(); c.shadowColor = 'rgba(35,30,25,.22)'; c.shadowBlur = 14; c.shadowOffsetY = 4;
-  c.strokeStyle = '#fffbf3'; c.lineWidth = 7; c.beginPath(); c.arc(cx, cy, ms/2 + 2.5, 0, Math.PI*2); c.stroke(); c.shadowColor = 'transparent';
-  const na = -Math.PI/2, nx = cx + Math.cos(na)*(ms/2 + 2), ny = cy + Math.sin(na)*(ms/2 + 2);
-  c.fillStyle = '#fffbf3'; c.beginPath(); c.arc(nx, ny, 9, 0, Math.PI*2); c.fill();
-  c.fillStyle = '#e2725b'; c.font = '800 11px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('N', nx, ny + .5); c.restore();
+  // P57: a wooden compass. A thick wooden rim with grain and a soft shadow, a thin brass ring inside it, tick marks all round
+  // (long ones at N, E, S, W), the four letters carved in (N in red), and little brass studs between them.
+  const R = ms/2, rim = 11*(G.uik || 1);
+  c.save(); c.shadowColor = 'rgba(35,25,15,.35)'; c.shadowBlur = 12; c.shadowOffsetY = 4;
+  const wg = c.createRadialGradient(cx - R*.3, cy - R*.4, R*.2, cx, cy, R + rim); wg.addColorStop(0, '#c99a62'); wg.addColorStop(.75, '#9a6a3c'); wg.addColorStop(1, '#6e4524');
+  c.strokeStyle = wg; c.lineWidth = rim; c.beginPath(); c.arc(cx, cy, R + rim/2, 0, Math.PI*2); c.stroke(); c.shadowColor = 'transparent';
+  c.strokeStyle = 'rgba(70,40,18,.28)'; c.lineWidth = 1; for (const f of [.25, .55, .8]){ c.beginPath(); c.arc(cx, cy, R + rim*f, 0, Math.PI*2); c.stroke(); } // wood grain
+  c.strokeStyle = '#3e2611'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, cy, R + rim, 0, Math.PI*2); c.stroke();
+  c.strokeStyle = '#d9b25a'; c.lineWidth = 2.2; c.beginPath(); c.arc(cx, cy, R + .5, 0, Math.PI*2); c.stroke(); // the brass ring
+  for (let i=0;i<32;i++){ if (i % 8 === 0) continue; const a = i/32*Math.PI*2 - Math.PI/2, big = false, mid = i % 4 === 0, l = big ? rim*.55 : mid ? rim*.4 : rim*.22;
+    c.strokeStyle = big ? '#2a1a0c' : 'rgba(42,26,12,.75)'; c.lineWidth = big ? 2 : 1.2; c.beginPath();
+    c.moveTo(cx + Math.cos(a)*(R + 1.5), cy + Math.sin(a)*(R + 1.5)); c.lineTo(cx + Math.cos(a)*(R + 1.5 + l), cy + Math.sin(a)*(R + 1.5 + l)); c.stroke(); }
+  c.font = `800 ${Math.round(10*(G.uik || 1))}px Nunito, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  [['N', -Math.PI/2], ['E', 0], ['S', Math.PI/2], ['W', Math.PI]].forEach(([l, a]) => { const x = cx + Math.cos(a)*(R + rim*.62), y = cy + Math.sin(a)*(R + rim*.62);
+    c.fillStyle = 'rgba(255,235,200,.55)'; c.fillText(l, x, y + 1); c.fillStyle = l === 'N' ? '#b8402f' : '#2a1a0c'; c.fillText(l, x, y); });
+  for (let i=0;i<4;i++){ const a = i*Math.PI/2 + Math.PI/4, x = cx + Math.cos(a)*(R + rim/2), y = cy + Math.sin(a)*(R + rim/2);
+    const bg = c.createRadialGradient(x - 1, y - 1, .3, x, y, 3); bg.addColorStop(0, '#fff2c0'); bg.addColorStop(1, '#a8812f'); c.fillStyle = bg; c.beginPath(); c.arc(x, y, 2.6, 0, Math.PI*2); c.fill(); }
+  c.restore();
   // which way the wind blows: a white arrow across the little map, stronger wind = more solid
   if (WIND.windK > .2){ const a = WIND.windA, al = Math.min(.85, WIND.windK);
     c.save(); c.translate(cx, cy); c.rotate(a); c.globalAlpha = al; c.strokeStyle = '#f4fbff'; c.fillStyle = '#f4fbff'; c.lineWidth = 2.2; c.lineCap = 'round';

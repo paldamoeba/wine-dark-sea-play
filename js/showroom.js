@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=3c87495';
-import {makePost} from './glow.js?v=3c87495';
-import {SOUNDS, STYLES, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=3c87495';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=3c87495';
-import {makeFire, updateFire} from './fire.js?v=3c87495';
-import {updateSmoke} from './smoke.js?v=3c87495';
-import {addGrass, updateGrass} from './grass.js?v=3c87495';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=3c87495';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=356bdbb';
+import {makePost} from './glow.js?v=356bdbb';
+import {SOUNDS, STYLES, BATTLE, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=356bdbb';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=356bdbb';
+import {makeFire, updateFire} from './fire.js?v=356bdbb';
+import {updateSmoke} from './smoke.js?v=356bdbb';
+import {addGrass, updateGrass} from './grass.js?v=356bdbb';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=356bdbb';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -192,6 +192,8 @@ const SOUND_SCENES = [
   // every music style in every mood, to compare (the game uses the one picked in Settings)
   ...Object.entries(STYLES).flatMap(([st, S]) => [['day', 'a day at sea', () => statue('apollo', 'painted')], ['night', 'night', () => statue('apollo', 'painted'), 'night'], ['harbor', 'in the harbor', () => harborTown('poseidon')], ['battle', 'battle', () => buildShip('raider')]]
     .map(([m, label, make, light], i) => ({name:`${S.name}: ${label}`, desc:(i ? MOOD_INFO[m] : S.desc + ' ' + MOOD_INFO.day) + ' It makes itself up as it plays, so it never repeats exactly.', music:m, style:st, light, make}))),
+  // P57: the drum-led battle music styles
+  ...Object.entries(BATTLE).filter(([k]) => k !== 'calm').map(([k, b]) => ({name:`Battle music: ${b.name}`, desc:b.desc + ' Pick it in Settings, Sound, Battle music.', music:'battle', style:null, bstyle:k, make:() => buildShip('raider')})),
   {name:'Sea: calm near an island', desc:'Soft waves, gulls calling from the shore, the hull creaking now and then.', sea:{speed:.3, waves:.55, wind:.1, land:.4, gulls:.8, sail:true}, make:() => buildShip('fishing')},
   {name:'Sea: rowing at full speed', desc:'Oars dipping in time, water rushing past the hull, the wind in your ears.', sea:{speed:1, waves:1, wind:.4, rowing:true}, make:() => buildShip('bireme')},
   {name:'Sea: storm', desc:'Big waves, howling wind, rain and thunder after each lightning flash.', sea:{speed:.8, waves:2.1, storm:1, wind:1, rain:1, rowing:true}, light:'storm', make:() => buildShip('bireme')},
@@ -224,7 +226,7 @@ const SOUND_MODEL = {
 let playing = null; // the item whose sound is on
 function playItem(item){
   playing = item.music || item.sea ? item : null;
-  if (item.music) testMusic(item.music, true, item.style); else stopMusic();
+  if (item.music) testMusic(item.music, true, item.style, item.bstyle); else stopMusic();
   if (item.sound) setTimeout(() => sfx(item.sound), 150);
   $('play').hidden = !(item.sound || item.music || item.sea); 
 }
@@ -241,7 +243,7 @@ const wider = k => { const s = SPECS[k], key = k + 'W'; if (!SPECS[key]) SPECS[k
 function sideBySide(k, alt = bigger){ const g = new T.Group(), a = buildShip(k), b = buildShip(alt(k)); a.position.z = -SPECS[k].B*1.6; b.position.z = SPECS[k].B*1.9; g.add(a, b); return g; }
 const GROUPS = {
   ships:{name:'Ships', items:[
-    {name:'The pirate king\'s flagship', desc:'Polycrates\' floating fortress, waiting in the wine-dark water off Kos: two rows of oars, four towers, a red-roofed hall, a column with a golden orb, a great curled stern and a triple ram.', make:() => buildShip('flagship', {paint:'king', sail:'purple'})},
+    {name:'The pirate king\'s flagship', desc:'Polycrates\' ghost ship, waiting in the wine-dark water off Kos: two long hulls under one huge flat deck with lattice railings, curled posts at both ends, two bronze rams and a forest of oars. You never see a single person aboard.', make:() => buildShip('flagship', {paint:'king'})},
     {name:'Bireme, wider (prototype)', desc:'A test: the bireme 45% wider and a little shorter (88% of the length), so it looks less skinny. Same size class.', make:() => buildShip(wider('bireme'))},
     {name:'Trireme, wider (prototype)', desc:'A test: the trireme 45% wider and a little shorter.', make:() => buildShip(wider('trireme'))},
     {name:'Bireme, old and wider side by side', desc:'In front: the wider prototype. Behind: the bireme as it is now.', make:() => sideBySide('bireme', wider)},
@@ -374,7 +376,7 @@ $('gfx').addEventListener('change', e => setFull(e.target.value === 'full'));
 $('glow').addEventListener('click', () => setGlow(!glowOn));
 // the cel-shaded test look: hard bands and ink outlines
 $('cel').addEventListener('click', () => { setCel(!CEL.on); $('cel').setAttribute('aria-pressed', CEL.on); show(); });
-$('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true, it.style); });
+$('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true, it.style, it.bstyle); });
 // Download the model as a .glb file, to open and edit in Blender (or any 3D program). Edited models can come back into the game.
 $('dl').addEventListener('click', () => {
   if (!T.GLTFExporter || !obj) return;
