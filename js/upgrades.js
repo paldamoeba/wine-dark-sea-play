@@ -1,12 +1,23 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES} from './config.js?v=a77b89b';
-import {G, lvl, ship, pay, rank} from './state.js?v=a77b89b';
-import {SPECS, sailSizes, crewLayout} from './ships.js?v=a77b89b';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES, POWER} from './config.js?v=d1e493c';
+import {G, lvl, ship, pay, rank} from './state.js?v=d1e493c';
+import {SPECS, sailSizes, crewLayout} from './ships.js?v=d1e493c';
 
 export const ramMax = () => RAM.lv*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
 // (the rowboat gets one small sail, the fishing boat and bireme two, the trireme three).
-export const upKeys = () => Object.keys(UPGRADES).filter(k => !(UPGRADES[k].minTier && rank() < UPGRADES[k].minTier) && !(k === 'sail' && !SPECS[ship().model].sailMax));
+export const upKeys = () => Object.keys(UPGRADES).filter(k => !UPGRADES[k].power && !(k === 'sail' && !SPECS[ship().model].sailMax));
+// P65: the powers have their own page in the shipyard
+export const powerKeys = () => Object.keys(UPGRADES).filter(k => UPGRADES[k].power && !(UPGRADES[k].minTier && rank() < UPGRADES[k].minTier));
+// How good a power is at level l: how often it can be used, how fast it flies, how tight it lands, how far it bends onto a ship.
+// Arrow rain starts usable at level 0; chain shot and the catapult are bought first, so their first level is the plain one.
+const pl = (k, l) => k === 'shower' ? l : Math.max(0, l - 1);
+export const powerCd = (k, l = lvl(k)) => ABILITIES[k === 'shower' ? 'shower' : k].cd*(1 - POWER.cd*pl(k, l));
+export const powerFlight = (k, l = lvl(k)) => ABILITIES[k].flight*(1 - POWER.flight*pl(k, l));
+export const powerR = (k, l = lvl(k)) => k === 'shower' ? ABILITIES.shower.r*(1 - POWER.spread*l) : ABILITIES[k].r*(1 + POWER.blast*pl(k, l));
+export const powerSeek = (k, l = lvl(k)) => POWER.seek0 + POWER.seek*pl(k, l);
+export const showerK = (l = lvl('shower')) => 1 + POWER.dmg*l;
+export const fireSecs = (l = lvl('fire')) => ABILITIES.fire.secs + .3*Math.max(0, l - 1);
 export const maxOf = k => k === 'ram' ? ramMax() : k === 'sail' ? SPECS[ship().model].sailMax : k === 'seats' ? crewLevels() : UPGRADE_MAX;
 export const sailCount = (l = lvl('sail')) => sailSizes(SPECS[ship().model], l).filter(Boolean).length;
 // The ram's material and its level within that material (1-10). Level 0 = no ram.
@@ -27,6 +38,7 @@ export function costOf(k){
   const n = l + 1, sk = u.ship ? SHIP_K[rank()] : 1;
   const step = k === 'ram' ? ramMat(n).sub*2 : n, mk = k === 'ram' ? ramMat(n).cost : 1, c = {};
   for (const m in u.cost) c[m] = Math.round(u.cost[m]*step*sk*mk);
+  if (u.iron && rank() >= 2) c.iron = Math.round(u.iron*n*sk); // warships are held together with iron nails
   // the bronze ram is paid in bronze instead of wood (5 wood = 1 bronze); the golden ram in drachmae alone
   const rp = k === 'ram' && ramMat(n).pay; if (rp === 'bronze'){ c.bronze = Math.round(c.wood/5/mk*1.5); delete c.wood; } else if (rp === 'gold'){ c.gold += c.wood; delete c.wood; }
   return c;
@@ -39,9 +51,10 @@ function crewText(l){ const t = G.S.tier, m = Math.min(SHIPS[t].men[1], SHIPS[t]
 export function effectText(k, l = lvl(k)){
   const u = UPGRADES[k];
   if (k === 'ram'){ const m = ramMat(l); return m ? `${m.name} ram, level ${m.sub}: ${ramDmg(l)} damage` : 'No ram'; }
-  if (k === 'fire') return l ? `${FIRE_ARROWS.dps(l).toFixed(1)} fire damage a second` : 'No fire arrows';
-  if (k === 'catapult') return l ? `${ABILITIES.catapult.dmg(l)} damage, sets ships alight` : 'No catapult';
-  if (k === 'chain') return l ? `${ABILITIES.chain.secs(l).toFixed(1)} seconds without a sail` : 'No chain shot';
+  if (k === 'fire') return l ? `${FIRE_ARROWS.dps(l).toFixed(1)} fire damage a second, for ${fireSecs(l).toFixed(1)} s` : 'No fire arrows';
+  if (k === 'catapult') return l ? `${ABILITIES.catapult.dmg(l)} damage` : 'No catapult';
+  if (k === 'chain') return l ? `${ABILITIES.chain.secs(l).toFixed(1)} s without a sail` : 'No chain shot';
+  if (k === 'shower') return `+${Math.round((showerK(l) - 1)*100)}% damage`;
   if (k === 'seats') return crewText(l);
   if (k === 'sail'){ const n = sailCount(l); return n ? `${n} sail${n > 1 ? 's' : ''}, +${Math.round(u.each*l*100)}% speed` : 'No sail'; }
   return `+${Math.round(u.each*l*100)}% ${u.unit}`;

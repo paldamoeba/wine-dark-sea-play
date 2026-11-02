@@ -1,11 +1,25 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=a77b89b';
+import {hash} from './world.js?v=d1e493c';
 
-import {smokeColumn} from './smoke.js?v=a77b89b';
+import {smokeColumn} from './smoke.js?v=d1e493c';
 const T = window.THREE;
-import {mat} from './ships.js?v=a77b89b';
+import {mat} from './ships.js?v=d1e493c';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
+// P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
+export function mineModel(){
+  const g = new T.Group(), rock = '#6c6a66', dark = '#191613', wood = '#6e4a26', ore = '#8a4b32';
+  const mound = mesh(new T.DodecahedronGeometry(30, 1), rock); mound.scale.set(1.25, .85, 1); mound.position.set(-10, 8, 0); g.add(mound);
+  const hole = mesh(new T.BoxGeometry(4, 21, 18), dark); hole.position.set(25, 10, 0); g.add(hole);
+  for (const z of [-11, 11]){ const post = mesh(new T.CylinderGeometry(1.8, 2.1, 25, 6), wood); post.position.set(27, 12, z); g.add(post); }
+  const lintel = mesh(new T.BoxGeometry(4.5, 4, 28), wood); lintel.position.set(27, 25, 0); g.add(lintel);
+  let sd = 4242; const R = () => (sd = (sd*16807) % 2147483647)/2147483647;
+  for (let k=0;k<9;k++){ const s = 3 + R()*3.5, o = mesh(new T.DodecahedronGeometry(s, 0), k % 3 ? ore : '#4a4744'); o.position.set(40 + R()*20, s*.55, -22 + R()*20); o.rotation.set(R()*3, R()*3, 0); g.add(o); }
+  const cart = mesh(new T.BoxGeometry(14, 7, 10), wood); cart.position.set(44, 6, 15); g.add(cart);
+  const load = mesh(new T.DodecahedronGeometry(5.5, 0), ore); load.scale.y = .6; load.position.set(44, 10, 15); g.add(load);
+  for (const x of [38, 50]) for (const z of [9.5, 20.5]){ const w = mesh(new T.CylinderGeometry(2.4, 2.4, 1.2, 10), '#3a2e26'); w.rotation.x = Math.PI/2; w.position.set(x, 2.4, z); g.add(w); }
+  return g;
+}
 export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
 export function jitter(geo, amt, seed){
   const p = geo.attributes.position;

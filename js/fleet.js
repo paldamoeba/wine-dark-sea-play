@@ -1,7 +1,7 @@
 // Your fleet: every ship you build stays yours, moored at Kallisto with its own upgrades, hull and paint.
 // Switch ships at the Kallisto shipwright. Your crew comes with you (sailors beyond the seats wait on the pier).
-import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=a77b89b';
-import {G, ship, used, capOf, LOADS} from './state.js?v=a77b89b';
+import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=d1e493c';
+import {G, ship, used, capOf, LOADS} from './state.js?v=d1e493c';
 
 export const owned = () => G.S.owned || (G.S.owned = Array.from({length:G.S.tier + 1}, (_, i) => i));
 export const has = t => owned().includes(t);
@@ -29,6 +29,12 @@ export function hireCaptain(t){
   const S = G.S, cost = captainCost(); if (t === S.tier || captainOf(t) || S.gold < cost) return false;
   const used = new Set(Object.values(S.captains || {}).map(c => c.n)), n = CAPTAIN.names.find(x => !used.has(x)) || 'Captain Nikon';
   S.gold -= cost; S.captains = {...(S.captains || {}), [t]:{n, out:true, t:CAPTAIN.tripSeconds}}; return n;
+}
+// P65: captains keep working after you close the game, for up to 2 hours. Returns what they brought back meanwhile (it waits in the purse).
+export function offlineEarnings(){
+  const S = G.S, away = Math.min(CAPTAIN.offline, Date.now()/1000 - (S.lastSeen || Infinity)); if (!S.captains || !(away > 60)) return 0;
+  let sum = 0; for (const t of Object.keys(S.captains)) if (+t !== S.tier) sum += Math.floor(away/(CAPTAIN.tripSeconds + CAPTAIN.restSeconds)*tripPay(+t));
+  if (sum) S.purse = (S.purse || 0) + sum; return sum;
 }
 // Called every frame. A ship you are sailing yourself waits for you; its captain rests.
 export function updateFleet(dt){

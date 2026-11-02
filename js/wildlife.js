@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=a77b89b';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=a77b89b';
-import {G, save} from './state.js?v=a77b89b';
-import {scene} from './scene.js?v=a77b89b';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=a77b89b';
-import {toast} from './ui.js?v=a77b89b';
-import {combatState} from './combat.js?v=a77b89b';
-import {sfx} from './audio.js?v=a77b89b';
+import {WILDLIFE} from './config.js?v=d1e493c';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=d1e493c';
+import {G, save, stat} from './state.js?v=d1e493c';
+import {scene} from './scene.js?v=d1e493c';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=d1e493c';
+import {toast} from './ui.js?v=d1e493c';
+import {combatState} from './combat.js?v=d1e493c';
+import {sfx} from './audio.js?v=d1e493c';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -61,7 +61,7 @@ function updateWhale(dt){
       if (p.visible){ p.position.set(38 + Math.sin(i*2.1)*k*8, 18 + k*55, Math.cos(i*1.7)*k*8); p.scale.setScalar(.6 + k*1.6); p.material.opacity = .8*(1 - k); } }); }
   // the blessing
   if (!W.blessed && W.state !== 'dive' && Math.hypot(S.x - W.x, S.y - W.y) < WILDLIFE.whaleNear){
-    W.blessed = true; S.bless = WILDLIFE.blessSeconds; save(); sfx('blessing');
+    W.blessed = true; S.bless = WILDLIFE.blessSeconds; stat('whales'); save(); sfx('blessing');
   }
 }
 // Builder tool / test: make the whale come up now.
@@ -120,7 +120,7 @@ function updateKraken(dt){
   K.t += dt; const d = Math.hypot(S.x - K.x, S.y - K.y);
   if (K.state === 'rise'){ K.rise = Math.min(1, K.t/2.5); if (K.rise >= 1){ K.state = 'show'; K.t = 0; } }
   else if (K.state === 'show' && (d < WILDLIFE.krakenNear || K.t > WILDLIFE.krakenStay)){ K.state = 'dive'; K.t = 0; sfx('bigsplash', K); sfx('kraken', K, .6);
-    if (d < WILDLIFE.krakenNear){ S.kraken = (S.kraken || 0) + 1; S.gold += WILDLIFE.krakenGold; save();
+    if (d < WILDLIFE.krakenNear){ S.kraken = (S.kraken || 0) + 1; S.gold += WILDLIFE.krakenGold; stat('kraken'); save();
       toast(`The kraken! +${WILDLIFE.krakenGold}`, 3); } }
   else if (K.state === 'dive'){ K.rise = Math.max(0, 1 - K.t/2); if (K.rise <= 0){ K.state = 'gone'; K.obj.visible = false; K.wait = rand(WILDLIFE.krakenEvery); } }
   K.obj.position.set(K.x, waveAt(K.x, K.y, G.t), K.y);

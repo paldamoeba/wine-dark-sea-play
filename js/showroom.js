@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=a77b89b';
-import {makePost} from './glow.js?v=a77b89b';
-import {SOUNDS, STYLES, BATTLE, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=a77b89b';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=a77b89b';
-import {makeFire, updateFire} from './fire.js?v=a77b89b';
-import {updateSmoke} from './smoke.js?v=a77b89b';
-import {addGrass, updateGrass} from './grass.js?v=a77b89b';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel} from './models.js?v=a77b89b';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=d1e493c';
+import {makePost} from './glow.js?v=d1e493c';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=d1e493c';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=d1e493c';
+import {makeFire, updateFire} from './fire.js?v=d1e493c';
+import {updateSmoke} from './smoke.js?v=d1e493c';
+import {addGrass, updateGrass} from './grass.js?v=d1e493c';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=d1e493c';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -189,6 +189,8 @@ const SHIP_INFO = {
 const MOOD_INFO = {day:'Out at sea in the daytime.', night:'Slower and softer, for sailing under the stars.', harbor:'A little brighter, while your ship is tied up in a harbor.',
   battle:'When raiders or warships come for you. Still calm, with a low pulse and a far-off drum.'};
 const SOUND_SCENES = [
+  // P65: the songs of the game, one by one
+  ...SONGBOOK.map(s => ({name:`Song: ${s.name}`, desc:`${s.bpm} beats a minute, on ${STYLES[s.style].name.toLowerCase()}. In the game it plays once, and then the sea plays alone for a while.`, music:s.moods[0], song:s, style:null, make:() => statue('apollo', 'painted')})),
   // every music style in every mood, to compare (the game uses the one picked in Settings)
   ...Object.entries(STYLES).flatMap(([st, S]) => [['day', 'a day at sea', () => statue('apollo', 'painted')], ['night', 'night', () => statue('apollo', 'painted'), 'night'], ['harbor', 'in the harbor', () => harborTown('poseidon')], ['battle', 'battle', () => buildShip('raider')]]
     .map(([m, label, make, light], i) => ({name:`${S.name}: ${label}`, desc:(i ? MOOD_INFO[m] : S.desc + ' ' + MOOD_INFO.day) + ' It makes itself up as it plays, so it never repeats exactly.', music:m, style:st, light, make}))),
@@ -226,7 +228,7 @@ const SOUND_MODEL = {
 let playing = null; // the item whose sound is on
 function playItem(item){
   playing = item.music || item.sea ? item : null;
-  if (item.music) testMusic(item.music, true, item.style, item.bstyle); else stopMusic();
+  if (item.music) testMusic(item.music, true, item.style, item.bstyle, item.song); else stopMusic();
   if (item.sound) setTimeout(() => sfx(item.sound), 150);
   $('play').hidden = !(item.sound || item.music || item.sea); 
 }
@@ -263,6 +265,7 @@ const GROUPS = {
     {name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
     {name:'Spartan fortress', desc:'The same plan in warmer stone, with red banners.', make:() => buildFortress('sparta', '#9e2a22')},
     {name:'Pirate fortress', desc:'Dark stone on Thasos and Kos, with black banners.', make:() => buildFortress('pirate', '#231d1d')},
+    {name:'Iron mine', desc:'On the shores of Amorgos, Serifos and Skyros: a timber frame around a dark tunnel, a pile of ore and a cart. Stop beside it to dig iron.', make:() => mineModel()},
     {name:'Bandit camp', desc:'On the wild islands near Kallisto: two log cabins, a tent, a campfire with a cooking pot, a black flag, and bandits with bows on the beach.', make:() => buildCamp()},
     {name:'Spartacus, in marble', desc:'The champion of the games, as a cartoony gladiator: a huge chest, a crested helmet, his sword raised and his shield up. He stands in white marble in the middle of the Arena of Rhodes.', make:() => buildGladiator('marble')},
     {name:'Spartacus, in bronze', desc:'The same champion cast in polished bronze, with a red crest.', make:() => buildGladiator('bronze')},
@@ -369,7 +372,7 @@ $('gfx').addEventListener('change', e => setFull(e.target.value === 'full'));
 $('glow').addEventListener('click', () => setGlow(!glowOn));
 // the cel-shaded test look: hard bands and ink outlines
 $('cel').addEventListener('click', () => { setCel(!CEL.on); $('cel').setAttribute('aria-pressed', CEL.on); show(); });
-$('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true, it.style, it.bstyle); });
+$('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true, it.style, it.bstyle, it.song); });
 // Download the model as a .glb file, to open and edit in Blender (or any 3D program). Edited models can come back into the game.
 $('dl').addEventListener('click', () => {
   if (!T.GLTFExporter || !obj) return;

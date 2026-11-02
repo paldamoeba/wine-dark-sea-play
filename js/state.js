@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE} from './config.js?v=a77b89b';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=a77b89b';
-import {sfx} from './audio.js?v=a77b89b';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=d1e493c';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=d1e493c';
+import {sfx} from './audio.js?v=d1e493c';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -31,11 +31,15 @@ function encodeExplored(){ let out = ''; for (let i=0;i<G.explored.length;i+=4) 
 function decodeExplored(str){
   G.explored.fill(0);
   if (typeof str !== 'string') return false;
-  for (let k=0;k<str.length && k*4<G.explored.length;k++){ const n = parseInt(str[k], 16) || 0; for (let b=0;b<4;b++) G.explored[k*4+b] = (n>>b) & 1; }
+  // P65: the chart's grid became twice as fine. An old save's chart (64 x 64) is doubled up to fit.
+  const old = EXP_N === 128 && str.length <= 1024;
+  for (let k=0;k<str.length;k++){ const n = parseInt(str[k], 16) || 0; for (let b=0;b<4;b++){ const v = (n>>b) & 1, i = k*4 + b;
+    if (!old){ if (i < G.explored.length) G.explored[i] = v; continue; }
+    if (!v) continue; const r = Math.floor(i/64), c = i % 64; for (const dr of [0, 1]) for (const dc of [0, 1]) G.explored[(r*2 + dr)*EXP_N + c*2 + dc] = 1; } }
   G.exploredRev++; return true;
 }
 export function revealAll(){ G.explored.fill(1); G.exploredRev++; }
-function startingChart(){ G.explored.fill(0); reveal(HOME.x, HOME.y, 1500); }
+function startingChart(){ G.explored.fill(0); reveal(HOME.x, HOME.y, REVEAL.start); }
 
 // Upgrade level: ship parts are kept per ship (G.S.ups[tier]); arrows and the ram stay with you.
 export const lvl = k => UPGRADES[k].ship ? ((G.S.ups || {})[G.S.tier] || {})[k] || 0 : G.S[k] || 0;
@@ -49,18 +53,18 @@ export const ship = () => { const b = SHIPS[G.S.tier], key = `${G.S.tier}|${lvl(
   return shipC.v; };
 // Something picked up: a little icon and "+n" springs up from the boat, then drops back into it (drawn by overlay.js).
 // kind = 'fish' | 'tuna' | 'swordfish' | 'wood' | 'coin' | a trade good.
-export function gain(kind, n = 1, x, y){ sfx(kind === 'coin' || kind === 'bronze' ? 'coin' : kind === 'sardine' ? 'fish' : kind === 'tuna' || kind === 'swordfish' ? '' : 'wood'); const slot = (G.pops || []).filter(p => p.ic && G.t - p.t < .6).length; G.pops = [...(G.pops || []), {t:G.t + slot*.15, slot, ic:kind, txt:`+${n}`, x, y}]; }
-// Building materials in the warehouse: wood (S.ware), bronze and linen. A cost is {wood, bronze, linen, gold}.
-const HAVE = {wood:'ware', bronze:'bronze', linen:'linen', gold:'gold'};
+export function gain(kind, n = 1, x, y){ sfx(kind === 'coin' || kind === 'bronze' || kind === 'iron' ? 'coin' : kind === 'sardine' ? 'fish' : kind === 'tuna' || kind === 'swordfish' ? '' : 'wood'); const slot = (G.pops || []).filter(p => p.ic && G.t - p.t < .6).length; G.pops = [...(G.pops || []), {t:G.t + slot*.15, slot, ic:kind, txt:`+${n}`, x, y}]; }
+// Building materials in the warehouse: wood (S.ware), bronze, iron and linen. A cost is {wood, bronze, iron, linen, gold}.
+const HAVE = {wood:'ware', bronze:'bronze', iron:'iron', linen:'linen', gold:'gold'};
 export const have = k => G.S[HAVE[k]] || 0;
 export const canPay = c => !!c && Object.keys(HAVE).every(k => have(k) >= (c[k] || 0));
 export function pay(c){ if (!canPay(c)) return false; for (const k in HAVE) G.S[HAVE[k]] = have(k) - (c[k] || 0); return true; }
-// The warehouse's room for wood, bronze and linen (gold has no limit)
+// The warehouse's room for wood, bronze, iron and linen (gold has no limit)
 export const wareCap = k => k === 'gold' ? Infinity : (WAREHOUSE[G.S.wareLv || 0] || WAREHOUSE[0]).cap[k];
 export const wareRoom = k => Math.max(0, wareCap(k) - have(k));
 export function addMat(k, n){ G.S[HAVE[k]] = Math.min(have(k) + n, Math.max(have(k), wareCap(k))); }
 // What the ship carries. Each kind has its own limit: fish (the hold), wood, bronze and trade goods (SHIPS[t].cap).
-export const LOADS = ['fish', 'wood', 'bronze', 'linen', 'goods'];
+export const LOADS = ['fish', 'wood', 'bronze', 'iron', 'linen', 'goods'];
 export const loadOf = k => FISH[k] ? 'fish' : GOODS[k] ? 'goods' : k;
 export function used(cat, cargo = G.S.cargo){ const keys = cat === 'fish' ? Object.keys(FISH) : cat === 'goods' ? Object.keys(GOODS) : [cat]; return keys.reduce((a, k) => a + (cargo[k] || 0), 0); }
 export const capOf = (cat, t = G.S.tier) => cat === 'fish' ? SHIPS[t].hold : SHIPS[t].cap[cat];
@@ -70,14 +74,25 @@ export const holdUsed = () => used('fish');
 export function putAboard(k, n = 1){ const m = Math.min(n, room(loadOf(k))); G.S.cargo[k] = (G.S.cargo[k] || 0) + m; return m; }
 // At any harbor the wood and bronze aboard go to the warehouse (it's shipped home to Kallisto).
 export function unload(){ const S = G.S, m = k => { const n = Math.min(S.cargo[k] || 0, wareRoom(k)); S.cargo[k] = (S.cargo[k] || 0) - n; addMat(k, n); return n; }; // what doesn't fit stays aboard
-  return [m('wood'), m('bronze'), m('linen')]; }
+  return [m('wood'), m('bronze'), m('linen'), m('iron')]; }
+// P65: fun numbers for the voyage log in Settings
+export function stat(k, n = 1){ const s = G.S.stats || (G.S.stats = {}); s[k] = (s[k] || 0) + n; }
 
 export function newSave(){
-  return {version:SAVE_VERSION, econ:2, tier:0, gold:0, ware:0, bronze:0, linen:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, bronze:0, linen:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},
-    x:START.x, y:START.y, a:START.a, map:MAP.key, hull:SHIPS[0].hull, hint:true, playSeconds:0, world:null, explored:null, look:{}, p49:true, ram15:true, plans:[0], camps:[]};
+  return {version:SAVE_VERSION, econ:2, tier:0, gold:0, ware:0, bronze:0, iron:0, linen:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, bronze:0, iron:0, linen:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},
+    x:START.x, y:START.y, a:START.a, map:MAP.key, hull:SHIPS[0].hull, hint:true, playSeconds:0, world:null, explored:null, look:{}, p49:true, ram15:true, p65:true, plans:[0], camps:[], stats:{}, colors:{paint:[], sail:[]}};
 }
 
 function read(key){ try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; } }
+// ---- save slots (P65): three voyages side by side. Slot 1 keeps the old save's name, so nobody loses their game. ----
+export const SLOTS = [1, 2, 3];
+const ACTIVE_KEY = SAVE_KEY + '-active';
+const slotKey = n => n === 1 ? SAVE_KEY : `${SAVE_KEY}-slot${n}`;
+export function activeSlot(){ try { const n = +localStorage.getItem(ACTIVE_KEY); return SLOTS.includes(n) ? n : 1; } catch(e){ return 1; } }
+export function setActiveSlot(n){ try { localStorage.setItem(ACTIVE_KEY, String(n)); } catch(e){} }
+// what's in a slot, for the main menu (null if it's empty)
+export function readSlot(n){ if (n === 1) for (const k of [SAVE_KEY, ...OLD_SAVE_KEYS]){ const o = migrate(read(k)); if (o) return o; } return n === 1 ? null : migrate(read(slotKey(n))); }
+export function wipeSlot(n){ try { localStorage.removeItem(slotKey(n)); if (n === 1) OLD_SAVE_KEYS.forEach(k => localStorage.removeItem(k)); } catch(e){} }
 function write(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch(e){ return false; } }
 
 // Bring an older save up to the current shape.
@@ -91,6 +106,8 @@ function migrate(o){
   if (!o.econ){ o.ware = ((o.ware || 0) + ((o.cargo && o.cargo.wood) || 0))*5; o.cargo.wood = 0; o.econ = 2; }
   // prototype 49: two bandit camp goals were added (before the fishing boat and before the bireme), ships need blueprints,
   // and the hired sailors became each ship's own crew (old crew quarters levels count as Crew levels; hires are refunded)
+  // P65: hull and sail colors are found now; whatever this save already used stays unlocked
+  if (!o.p65){ o.p65 = true; const looks = [o.look || {}, ...Object.values(o.looks || {})]; o.colors = {paint:[...new Set(looks.map(l => l.paint).filter(Boolean))], sail:[...new Set(looks.map(l => l.sail).filter(Boolean))]}; }
   if (!o.ram15){ o.ram15 = true; o.ram = Math.ceil((o.ram || 0)/2); } // P64: the ram went from 30 levels to 15
   if (!o.p49){ o.p49 = true; const g = o.goal || 0; o.goal = g < 7 ? g : g === 7 ? 8 : g + 2;
     const own = o.owned || Array.from({length:(o.tier || 0) + 1}, (_, i) => i); o.plans = [...new Set([0, ...own])];
@@ -111,19 +128,21 @@ function resetWorld(){
 }
 
 export function load(){
-  let s = migrate(read(SAVE_KEY));
-  if (!s) for (const k of OLD_SAVE_KEYS){ s = migrate(read(k)); if (s) break; }
+  G.slot = activeSlot();
+  const s = readSlot(G.slot);
+  G.fresh = !s; // nothing saved here yet: a brand new voyage
   G.S = s || newSave();
   // A different map (or map scale) than last time: keep drachmae and ship, start again at the Kallisto pier.
   if (G.S.map !== MAP.key){ Object.assign(G.S, {map:MAP.key, x:START.x, y:START.y, a:START.a, world:null, explored:null}); }
   applyWorld(G.S.world);
   if (!G.S.explored || !decodeExplored(G.S.explored)) startingChart();
-  reveal(G.S.x, G.S.y, 520);
+  reveal(G.S.x, G.S.y, REVEAL.sail);
   G.cam = {x:G.S.x, y:G.S.y};
 }
 
 export function save(){
-  if (!G.S) return;
+  if (!G.S || G.noSave) return; // (nothing is saved while the main menu is up: an empty slot stays empty until you start it)
+  G.S.lastSeen = Math.floor(Date.now()/1000);
   G.S.world = {
     trees: ISLANDS.map(i => i.stock),
     spots: SPOTS.map(s => s.stock),
@@ -131,7 +150,7 @@ export function save(){
     owners: ISLANDS.map(i => i.city || null),
   };
   G.S.explored = encodeExplored();
-  write(SAVE_KEY, G.S);
+  write(slotKey(G.slot || 1), G.S);
 }
 
 export function resetSave(){

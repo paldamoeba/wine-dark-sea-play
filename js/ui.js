@@ -1,24 +1,26 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=a77b89b';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=a77b89b';
-import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom} from './state.js?v=a77b89b';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=a77b89b';
-import {swapBoat, refreshAllTrees} from './entities.js?v=a77b89b';
-import {setZoom} from './input.js?v=a77b89b';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=a77b89b';
-import {tutHTML} from './tutorial.js?v=a77b89b';
-import {founded, blessing} from './crew.js?v=a77b89b';
-import {WHALE} from './wildlife.js?v=a77b89b';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=a77b89b';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=a77b89b';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=a77b89b';
-import {effectText, buy} from './upgrades.js?v=a77b89b';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=a77b89b';
-import {GOODS, WAR} from './config.js?v=a77b89b';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=a77b89b';
-import {W, KINDS} from './weather.js?v=a77b89b';
-import {sfx, SND, STYLES, BATTLE, applyVolumes, playNow} from './audio.js?v=a77b89b';
-import {setTimeOfDay} from './daynight.js?v=a77b89b';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=d1e493c';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=d1e493c';
+import {PUBLIC, G, ship, holdUsed, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=d1e493c';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=d1e493c';
+import {CYCLE} from './daynight.js?v=d1e493c';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=d1e493c';
+import {swapBoat, refreshAllTrees} from './entities.js?v=d1e493c';
+import {setZoom} from './input.js?v=d1e493c';
+import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=d1e493c';
+import {tutHTML} from './tutorial.js?v=d1e493c';
+import {founded, blessing} from './crew.js?v=d1e493c';
+import {WHALE} from './wildlife.js?v=d1e493c';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=d1e493c';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=d1e493c';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=d1e493c';
+import {effectText, buy} from './upgrades.js?v=d1e493c';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=d1e493c';
+import {GOODS, WAR} from './config.js?v=d1e493c';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=d1e493c';
+import {W, KINDS} from './weather.js?v=d1e493c';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=d1e493c';
+import {setTimeOfDay} from './daynight.js?v=d1e493c';
 
 const $ = id => document.getElementById(id);
 
@@ -51,7 +53,10 @@ export function updateUI(dt, nearDock){
   $('hint').hidden = !G.S.hint || G.sheetOpen;
   document.body.classList.toggle('sheeton', !!G.sheetOpen); // menus cover the whole screen: the HUD and little map step aside
   G.doneT = Math.max(0, (G.doneT || 0) - dt); $('goalPill').classList.toggle('done', G.doneT > 0); // a check mark for a moment after a goal or job is done
-  const pill = pillText(); $('goalDot').hidden = !pill || G.sheetOpen || G.doneT > 0; // the quest button stays; a little dot shows when there's a goal or job
+  // P65: the red bubble only means something: a quest is done and you haven't looked at it yet; on the chart, a treasure map you haven't looked at
+  const pill = pillText(); $('goalDot').hidden = !G.S.questNew || G.sheetOpen || G.doneT > 0;
+  $('chartDot').hidden = $('mapDot').hidden = !G.S.mapNew || G.sheetOpen;
+  { const d = G.S.gold - (G.goldSeen ?? G.S.gold); if (d > 0) stat('earned', d); G.goldSeen = G.S.gold; }
   if (pill && $('goalText').textContent !== pill){ $('goalText').textContent = pill; $('goalLbl').textContent = goal() ? 'Goal' : 'Job'; $('goalPill').title = $('goalLbl').textContent + ': ' + pill; }
   // at night a clear sky shows the moon instead of the sun
   const wk = KINDS[W.kind], moon = (G.night || 0) > .5 && (W.kind === 'fair' || W.kind === 'calm'), wkey = W.kind + (moon ? '-n' : '');
@@ -71,17 +76,17 @@ export function updateUI(dt, nearDock){
 }
 
 // What the ship carries: one short bar for each kind, stacked under the hull bar. Bronze and goods show once you have some.
-const LOAD_IC = {fish:() => IC.fish(), wood:() => IC.wood, bronze:() => IC.bronze, linen:() => IC.linen, goods:() => GOOD_IC('wine')};
+const LOAD_IC = {fish:() => IC.fish(), wood:() => IC.wood, bronze:() => IC.bronze, iron:() => IC.iron, linen:() => IC.linen, goods:() => GOOD_IC('wine')};
 function drawLoads(){
   const S = G.S, rows = LOADS; // P59: every kind, always
   $('loads').innerHTML = rows.map(k => { const u = used(k), c = capOf(k), p = Math.min(100, u/c*100);
     return `<div class="ld ${u >= c ? 'full' : ''}" title="${k}"><i class="ic">${LOAD_IC[k]()}</i><span class="bar"><i style="width:${p}%"></i></span><b>${u}/${c}</b></div>`; }).join('');
 }
 
-// A video to make studying or building faster. For now a 5-second placeholder; real ads come in when we choose an ad company.
-function playVideo(done){
-  const v = document.createElement('div'); v.className = 'videobox'; v.innerHTML = '<div><b>A short video would play here</b><small>Ads come later. This one takes 10 minutes off.</small><em>5</em></div>'; document.body.appendChild(v);
-  let n = 5; const iv = setInterval(() => { n--; v.querySelector('em').textContent = n; if (n <= 0){ clearInterval(iv); v.remove(); done(); toast('10 minutes faster!', 2); } }, 1000);
+// A video reward (studying or building faster, a color, sailing home). For now a 5-second placeholder; real ads come in when we choose an ad company.
+export function playVideo(done, what = 'This one takes 10 minutes off.', after = '10 minutes faster!'){
+  const v = document.createElement('div'); v.className = 'videobox'; v.innerHTML = `<div><b>A short video would play here</b><small>Ads come later. ${what}</small><em>5</em></div>`; document.body.appendChild(v);
+  let n = 5; const iv = setInterval(() => { n--; v.querySelector('em').textContent = n; if (n <= 0){ clearInterval(iv); v.remove(); done(); if (after) toast(after, 2); } }, 1000);
 }
 // Tablets: everything on screen is drawn half as big again (body.big in the CSS, G.uik for the minimap and placed buttons).
 // ?big=1 or ?big=0 forces it for testing.
@@ -106,27 +111,36 @@ function placeNearBoat(){
 }
 // ---- sheets (harbor, settings) ----
 const sheetEl = $('sheet'); let sheet = null, resetArmed = false;
-// the end of chapter one: a page with your voyage in numbers
+// the end of the voyage: a page with it in numbers
 document.addEventListener('chapterdone', () => openSheet('end'));
-function openSheet(name){ if (!sheet) sfx('open'); sheet = name; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
-function closeSheet(){ if (sheet) sfx('close'); sheet = null; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); }
+export function openSheet(name){ if (!sheet) sfx('open'); sheet = name; if (name === 'inv' && tabs.inv === 'jobs') G.S.questNew = false; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
+function closeSheet(){ if (sheet) sfx('close'); sheet = null; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); document.dispatchEvent(new Event('sheetclosed')); }
 export function openPort(){
   G.v = 0; tabs.port = (G.dock && G.dock.h && !G.dock.h.is.port) ? 'market' : 'yard'; // every visit opens on the first tab
   openSheet('port'); save();
 }
 
 function render(){ const st = sheetEl.scrollTop;
-  sheetEl.innerHTML = sheet === 'port' ? harborHTML(G.dock ? G.dock.h : HARBORS[0]) : sheet === 'tut' ? tutHTML(tutPage) : sheet === 'inv' ? bagHTML() : sheet === 'council' && G.council ? councilHTML(G.council) : sheet === 'end' ? endHTML() : settingsHTML();
+  sheetEl.innerHTML = sheet === 'port' ? harborHTML(G.dock ? G.dock.h : HARBORS[0]) : sheet === 'tut' ? tutHTML(tutPage) : sheet === 'inv' ? bagHTML() : sheet === 'council' && G.council ? councilHTML(G.council) : sheet === 'end' ? endHTML() : sheet === 'log' ? `<div class="mtop">${top('Voyage log')}</div><div class="mbody">${logHTML()}</div>` : settingsHTML();
   sheetEl.classList.add('menu'); sheetEl.scrollTop = st; }
 
-// The end of chapter one.
+// P65: fun numbers to look at after hours of playing
+function logHTML(){
+  const S = G.S, s = S.stats || {}, secs = S.playSeconds || 0, n = v => (v || 0).toLocaleString();
+  const time = secs >= 3600 ? `${Math.floor(secs/3600)} h ${Math.floor(secs/60) % 60} min` : `${Math.floor(secs/60)} min`, days = Math.max(s.days || 0, Math.floor(secs/CYCLE));
+  const tile = (ic, v, label) => `<div class="stat">${ic}<b>${v}</b><small>${label}</small></div>`;
+  return card('Your voyage', `<div class="statgrid">${tile(IC.star, days, days === 1 ? 'day at sea' : 'days at sea')}${tile(IC.ship, time, 'sailing')}${tile(IC.world, n(s.dist), 'stadia sailed')}${tile(IC.coin, n(s.earned), 'drachmae earned')}</div>`)
+    + card('Battles', `<div class="statgrid">${tile(IC.swords, n(s.sunk), 'ships sunk')}${tile(IC.flame, n(s.pirates), 'pirates sunk')}${tile(IC.crew, n(s.navy), 'army ships sunk')}${tile(IC.hold, n(s.merchants), 'merchants raided')}${tile(IC.catapult, n(s.forts), 'fortresses taken')}${tile(IC.jobs, n(s.camps), 'camps burned')}${tile(IC.hull, n(s.sunkMe), 'times you sank')}</div>`)
+    + card('Finds', `<div class="statgrid">${tile(IC.fish(), n(s.fish), 'fish caught')}${tile(IC.wood, n(s.wood), 'wood gathered')}${tile(IC.iron, n(s.iron), 'iron dug up')}${tile(IC.map, n(s.treasure), 'treasures dug up')}${tile(IC.letter, n(s.bottles), 'bottles opened')}${tile(IC.bless, n(s.whales), 'whale blessings')}${tile(IC.chain, n(s.kraken || S.kraken), 'kraken seen')}${tile(IC.sail, n(s.colors), 'colors found')}${tile(IC.book, n(s.quests), 'quests done')}</div>`);
+}
+// The end of the voyage: the pirate king is beaten.
 function endHTML(){
   const S = G.S, mins = Math.round((S.playSeconds || 0)/60), ships = (S.owned || []).length || S.tier + 1;
-  return `<div class="mtop">${top('Chapter one complete')}</div><div class="mbody">
+  return `<div class="mtop">${top('The Aegean is free')}</div><div class="mbody">
     ${card('The pirate king is beaten', `<div class="endpic">${IC.ship}${IC.swords}${IC.star}</div>
       <p class="endtxt">Polycrates' black and gold galley lies at the bottom of the sea, and the merchants of the Aegean sail safe again. From one little rowboat you built a fleet${S.crewName ? ` and the ${S.crewName}` : ''}.</p>
       <div class="stats big">${IC.ship} ${ships} ships · ${IC.coin} ${S.gold} drachmae · ${mins} min at sea</div>`)}
-    ${card('What next', '<p class="note">Chapter two takes you north to the Vikings, and it is coming in a later build. Until then the Aegean is yours: keep fishing, trading and fighting as long as you like.</p><button class="btn gold wide" data-act="close">Keep sailing</button>')}</div>`;
+    ${card('What next', '<p class="note">The Aegean is yours: keep fishing, trading and fighting as long as you like.</p><button class="btn gold wide" data-act="close">Keep sailing</button>')}</div>`;
 }
 
 // How to play: two pages, shown on a new game and from Settings.
@@ -162,7 +176,7 @@ function toggleFull(){
   try { Promise.resolve(rq.call(d, {navigationUI:'hide'})).then(() => { try { screen.orientation.lock('portrait').catch(() => {}); } catch(_){} }, blocked); } catch(_){ blocked(); }
 }
 document.addEventListener('fullscreenchange', () => { if (sheet === 'settings') render(); });
-function saveSound(){ const {on, music, sfx: fx, sea, style, battle} = SND; G.settings.sound = {on, music, sfx:fx, sea, style, battle}; saveSettings(); applyVolumes(); }
+function saveSound(){ const {on, music, sfx: fx, sea, style, battle, rest} = SND; G.settings.sound = {on, music, sfx:fx, sea, style, battle, rest}; saveSettings(); applyVolumes(); }
 const tog = (act, on, label) => `<button class="tog ${on ? 'on' : ''}" data-act="${act}" role="switch" aria-checked="${on}" aria-label="${label}"><i></i></button>`;
 const row = (title, small, ctl) => `<div class="row"><div>${title}${small ? `<small>${small}</small>` : ''}</div>${ctl}</div>`;
 function settingsHTML(){
@@ -173,29 +187,31 @@ function settingsHTML(){
   // the Builder tab only shows for the builder: tap the version line five times to bring it up on a new device
   const list = [['game', 'Game', IC.ship], ['gfx', 'Graphics', IC.star], ...(s.builder || s.showBuilder ? [['dev', 'Builder', IC.gear]] : [])];
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
-  const game = card('Your voyage', `<div class="stats big">${IC.ship} ${ship().name} · ${mins} min at sea</div>${row('How to play', 'The two pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}`)
+  const game = card('Your voyage', `<div class="stats big">${IC.ship} ${ship().name} · ${mins} min at sea</div>${row('Voyage log', 'Ships sunk, days at sea and other fun numbers.', '<button class="btn" data-act="log">Open</button>')}${row('How to play', 'The pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}${row('Main menu', 'Your three voyages. This one is saved first.', '<button class="btn" data-act="mainmenu">Go</button>')}`)
     + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and soft music.', tog('sound', SND.on, 'Sound'))
       + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
-      + `<div class="looks"><label><span>Music style</span><select data-set="mstyle" ${SND.on ? '' : 'disabled'}>${Object.entries(STYLES).map(([k, v]) => `<option value="${k}" ${SND.style === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
-      <p class="note">${STYLES[SND.style].desc} Every style is in the Showroom too, to compare.</p>
+      + `<div class="looks"><label><span>Music style</span><select data-set="mstyle" ${SND.on ? '' : 'disabled'}>${Object.entries({mix:MIX, ...STYLES}).map(([k, v]) => `<option value="${k}" ${SND.style === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
+      <label><span>Quiet between songs</span><select data-set="mrest" ${SND.on ? '' : 'disabled'}>${[['short', 'About a minute'], ['medium', '2 to 4 minutes'], ['long', '5 to 9 minutes']].map(([k, v]) => `<option value="${k}" ${(SND.rest || 'medium') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
+      <p class="note">${(SND.style === 'mix' ? MIX : STYLES[SND.style]).desc} Every song is in the Showroom too.</p>
       <div class="looks"><label><span>Battle music</span><select data-set="bstyle" ${SND.on ? '' : 'disabled'}>${Object.entries(BATTLE).map(([k, v]) => `<option value="${k}" ${SND.battle === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
       <p class="note">${BATTLE[SND.battle].desc}</p>`)
     + card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`))
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
-    + card('Save', row('Your progress saves on this device by itself.', 'Starting over erases your drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 64</p>`;
+    + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 65</p>`;
   const gfx = card('Graphics', `<div class="segs">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
       <div class="segs">${Object.entries(CAM_ANGLES).map(([k, v]) => `<button class="seg ${(s.angle || 'low') === k ? 'on' : ''}" data-act="angle" data-v="${k}" aria-pressed="${(s.angle || 'low') === k}">${v.label}</button>`).join('')}</div>
       ${row('Day and night', 'A 10 minute day with a short moonlit night, when torches and windows light up.', `<select class="jobsel" data-set="daynight" aria-label="Day and night">${[['cycle', 'Day and night'], ['day', 'Always day'], ['night', 'Always night']].map(([v, n]) => `<option value="${v}" ${(s.daynight || 'cycle') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
-      ${row('Bright sea', 'Clear blue water with drifting white foam lines, like a cartoon sea. Off = the darker teal sea.', tog('bright', s.bright !== false, 'Bright sea'))}
+      ${row('Sea', 'Realistic: reflections of the sky and sun. Cartoon: flat colors and white wave lines that change with the weather.', `<select class="jobsel" data-set="sea" aria-label="Sea">${[['real', 'Realistic'], ['toon', 'Cartoon']].map(([v, n]) => `<option value="${v}" ${(s.sea || 'real') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Tiny world look', 'Soft blur at the top and bottom of the screen and warmer colors, so the sea looks like a little model. Turn off if the game feels slow.', tog('tiny', s.tiny !== false, 'Tiny world look'))}
       ${row('Cel-shaded look (test)', 'Hard light and dark bands with ink outlines on ships and fortresses, like a cartoon. Try it and tell me.', tog('cel', !!s.cel, 'Cel-shaded look'))}
       ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}`);
   const dev = card('Builder tools · removed before release', `${row('Builder tools', s.builder ? 'Off plays the game the way a player would.' : 'Off: normal speed, no teleport, no hidden marks, raiders on. Your builder settings come back when you turn them on.', tog('builder', s.builder, 'Builder tools'))}
       ${s.builder ? `${mapHTML()}
+      ${row('Ship tilt in turns', 'How far a ship under sail leans in a hard turn at full speed. 100% would be 40 degrees.', `<select class="jobsel" data-set="tilt" aria-label="Ship tilt">${[[0, 'Old (4°)'], [20, '20% (8°)'], [30, '30% (12°)'], [50, '50% (20°)'], [70, '70% (28°)']].map(([v, n]) => `<option value="${v}" ${(s.tilt ?? 30) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Camera zoom', 'Also pinch with two fingers, or scroll the mouse wheel.', `<b id="zoomVal">${s.dev.zoom.toFixed(1)}×</b>`)}
       <input type="range" id="zoomRange" min="0.4" max="3.5" step="0.1" value="${s.dev.zoom}" aria-label="Camera zoom">
       ${row('Ship speed', '', '')}
@@ -213,7 +229,7 @@ function settingsHTML(){
       ${row('Bring up the kraken', 'Only works out in the Open Sea.', '<button class="btn" data-act="kraken">Kraken</button>')}
       ${row('Bring a raider skiff to me', 'To test a fight right away.', '<button class="btn" data-act="spawn">Spawn</button>')}
       ${row('Reveal the whole chart', '', '<button class="btn" data-act="revealall">Reveal</button>')}
-      ${row('Add drachmae and materials', '100 drachmae, 200 wood, 20 bronze, 20 linen.', '<button class="btn" data-act="givestuff">Add</button>')}` : ''}
+      ${row('Add drachmae and materials', '100 drachmae, 200 wood, 20 bronze, 20 iron, 20 linen.', '<button class="btn" data-act="givestuff">Add</button>')}` : ''}
       ${row('Model showroom', 'Every ship, fortress and statue in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')}`, 'dev');
   return `<div class="mtop">${top('Settings')}${tabBar(list, tabs.set, 'set')}</div><div class="mbody">${tabs.set === 'gfx' ? gfx : tabs.set === 'dev' ? dev : game}</div>`;
 }
@@ -228,6 +244,10 @@ sheetEl.addEventListener('click', e => {
   if (a !== 'reset') resetArmed = false;
   if (a === 'close'){ closeSheet(); return; }
   if (a === 'tut'){ openTutorial(); return; }
+  if (a === 'log'){ sheet = 'log'; render(); sheetEl.scrollTop = 0; return; }
+  if (a === 'mainmenu'){ closeSheet(); document.dispatchEvent(new Event('openmenu')); return; }
+  if (a === 'colorlocked'){ toast('Found on ships you sink', 2.4); return; }
+  if (a === 'colorvideo'){ const k = b.dataset.k, v = b.dataset.v; playVideo(() => { unlockColor(k, v); G.S.look = {...G.S.look, [k]:v}; swapBoat(); save(); sfx('fanfare'); render(); }, `This one unlocks ${colorName(k, v)}.`, `${colorName(k, v)}!`); return; }
   if (a === 'accept') accept(+b.dataset.i);
   if (a === 'decline') decline(+b.dataset.i);
   if (a === 'deliver') deliver(+b.dataset.i, G.dock && G.dock.h);
@@ -243,7 +263,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); progress('upgrade', k); if (k === 'ram' || k === 'hull' || k === 'sail' || k === 'seats') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   if (a === 'buymat'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k, n = +b.dataset.n, p = matPrice(h, k), cost = n/matStep(k)*p;
     if (p !== null && S.gold >= cost && wareRoom(k) >= n){ sfx('buy'); S.gold -= cost; addMat(k, n); } else if (wareRoom(k) < n) toast('Warehouse full', 1.6); }
-  if (a === 'look'){ G.S.look = {...G.S.look, [b.dataset.k]:b.dataset.v}; swapBoat(); save(); }
+  if (a === 'look' && (b.dataset.k === 'flag' || colorHeld(b.dataset.k, b.dataset.v))){ G.S.look = {...G.S.look, [b.dataset.k]:b.dataset.v}; swapBoat(); save(); }
   if (a === 'wareup'){ const nx = WAREHOUSE[(S.wareLv || 0) + 1]; if (nx && pay(nx.cost)){ S.wareLv = (S.wareLv || 0) + 1; sfx('hammer'); save(); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k;
     if (a === 'buygood' && room('goods') && S.gold >= goodPrice(h, k) && canBuyGood(h, k)){ S.gold -= goodPrice(h, k); S.cargo[k] = (S.cargo[k] || 0) + 1; sfx('buy'); }
@@ -266,23 +286,22 @@ sheetEl.addEventListener('click', e => {
   if (a === 'fleet'){ G.settings.dev.fleet = !G.settings.dev.fleet; saveSettings(); document.dispatchEvent(new Event('fleet')); }
   if (a === 'revealall'){ revealAll(); toast('Whole chart revealed'); }
   if (a === 'bottle'){ document.dispatchEvent(new Event('bottle')); closeSheet(); return; }
-  if (a === 'selup'){ sel.up = b.dataset.k; render(); return; }
+  if (a === 'selup'){ if (UPGRADES[b.dataset.k].power) sel.pw = b.dataset.k; else sel.up = b.dataset.k; render(); return; }
   if (a === 'wartake' && G.council){ const o = WAR.offers[+b.dataset.i]; S.war = {...o, city:G.council.city, foe:rival(G.council.city), got:0}; toast('Contract taken', 2); }
   if (a === 'warclaim' && S.war && S.war.got >= S.war.n){ S.gold += S.war.gold; sfx('coins'); toast(`+${S.war.gold}`, 3); S.war = null; }
   if (a === 'wardrop'){ S.war = null; }
-  if (a === 'tab'){ tabs[b.dataset.sheet] = b.dataset.t; render(); sheetEl.scrollTop = 0; return; }
+  if (a === 'tab'){ tabs[b.dataset.sheet] = b.dataset.t; if (b.dataset.sheet === 'inv' && b.dataset.t === 'jobs') S.questNew = false; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'treasure'){ document.dispatchEvent(new Event('treasure')); closeSheet(); return; }
   if (a === 'wx'){ document.dispatchEvent(new CustomEvent('weather', {detail:b.dataset.v})); closeSheet(); return; }
   if (a === 'tod'){ setTimeOfDay(b.dataset.v); G.settings.daynight = 'cycle'; saveSettings(); closeSheet(); return; }
   if (a === 'kraken'){ document.dispatchEvent(new Event('kraken')); closeSheet(); return; }
   if (a === 'whale'){ document.dispatchEvent(new Event('whale')); closeSheet(); return; }
-  if (a === 'givestuff'){ S.gold += 100; addMat('wood', 200); addMat('bronze', 20); addMat('linen', 20); toast('+100 drachmae, +200 wood, +20 bronze, +20 linen'); }
+  if (a === 'givestuff'){ S.gold += 100; addMat('wood', 200); addMat('bronze', 20); addMat('iron', 20); addMat('linen', 20); toast('+100 drachmae, +200 wood, +20 bronze, +20 iron, +20 linen'); }
   if (a === 'applymap'){
     const d = G.settings.dev; d.map = $('mapSel').value; d.spread = +$('spreadRange').value; d.isle = +$('isleRange').value;
     saveSettings(); save(); location.reload(); return;
   }
   if (a === 'builder'){ G.settings.builder = !G.settings.builder; saveSettings(); swapBoat(); document.dispatchEvent(new Event('fleet')); }
-  if (a === 'bright'){ G.settings.bright = G.settings.bright === false; saveSettings(); setSeaLook(G.settings.bright); }
   if (a === 'tiny'){ G.settings.tiny = G.settings.tiny === false; saveSettings(); }
   if (a === 'cel'){ G.settings.cel = !G.settings.cel; saveSettings(); setCel(G.settings.cel); document.dispatchEvent(new Event('crew')); swapBoat(); }
   if (a === 'full'){ toggleFull(); return; }
@@ -296,6 +315,9 @@ sheetEl.addEventListener('click', e => {
   save(); render();
 });
 sheetEl.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.set === 'sea'){ G.settings.sea = e.target.value; saveSettings(); setSeaLook(e.target.value); return; }
+  if (e.target.dataset && e.target.dataset.set === 'tilt'){ G.settings.tilt = +e.target.value; saveSettings(); return; }
+  if (e.target.dataset && e.target.dataset.set === 'mrest'){ SND.rest = e.target.value; saveSound(); return; }
   if (e.target.dataset && e.target.dataset.set === 'bstyle'){ SND.battle = e.target.value; saveSound(); render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'mstyle'){ SND.style = e.target.value; saveSound(); playNow(); render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'daynight'){ G.settings.daynight = e.target.value; saveSettings(); return; }
@@ -320,11 +342,14 @@ setTimeout(() => { const S = G.S; if (S && S.crewRefund){ toast(`Sailors paid ba
 // tapping the blessing icon explains it
 $('blessChip').addEventListener('click', () => toast(G.S.bless ? "Poseidon's blessing: faster sailing and quicker work" : 'A whale! Sail close for Poseidon\'s blessing', 3));
 // docking: wood and bronze aboard go to the warehouse first, so the shipyard can use them
-document.addEventListener('docked', () => { const [w, b, l] = unload(); if (w || b || l) save(); openPort(); }); // unloaded quietly: the warehouse numbers in the menu show it
-$('goalPill').addEventListener('click', () => { if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });
+document.addEventListener('docked', () => { if (unload().some(Boolean)) save(); openPort(); }); // unloaded quietly: the warehouse numbers in the menu show it
+$('goalPill').addEventListener('click', () => { G.S.questNew = false; if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });
 $('bagBtn').addEventListener('click', () => sheet === 'inv' ? closeSheet() : openSheet('inv'));
 $('gearBtn').addEventListener('click', () => sheet === 'settings' ? closeSheet() : openSheet('settings'));
 $('councilBtn').addEventListener('click', () => { if (G.council) openSheet('council'); });
 $('chartBtn').addEventListener('click', () => { if (sheet) closeSheet(); $('mapBtn').click(); });
 // HUD and toolbar icons are the same drawings as the menus
 document.querySelectorAll('i.ic[data-ic]').forEach(el => { el.innerHTML = IC[el.dataset.ic] || ''; });
+// P65: the crate in the toolbar has the black outline like the other three; the power buttons show the glossy pictures
+document.querySelector('#bagBtn i.ic').innerHTML = IC.crate;
+for (const [id, ic] of [['stopBtn', IC.anchor], ['rowBtn', IC.rower], ['volleyBtn', IC.rain], ['fireBtn', IC.flame], ['chainBtn', IC.chain], ['cataBtn', IC.catapult]]){ const b = $(id), old = b.querySelector('svg'); old.outerHTML = ic.replace(/id="(\w+)"/g, `id="${id}$1"`).replace(/url\(#(\w+)\)/g, `url(#${id}$1)`); } // (their own gradient names: a hidden button's gradients would blank out the same picture in the menus)

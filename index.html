@@ -3,13 +3,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=a77b89b">
+<link rel="stylesheet" href="css/style.css?v=d1e493c">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 
 <canvas id="cv" aria-label="The sea"></canvas>
 <canvas id="ov"></canvas>
+<canvas id="miniEl" aria-hidden="true"></canvas>
 <div class="hud" aria-live="polite">
   <div class="lifebar" title="Hull"><div class="bar"><i id="hullbar"></i></div></div>
   <div class="loads" id="loads" aria-label="What your ship carries"></div>
@@ -23,10 +24,10 @@
 <nav class="toolbar" aria-label="Menus">
   <button class="tool" id="bagBtn" aria-label="Your bag"><i class="ic" data-ic="hold"></i><span>Bag</span></button>
   <button class="tool" id="goalPill" aria-label="Quests"><i class="ic" data-ic="book"></i><span>Quests</span><span class="vh"><span id="goalLbl">Goal</span>: <span id="goalText"></span></span><em class="dot" id="goalDot" hidden></em></button>
-  <button class="tool" id="chartBtn" aria-label="Chart"><i class="ic" data-ic="map"></i><span>Chart</span></button>
+  <button class="tool" id="chartBtn" aria-label="Chart"><i class="ic" data-ic="map"></i><span>Chart</span><em class="dot" id="chartDot" hidden></em></button>
   <button class="tool" id="gearBtn" aria-label="Settings"><i class="ic" data-ic="gear"></i><span>Settings</span></button>
 </nav>
-<button class="mapbtn" id="mapBtn" aria-label="Open the chart"></button>
+<button class="mapbtn" id="mapBtn" aria-label="Open the chart"><em class="dot" id="mapDot" hidden></em></button>
 <div class="mapview" id="mapView" hidden>
   <canvas id="mapCv" aria-label="Chart of the Aegean"></canvas>
   <header class="maphead">
@@ -40,13 +41,12 @@
       <li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>Fortress</li>
       <li><i class="lg-fish"></i>Fish</li>
       <li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 12q8 6 16 0M9 14l5-11-5 2" fill="none" stroke="#4a3b28" stroke-width="1.8" stroke-linecap="round"/></svg>Wreck</li>
-      <li><i class="lg-course">×</i>Course</li>
     </ul>
     <div class="mapbtns">
-      <button class="btn ghostdark" id="mapCenter">Find my ship</button>
+      <button class="btn homebtn" id="mapHome">Sail home</button>
+      <button class="btn homebtn alt" id="mapFast"><b>&#9654;</b> Video: be home now</button>
       <button class="btn ghostdark" id="mapClear" hidden>Clear course</button>
     </div>
-    <p>Tap the chart to set a course. Drag to look around, pinch to zoom.</p>
   </footer>
 </div>
 <div class="mission" id="mission" hidden></div>
@@ -67,10 +67,12 @@
 </div>
 <div class="dockbar"><button class="dock alt" id="harborBtn" hidden>Harbor</button><button class="dock" id="dockBtn" hidden>Set sail</button></div>
 <div class="sheet" id="sheet" hidden></div>
+<div class="mainmenu" id="mainMenu" hidden></div>
+<div class="boot" id="boot"><h1>Wine-Dark Sea</h1><i></i></div>
 <noscript><div class="err">This game needs JavaScript turned on.</div></noscript>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
   if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
 </script>
-<script type="module" src="js/main.js?v=a77b89b"></script>
+<script type="module" src="js/main.js?v=d1e493c"></script>

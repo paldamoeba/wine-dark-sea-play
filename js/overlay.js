@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=a77b89b';
-import {G, isExplored} from './state.js?v=a77b89b';
-import {fogLayer, islandPath} from './map.js?v=a77b89b';
-import {view, project, screenToSea} from './scene.js?v=a77b89b';
-import {JOY_RADIUS} from './input.js?v=a77b89b';
-import {enemies, combatState, capture} from './combat.js?v=a77b89b';
-import {drawFish} from './fishing.js?v=a77b89b';
-import {whale} from './wildlife.js?v=a77b89b';
-import {SHORE_FISH} from './config.js?v=a77b89b';
-import {W as WIND} from './weather.js?v=a77b89b';
-import {bottle} from './quests.js?v=a77b89b';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=a77b89b';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=d1e493c';
+import {G, isExplored} from './state.js?v=d1e493c';
+import {fogLayer, islandPath} from './map.js?v=d1e493c';
+import {view, project, screenToSea} from './scene.js?v=d1e493c';
+import {JOY_RADIUS} from './input.js?v=d1e493c';
+import {enemies, combatState, capture, aimLeads} from './combat.js?v=d1e493c';
+import {drawFish} from './fishing.js?v=d1e493c';
+import {whale} from './wildlife.js?v=d1e493c';
+import {SHORE_FISH} from './config.js?v=d1e493c';
+import {W as WIND} from './weather.js?v=d1e493c';
+import {bottle} from './quests.js?v=d1e493c';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=d1e493c';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -28,13 +28,15 @@ function drawGain(c, p, t, S){
 // pick-up icons, drawn from the menu icons once
 const icons = {};
 function iconImg(k){ if (icons[k]) return icons[k];
-  const svg = k === 'wood' || k === 'bronze' || k === 'linen' ? IC[k] : k === 'coin' ? IC.coin : FISH_COLOR[k] ? IC.fish(FISH_COLOR[k]) : k === 'fish' ? IC.fish(FISH_COLOR.sardine) : GOOD_IC(k);
+  const svg = k === 'wood' || k === 'bronze' || k === 'iron' || k === 'linen' ? IC[k] : k === 'coin' ? IC.coin : FISH_COLOR[k] ? IC.fish(FISH_COLOR[k]) : k === 'fish' ? IC.fish(FISH_COLOR.sardine) : GOOD_IC(k);
   const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" ')); return icons[k] = im; }
 
 const MINI_RANGE = 2600, SIDE_COLOR = {pirate:'#e0614d', merchant:'#e8dcc0', ally:'#5fd06a'}; // your own ships at sea are green
 const shipColor = e => (e.spec.side === 'navy' || e.spec.side === 'fort') && e.city ? CITIES[e.city].color : SIDE_COLOR[e.spec.side === 'fort' ? 'pirate' : e.spec.side];
 const ov = document.getElementById('ov'), c = ov.getContext('2d');
-export function resizeOverlay(){ ov.width = view.W*view.DPR; ov.height = view.H*view.DPR; }
+// P65: the 2D layer is drawn sharper than the 3D view (on a phone the 3D runs at 1.5x to stay fast; text and icons should not)
+const ovDPR = () => Math.max(view.DPR, Math.min(2.5, devicePixelRatio || 1));
+export function resizeOverlay(){ const d = ovDPR(); ov.width = view.W*d; ov.height = view.H*d; rimCv = null; }
 
 let mini = null;
 function buildMini(){
@@ -144,7 +146,7 @@ function banner(name, x, y, alpha, city){
 }
 let lastT = 0;
 export function drawOverlay(fps){
-  const {W, H, DPR} = view, S = G.S, t = G.t;
+  const {W, H} = view, DPR = ovDPR(), S = G.S, t = G.t;
   c.setTransform(DPR,0,0,DPR,0,0); c.clearRect(0,0,W,H);
   drawWind(t, Math.min(.05, Math.max(0, t - lastT))); lastT = t;
   if (G.stormK > .05){
@@ -159,7 +161,12 @@ export function drawOverlay(fps){
     ring(A.x, A.y, A.r, 3, .9); c.fillStyle = `rgba(${col},.18)`; c.fill();
     c.save(); c.setLineDash([8, 8]); c.lineWidth = 2.5; c.strokeStyle = `rgba(${col},.75)`; c.beginPath();
     for (let i=0;i<=24;i++){ const k = i/24, p = project(S.x + (A.x - S.x)*k, 20 + Math.sin(k*Math.PI)*Math.min(260, Math.hypot(A.x - S.x, A.y - S.y)*.5), S.y + (A.y - S.y)*k); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }
-    c.stroke(); c.restore(); }
+    c.stroke(); c.restore();
+    // P65: where each ship in reach will be when the shot lands: a little dashed ring ahead of it, so you know where to aim
+    if (A.k !== 'fire') for (const L of aimLeads(A.k)){ const p0 = project(L.from.x, 2, L.from.y), p1 = project(L.x, 2, L.y), R = L.from.spec.beam*.55;
+      c.save(); c.setLineDash([3, 5]); c.lineWidth = 2; c.strokeStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke(); c.setLineDash([]);
+      c.strokeStyle = 'rgba(255,255,255,.95)'; c.fillStyle = 'rgba(255,255,255,.2)'; c.beginPath(); for (let i=0;i<=20;i++){ const a = i/20*6.283, q = project(L.x + Math.cos(a)*R, 2, L.y + Math.sin(a)*R); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); } c.fill(); c.stroke(); c.restore(); }
+  }
   if (G.flash){ c.fillStyle = `rgba(240,245,255,${G.flash*.4})`; c.fillRect(0,0,W,H); }
 
   // red edges when an arrow hits you
@@ -203,7 +210,7 @@ export function drawOverlay(fps){
     const [bx, by] = project(S.x, 70, S.y);
     c.fillStyle = 'rgba(247,238,214,.95)'; c.beginPath(); c.arc(bx, by, 16, 0, Math.PI*2); c.fill();
     if (G.act.full){ c.fillStyle = '#c4473b'; c.font = '800 16px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('!', bx, by+1); c.textBaseline = 'alphabetic'; }
-    else { c.strokeStyle = G.act.type === 'shore' ? '#1f6b8f' : G.act.type === 'wreck' ? '#d48a2a' : '#6d7d38'; c.lineWidth = 4; c.beginPath(); c.arc(bx, by, 10, -Math.PI/2, -Math.PI/2 + G.act.p*Math.PI*2); c.stroke(); }
+    else { c.strokeStyle = G.act.type === 'shore' ? '#1f6b8f' : G.act.type === 'wreck' ? '#d48a2a' : G.act.type === 'mine' ? '#5d6773' : '#6d7d38'; c.lineWidth = 4; c.beginPath(); c.arc(bx, by, 10, -Math.PI/2, -Math.PI/2 + G.act.p*Math.PI*2); c.stroke(); }
   }
   if (capture.is){ // raising a flag over an open island
     const [bx, by] = project(S.x, 70, S.y), col = capture.to ? CITIES[capture.to].color : '#d48a2a';
@@ -221,43 +228,7 @@ export function drawOverlay(fps){
     if (G.rowT > 0){ c.strokeStyle = 'rgba(94,195,232,.7)'; c.lineWidth = 4; c.beginPath(); c.arc(j.bx, j.by, JOY_RADIUS + 6, 0, Math.PI*2); c.stroke(); }
   }
 
-  // round minimap, turned to match the camera, showing the sea around the ship (MINI_RANGE world units to the edge)
-  if (!mini) buildMini();
-  const ms = 112*(G.uik || 1), cx = W - ms/2 - 12 - 6*(G.uik || 1), cy = 10 + 8*(G.uik || 1) + ms/2 + topInset(); // room for the compass rim
-  // the minimap is drawn into its own small canvas only every third frame, then copied: it's one of the slower things to draw
-  const md = Math.min(3, view.DPR || 1), mpx = Math.round(ms*md); // drawn at the screen's full sharpness
-  if (!miniCv || miniCv.width !== mpx){ miniCv = document.createElement('canvas'); miniCv.width = miniCv.height = mpx; }
-  if ((miniTick = (miniTick + 1) % 3) === 1){ const m = miniCv.getContext('2d'); m.setTransform(md, 0, 0, md, 0, 0); m.clearRect(0, 0, ms, ms); drawMini(m, ms/2, ms/2, ms, S); }
-  c.drawImage(miniCv, cx - ms/2, cy - ms/2, ms, ms);
-  // a round wooden frame, with a little N where north is (the map is turned like the camera, so north is up and to the right)
-  // P57: a wooden compass. A thick wooden rim with grain and a soft shadow, a thin brass ring inside it, tick marks all round
-  // (long ones at N, E, S, W), the four letters carved in (N in red), and little brass studs between them.
-  const R = ms/2, rim = 11*(G.uik || 1);
-  c.save(); c.shadowColor = 'rgba(35,25,15,.35)'; c.shadowBlur = 12; c.shadowOffsetY = 4;
-  const wg = c.createRadialGradient(cx - R*.3, cy - R*.4, R*.2, cx, cy, R + rim); wg.addColorStop(0, '#c99a62'); wg.addColorStop(.75, '#9a6a3c'); wg.addColorStop(1, '#6e4524');
-  c.strokeStyle = wg; c.lineWidth = rim; c.beginPath(); c.arc(cx, cy, R + rim/2, 0, Math.PI*2); c.stroke(); c.shadowColor = 'transparent';
-  c.strokeStyle = 'rgba(70,40,18,.28)'; c.lineWidth = 1; for (const f of [.25, .55, .8]){ c.beginPath(); c.arc(cx, cy, R + rim*f, 0, Math.PI*2); c.stroke(); } // wood grain
-  c.strokeStyle = '#3e2611'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, cy, R + rim, 0, Math.PI*2); c.stroke();
-  c.strokeStyle = '#d9b25a'; c.lineWidth = 2.2; c.beginPath(); c.arc(cx, cy, R + .5, 0, Math.PI*2); c.stroke(); // the brass ring
-  for (let i=0;i<32;i++){ if (i % 8 === 0) continue; const a = i/32*Math.PI*2 - Math.PI/2, big = false, mid = i % 4 === 0, l = big ? rim*.55 : mid ? rim*.4 : rim*.22;
-    c.strokeStyle = big ? '#2a1a0c' : 'rgba(42,26,12,.75)'; c.lineWidth = big ? 2 : 1.2; c.beginPath();
-    c.moveTo(cx + Math.cos(a)*(R + 1.5), cy + Math.sin(a)*(R + 1.5)); c.lineTo(cx + Math.cos(a)*(R + 1.5 + l), cy + Math.sin(a)*(R + 1.5 + l)); c.stroke(); }
-  c.font = `800 ${Math.round(10*(G.uik || 1))}px Nunito, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-  [['N', -Math.PI/2], ['E', 0], ['S', Math.PI/2], ['W', Math.PI]].forEach(([l, a]) => { const x = cx + Math.cos(a)*(R + rim*.62), y = cy + Math.sin(a)*(R + rim*.62);
-    c.fillStyle = 'rgba(255,235,200,.55)'; c.fillText(l, x, y + 1); c.fillStyle = l === 'N' ? '#b8402f' : '#2a1a0c'; c.fillText(l, x, y); });
-  for (let i=0;i<4;i++){ const a = i*Math.PI/2 + Math.PI/4, x = cx + Math.cos(a)*(R + rim/2), y = cy + Math.sin(a)*(R + rim/2);
-    const bg = c.createRadialGradient(x - 1, y - 1, .3, x, y, 3); bg.addColorStop(0, '#fff2c0'); bg.addColorStop(1, '#a8812f'); c.fillStyle = bg; c.beginPath(); c.arc(x, y, 2.6, 0, Math.PI*2); c.fill(); }
-  c.restore();
-  // which way the wind blows: a white arrow across the little map, stronger wind = more solid
-  if (WIND.windK > .2){ const a = WIND.windA, al = Math.min(.85, WIND.windK);
-    c.save(); c.translate(cx, cy); c.rotate(a); c.globalAlpha = al; c.strokeStyle = '#f4fbff'; c.fillStyle = '#f4fbff'; c.lineWidth = 2.2; c.lineCap = 'round';
-    c.beginPath(); c.moveTo(-ms*.36, 0); c.lineTo(ms*.3, 0); c.stroke(); c.beginPath(); c.moveTo(ms*.38, 0); c.lineTo(ms*.27, -5); c.lineTo(ms*.27, 5); c.closePath(); c.fill();
-    for (const f of [-.36, -.29]){ c.beginPath(); c.moveTo(ms*f, 0); c.lineTo(ms*(f - .06), -5); c.moveTo(ms*f, 0); c.lineTo(ms*(f - .06), 5); c.stroke(); } c.restore(); }
-  // the nearest chapter goal off the little map: a red arrow on its rim pointing the way
-  let gm = null, gd = Infinity; for (const m of G.goalMarks || []){ const d = Math.hypot(m.x - S.x, m.y - S.y); if (d < gd){ gd = d; gm = m; } }
-  if (gm && gd > MINI_RANGE*.9){ const a = Math.atan2(gm.y - S.y, gm.x - S.x), r = ms/2 - 2, px = cx + Math.cos(a)*r, py = cy + Math.sin(a)*r, pulse = 1 + Math.sin(G.t*5)*.12;
-    c.save(); c.translate(px, py); c.rotate(a); c.scale(pulse, pulse); c.fillStyle = '#e0614d'; c.strokeStyle = '#2a1d17'; c.lineWidth = 1.5;
-    c.beginPath(); c.moveTo(7, 0); c.lineTo(-5, -6); c.lineTo(-2, 0); c.lineTo(-5, 6); c.closePath(); c.fill(); c.stroke(); c.restore(); }
+  drawMiniEl(S);
 
   if (G.settings.showFps){
     c.font = '800 12px Nunito, system-ui, sans-serif'; c.textAlign = 'left'; c.fillStyle = fps >= 50 ? '#cfe8c0' : fps >= 35 ? '#f2d58a' : '#f2a093';
@@ -265,7 +236,64 @@ export function drawOverlay(fps){
   }
 }
 
-let miniCv = null, miniTick = 0;
+// P65: the minimap and its wooden rim have their own canvas at the phone's full sharpness (up to 4x), so they stay crisp even though the
+// 3D view is drawn at a lower resolution. The rim is drawn once and kept; the map inside changes every few frames.
+const miniEl = document.getElementById('miniEl'), PAD = 6;
+let miniTick = 0, rimCv = null;
+const seeded = n => { let s = n; return () => (s = (s*16807) % 2147483647)/2147483647; };
+function buildRim(ms, rim, md){
+  const R = ms/2, sz = ms + (rim + PAD)*2, cv = document.createElement('canvas'); cv.width = cv.height = Math.ceil(sz*md);
+  const g = cv.getContext('2d'), cx = sz/2, cy = sz/2, u = rim/11, rnd = seeded(77); g.scale(md, md);
+  const ring = () => { g.beginPath(); g.arc(cx, cy, R + rim, 0, 6.2832); g.arc(cx, cy, R, 0, 6.2832, true); };
+  // a soft shadow under the whole thing, then the wood
+  g.save(); g.shadowColor = 'rgba(30,18,8,.45)'; g.shadowBlur = 9*u; g.shadowOffsetY = 3.5*u; ring(); g.fillStyle = '#7d5129'; g.fill(); g.restore();
+  g.save(); ring(); g.clip();
+  const wg = g.createLinearGradient(cx - R, cy - R - rim, cx + R, cy + R + rim); wg.addColorStop(0, '#c99a62'); wg.addColorStop(.5, '#a8743f'); wg.addColorStop(1, '#7f512a'); g.fillStyle = wg; g.fillRect(0, 0, sz, sz);
+  // wood grain: many fine lines following the ring, some long, some short, light and dark
+  for (let i=0;i<150;i++){ const r = R + rnd()*rim, a0 = rnd()*6.2832, len = .12 + rnd()*.8; g.strokeStyle = rnd() < .62 ? `rgba(58,32,12,${.1 + rnd()*.3})` : `rgba(255,220,165,${.06 + rnd()*.18})`; g.lineWidth = (.25 + rnd()*.55)*u; g.beginPath(); g.arc(cx, cy, r, a0, a0 + len); g.stroke(); }
+  // a few knots in the wood
+  for (let i=0;i<5;i++){ const a = rnd()*6.2832, r = R + rim*(.3 + rnd()*.4), x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r; for (let k=3;k>=1;k--){ g.strokeStyle = `rgba(52,28,10,${.32 - k*.05})`; g.lineWidth = .45*u; g.beginPath(); g.ellipse(x, y, k*1.3*u, k*.8*u, a + 1.57, 0, 6.2832); g.stroke(); } }
+  g.restore();
+  // rounded edges: light from the top left along the outside, dark along the inside
+  const edge = (r, w, c0, c1) => { const lg = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R); lg.addColorStop(0, c0); lg.addColorStop(1, c1); g.strokeStyle = lg; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, r, 0, 6.2832); g.stroke(); };
+  edge(R + rim - .9*u, 1.8*u, 'rgba(255,226,175,.75)', 'rgba(60,32,12,.45)'); edge(R + 1.6*u, 1.6*u, 'rgba(45,24,8,.5)', 'rgba(255,220,165,.4)');
+  g.strokeStyle = '#3a2410'; g.lineWidth = 1.1*u; g.beginPath(); g.arc(cx, cy, R + rim, 0, 6.2832); g.stroke();
+  // tick marks
+  for (let i=0;i<32;i++){ if (i % 8 === 0) continue; const a = i/32*6.2832 - 1.5708, mid = i % 4 === 0, l = mid ? rim*.42 : rim*.24, r0 = R + 2.5*u;
+    g.strokeStyle = 'rgba(40,22,8,.85)'; g.lineWidth = (mid ? 1.15 : .8)*u; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx + Math.cos(a)*r0, cy + Math.sin(a)*r0); g.lineTo(cx + Math.cos(a)*(r0 + l), cy + Math.sin(a)*(r0 + l)); g.stroke(); }
+  // brass studs between the letters
+  for (let i=0;i<4;i++){ const a = i*1.5708 + .7854, x = cx + Math.cos(a)*(R + rim*.58), y = cy + Math.sin(a)*(R + rim*.58), r = 2.3*u, bg = g.createRadialGradient(x - r*.4, y - r*.45, .1, x, y, r);
+    bg.addColorStop(0, '#fff6cf'); bg.addColorStop(.45, '#e0b95c'); bg.addColorStop(1, '#7c5a1c'); g.fillStyle = bg; g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill(); g.strokeStyle = 'rgba(40,22,8,.7)'; g.lineWidth = .5*u; g.stroke(); }
+  // N, E, S, W carved in
+  g.font = `800 ${9.5*u}px Nunito, system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  [['N', -1.5708], ['E', 0], ['S', 1.5708], ['W', 3.1416]].forEach(([l, a]) => { const x = cx + Math.cos(a)*(R + rim*.56), y = cy + Math.sin(a)*(R + rim*.56); g.fillStyle = 'rgba(255,232,190,.7)'; g.fillText(l, x, y + .7*u); g.fillStyle = l === 'N' ? '#a8301f' : '#2a1608'; g.fillText(l, x, y); });
+  // the thin brass ring around the map, with a shine, and the shadow it throws onto the map
+  const br = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R); br.addColorStop(0, '#fff0b8'); br.addColorStop(.35, '#d9b25a'); br.addColorStop(.7, '#a07c2c'); br.addColorStop(1, '#e8c66e'); g.strokeStyle = br; g.lineWidth = 2*u; g.beginPath(); g.arc(cx, cy, R + .5*u, 0, 6.2832); g.stroke();
+  g.save(); g.beginPath(); g.arc(cx, cy, R - .3*u, 0, 6.2832); g.clip(); const sh = g.createRadialGradient(cx, cy + 1.5*u, R*.8, cx, cy + 1.5*u, R + 1); sh.addColorStop(0, 'rgba(30,18,6,0)'); sh.addColorStop(1, 'rgba(30,18,6,.34)'); g.fillStyle = sh; g.fillRect(0, 0, sz, sz); g.restore();
+  return cv;
+}
+function drawMiniEl(S){
+  if (!mini) buildMini();
+  const u = G.uik || 1, ms = 112*u, rim = 11*u, md = Math.min(4, devicePixelRatio || 1), sz = ms + (rim + PAD)*2, px = Math.ceil(sz*md);
+  if (miniEl.width !== px || !rimCv){ miniEl.width = miniEl.height = px; miniEl.style.width = miniEl.style.height = sz + 'px'; rimCv = buildRim(ms, rim, md); miniTick = 0; }
+  const cx = view.W - ms/2 - 12 - 6*u, cy = 10 + 8*u + ms/2 + topInset();
+  miniEl.style.left = (cx - sz/2) + 'px'; miniEl.style.top = (cy - sz/2) + 'px';
+  if ((miniTick = (miniTick + 1) % 3) !== 1) return;
+  const m = miniEl.getContext('2d'); m.setTransform(md, 0, 0, md, 0, 0); m.clearRect(0, 0, sz, sz); m.imageSmoothingQuality = 'high';
+  drawMini(m, sz/2, sz/2, ms, S);
+  m.setTransform(1, 0, 0, 1, 0, 0); m.drawImage(rimCv, 0, 0); m.setTransform(md, 0, 0, md, 0, 0);
+  const ox = sz/2, oy = sz/2;
+  // which way the wind blows: a white arrow across the little map, stronger wind = more solid
+  if (WIND.windK > .2){ const a = WIND.windA, al = Math.min(.85, WIND.windK);
+    m.save(); m.translate(ox, oy); m.rotate(a); m.globalAlpha = al; m.strokeStyle = '#f4fbff'; m.fillStyle = '#f4fbff'; m.lineWidth = 2.2*u; m.lineCap = 'round';
+    m.beginPath(); m.moveTo(-ms*.36, 0); m.lineTo(ms*.3, 0); m.stroke(); m.beginPath(); m.moveTo(ms*.38, 0); m.lineTo(ms*.27, -5*u); m.lineTo(ms*.27, 5*u); m.closePath(); m.fill();
+    for (const f of [-.36, -.29]){ m.beginPath(); m.moveTo(ms*f, 0); m.lineTo(ms*(f - .06), -5*u); m.moveTo(ms*f, 0); m.lineTo(ms*(f - .06), 5*u); m.stroke(); } m.restore(); }
+  // the nearest goal off the little map: a red arrow on its rim pointing the way
+  let gm = null, gd = Infinity; for (const g of G.goalMarks || []){ const d = Math.hypot(g.x - S.x, g.y - S.y); if (d < gd){ gd = d; gm = g; } }
+  if (gm && gd > MINI_RANGE*.9){ const a = Math.atan2(gm.y - S.y, gm.x - S.x), r = ms/2 - 2, ax = ox + Math.cos(a)*r, ay = oy + Math.sin(a)*r, pulse = 1 + Math.sin(G.t*5)*.12;
+    m.save(); m.translate(ax, ay); m.rotate(a); m.scale(pulse*u, pulse*u); m.fillStyle = '#e0614d'; m.strokeStyle = '#2a1d17'; m.lineWidth = 1.5;
+    m.beginPath(); m.moveTo(7, 0); m.lineTo(-5, -6); m.lineTo(-2, 0); m.lineTo(-5, 6); m.closePath(); m.fill(); m.stroke(); m.restore(); }
+}
 function drawMini(c, cx, cy, ms, S){
   const k = ms/2/MINI_RANGE;
   c.save(); c.beginPath(); c.arc(cx, cy, ms/2, 0, Math.PI*2); c.clip();
@@ -277,6 +305,7 @@ function drawMini(c, cx, cy, ms, S){
     islandPath(c, i, 0, k); c.fillStyle = '#efdcaa'; c.fill(); c.strokeStyle = '#6b5236'; c.lineWidth = 1; c.stroke();
     if (i.tiers[1]){ islandPath(c, i, 1, k); c.fillStyle = '#9fbe62'; c.fill(); } if (i.tiers[2]){ islandPath(c, i, 2, k); c.fillStyle = '#b4a888'; c.fill(); } }
   c.drawImage(fogLayer('#dccaa2'), 0, 0, WORLD*k, WORLD*k);
+  for (const i of ISLANDS) if (i.mine && isExplored(i.mine.x, i.mine.y)){ c.fillStyle = '#4a525c'; c.strokeStyle = '#efe6cf'; c.lineWidth = 1; c.beginPath(); c.rect(i.mine.x*k - 3, i.mine.y*k - 3, 6, 6); c.fill(); c.stroke(); }
   c.strokeStyle = '#3e2b1c'; c.lineWidth = 1;
   for (const h of HARBORS){ c.fillStyle = h.is.city ? CITIES[h.is.city].color : '#d48a2a'; c.beginPath(); c.arc(h.dock.x*k, h.dock.y*k, 3, 0, Math.PI*2); c.fill(); c.stroke(); }
   if (G.dest){ c.fillStyle = '#e0614d'; c.beginPath(); c.arc(G.dest.x*k, G.dest.y*k, 3, 0, Math.PI*2); c.fill(); }

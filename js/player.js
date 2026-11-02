@@ -1,22 +1,22 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES} from './config.js?v=a77b89b';
-import {SPECS} from './ships.js?v=a77b89b';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=a77b89b';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room} from './state.js?v=a77b89b';
-import {W} from './weather.js?v=a77b89b';
-import {steering} from './input.js?v=a77b89b';
-import {toast, showZone} from './ui.js?v=a77b89b';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=a77b89b';
-import {startFish, stopFish} from './fishing.js?v=a77b89b';
-import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=a77b89b';
-import {progress} from './quests.js?v=a77b89b';
-import {startSink} from './sinking.js?v=a77b89b';
-import {sfx} from './audio.js?v=a77b89b';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=d1e493c';
+import {SPECS} from './ships.js?v=d1e493c';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=d1e493c';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, unload} from './state.js?v=d1e493c';
+import {W} from './weather.js?v=d1e493c';
+import {steering} from './input.js?v=d1e493c';
+import {toast, showZone} from './ui.js?v=d1e493c';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=d1e493c';
+import {startFish, stopFish} from './fishing.js?v=d1e493c';
+import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=d1e493c';
+import {progress} from './quests.js?v=d1e493c';
+import {startSink} from './sinking.js?v=d1e493c';
+import {sfx} from './audio.js?v=d1e493c';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
   if (G.sinking) return;
-  G.sinking = {t:0, side:Math.random() < .5 ? 1 : -1}; sfx('sink'); G.dest = null; G.joy = null; stopFish(); G.act = null;
+  stat('sunkMe'); G.sinking = {t:0, side:Math.random() < .5 ? 1 : -1}; sfx('sink'); G.dest = null; G.joy = null; stopFish(); G.act = null;
   startSink(G.S.x, G.S.y, ship().len);
 }
 const SINK_SECONDS = 4.5;
@@ -33,7 +33,9 @@ function windBoost(){
   const S = G.S, sails = SPECS[ship().model].mast || lvl('sail') > 0;
   if (!sails){ G.windFill = 0; return 1; }
   const along = Math.cos(S.a - W.windA), k = W.windK; G.windFill = Math.max(0, along)*k;
-  if (!S.windTip && G.windFill > .45 && G.v > 40){ S.windTip = true; toast('Wind at your back!', 4.5); }
+  // P65: no message: you hear it. The sail catches the wind with a whoosh of air and the cloth snapping taut.
+  if (G.sailFull && G.windFill < .22) G.sailFull = false;
+  else if (!G.sailFull && G.windFill > .42 && G.v > 25 && !G.sheetOpen){ G.sailFull = true; if (G.t - (G.sailT ?? -99) > 14){ G.sailT = G.t; sfx('sailfill'); } }
   return 1 + k*(along > 0 ? .2*along : .08*along);
 }
 // ---- Row! (P56): a 5-second burst of everyone rowing, to catch a ship or ram it at full speed; then a rest ----
@@ -67,7 +69,8 @@ function move(dt, sh){
   G.v += (target - G.v) * Math.min(1, dt*(target > G.v ? 1.6/heavy : 1.2/Math.sqrt(heavy)));
   let px = Math.cos(S.a)*G.v*dt, py = Math.sin(S.a)*G.v*dt;
   if (zoneAt(S.x, S.y) === 2){ px += Math.sin(G.t*1.7)*TUNING.stormDrift*dt; py += Math.cos(G.t*1.3)*TUNING.stormDrift*dt; }
-  S.x += px; S.y += py;
+  S.x += px; S.y += py; if (!G.dock) G.distAcc = (G.distAcc || 0) + Math.hypot(px, py);
+  if (G.distAcc > 100){ stat('dist', Math.floor(G.distAcc/100)); G.distAcc %= 100; }
   if (pushOut(S, sh.beam*.9)) G.v *= .6;
   if (!G.dock && pierPush(S, sh.beam*.55)) G.v *= .6;
   for (const b of ICEBERGS){ const dx = S.x - b.x, dy = S.y - b.y, d = Math.hypot(dx, dy) || 1, m = b.r + sh.beam*.6; if (d < m){ S.x = b.x + dx/d*m; S.y = b.y + dy/d*m; G.v *= .6; } } // icebergs are solid
@@ -81,10 +84,12 @@ function gather(dt, sh){
   if (slow && !G.sheetOpen){
     const sp = SPOTS.find(s => s.stock > 0 && Math.hypot(s.x-S.x, s.y-S.y) < TUNING.fishRange);
     const wr = !sp && WRECKS.find(w => w.stock > 0 && Math.hypot(w.x-S.x, w.y-S.y) < TUNING.wreckRange*Math.max(1, WRECK_SIZES[w.size].scale));
-    const is = !sp && !wr && ISLANDS.find(i => i.stock > 0 && shoreDist(i, S.x, S.y) < sh.beam + TUNING.treeRange);
+    const mi = !sp && !wr && ISLANDS.find(i => i.mine && i.mine.stock > 0 && Math.hypot(i.mine.x - S.x, i.mine.y - S.y) < sh.beam + 130); // an iron mine
+    const is = !sp && !wr && !mi && ISLANDS.find(i => i.stock > 0 && shoreDist(i, S.x, S.y) < sh.beam + TUNING.treeRange);
     const k = S.bless > 0 ? WILDLIFE.blessWork : 1;
     if (sp) cur = {type:'fish', ref:sp, time:sh.fishTime};
     else if (wr) cur = {type:'wreck', ref:wr, time:sh.woodTime*.8*k};
+    else if (mi) cur = {type:'mine', ref:mi, time:sh.woodTime*IRON.digTime*k};
     else if (is) cur = {type:'wood', ref:is, time:sh.woodTime*k};
     else {
       // only on a school that is out right now, and only once the boat has settled
@@ -98,6 +103,7 @@ function gather(dt, sh){
   // each kind has its own limit: fish in the hold, wood on deck
   if (holdUsed() >= sh.hold && (cur.type === 'fish' || cur.type === 'shore')){ G.act = {full:true}; stopFish(); return; }
   if (!room('wood') && (cur.type === 'wood' || cur.type === 'wreck')){ if (!G.act || !G.act.full) fullTip('wood'); G.act = {full:true}; return; }
+  if (cur.type === 'mine' && !room('iron')){ if (!G.act || !G.act.full) fullTip('iron'); G.act = {full:true}; return; }
   if (cur.type === 'fish'){ if (!G.fish || G.fish.ref !== cur.ref) startFish(cur.ref); G.act = null; return; }
   if (!G.act || G.act.ref !== cur.ref) G.act = {...cur, p:0};
   const act = G.act;
@@ -106,11 +112,13 @@ function gather(dt, sh){
   act.p = 0;
   const r = act.ref;
   if (act.type === 'shore'){ S.cargo[SHORE_FISH.kind]++; progress('catch', SHORE_FISH.kind); gain(SHORE_FISH.kind); } // a little fish pops up from the boat instead of a message
+  else if (act.type === 'mine'){ const n = putAboard('iron', IRON.perDig); sfx('hammer'); r.mine.stock--; if (n) gain('iron', n); stat('iron', n); }
   else if (act.type === 'wood'){ const n = putAboard('wood', TUNING.woodPerCut); sfx('chop'); r.stock--; refreshTrees(r); gain('wood', n); progress('wood', null, n); }
   else {
     // bigger wrecks give more timber per pull, more coins, and merchant wrecks sometimes an amphora of wine or oil
     const ws = WRECK_SIZES[r.size] || WRECK_SIZES.small, wood = ws.wood;
     const wn = putAboard('wood', wood); r.stock--; progress('salvage', null, wn); gain('wood', wn);
+    if (ws.iron && Math.random() < ws.iron[0]){ const b = putAboard('iron', ws.iron[1] + Math.floor(Math.random()*(ws.iron[2] - ws.iron[1] + 1))); if (b){ gain('iron', b); stat('iron', b); } } // iron nails and fittings
     if (ws.bronze && Math.random() < ws.bronze[0]){ const b = putAboard('bronze', ws.bronze[1] + Math.floor(Math.random()*(ws.bronze[2] - ws.bronze[1] + 1))); if (b) gain('bronze', b); } // warships carried bronze fittings
     const [gc, g0, g1] = ws.gold;
     if (Math.random() < gc){ const c = g0 + Math.floor(Math.random()*(g1 - g0 + 1)); S.gold += c; gain('coin', c); }
@@ -142,6 +150,7 @@ function regrow(dt){
     if (s.stock && s.stock < TUNING.spotStock){ s.regen += dt; if (s.regen > TUNING.spotRegen){ s.stock++; s.regen = 0; } }
   }
   for (const i of ISLANDS) if (i.trees && i.stock < i.trees){ i.regen += dt; if (i.regen > TUNING.treeRegen){ i.stock++; i.regen = 0; refreshTrees(i); } }
+  for (const i of ISLANDS) if (i.mine && i.mine.stock < IRON.stock && (i.mine.regen += dt) > IRON.regen){ i.mine.regen = 0; i.mine.stock++; } // the miners dig out more ore
   for (const w of WRECKS) if (!w.stock){ w.regen += dt; if (w.regen > TUNING.wreckRespawn){ w.stock = WRECK_SIZES[w.size].stock; w.regen = 0; } }
 }
 
@@ -199,11 +208,13 @@ function docking(dt){
 
 // P50: every harbor has a glowing ring in the water just past the end of its pier. Sail into it and the dockhands bring you in.
 // It only works again once you've sailed out of it (so leaving the harbor doesn't pull you straight back in).
+// P65: the chart's video button: home at once
+document.addEventListener('fasthome', () => { if (G.sinking) return; stopFish(); G.act = null; G.cruise = false; G.rowT = 0; moorAt(HARBORS[0]); G.curZone = zoneAt(G.S.x, G.S.y); unload(); save(); });
 export const RING_R = 70;
 export const harborRing = h => ({x:h.pier.x + h.pier.dx*(PIER_LEN + 75), y:h.pier.y + h.pier.dy*(PIER_LEN + 75)});
 let ringArmed = false, started = false;
 // Tied up at harbor h right away (no sailing in): when the game starts near a harbor, and after you're towed home.
-function moorAt(h){ const b = berth(ship(), h.pier); Object.assign(G.S, {x:b.x, y:b.y, a:b.a}); G.v = 0; G.dest = null; G.joy = null;
+export function moorAt(h){ const b = berth(ship(), h.pier); Object.assign(G.S, {x:b.x, y:b.y, a:b.a}); G.v = 0; G.dest = null; G.joy = null;
   G.dock = {mode:'moored', t:1, dur:1, x0:b.x, y0:b.y, a0:b.a, h, ...b}; G.cam = {x:b.x, y:b.y}; }
 function harborRings(){
   const S = G.S; let near = Infinity, hit = null;

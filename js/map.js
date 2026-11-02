@@ -1,10 +1,12 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, zoneAt, landDist, pushOut} from './world.js?v=a77b89b';
-import {ARENA} from './arena.js?v=a77b89b';
-import {enemies, planReward} from './combat.js?v=a77b89b';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=a77b89b';
-import {G, ship, isExplored, reveal, save} from './state.js?v=a77b89b';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=d1e493c';
+import {IC} from './menus.js?v=d1e493c';
+import {playVideo, toast} from './ui.js?v=d1e493c';
+import {ARENA} from './arena.js?v=d1e493c';
+import {enemies, planReward, combatState} from './combat.js?v=d1e493c';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=d1e493c';
+import {G, ship, isExplored, reveal, save} from './state.js?v=d1e493c';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -77,6 +79,22 @@ function toWorld(sx, sy){ return [view.cx + (sx - W/2)/view.z, view.cy + (sy - H
 export function islandPath(g, is, tier, k = 1){
   g.beginPath(); is.tiers[tier].forEach(([x, y], i) => i ? g.lineTo((is.x + x)*k, (is.y + y)*k) : g.moveTo((is.x + x)*k, (is.y + y)*k)); g.closePath();
 }
+// P65: the marks on the chart are the same glossy pictures as the rest of the game, on little cream badges a finger can find on a phone.
+const icImgs = {};
+function icImg(key, svg){ if (icImgs[key]) return icImgs[key]; const im = new Image(); im.onload = () => { if (G.mapOpen) draw(); };
+  im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" ')); return icImgs[key] = im; }
+const CAMP_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3 L22 20 H2Z" fill="#b5793f" stroke="#2a1d17" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 8 L17 20 H7Z" fill="#3a2618"/><path d="M12 3 L10 1 M12 3 L14 1" stroke="#2a1d17" stroke-width="1.4" stroke-linecap="round"/><path d="M12 12.5 C13.6 15 14.4 16 14 18 C13.6 19.6 10.4 19.6 10 18 C9.6 16 11 15 12 12.5Z" fill="#f59a3a"/></svg>';
+const X_SVG = '<svg viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" stroke="#6e1d12" stroke-width="6.5" stroke-linecap="round"/><path d="M5 5 L19 19 M19 5 L5 19" stroke="#d6503f" stroke-width="3.8" stroke-linecap="round"/></svg>';
+const icons = () => ({harbor:IC.dock, camp:CAMP_SVG, iron:IC.iron, wreck:IC.wreck, x:X_SVG, fish:IC.fish('#4f8fc0')});
+function badge(x, y, r, key, ring, opt = {}){
+  c.save(); c.shadowColor = 'rgba(50,32,12,.45)'; c.shadowBlur = 5; c.shadowOffsetY = 2;
+  const g = c.createRadialGradient(x - r*.35, y - r*.4, 1, x, y, r); g.addColorStop(0, '#fffdf4'); g.addColorStop(1, '#f0e2c2'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI*2); c.fill(); c.restore();
+  c.strokeStyle = ring || INK; c.lineWidth = ring ? 3 : 1.5; c.beginPath(); c.arc(x, y, r - (ring ? 1 : 0), 0, Math.PI*2); c.stroke();
+  if (ring){ c.strokeStyle = 'rgba(50,32,12,.75)'; c.lineWidth = 1; c.beginPath(); c.arc(x, y, r + .3, 0, Math.PI*2); c.stroke(); }
+  if (key){ const im = icImg(key, icons()[key]), s = r*(opt.k || 1.45); if (im.complete && im.naturalWidth){ c.globalAlpha = opt.dim ? .45 : 1; c.drawImage(im, x - s/2, y - s/2, s, s); c.globalAlpha = 1; } }
+}
+function crossOut(x, y, r){ c.save(); c.strokeStyle = COURSE; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - r*.7, y - r*.7); c.lineTo(x + r*.7, y + r*.7); c.stroke(); c.restore(); }
+function stars(x, y, n){ c.save(); c.font = '800 9px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round'; c.lineWidth = 3; c.strokeStyle = 'rgba(70,45,15,.85)'; const t = '★'.repeat(n); c.strokeText(t, x, y); c.fillStyle = '#ffcd5e'; c.fillText(t, x, y); c.restore(); }
 // small ink pictures for the marks on the chart
 function fishGlyph(x, y){ c.beginPath(); c.ellipse(x, y, 6, 3.2, 0, 0, Math.PI*2); c.moveTo(x-5, y); c.lineTo(x-10, y-4); c.lineTo(x-10, y+4); c.closePath(); c.fill(); }
 function wreckGlyph(x, y){ c.save(); c.translate(x, y); c.lineCap = 'round';
@@ -150,18 +168,19 @@ function draw(){
   c.restore();
 
   // upright marks and names, only where you have sailed
-  placed = [[W - 110, 0, W, 64], [0, H - 120, W, H]]; // keep names off the header and footer
+  placed = [[W - 110, 0, W, 64], [0, H - 130, W, H]]; // keep names off the header and footer
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
   const marks = G.settings.dev.markers;
-  for (const s of SPOTS){ if (!marks || !s.stock || !isExplored(s.x, s.y)) continue; const [x, y] = toScreen(s.x, s.y); c.fillStyle = '#3d7d93'; fishGlyph(x, y); }
+  for (const s of SPOTS){ if (!marks || !s.stock || !isExplored(s.x, s.y)) continue; const [x, y] = toScreen(s.x, s.y); badge(x, y, 10, 'fish'); }
   c.strokeStyle = INK; c.lineWidth = 1.8;
-  for (const w of WRECKS){ if (!marks || !w.stock || !isExplored(w.x, w.y)) continue; const [x, y] = toScreen(w.x, w.y); wreckGlyph(x, y); }
+  for (const w of WRECKS){ if (!marks || !w.stock || !isExplored(w.x, w.y)) continue; const [x, y] = toScreen(w.x, w.y); badge(x, y, 10, 'wreck'); }
+  // iron mines
+  for (const is of ISLANDS){ if (!is.mine || !isExplored(is.mine.x, is.mine.y)) continue; const [x, y] = toScreen(is.mine.x, is.mine.y); badge(x, y, 13, 'iron', '#5d6773'); }
   // buried treasure on the small islands (P52): a little gold X where a chest is waiting
   for (const t of TREASURE_ISLES){ if (!isExplored(t.x, t.y) || !chestReady(t)) continue; const [x, y] = toScreen(t.x, t.y);
     c.save(); c.strokeStyle = '#d9a23a'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - 5, y - 5); c.lineTo(x + 5, y + 5); c.moveTo(x + 5, y - 5); c.lineTo(x - 5, y + 5); c.stroke(); c.restore(); }
   // the treasure map's X, and a dashed ring around islands your jobs send you to
-  if (G.S.treasure){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); c.save(); c.strokeStyle = COURSE; c.lineWidth = 4; c.lineCap = 'round';
-    c.beginPath(); c.moveTo(x - 9, y - 9); c.lineTo(x + 9, y + 9); c.moveTo(x + 9, y - 9); c.lineTo(x - 9, y + 9); c.stroke(); c.restore(); }
+  if (G.S.treasure){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); badge(x, y, 17, 'x', '#d9a23a', {k:1.3}); }
   for (const r of G.S.reqs || []){ const is = (r.t === 'visit' || r.t === 'deliver') && ISLANDS.find(i => i.name === r.to); if (!is) continue;
     const [x, y] = toScreen(is.x, is.y); c.save(); c.setLineDash([6, 6]); c.strokeStyle = COURSE; c.lineWidth = 2; c.beginPath(); c.arc(x, y, Math.max(16, is.r*view.z + 12), 0, Math.PI*2); c.stroke(); c.restore(); }
   // the Arena of Rhodes: a stone ring with the gate marked
@@ -170,9 +189,11 @@ function draw(){
     label('Arena of Rhodes', ax, ay + r + 16, '400 14px Marcellus, Georgia, serif', INK); }
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
   for (const e of enemies){ if (!e.fort || !isExplored(e.x, e.y)) continue; const [fx, fy] = toScreen(e.x, e.y);
-    towerGlyph(fx, fy, e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a', e.dead); }
+    if (e.camp){ badge(fx, fy, 15, 'camp', '#b5552c', {dim:e.dead}); if (e.dead) crossOut(fx, fy, 15); else stars(fx, fy + 20, e.camp.lv || 1); continue; }
+    const col = e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a'; badge(fx, fy, 15, null, col); c.save(); c.translate(fx, fy); c.scale(.92, .92); towerGlyph(0, 0, col, false); c.restore();
+    if (e.dead) crossOut(fx, fy, 15); else stars(fx, fy + 20, e.tier || 1); }
   for (const h of HARBORS){ if (!h.is.port && !isExplored(h.dock.x, h.dock.y)) continue;
-    const [hx, hy] = toScreen(h.dock.x, h.dock.y); anchorGlyph(hx, hy, h.is.city ? CITIES[h.is.city].color : OCHRE); }
+    const [hx, hy] = toScreen(h.dock.x, h.dock.y), port = h.is.port; badge(hx, hy, port ? 19 : 16, 'harbor', h.is.city ? CITIES[h.is.city].color : OCHRE, {k:1.35}); }
   // the chapter goal: a red ring with a name (pirate fortresses, the pirate king)
   for (const m of G.goalMarks || []){ const [x, y] = toScreen(m.x, m.y); c.save(); c.strokeStyle = COURSE; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
     c.beginPath(); c.arc(x, y, 5, 0, Math.PI*2); c.fillStyle = COURSE; c.fill(); c.restore(); label(m.label, x, y - 20, '700 13px Nunito, sans-serif', '#5a1e14'); }
@@ -194,11 +215,12 @@ function draw(){
   // you: a gold arrow with a soft ring around it
   const [bx, by] = toScreen(S.x, S.y), ang = S.a + R45;
   c.save(); c.translate(bx, by);
-  c.fillStyle = 'rgba(212,138,42,.18)'; c.strokeStyle = 'rgba(160,95,20,.6)'; c.lineWidth = 1.5; c.beginPath(); c.arc(0, 0, 19, 0, Math.PI*2); c.fill(); c.stroke();
-  c.rotate(ang); c.fillStyle = OCHRE; c.strokeStyle = INK; c.lineWidth = 2; c.lineJoin = 'round';
-  c.beginPath(); c.moveTo(13, 0); c.lineTo(-8, -8); c.lineTo(-4, 0); c.lineTo(-8, 8); c.closePath(); c.fill(); c.stroke();
+  c.save(); c.shadowColor = 'rgba(50,32,12,.5)'; c.shadowBlur = 6; c.shadowOffsetY = 2; c.fillStyle = '#fffdf4'; c.beginPath(); c.arc(0, 0, 18, 0, Math.PI*2); c.fill(); c.restore();
+  c.strokeStyle = OCHRE; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, 16.5, 0, Math.PI*2); c.stroke();
+  c.rotate(ang); c.fillStyle = OCHRE; c.strokeStyle = INK; c.lineWidth = 1.8; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(12, 0); c.lineTo(-8, -8); c.lineTo(-4, 0); c.lineTo(-8, 8); c.closePath(); c.fill(); c.stroke();
   c.restore();
-  compass(W - 44, H - 196, 28);
+  compass(W - 42, 112, 26);
   // the paper itself, over everything, and a darker edge like an old sheet
   c.save(); c.globalCompositeOperation = 'multiply'; c.fillStyle = paper; c.fillRect(0, 0, W, H);
   const vg = c.createRadialGradient(W/2, H/2, Math.min(W, H)*.35, W/2, H/2, Math.max(W, H)*.75); vg.addColorStop(0, 'rgba(255,255,255,0)'); vg.addColorStop(1, 'rgba(150,110,60,.35)');
@@ -210,7 +232,11 @@ function draw(){
 export function openMap(){
   if (G.sheetOpen) return;
   G.mapOpen = true; G.joy = null; el.hidden = false; size();
-  view.cx = G.S.x; view.cy = G.S.y; view.z = Math.min(W, H)/6500; clampView();
+  view.cx = G.S.x; view.cy = G.S.y; view.z = Math.min(W, H)/6500;
+  // P65: a new treasure map: open on it, far enough out to see it and your ship
+  if (G.S.mapNew && G.S.treasure){ const T = G.S.treasure, d = Math.hypot(T.x - G.S.x, T.y - G.S.y); view.cx = (T.x + G.S.x)/2; view.cy = (T.y + G.S.y)/2; view.z = Math.min(view.z, Math.min(W, H)*.62/Math.max(d, 1)); }
+  G.S.mapNew = false; clampView();
+  const homeNow = !!G.dock && G.dock.h === HARBORS[0]; $('mapHome').hidden = $('mapFast').hidden = homeNow;
   draw();
 }
 // Test hook: the whole map at once.
@@ -266,7 +292,13 @@ cv.addEventListener('wheel', e => { e.preventDefault(); view.z *= Math.exp(-e.de
 
 $('mapBtn').addEventListener('click', openMap);
 $('mapClose').addEventListener('click', closeMap);
-$('mapCenter').addEventListener('click', () => { view.cx = G.S.x; view.cy = G.S.y; draw(); });
+// P65: home to Kallisto: sail there by yourself (like tapping it on the chart), or watch a video and be there now
+$('mapHome').addEventListener('click', () => { const P = HARBORS[0].pier, x = P.x + P.dx*(PIER_LEN + 75), y = P.y + P.dy*(PIER_LEN + 75);
+  if (G.dock){ document.dispatchEvent(new Event('undock')); } setCourse(x, y); toast('Sailing home', 2); });
+$('mapFast').addEventListener('click', () => { if (combatState.threat){ toast('Not in the middle of a fight', 2.4); return; }
+  playVideo(() => { closeMap(); document.dispatchEvent(new Event('fasthome')); }, 'This one takes you straight home.', 'Home!'); });
+// the legend, with the same pictures as the chart
+$('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [X_SVG, 'Treasure']].map(([ic, n]) => `<li>${ic}${n}</li>`).join('');
 $('mapClear').addEventListener('click', () => { G.dest = null; draw(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape' && G.mapOpen) closeMap();

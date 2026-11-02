@@ -1,12 +1,14 @@
 // Tells the sound engine what is going on around the ship each frame: speed, weather, land, wrecks, fights, harbors.
-import {G, ship, lvl} from './state.js?v=a77b89b';
-import {SHIPS} from './config.js?v=a77b89b';
-import {landDist, WRECKS} from './world.js?v=a77b89b';
-import {W, KINDS} from './weather.js?v=a77b89b';
-import {combatState} from './combat.js?v=a77b89b';
-import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=a77b89b';
+import {G, ship, lvl} from './state.js?v=d1e493c';
+import {SHIPS} from './config.js?v=d1e493c';
+import {landDist, WRECKS} from './world.js?v=d1e493c';
+import {W, KINDS} from './weather.js?v=d1e493c';
+import {combatState} from './combat.js?v=d1e493c';
+import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=d1e493c';
 
-Object.assign(SND, G.settings.sound || {}); applyVolumes();
+Object.assign(SND, G.settings.sound || {});
+if (!G.settings.musicP65){ G.settings.musicP65 = true; SND.style = 'mix'; SND.rest = 'medium'; } // P65: everyone gets the changing songs once
+applyVolumes();
 
 const ROWED = {rowboat:true, bireme:true, trireme:true}; // ships pulled by oars (the others sail)
 let near = {land:0, gulls:0}, scanT = 0;

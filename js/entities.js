@@ -1,17 +1,19 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS} from './config.js?v=a77b89b';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=a77b89b';
-import {G, ship, lvl} from './state.js?v=a77b89b';
-import {men} from './crew.js?v=a77b89b';
-import {scene} from './scene.js?v=a77b89b';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=a77b89b';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=a77b89b';
-import {addTown, figure} from './town.js?v=a77b89b';
-import {makeFire, updateFire, burn} from './fire.js?v=a77b89b';
-import {addGrass} from './grass.js?v=a77b89b';
-import {sinkPose} from './sinking.js?v=a77b89b';
-import {moored} from './fleet.js?v=a77b89b';
-import {placeOnWaves} from './combat.js?v=a77b89b';
+import {SHIPS, IRON} from './config.js?v=d1e493c';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=d1e493c';
+import {G, ship, lvl} from './state.js?v=d1e493c';
+import {men} from './crew.js?v=d1e493c';
+import {scene} from './scene.js?v=d1e493c';
+import {mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=d1e493c';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=d1e493c';
+import {addTown, figure} from './town.js?v=d1e493c';
+import {makeFire, updateFire, burn} from './fire.js?v=d1e493c';
+import {addGrass} from './grass.js?v=d1e493c';
+import {sinkPose} from './sinking.js?v=d1e493c';
+import {moored} from './fleet.js?v=d1e493c';
+import {sailCount} from './upgrades.js?v=d1e493c';
+import {hasSail} from './crew.js?v=d1e493c';
+import {placeOnWaves} from './combat.js?v=d1e493c';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -67,6 +69,11 @@ ISLANDS.forEach((is, i) => {
   // a few rocks along the shore
   for (let k=0;k<Math.min(8, 3 + size/300);k++){ const [x, z] = beach[Math.floor(R()*beach.length)], s = 7 + R()*10, rock = mesh(new T.DodecahedronGeometry(s, 0), '#9a9483');
     rock.position.set(x*1.02, 1, z*1.02); rock.rotation.set(R()*3, R()*3, 0); g.add(rock); }
+  // P65: an iron mine stands on the shore of a few islands: stop beside it to dig
+  if (IRON.mines.includes(is.name)){ for (let k=0;k<40;k++){ const a = R()*6.28, c = Math.cos(a), s = Math.sin(a); let r = 0; while (r < is.r*2 && landDist(is.x + c*r, is.y + s*r) < 0) r += 6;
+      if (r >= is.r*2 || landDist(is.x + c*(r + 200), is.y + s*(r + 200)) < 120) continue;
+      const m = mineModel(); m.position.set(c*(r - 44), 2, s*(r - 44)); m.rotation.y = -a; g.add(m);
+      is.mine = {x:is.x + c*(r + 30), y:is.y + s*(r + 30), stock:IRON.stock, regen:0}; break; } }
   // trees: on the grass, or on the hilltop if they land there
   is.treeObjs = [];
   const ground = grass || beach, treeAt = ([x, z]) => hill && inPoly(hill, x, z) ? hillTop : top;
@@ -300,7 +307,11 @@ export function animateEntities(dt){
   // hits and volleys rock the boat; sinking lists it over and pulls it under
   G.kick = Math.max(0, (G.kick || 0) - dt*.5);
   // leaning out of a fast turn, like a real boat heeling over: more turn and more speed, more lean
-  G.heel = (G.heel || 0) + (Math.max(-.22, Math.min(.22, -(G.turnRate || 0)*G.v/sh.speed*.12)) - (G.heel || 0))*Math.min(1, dt*3);
+  // P65: a ship under sail leans much further: all that weight up in the sails. The Builder tab sets how far (settings.tilt, % of 40 degrees at a full-speed hard turn).
+  const sailN = hasSail() ? Math.max(1, sailCount()) : 0, hk = sailN ? (G.settings.tilt ?? 30)/100*.7*(1 + .12*(sailN - 1)) : .22, hmax = Math.max(.22, hk);
+  const hardTurn = Math.max(-1, Math.min(1, (G.turnRate || 0)/(sh.turn || 1))), hardSpeed = Math.min(1, G.v/(sh.speed || 1));
+  const heelTo = sailN && G.settings.tilt !== 0 ? -hardTurn*hardSpeed*hk : Math.max(-.22, Math.min(.22, -(G.turnRate || 0)*G.v/sh.speed*.12));
+  G.heel = (G.heel || 0) + (Math.max(-hmax, Math.min(hmax, heelTo)) - (G.heel || 0))*Math.min(1, dt*2.4);
   const sp = G.sinking ? sinkPose(G.sinking.t, G.sinking.side, sh.len) : {depth:0, roll:0, pitch:0, done:false};
   boat.visible = !sp.done;
   boat.position.set(S.x, wh + sh.len*.05 - sp.depth, S.y);

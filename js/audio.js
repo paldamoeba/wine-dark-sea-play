@@ -2,8 +2,9 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
+import {MUSIC_REST} from './config.js?v=d1e493c';
 const AC = window.AudioContext || window.webkitAudioContext;
-export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'piano', ready:false}; // .6 = Medium in Settings
+export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
 const lis = {x:0, y:0, far:1400};
 
@@ -169,6 +170,13 @@ export const SOUNDS = {
   creak:{name:'Hull creaks', gap:.5, sea:true, play:(t, d) => creakAt(t, d, .35)},
   oar:{name:'Oar stroke', gap:.15, sea:true, play:(t, d) => { noise(t, .4, d, {type:'lowpass', f:900, f2:400, peak:.09, a:.08}); noise(t + .22, .5, d, {f:1800, f2:900, q:.8, peak:.035, a:.12}); }}, // a soft swish of water, no click
   drum:{name:'Rowing drum', gap:.2, play:(t, d) => { osc('sine', 82, t, .22, d, .5, .004, 55); noise(t, .06, d, {type:'lowpass', f:500, peak:.2}); }},
+  // P65: the sail catching the wind: air rushing through cloth, the cloth flapping faster and faster, then it stretches out taut with a deep thump and the ropes creak
+  sailfill:{name:'Sail catches the wind', gap:2, sea:true, vol:1.5, play:(t, d) => {
+    noise(t, 1.05, d, {f:320, f2:1500, q:.7, peak:.55, buf:pinkBuf});
+    noise(t + .12, .85, d, {type:'highpass', f:2200, peak:.07});
+    const flaps = [0, .17, .31, .43, .53, .61, .68, .74]; flaps.forEach((o, i) => noise(t + .08 + o, .1, d, {f:520 + i*70, f2:300 + i*40, q:1.1, peak:.26 + i*.035, buf:pinkBuf}));
+    osc('sine', 70, t + .84, .3, d, .42, .006, 44); noise(t + .84, .2, d, {f:360, f2:150, q:.8, peak:.45, buf:pinkBuf});
+    osc('sawtooth', 118, t + 1, .24, d, .05, .03, 168); osc('sawtooth', 171, t + 1.2, .18, d, .035, .03, 225); }},
   sail:{name:'Sail flaps', gap:.6, sea:true, play:(t, d) => { for (let i=0;i<3;i++) noise(t + i*.09, .12, d, {f:500, f2:300, q:.8, peak:.5 - i*.12, buf:pinkBuf}); }},
   bottle:{name:'Bottle opened', play:(t, d) => { osc('sine', 2400, t, .3, d, .2); osc('sine', 3900, t + .05, .2, d, .1); osc('sine', 700, t + .4, .06, d, .22, .001, 300); noise(t + .4, .05, d, {type:'highpass', f:2000, peak:.3}); }},
   treasure:{name:'Treasure found', play:(t, d) => { creakAt(t, d, .4); SOUNDS.coins.play(t + .3, d); SOUNDS.chime.play(t + .5, d); }},
@@ -246,6 +254,7 @@ function cricket(t, d){ const f = 4200 + Math.random()*300; for (let i=0;i<3;i++
 // a guitar or a music box: written as little tunes (a motif, the same motif again, something new, the motif to finish)
 // over gentle chords, made up fresh every couple of minutes. The old lyre music is still there as its own style.
 // Every few minutes the music rests and lets the sea be heard.
+export const MIX = {name:'A bit of everything', desc:'Every song on its own instruments, one after another, with the sea alone in between.'};
 export const STYLES = {
   piano: {name:'Soft piano', desc:'A felt piano on its own, slow and gentle.', lh:'piano', mel:'piano'},
   cello: {name:'Piano and cello', desc:'The piano rolls the chords, a cello sings the tune and soft strings hold the harmony.', lh:'piano', mel:'cello', pad:true},
@@ -254,7 +263,7 @@ export const STYLES = {
   box:   {name:'Music box', desc:'A little music box over a harp, like a lullaby.', lh:'harp', mel:'box', lhVol:.75},
   lyre:  {name:'Greek lyre (the old music)', desc:'The first music: a lyre, a drone and a flute in an old Greek mode.'},
 };
-if (!STYLES[SND.style]) SND.style = 'piano';
+if (SND.style !== 'mix' && !STYLES[SND.style]) SND.style = 'mix';
 // P57: the fight has its own music, chosen apart from the calm style. Drums lead; the old calm battle music is still there.
 export const BATTLE = {
   war:   {name:'War drums', desc:'Big booming drums and rattling toms, a low drone underneath. No tune at all: just the beat of the fight.'},
@@ -319,7 +328,7 @@ const INST = {
 };
 // The little tunes in jingles (a goal done, a big fish) play on the chosen style's instrument.
 function jingle(m, t, d, vol, bright = .5){
-  const st = M.style || SND.style;
+  const st = M.style || (SND.style === 'mix' ? 'piano' : SND.style);
   if (st === 'piano' || st === 'cello' || st === 'guitar') playBuf(pianoBuf(m), t, d, vol*.55);
   else if (st === 'box') playBuf(boxBuf(m), t, d, vol*.6);
   else pluck(midi(m), t, d, vol, bright);
@@ -339,6 +348,32 @@ const SONGS = {
   battle:{root:50, bpm:92, scale:[0, 3, 5, 7, 10], lh:[{0:2, 4:3}],
           prog:[[0, 7, 12, 15], [-4, 3, 8, 12], [3, 7, 10, 15], [-2, 5, 10, 14], [0, 7, 12, 15], [-4, 3, 8, 12], [5, 8, 12, 17], [7, 11, 14, 19]]},
 };
+// P65: the song book. Like Minecraft: a song plays to its end, then the sea plays alone for a few minutes, then another song comes (never the same
+// one twice in a row). Each has its own key, speed, chords and instruments. slow = longer notes and fewer of them. moods = when it may come up.
+const WARM = [[0, 7, 14, 16], [5, 9, 12, 16], [-3, 4, 7, 12], [5, 9, 12, 16], [0, 7, 14, 16], [4, 7, 11, 14], [5, 9, 12, 16], [7, 12, 14, 19]];
+const WIDE = [[0, 7, 14, 16], [2, 6, 9, 14], [0, 7, 11, 16], [-3, 4, 7, 12], [5, 9, 12, 16], [2, 6, 9, 14], [0, 7, 14, 16], [0, 7, 14, 16]];
+const FOLK = [[0, 7, 12, 16], [5, 9, 12, 16], [0, 7, 12, 16], [7, 11, 14, 19], [-3, 4, 7, 12], [5, 9, 12, 16], [7, 11, 14, 19], [0, 7, 12, 16]];
+const TIDE = [[0, 7, 12, 16], [-3, 4, 9, 12], [5, 9, 12, 19], [0, 7, 12, 16], [-5, 2, 7, 11], [-3, 4, 9, 12], [5, 12, 16, 21], [0, 7, 12, 16]];
+const DUSK = [[0, 7, 12, 15], [-4, 3, 8, 12], [3, 7, 10, 15], [-2, 5, 10, 14], [-4, 3, 8, 12], [3, 7, 10, 15], [-2, 5, 10, 14], [0, 7, 12, 15]];
+const ROLL = [{0:0, 2:1, 4:2, 6:3}, {0:0, 2:2, 4:1, 6:3}], SLOW = [{0:0, 4:2}, {0:0, 3:1, 6:3}], SLOWER = [{0:0}, {0:0, 4:2}], WALTZ = [{0:0, 3:1, 6:2}, {0:0, 3:2, 6:1}];
+const PENTA = [0, 2, 4, 7, 9], MINOR = [0, 3, 5, 7, 10];
+export const SONGBOOK = [
+  {name:'First Light',        style:'piano',  moods:['day', 'harbor'], root:53, bpm:62, scale:PENTA, lh:ROLL, prog:WARM, bars:32},
+  {name:'Slow Tide',          style:'harp',   moods:['day', 'night'],  root:50, bpm:40, scale:PENTA, lh:SLOW, prog:TIDE, bars:24, thin:.45, solo:true, soft:1.1},
+  {name:'The Calm Between',   style:'harp',   moods:['day', 'night'],  root:55, bpm:36, scale:PENTA, lh:SLOWER, prog:WIDE, bars:16, thin:.35, solo:true, soft:1.15},
+  {name:'Olive Shade',        style:'cello',  moods:['day', 'harbor'], root:48, bpm:46, scale:PENTA, lh:SLOW, prog:WARM, bars:24, thin:.6},
+  {name:'Net Mender',         style:'guitar', moods:['day', 'harbor'], root:52, bpm:58, scale:PENTA, lh:WALTZ, prog:FOLK, bars:32},
+  {name:'Moon over Naxos',    style:'box',    moods:['night'],         root:57, bpm:44, scale:PENTA, lh:SLOW, prog:WIDE, bars:24, thin:.5, soft:1.05},
+  {name:'Night Watch',        style:'piano',  moods:['night'],         root:50, bpm:42, scale:MINOR, lh:SLOWER, prog:DUSK, bars:24, thin:.45, soft:1.3},
+  {name:'Harbor Morning',     style:'guitar', moods:['harbor'],        root:55, bpm:68, scale:PENTA, lh:ROLL, prog:FOLK, bars:24},
+  {name:'Wine-Dark Evening',  style:'cello',  moods:['night', 'day'],  root:45, bpm:40, scale:MINOR, lh:SLOW, prog:DUSK, bars:24, thin:.5, soft:1.05},
+  {name:'Old Lyre',           style:'harp',   moods:['day'],           root:50, bpm:50, scale:[0, 2, 3, 7, 9], lh:ROLL, prog:DUSK, bars:24, thin:.6, solo:true},
+];
+const songStyle = sg => SND.style === 'mix' || !STYLES[SND.style] || SND.style === 'lyre' ? sg.style : SND.style;
+// the next song: one that suits the moment, not one of the last few heard
+function nextSong(mood){ const list = SONGBOOK.map((s, i) => i).filter(i => SONGBOOK[i].moods.includes(mood) || mood === 'battle'), fresh = list.filter(i => !M.heard.includes(i)), pool = fresh.length ? fresh : list, i = pool[Math.floor(Math.random()*pool.length)];
+  M.heard = [...M.heard, i].slice(-4); return SONGBOOK[i]; }
+export function restNow(){ const r = MUSIC_REST[SND.rest] || MUSIC_REST.medium; M.rest = r[0] + Math.random()*(r[1] - r[0]); M.song = null; M.playing = 0; }
 // tune rhythms for two bars (16 eighth notes): [start, length]
 const RHYTHMS = [[[0, 2], [2, 2], [4, 4], [8, 8]], [[0, 3], [3, 1], [4, 4], [10, 6]], [[0, 4], [4, 2], [6, 2], [8, 8]], [[2, 2], [4, 2], [6, 6], [12, 4]],
   [[0, 6], [6, 2], [8, 6], [14, 2]], [[0, 2], [2, 2], [4, 2], [6, 2], [8, 8]], [[0, 4], [4, 4], [8, 4], [12, 4]]];
@@ -347,29 +382,35 @@ function motif(thin){ return pickR(RHYTHMS).map(([s, l], i) => ({s, l, mv:i ? pi
 // a tune for eight bars: motif A, A again a step away, something new (or a breath), then A to finish on the home note
 function newTune(sg){ const A = motif(sg.thin), B = Math.random() < .2 ? [] : motif(sg.thin); return {mot:[A, A, B, A], start:[4, pickR([3, 5]), 6, 4]}; }
 
-const M = {mood:'day', want:'day', next:0, step:0, bar:0, rest:0, playing:0, mel:7, drone:null, test:null, style:null, cur:null, tune:null, idx:4};
+const M = {mood:'day', want:'day', next:0, step:0, bar:0, rest:25 + Math.random()*35, playing:0, mel:7, drone:null, test:null, style:null, cur:null, tune:null, idx:4, song:null, heard:[]}; // a new voyage opens on just the sea
 export function musicMood(m){ M.want = m; }
 function updateMusic(dt, a){
   if (SND.music <= 0){ if (M.drone) droneStop(); return; }
-  const st = M.style || SND.style || 'piano';
-  if (st !== M.cur){ M.cur = st; M.bar = 0; M.step = 0; M.tune = null; if (M.drone) droneStop(); M.next = now() + .3; }
+  const st = M.style || SND.style || 'mix';
+  if (st !== M.cur){ M.cur = st; M.bar = 0; M.step = 0; M.tune = null; M.playing = 0; M.song = null; if (M.drone) droneStop(); M.next = now() + .3; }
   if (st === 'lyre') return lyreMusic(dt);
-  const t = now(), S = STYLES[st];
-  if (M.rest > 0){ M.rest -= dt; if (M.rest > 0) return; M.bar = 0; M.step = 0; M.next = t + .1; M.tune = null; }
-  if (M.want !== M.mood && (M.step % 8 === 0 || M.want === 'battle' || M.mood === 'battle')){ M.mood = M.want; M.bar = 0; M.tune = null; B.step = 0; B.next = t + .05; M.next = t + .05; } // fights start (and end) right away
+  const t = now();
+  // a fight starts its music right away; when it ends the sea comes back first, and then in a while a new song
+  if (M.want === 'battle' && M.mood !== 'battle'){ M.mood = 'battle'; M.rest = 0; M.bar = 0; M.tune = null; M.song = null; B.step = 0; B.next = t + .05; M.next = t + .05; }
+  else if (M.want !== 'battle' && M.mood === 'battle'){ M.mood = M.want; M.bar = 0; M.step = 0; M.tune = null; if (!M.test) restNow(); }
+  else if (!M.song) M.mood = M.want; // a song plays to its end, even if day turns to night or you dock
+  if (M.rest > 0){ M.rest -= dt; if (M.rest > 0) return; M.bar = 0; M.step = 0; M.next = t + .1; M.tune = null; M.playing = 0; }
   const bst = M.bstyle || SND.battle;
   if (M.mood === 'battle' && bst !== 'calm') return battleMusic(t, bst);
-  const sg = SONGS[M.mood], beat = 60/sg.bpm/2, w = musicWet, root = sg.root;
+  if (M.mood !== 'battle' && !M.song) M.song = M.test || (M.noRest && M.style ? SONGS[M.mood] : nextSong(M.mood));
+  const sg = M.mood === 'battle' ? SONGS.battle : M.song, S = STYLES[M.mood === 'battle' ? (st === 'mix' ? 'piano' : st) : (M.style || songStyle(sg))] || STYLES.piano, soft = sg.soft || 1, w = musicWet, root = sg.root;
+  // the last two bars slow down a little, so a song ends like a song
+  const beat = 60/sg.bpm/2*(sg.bars && M.playing >= sg.bars - 2 ? 1.22 : 1);
   if (M.next < t - .5) M.next = t + .05;
   while (M.next < t + .3){
     const s = M.step % 8, nt = M.next, ch = sg.prog[M.bar % sg.prog.length];
     if (!M.tune || (s === 0 && M.bar % 16 === 0)) M.tune = newTune(sg);
     // the left hand (or harp, or guitar) rolls the chord: bass note low, the others in the middle
     const tones = [root + ch[0] - 12, root + ch[1] - 12, root + ch[2] - 12, root + ch[3] - 12];
-    const pat = sg.lh[M.bar % sg.lh.length], lhv = .2*(S.lhVol || 1)*(M.mood === 'night' ? .8 : 1);
+    const pat = sg.lh[M.bar % sg.lh.length], lhv = .2*(S.lhVol || 1)*soft*(M.mood === 'night' ? .8 : 1);
     if (pat[s] !== undefined) INST[S.lh](tones[pat[s]], nt + (s === 0 ? 0 : (Math.random() - .5)*.012), beat*2, w, lhv*(s === 0 ? 1.15 : .9));
     if (sg.pulse) INST[S.lh === 'piano' ? 'piano' : S.lh](tones[0] - (s % 2 ? 0 : 12), nt, beat, w, lhv*(s % 4 === 0 ? .55 : .3)); // battle: a soft low pulse
-    if (S.pad && s === 0) strings(tones.slice(1), nt, beat*8*.97, w, M.mood === 'night' ? .022 : .028);
+    if (S.pad && s === 0) strings(tones.slice(1), nt, beat*8*.97, w, (M.mood === 'night' ? .022 : .028)*soft);
     // the tune
     const bi = M.bar % 8, win = bi >> 1, ws = (bi & 1)*8 + s, mot = M.tune.mot[win];
     if (ws === 0) M.idx = M.tune.start[win];
@@ -381,11 +422,13 @@ function updateMusic(dt, a){
         const pcs = last ? [0] : ch.map(c => ((c % 12) + 12) % 12); let best = M.idx, bd = 99;
         for (let k=0;k<=10;k++) if (pcs.includes(lad(k) % 12) && Math.abs(k - M.idx) < bd){ bd = Math.abs(k - M.idx); best = k; }
         M.idx = best; }
-      INST[S.mel](root + 12 + lad(M.idx) - (S.mel === 'cello' ? 12 : 0), nt, n.l*beat, w, (M.mood === 'night' ? .26 : .32)*(strong ? 1 : .85));
+      INST[sg.solo ? S.lh : S.mel](root + 12 + lad(M.idx) - (S.mel === 'cello' && !sg.solo ? 12 : 0), nt, n.l*beat, w, (M.mood === 'night' ? .26 : .32)*soft*(strong ? 1 : .85));
     }
     if (M.mood === 'battle') battleBeat(s, nt, w, tones[0]);
     M.next += beat; M.step++; if (M.step % 8 === 0){ M.bar++; M.playing++; }
-    if (M.mood !== 'battle' && !M.noRest && M.playing >= 24 && M.step % 8 === 0){ M.playing = 0; M.rest = 20 + Math.random()*30; break; }
+    // the end of the song: let the last note ring, then just the sea for a while
+    if (M.mood !== 'battle' && !M.noRest && sg.bars && M.playing >= sg.bars && M.step % 8 === 0){ restNow(); break; }
+    if (M.noRest && sg.bars && M.playing >= sg.bars && M.step % 8 === 0) M.playing = 0;
   }
 }
 // ---- the drum-led fight music (P57). 16 steps (two bars of eighths) at 108 beats a minute. ----
@@ -485,11 +528,11 @@ function lyreMusic(dt){
     else if (M.mood === 'harbor' && (s === 0 || s === 5)) drum(nt, w, s === 0);
     M.next += beat; M.step++; if (M.step % 8 === 0){ M.bar++; M.playing++; }
     // after a while, rest: 28 bars of music, then 20 to 50 seconds of just the sea
-    if (M.mood !== 'battle' && !M.noRest && M.playing >= 28 && M.step % 8 === 0){ M.playing = 0; M.rest = 20 + Math.random()*30; droneStop(); break; }
+    if (M.mood !== 'battle' && !M.noRest && M.playing >= 28 && M.step % 8 === 0){ M.playing = 0; restNow(); droneStop(); break; }
   }
 }
 // The showroom plays the music on its own, without the game around it.
-export function testMusic(mood, noRest = false, style = null, bstyle = null){ M.bstyle = bstyle; B.step = 0; B.next = 0; M.style = style; M.noRest = noRest; M.tune = null; M.want = M.mood = mood; M.rest = 0; M.playing = 0; M.bar = 0; M.step = 0; if (M.drone) droneStop(); }
+export function testMusic(mood, noRest = false, style = null, bstyle = null, song = null){ M.test = song; M.song = song; M.heard = []; M.bstyle = bstyle; B.step = 0; B.next = 0; M.style = style; M.noRest = noRest; M.tune = null; M.want = M.mood = mood; M.rest = 0; M.playing = 0; M.bar = 0; M.step = 0; if (M.drone) droneStop(); }
 export function stopMusic(){ M.rest = 1e9; droneStop(); }
 export function musicResting(){ return M.rest > 0; }
 // For checking the sea: record secs of the background sounds for a situation a (used by the tests).
@@ -501,10 +544,10 @@ export async function renderAmbient(a, secs = 10){
   return off.startRendering();
 }
 // For checking the music: record secs of a mood offline (used by the tests).
-export async function renderMusic(mood, secs = 20, style = null, bstyle = null){
+export async function renderMusic(mood, secs = 20, style = null, bstyle = null, song = null){
   const keep = {ctx, out, musicBus, musicWet, sfxBus, seaBus, verb}, m = {...M};
   const off = new OfflineAudioContext(2, Math.ceil(44100*secs), 44100); init(off, false);
-  Object.assign(M, {drone:null, playing:0, cur:null}); testMusic(mood, true, style, bstyle);
+  Object.assign(M, {drone:null, playing:0, cur:null}); testMusic(mood, true, style, bstyle, song);
   try { for (fakeT = 0; fakeT < secs - 1; fakeT += .1) updateMusic(.1, {}); if (M.drone) M.drone.os.forEach(o => o.stop(secs)); }
   finally { fakeT = null; ({ctx, out, musicBus, musicWet, sfxBus, seaBus, verb} = keep); Object.assign(M, m); }
   return off.startRendering();

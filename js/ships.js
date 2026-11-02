@@ -615,8 +615,11 @@ export function animateShip(root, t, speed){
   const stow = root.userData.stow, f = root.userData.burst ? 4.4 : 2.6, row = stow ? 0 : Math.min(1, .25 + speed/60) * (root.userData.burst ? 1.25 : 1);
   // P60: under sail the oars are pulled in through the oar ports (they shrink back to the hull side), and pushed out again to row
   root.userData.stowK = (root.userData.stowK || 0) + ((stow ? 1 : 0) - (root.userData.stowK || 0))*.06; const sk = root.userData.stowK;
-  root.userData.oars.forEach(o => { o.piv.rotation.y = o.sg*Math.sin(t*f + o.ph)*.4*row; if (o.rx0 == null) o.rx0 = o.piv.rotation.x;
-    o.piv.rotation.x = o.rx0*(1 - .7*sk); o.piv.scale.z = Math.max(.04, 1 - sk); o.piv.visible = sk < .97; });
+  // P65: the rower faces the stern. When he leans back toward the bow (the pull), the handle comes with him and the blade sweeps toward the
+  // stern through the water; then he leans forward (the push) and the blade comes back up in the air, toward the bow.
+  root.userData.oars.forEach(o => { const ph = t*f + o.ph; o.piv.rotation.y = -o.sg*Math.sin(ph)*.4*row; if (o.rx0 == null) o.rx0 = o.piv.rotation.x;
+    const lift = Math.max(0, -Math.cos(ph))*.34*row;
+    o.piv.rotation.x = (o.rx0 - o.sg*lift)*(1 - .7*sk); o.piv.scale.z = Math.max(.04, 1 - sk); o.piv.visible = sk < .97; });
   // Rowers rock in time with the oars; archers lean in when the ship is fighting.
   for (const c of root.userData.crew || []){ const {inner, pose} = c.p.userData;
     if (pose === 'row') inner.rotation.z = Math.sin(t*f + c.ph)*.25*row;                                  // rocking with the oar

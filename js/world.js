@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R} from './config.js?v=a77b89b';
-import {MAPDATA} from './mapdata.js?v=a77b89b';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R} from './config.js?v=d1e493c';
+import {MAPDATA} from './mapdata.js?v=d1e493c';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -24,7 +24,7 @@ export const UNIT = 1500; // world units per map degree (about 111 km) at 1× di
 
 export const ZONES = [
   {name:'The Shallows', sub:'Calm water around Kallisto'},
-  {name:'Coastal Waters', sub:'Tuna, old wrecks, and raiders. Flee to the Shallows if it goes badly.'},
+  {name:'Coastal Waters', sub:'Tuna, old wrecks, and raiders.'},
   {name:'Open Sea', sub:'Big waves slowly wear down small hulls, and raider galleys hunt here.'},
 ];
 
@@ -78,7 +78,7 @@ export const PIER = pier; // where the pier leaves the shore, and the direction 
 export const DOCK = {x: PIER.x + PIER.dx*(PIER_LEN + 30), y: PIER.y + PIER.dy*(PIER_LEN + 30)};
 export const START = {x: DOCK.x + PIER.dx*80, y: DOCK.y + PIER.dy*80, a: Math.atan2(PIER.dy, PIER.dx)}; // where a new game (or a sunk ship) begins
 // Explored map: a 64 x 64 grid over the world, revealed as you sail.
-export const EXP_N = 64, EXP_CELL = WORLD/EXP_N;
+export const EXP_N = 128, EXP_CELL = WORLD/EXP_N; // P65: twice as fine (rounder cleared circles)
 export const STADION = 100; // world units per stadion, the Greek distance unit shown on the chart
 
 // ---- zones: rings around the middle of the Cyclades, with a wobble so they don't look like circles ----
@@ -157,7 +157,9 @@ if (MAP.id === 'old'){
   // three sizes of pirate: small boats just past the Shallows, skiffs further out, galleys in the Open Sea
   raiders = [...scatter(31, 10, 1100*S, (x, y) => landDist(x, y) > 180 && zoneAt(x, y) === 1 && bounds(x, y).d > ZR[0] + 250 && bounds(x, y).d < ZR[0] + 1400).map(p => ({kind:'dinghy', home:p})),
              ...scatter(37, 12, 1300*S, (x, y) => landDist(x, y) > 220 && zoneAt(x, y) === 1 && bounds(x, y).d > ZR[0] + 1200).map(p => ({kind:'skiff', home:p})),
-             ...scatter(41, 9, 1800*S, (x, y) => landDist(x, y) > 260 && zoneAt(x, y) === 2).map(p => ({kind:'galley', home:p}))];
+             ...scatter(41, 9, 1800*S, (x, y) => landDist(x, y) > 260 && zoneAt(x, y) === 2).map(p => ({kind:'galley', home:p})),
+             // P65: the Shallows aren't a safe place: a few little raider boats sail here too, but none right off the Kallisto pier
+             ...scatter(43, 5, 1000*S, (x, y) => landDist(x, y) > 180 && zoneAt(x, y) === 0 && Math.hypot(x - HOME_.x, y - HOME_.y) > 1700).map(p => ({kind:'dinghy', home:p}))];
 }
 export const SPOTS = spots.map(p => ({...p, kind: zoneAt(p.x, p.y) === 0 ? 'tuna' : 'swordfish', stock:TUNING.spotStock, regen:0}));
 // each wreck has a size (small, medium, large), picked from its spot so it stays the same every visit
@@ -248,6 +250,11 @@ const R2 = rng(53), traffic = [];
     if (Math.hypot(route[0].x - route[1].x, route[0].y - route[1].y) < 1200) continue; // too short to be a voyage
     traffic.push({kind:'merchant', route, isle:a.port ? b : a});
   }
+  // P65: small traders in the Shallows, for a rowboat to raid: they never shoot back
+  if (MAP.id !== 'old'){ const inS = named.filter(i => zoneAt(i.x, i.y) === 0), kal = ISLANDS.find(i => i.port);
+    const near = (a, n) => inS.filter(b => b !== a).sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y)).slice(0, n);
+    const pairs2 = [...near(kal, 3).map(b => [kal, b]), ...inS.filter(a => a !== kal).slice(0, 2).map(a => [a, near(a, 1)[0]])];
+    for (const [a, b] of pairs2) if (a && b) traffic.push({kind:'trader', route:[offshore(a, b, 150), offshore(b, a, 150)], isle:a.port ? b : a}); }
   // each city guards its islands nearest the enemy; those patrols meet at the border
   for (const c of Object.keys(CITIES)){
     const mine = named.filter(i => i.city === c && zoneAt(i.x, i.y) > 0), theirs = named.filter(i => i.city === rival(c));
