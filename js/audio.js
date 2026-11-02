@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=d1e493c';
+import {MUSIC_REST} from './config.js?v=58f9730';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -168,6 +168,7 @@ export const SOUNDS = {
   gull:{name:'Gull calls', gap:.4, sea:true, play:(t, d) => gullCry(t, d)},
   thunder:{name:'Thunder', gap:1, sea:true, play:(t, d) => { noise(t, .25, d, {type:'highpass', f:900, peak:.35}); noise(t + .05, 3.2, d, {type:'lowpass', f:260, f2:60, peak:1, buf:brownBuf, a:.08}); noise(t + .6, 2.2, d, {type:'lowpass', f:180, f2:50, peak:.6, buf:brownBuf, a:.3}); }},
   creak:{name:'Hull creaks', gap:.5, sea:true, play:(t, d) => creakAt(t, d, .35)},
+  torch:{name:'Torches at night', sea:true, gap:2, play:(t, d) => torchSample(t, d, 10)},
   oar:{name:'Oar stroke', gap:.15, sea:true, play:(t, d) => { noise(t, .4, d, {type:'lowpass', f:900, f2:400, peak:.09, a:.08}); noise(t + .22, .5, d, {f:1800, f2:900, q:.8, peak:.035, a:.12}); }}, // a soft swish of water, no click
   drum:{name:'Rowing drum', gap:.2, play:(t, d) => { osc('sine', 82, t, .22, d, .5, .004, 55); noise(t, .06, d, {type:'lowpass', f:500, peak:.2}); }},
   // P65: the sail catching the wind: air rushing through cloth, the cloth flapping faster and faster, then it stretches out taut with a deep thump and the ropes creak
@@ -202,6 +203,7 @@ function gullCry(t, d){ const n = 2 + Math.floor(Math.random()*2), p = .9 + Math
 
 // ---- the sea: sounds that never stop, louder or softer with what is happening ----
 let beds = null;
+const FIRE = {low:.07, lowMove:.22, air:.03, airMove:.13}; // P66: how loud the torch's flutter is, steady part and moving part (the air layer is what a phone speaker can actually play)
 function loop(buf, type, f, q, dest){ const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = buf; s.loop = true;
   fl.type = type; fl.frequency.value = f; fl.Q.value = q; g.gain.value = 0; s.connect(fl); fl.connect(g); g.connect(dest); s.start(0, Math.random()*3); return {g, fl}; }
 function buildBeds(){
@@ -211,13 +213,14 @@ function buildBeds(){
     wind:  loop(pinkBuf, 'bandpass', 500, 1.6, seaBus),  // wind, whistling higher in storms
     rain:  loop(noiseBuf, 'highpass', 2500, .5, seaBus),
     bow:   loop(pinkBuf, 'bandpass', 1100, .9, seaBus),  // water rushing past the hull
-    fire:  loop(noiseBuf, 'bandpass', 3000, .7, seaBus), // the hiss under crackling fires
+    fire:  loop(brownBuf, 'lowpass', 420, .6, seaBus),   // P66: a torch is mostly a low, soft flutter of burning air...
+    fireAir: loop(pinkBuf, 'bandpass', 850, .5, seaBus), // ...with a little breath on top that moves with it
   };
 }
 // The game calls this every frame with what is going on around the ship.
 // a = {speed 0..1, waves 0..2, storm 0..1, wind 0..1, rain 0..1, night 0..1, gulls 0..1, fire 0..1, rowing, sail, docked}
 const QUIET = {speed:0, waves:1, storm:0, wind:0, rain:0, night:0, land:0, gulls:0, fire:0, rowing:false, burst:false, sail:false, docked:false};
-let swell = 0, windWander = 0, nextGull = 4, nextCreak = 3, oarT = 0, nextCricket = 1, nextCrackle = .5, nextSail = 5;
+let swell = 0, windWander = 0, nextGull = 4, nextCreak = 3, oarT = 0, nextCricket = 1, nextCrackle = 1, nextSail = 5, flutter = .5, flutterTo = .5, nextFlutter = 0;
 export function updateAudio(dt, a){
   if (!ctx || !beds || !SND.on || (ctx.state !== 'running' && fakeT === null)) return;
   a = {...QUIET, ...a};
@@ -231,7 +234,12 @@ export function updateAudio(dt, a){
   set('wind', a.wind*.13 + a.storm*.12); beds.wind.fl.frequency.setTargetAtTime(380 + a.storm*500 + windWander*180, t, .5);
   set('rain', a.rain*.11);
   set('bow', a.speed*a.speed*.12, .2);
-  set('fire', a.fire*.02);
+  // P66: the flame wanders: it swells and sinks a few times a second, never steady, like a real flame in the wind
+  if ((nextFlutter -= dt) <= 0){ nextFlutter = .07 + Math.random()*.26; flutterTo = .3 + Math.random()*.7; }
+  flutter += (flutterTo - flutter)*Math.min(1, dt*9);
+  const fireK = a.fire*(1 - a.storm*.6); // the rain and wind drown a torch out
+  set('fire', fireK*(FIRE.low + flutter*FIRE.lowMove), .05);
+  set('fireAir', fireK*(FIRE.air + flutter*FIRE.airMove), .05); beds.fireAir.fl.frequency.setTargetAtTime(600 + flutter*650, t, .08);
   const sea = seaBus;
   // gulls near islands, wrecks and harbors
   if ((nextGull -= dt) <= 0){ nextGull = 4 + Math.random()*10; if (Math.random() < a.gulls && a.night < .5){ const g = place(sea, null, .25 + Math.random()*.3); if (g){ if (ctx.createStereoPanner){ const p = ctx.createStereoPanner(); p.pan.value = Math.random()*1.4 - .7; g.disconnect(); g.connect(p); p.connect(sea); } gullCry(t, g); } } }
@@ -243,10 +251,32 @@ export function updateAudio(dt, a){
   if (a.sail && a.speed > .3 && (nextSail -= dt) <= 0){ nextSail = 6 + Math.random()*10; const g = place(sea, null, .4 + a.wind*.6); if (g) SOUNDS.sail.play(t, g); }
   // crickets at night, from the islands
   if (a.night > .5 && a.land > .2 && (nextCricket -= dt) <= 0){ nextCricket = .5 + Math.random()*1.4; const g = place(sea, null, .1*a.land); if (g) cricket(t, g); }
-  // fires crackle near torches and fire bowls
-  if (a.fire > .05 && (nextCrackle -= dt) <= 0){ nextCrackle = .05 + Math.random()*.25; const g = place(sea, null, a.fire*.5); if (g) noise(t, .02, g, {type:'highpass', f:2000 + Math.random()*3000, peak:.2 + Math.random()*.2}); }
+  // P66: a few small cracks now and then, not a constant patter. A fire bowl close by is busier than your own torches.
+  if (fireK > .05 && (nextCrackle -= dt) <= 0){ nextCrackle = (.9 + Math.random()*3.2)/(.45 + fireK); crackle(t, sea, fireK); }
   updateMusic(dt, a);
 }
+// A torch: burning resin. Soft woody ticks in little runs (each one a tiny resonant click, a few milliseconds long, in a
+// different spot left or right), and now and then a rounder snap of wood with a little weight under it.
+function tick(t, d, peak){ const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), len = .004 + Math.random()*.014; s.buffer = noiseBuf;
+  fl.type = 'bandpass'; fl.frequency.value = 1100 + Math.random()*Math.random()*3200; fl.Q.value = 2.5 + Math.random()*5;
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(peak, t + .0007); g.gain.exponentialRampToValueAtTime(.0001, t + .0007 + len);
+  s.connect(fl); fl.connect(g); g.connect(d); s.start(t, Math.random()*3); s.stop(t + len + .02); }
+function snap(t, d, peak){ const f = 480 + Math.random()*620;
+  noise(t, .035 + Math.random()*.04, d, {f, q:3.5, peak, a:.0008}); osc('sine', 150 + Math.random()*110, t, .05, d, peak*.5, .001, 80);
+  for (let i=0;i<3;i++) tick(t + .012 + Math.random()*.09, d, peak*.35); }
+function crackle(t, bus, k){ const g = place(bus, null, k); if (!g) return; let d = g;
+  if (ctx.createStereoPanner){ const p = ctx.createStereoPanner(); p.pan.value = Math.random()*1.1 - .55; g.disconnect(); g.connect(p); p.connect(bus); }
+  crackleAt(t, d); }
+// the same fire on its own, for the showroom and the tests
+function torchSample(t, d, secs){
+  const layer = (buf, type, f, q, base, depth) => { const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = buf; s.loop = true; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+    g.gain.setValueAtTime(.0001, t); let o = 0; while (o < secs){ const e = Math.min(1, Math.min(o, secs - o)/.6); g.gain.linearRampToValueAtTime(Math.max(.0001, e*(base + (.3 + Math.random()*.7)*depth)), t + o); o += .07 + Math.random()*.26; }
+    s.connect(fl); fl.connect(g); g.connect(d); s.start(t, Math.random()*3); s.stop(t + secs); };
+  layer(brownBuf, 'lowpass', 420, .6, FIRE.low, FIRE.lowMove); layer(pinkBuf, 'bandpass', 900, .5, FIRE.air, FIRE.airMove);
+  for (let o = .3 + Math.random()*.5; o < secs - .4; o += (.9 + Math.random()*3.2)/1.4) crackleAt(t + o, d);
+}
+function crackleAt(t, d){ if (Math.random() < .22){ snap(t, d, .22 + Math.random()*.2); return; }
+  let o = 0; for (let i = 1 + Math.floor(Math.random()*Math.random()*7); i > 0; i--){ tick(t + o, d, .08 + Math.random()*Math.random()*.34); o += .015 + Math.random()*Math.random()*.16; } }
 function cricket(t, d){ const f = 4200 + Math.random()*300; for (let i=0;i<3;i++) osc('sine', f, t + i*.06, .035, d, .12, .004); }
 
 // ---- music ----

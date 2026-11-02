@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=d1e493c';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=d1e493c';
-import {G, save, stat} from './state.js?v=d1e493c';
-import {scene} from './scene.js?v=d1e493c';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=d1e493c';
-import {toast} from './ui.js?v=d1e493c';
-import {combatState} from './combat.js?v=d1e493c';
-import {sfx} from './audio.js?v=d1e493c';
+import {WILDLIFE} from './config.js?v=58f9730';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=58f9730';
+import {G, save, stat} from './state.js?v=58f9730';
+import {scene} from './scene.js?v=58f9730';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=58f9730';
+import {toast} from './ui.js?v=58f9730';
+import {combatState} from './combat.js?v=58f9730';
+import {sfx} from './audio.js?v=58f9730';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);

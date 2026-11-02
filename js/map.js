@@ -1,12 +1,13 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=d1e493c';
-import {IC} from './menus.js?v=d1e493c';
-import {playVideo, toast} from './ui.js?v=d1e493c';
-import {ARENA} from './arena.js?v=d1e493c';
-import {enemies, planReward, combatState} from './combat.js?v=d1e493c';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=d1e493c';
-import {G, ship, isExplored, reveal, save} from './state.js?v=d1e493c';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=58f9730';
+import {IC} from './menus.js?v=58f9730';
+import {sfx} from './audio.js?v=58f9730';
+import {playVideo, toast} from './ui.js?v=58f9730';
+import {ARENA} from './arena.js?v=58f9730';
+import {enemies, planReward, combatState} from './combat.js?v=58f9730';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=58f9730';
+import {G, ship, isExplored, reveal, save} from './state.js?v=58f9730';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -236,7 +237,7 @@ export function openMap(){
   // P65: a new treasure map: open on it, far enough out to see it and your ship
   if (G.S.mapNew && G.S.treasure){ const T = G.S.treasure, d = Math.hypot(T.x - G.S.x, T.y - G.S.y); view.cx = (T.x + G.S.x)/2; view.cy = (T.y + G.S.y)/2; view.z = Math.min(view.z, Math.min(W, H)*.62/Math.max(d, 1)); }
   G.S.mapNew = false; clampView();
-  const homeNow = !!G.dock && G.dock.h === HARBORS[0]; $('mapHome').hidden = $('mapFast').hidden = homeNow;
+  const homeNow = !!G.dock && G.dock.h === HARBORS[0]; $('mapHome').hidden = homeNow; $('homePop').hidden = true;
   draw();
 }
 // Test hook: the whole map at once.
@@ -292,16 +293,21 @@ cv.addEventListener('wheel', e => { e.preventDefault(); view.z *= Math.exp(-e.de
 
 $('mapBtn').addEventListener('click', openMap);
 $('mapClose').addEventListener('click', closeMap);
-// P65: home to Kallisto: sail there by yourself (like tapping it on the chart), or watch a video and be there now
-$('mapHome').addEventListener('click', () => { const P = HARBORS[0].pier, x = P.x + P.dx*(PIER_LEN + 75), y = P.y + P.dy*(PIER_LEN + 75);
-  if (G.dock){ document.dispatchEvent(new Event('undock')); } setCourse(x, y); toast('Sailing home', 2); });
-$('mapFast').addEventListener('click', () => { if (combatState.threat){ toast('Not in the middle of a fight', 2.4); return; }
+// P66: one Sail home button. It opens a little popup: go instantly with a video, or sail there by yourself.
+const homePop = $('homePop'), hidePop = () => { homePop.hidden = true; };
+$('homeNow').innerHTML = `${IC.play}<span>Go instantly</span>`;
+$('mapHome').addEventListener('click', () => { sfx('click'); const fight = !!combatState.threat; $('homeNow').disabled = fight; $('homeNote').hidden = !fight; homePop.hidden = false; });
+$('homeSail').addEventListener('click', () => { hidePop(); const P = HARBORS[0].pier, x = P.x + P.dx*(PIER_LEN + 75), y = P.y + P.dy*(PIER_LEN + 75);
+  if (G.dock) document.dispatchEvent(new Event('undock')); setCourse(x, y); toast('Sailing home', 2); });
+$('homeNow').addEventListener('click', () => { if (combatState.threat) return; hidePop();
   playVideo(() => { closeMap(); document.dispatchEvent(new Event('fasthome')); }, 'This one takes you straight home.', 'Home!'); });
+$('homeCancel').addEventListener('click', hidePop);
+homePop.addEventListener('click', e => { if (e.target === homePop) hidePop(); });
 // the legend, with the same pictures as the chart
 $('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [X_SVG, 'Treasure']].map(([ic, n]) => `<li>${ic}${n}</li>`).join('');
 $('mapClear').addEventListener('click', () => { G.dest = null; draw(); });
 addEventListener('keydown', e => {
-  if (e.key === 'Escape' && G.mapOpen) closeMap();
+  if (e.key === 'Escape' && G.mapOpen){ if (!$('homePop').hidden) $('homePop').hidden = true; else closeMap(); }
   else if ((e.key === 'm' || e.key === 'M') && !G.sheetOpen) G.mapOpen ? closeMap() : openMap();
 });
 addEventListener('resize', () => { if (G.mapOpen){ size(); clampView(); draw(); } });

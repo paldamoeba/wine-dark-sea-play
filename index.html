@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=d1e493c">
+<link rel="stylesheet" href="css/style.css?v=58f9730">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -44,10 +44,18 @@
     </ul>
     <div class="mapbtns">
       <button class="btn homebtn" id="mapHome">Sail home</button>
-      <button class="btn homebtn alt" id="mapFast"><b>&#9654;</b> Video: be home now</button>
       <button class="btn ghostdark" id="mapClear" hidden>Clear course</button>
     </div>
   </footer>
+  <div class="homepop" id="homePop" hidden role="dialog" aria-labelledby="homePopT">
+    <div class="homecard">
+      <h3 id="homePopT">Sail home to Kallisto</h3>
+      <button class="btn gold wide" id="homeNow"></button>
+      <small id="homeNote" hidden>Not in the middle of a fight</small>
+      <button class="btn wide" id="homeSail">Sail there</button>
+      <button class="homeno" id="homeCancel">Not now</button>
+    </div>
+  </div>
 </div>
 <div class="mission" id="mission" hidden></div>
 <div class="caution" id="caution" hidden><span class="cic">!</span><p id="cautionText"></p></div>
@@ -75,4 +83,4 @@
 <script>
   if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
 </script>
-<script type="module" src="js/main.js?v=d1e493c"></script>
+<script type="module" src="js/main.js?v=58f9730"></script>

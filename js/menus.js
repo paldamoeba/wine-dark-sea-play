@@ -1,17 +1,17 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=d1e493c';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=d1e493c';
-import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=d1e493c';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=d1e493c';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=d1e493c';
-import {planClues} from './combat.js?v=d1e493c';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=d1e493c';
-import {board, active, canDeliver, goal} from './quests.js?v=d1e493c';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=d1e493c';
-import {colorHeld, colorInfo} from './colors.js?v=d1e493c';
-import {shipPortrait} from './portrait.js?v=d1e493c';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=d1e493c';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=58f9730';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=58f9730';
+import {G, ship, holdUsed, lvl, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=58f9730';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=58f9730';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=58f9730';
+import {planClues} from './combat.js?v=58f9730';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=58f9730';
+import {board, active, canDeliver, goal} from './quests.js?v=58f9730';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=58f9730';
+import {colorHeld, colorInfo} from './colors.js?v=58f9730';
+import {shipPortrait} from './portrait.js?v=58f9730';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=58f9730';
 
 export const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
@@ -215,7 +215,7 @@ Object.assign(IC, {
   rain: svg(`<defs>${glossy('rn', [[0, '#f0c98f'], [1, '#8a5a30']])}${glossy('rh', [[0, '#f6f8fa'], [1, '#9aa6b2']])}</defs>${shade(12, 22, 8)}
     ${[[5, 3.5], [12, 2], [19, 3.5]].map(([x, y]) => `<path d="M${x} ${y} L${x - 2.6} ${y + 14}" stroke="url(#rn)" stroke-width="2" stroke-linecap="round"/><path d="M${x - 2.6} ${y + 14} l-2 -3.6 l4.6 .8Z" fill="url(#rh)"/><path d="M${x} ${y} l-2 -1 M${x} ${y} l2 -.4" stroke="#d9483c" stroke-width="1.6" stroke-linecap="round"/>`).join('')}`),
   anchor: svg(`<defs>${glossy('an', [[0, '#d7e0e8'], [1, '#66727e']])}</defs>${shade(12, 22.2, 7)}<circle cx="12" cy="4.6" r="2.2" fill="none" stroke="url(#an)" stroke-width="2"/><path d="M12 6.8 V20 M7.4 10 H16.6 M4.4 14 C5 18.6 8.4 20.6 12 20.6 C15.6 20.6 19 18.6 19.6 14" stroke="url(#an)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M2.6 15.4 L4.4 12.8 L6.2 15.2 M21.4 15.4 L19.6 12.8 L17.8 15.2" stroke="url(#an)" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`),
-  play: svg(`<circle cx="12" cy="12" r="10" fill="#e2725b"/><path d="M9.6 7.4 L17 12 L9.6 16.6Z" fill="#fff"/>`),
+  play: svg(`<rect x="2" y="4.5" width="20" height="15" rx="3.6" fill="#e2725b" stroke="#a8452f" stroke-width="1.2"/><rect x="4" y="6" width="16" height="3" rx="1.5" fill="#fff" opacity=".22"/><path d="M9.8 8.2 L16.4 12 L9.8 15.8Z" fill="#fff" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>`),
   lock: svg(`<defs>${glossy('lk', [[0, '#f4d27a'], [1, '#b98a2e']])}</defs><path d="M7.6 11 V8 a4.4 4.4 0 0 1 8.8 0 V11" fill="none" stroke="#6b5236" stroke-width="2.2"/><rect x="5" y="10.5" width="14" height="10.5" rx="2.5" fill="url(#lk)" stroke="#6b5236" stroke-width="1.1"/><circle cx="12" cy="15.2" r="1.7" fill="#6b5236"/>`),
 });
 export const goodPrice = (h, k) => Math.round(GOODS[k].base*(h.free ? FREEPORT.goods : TRADE.makes[h.is.name] === k ? TRADE.made : TRADE.wants[h.is.name] === k ? TRADE.wanted : 1));
