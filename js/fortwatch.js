@@ -1,12 +1,12 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=49ea3d2';
-import {FORTS} from './config.js?v=49ea3d2';
-import {CITIES} from './world.js?v=49ea3d2';
-import {enemies, hostile, planReward} from './combat.js?v=49ea3d2';
-import {SHIPS, PLANS} from './config.js?v=49ea3d2';
-import {sfx} from './audio.js?v=49ea3d2';
-import {siteLevel, myLevel, standing, LEVEL_WORD} from './levels.js?v=49ea3d2';
+import {G} from './state.js?v=8c56f6e';
+import {FORTS} from './config.js?v=8c56f6e';
+import {CITIES} from './world.js?v=8c56f6e';
+import {enemies, hostile, planReward} from './combat.js?v=8c56f6e';
+import {SHIPS, PLANS} from './config.js?v=8c56f6e';
+import {sfx} from './audio.js?v=8c56f6e';
+import {siteLevel, myLevel, standing, LEVEL_WORD} from './levels.js?v=8c56f6e';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
@@ -14,15 +14,15 @@ let inside = null, cautionT = 0, last = '';
 const shipIc = sunk => `<svg viewBox="0 0 24 16" class="${sunk ? 'sunk' : ''}" aria-hidden="true"><path d="M2 8 H22 L19 13.5 Q12 15.5 5 13.5Z" fill="${sunk ? '#9b8f80' : '#3a2e2a'}"/><path d="M12 1 V8" stroke="#3a2e2a" stroke-width="1.6"/><path d="M12.5 1.5 L18 6.5 H12.5Z" fill="${sunk ? '#cfc4b0' : '#c4473b'}"/>${sunk ? '<path d="M4 2 L20 15 M20 2 L4 15" stroke="#c4473b" stroke-width="2.2" stroke-linecap="round"/>' : ''}</svg>`;
 export function updateFortWatch(dt){
   let best = null, bd = WARN;
-  if (!G.dock && !G.sheetOpen && !G.mapOpen) for (const f of enemies){ if (!f.fort) continue;
+  if (!G.dock && !G.sheetOpen && !G.mapOpen) for (const f of enemies){ if (!f.fort && !f.named) continue;
     // a standing hostile fort, or a fallen pirate fort whose guards still sail
     const live = !f.dead && hostile(f), siege = f.dead && f.owner === 'pirate' && f.guards.some(g => !g.dead); if (!live && !siege) continue;
-    const d = Math.hypot(f.x - G.S.x, f.y - G.S.y) - (f.camp ? WARN - 900 : 0); if (d < bd){ bd = d; best = f; } } // camps have no catapults: the warning comes closer
+    const d = Math.hypot(f.x - G.S.x, f.y - G.S.y) - (f.camp || f.named ? WARN - 900 : 0); if (d < bd){ bd = d; best = f; } } // camps have no catapults: the warning comes closer
   if (best && best !== inside && !best.dead){ // just sailed into its waters
     const who = best.city ? CITIES[best.city].name : 'Pirate';
     // P70: its level against yours, so you know before the arrows fly
     const lv = siteLevel(best), st = standing(lv), note = st === 'ready' ? '' : `<span class="cawarn ${st}">Level ${lv}. You are level ${myLevel()}. ${LEVEL_WORD[st]}</span>`;
-    $('cautionText').innerHTML = (best.camp ? '<b>Bandits!</b>' : `<b>${who === 'Pirate' ? 'Pirate' : who + "'s"} fortress!</b>`) + note;
+    $('cautionText').innerHTML = (best.named ? `<b>${best.named.name}!</b>` : best.camp ? '<b>Bandits!</b>' : `<b>${who === 'Pirate' ? 'Pirate' : who + "'s"} fortress!</b>`) + note;
     $('caution').hidden = false; cautionT = 5; sfx('warn');
   }
   inside = best;
@@ -30,10 +30,10 @@ export function updateFortWatch(dt){
   const m = $('mission');
   if (!best){ if (!m.hidden) m.hidden = true; last = ''; return; }
   const f = best, sunk = f.guards.filter(g => g.dead).length, n = f.guards.length, wall = f.dead ? 0 : Math.max(0, f.hull/f.spec.hull);
-  const prize = planReward(f), key = f.isle.name + sunk + Math.round(wall*20) + f.dead + prize + myLevel();
+  const prize = planReward(f), key = (f.named ? f.named.name : f.isle.name) + sunk + Math.round(wall*20) + f.dead + prize + myLevel();
   if (key !== last){ last = key;
     // P60: one short line: name, a thin bar for the walls (or "fallen"), the guard ships (crossed out when sunk), a scroll if it holds plans
     const lv = siteLevel(f), st = standing(lv);
-    m.innerHTML = `<span class="lvchip ${st}">Lv ${lv}</span><b class="mt">${f.isle.name}</b>${f.dead ? '<em class="done">✓</em>' : `<span class="mbar"><i style="width:${wall*100}%"></i></span>`}<span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span>${prize ? '<span class="mscroll" title="Holds ship plans">📜</span>' : ''}`; }
+    m.innerHTML = `<span class="lvchip ${st}">Lv ${lv}</span><b class="mt">${f.named ? f.named.name : f.isle.name}</b>${f.dead ? '<em class="done">✓</em>' : `<span class="mbar"><i style="width:${wall*100}%"></i></span>`}<span class="mships">${f.guards.map(g => shipIc(g.dead)).join('')}</span>${prize ? '<span class="mscroll" title="Holds ship plans">📜</span>' : ''}`; }
   m.hidden = false;
 }

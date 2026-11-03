@@ -21,16 +21,25 @@ export const SHIPS = [
     desc:'A warship. Benches for 28 rowers and four archers, a hull that shrugs off big waves, but a small hold'},
   {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, iron:36, linen:30, goods:32}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:167, beam:49, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, iron:50, linen:40, gold:600}, plans:true,
     desc:'The greatest warship of the Aegean: benches for 32 rowers, six archers, an outrigger and a big bronze ram'},
-  // bandit ships you capture (combat.js): never built, only taken
-  {name:'Bandit boat',   model:'dinghy', rank:0, captured:true, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, iron:4, linen:4, goods:8}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
+  // bandit ships: built from plans won from the named pirates who sail them
+  {name:'Bandit boat',   model:'dinghy', rank:0, plans:true, cost:{wood:60, linen:4, gold:40}, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, iron:4, linen:4, goods:8}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
     desc:'A quick little raider boat with a blood-red sail'},
-  {name:'Bandit skiff',  model:'skiff',  rank:1, captured:true, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, iron:8, linen:8, goods:16}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
+  {name:'Bandit skiff',  model:'skiff',  rank:1, plans:true, cost:{wood:140, linen:8, gold:100}, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, iron:8, linen:8, goods:16}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
     desc:'A raider skiff with a ram: three archers and a small hold'},
-  {name:'Bandit galley', model:'raider', rank:2, captured:true, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, iron:20, linen:15, goods:24}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
+  {name:'Bandit galley', model:'raider', rank:2, plans:true, cost:{wood:350, bronze:40, iron:20, linen:20, gold:350}, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, iron:20, linen:15, goods:24}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
     desc:'A black pirate galley with a boar\'s head ram: six archers when its benches are full'},
   // P62: the biggest warship you can build: two decks
   {name:'Quinquereme', model:'quinquereme', rank:4, speed:205, hull:420, hold:24, cap:{wood:260, bronze:90, iron:60, linen:40, goods:40}, heavy:6.5, fishTime:3, woodTime:3, storm:0, len:215, beam:62, fighters:10, men:[10, 56], turn:.5,
     cost:{wood:1000, bronze:200, iron:140, linen:100, gold:1500}, plans:true, desc:'Two decks: rowers below on two rows of oars, ten archers on the fighting deck above, two sails and a huge ram'},
+  // P71: every ship in the game can be yours. Traders carry the most, the penteconter is the fastest thing on oars, the flagship comes only from Polycrates himself.
+  {name:'Small Trader', model:'trader', rank:1, speed:100, hull:110, hold:30, cap:{wood:120, bronze:40, iron:20, linen:20, goods:60}, heavy:3.2, fishTime:2, woodTime:2.4, storm:.3, len:84, beam:36, fighters:2, men:[2, 6], turn:.9, plans:true, cost:{wood:200, linen:14, gold:140},
+    desc:'A round little trader: slow to turn, but with room for more than twice the goods of a warship'},
+  {name:'Merchant Ship', model:'merchant', rank:2, speed:120, hull:220, hold:40, cap:{wood:240, bronze:90, iron:50, linen:45, goods:110}, heavy:5, fishTime:2.2, woodTime:2.4, storm:0, len:110, beam:44, fighters:3, men:[3, 9], turn:.55, plans:true, cost:{wood:420, bronze:30, iron:15, linen:30, gold:400},
+    desc:'The biggest hold in the Aegean, with a cabin and crates on deck. Few archers: this ship is for getting rich'},
+  {name:'Penteconter', model:'penteconter', rank:2, speed:190, hull:130, hold:8, cap:{wood:80, bronze:30, iron:16, linen:12, goods:12}, heavy:3, fishTime:3, woodTime:3, storm:.2, len:150, beam:22, fighters:3, men:[8, 23], turn:.85, plans:true, cost:{wood:380, bronze:40, iron:20, linen:24, gold:380},
+    desc:'Long, narrow and fast, with benches for 22 rowers and a ram. Thin planks and almost no hold'},
+  {name:'Pirate King\'s Flagship', model:'flagship', rank:4, speed:190, hull:800, hold:30, cap:{wood:300, bronze:110, iron:70, linen:50, goods:60}, heavy:8, fishTime:3, woodTime:3, storm:0, len:280, beam:96, fighters:14, men:[14, 24], turn:.42, plans:true, cost:{wood:1500, bronze:300, iron:200, linen:150, gold:3000},
+    desc:'Polycrates\' floating fortress: towers, statues and a golden stern. There is only one, and you have to beat him for it'},
 ];
 
 // spin = needle speed (radians per second), green = size of the green part (degrees). Bigger fish: faster, smaller.
@@ -81,7 +90,7 @@ export const GOALS = [
   {t:'build', kind:'bireme', n:1, gold:100, text:'Study the plans and build the bireme at Kallisto, your first warship', chapter:true},
   {t:'sink', kind:'galley', n:3, gold:150, text:'Sink 3 raider galleys out in the Open Sea', chapter:true},
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
-  {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp and the pirate fortresses of Thasos and Kos', chapter:true},
+  {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp, the pirate fortress of Kos, and Nikandros the Scourge, who sails off Skyros', chapter:true},
   {t:'build', kind:'trireme', n:1, gold:200, text:'Study the plans and build the trireme, the greatest warship of the Aegean', chapter:true},
   {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, off Kos', chapter:true},
 ];
@@ -171,7 +180,17 @@ export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
 // then build the ship. Both take real time (seconds, running even while the game is closed); a video makes it faster.
 // P65: the fishing boat's plans take 25 minutes, so you really live with the rowboat first; the later ships stay longer than that.
-export const PLANS = {1:{pieces:1, study:1500, build:120}, 2:{pieces:2, study:2100, build:900}, 3:{pieces:3, study:3000, build:1500}, 7:{pieces:3, study:4200, build:2400}};
+export const PLANS = {1:{pieces:1, study:1500, build:120}, 2:{pieces:2, study:2100, build:900}, 3:{pieces:3, study:3000, build:1500}, 7:{pieces:3, study:4200, build:2400}, 4:{pieces:1, study:600, build:120}, 8:{pieces:1, study:900, build:180}, 5:{pieces:1, study:1200, build:300}, 9:{pieces:1, study:1800, build:600}, 10:{pieces:2, study:1800, build:600}, 6:{pieces:1, study:2100, build:900}, 11:{pieces:1, study:900, build:900}};
+// P71: named pirates, each sailing near one island and holding the plans of a ship. Sink one and the piece is yours. Numbers set their level (levels.js).
+export const NAMED = [
+  {name:'Mikros the Rat', near:'Donousa', kind:'dinghy', plans:4, hull:90, fighters:3, dmg:2, gold:[40, 60], paint:'raider', sail:'blood'},
+  {name:'Greedy Kerkyon', near:'Amorgos', kind:'skiff', plans:8, hull:150, fighters:4, dmg:2, gold:[80, 110], paint:'green', sail:'plain'},
+  {name:'Lysandra Red-Sail', near:'Samos', kind:'skiff', plans:5, hull:220, fighters:5, dmg:2.4, gold:[120, 170], paint:'raider', sail:'blood'},
+  {name:'Hermon the Smuggler', near:'Astypalaia', kind:'galley', plans:9, hull:380, fighters:6, dmg:3.2, gold:[220, 320], paint:'white', sail:'purple'},
+  {name:'Black Lykos', near:'Kea', kind:'galley', plans:6, hull:520, fighters:7, dmg:3.6, gold:[320, 460], paint:'black', sail:'blood'},
+  {name:'Nikandros the Scourge', near:'Skyros', kind:'pirateQ', plans:3, hull:1000, fighters:9, dmg:4.6, gold:[600, 800], paint:'black', sail:'purple'},
+  {name:'Aristaios the Ghost', near:'Skopelos', kind:'pirateQ', plans:7, hull:1800, fighters:10, dmg:5.5, gold:[900, 1300], paint:'king', sail:'plain'},
+];
 export const VIDEO_SKIP = 600; // each video takes 10 minutes off studying or building (a placeholder until real ads)
 // Athens and Sparta keep their fortresses and navies this far from Kallisto: the start is neutral (P49).
 export const NEUTRAL_R = 8000; // P52: the fortresses stand far out

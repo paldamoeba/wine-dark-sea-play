@@ -1153,3 +1153,9 @@ body.uivase .mplus{background:var(--gl)!important;color:var(--cr)!important;box-
 .namecard h2{font:400 24px var(--display,Marcellus,serif);margin:0}.namecard p{margin:0;font-size:13.5px;font-weight:700;opacity:.8}.namepic .shippic{width:70%;max-width:220px;height:auto;margin:auto;display:block}
 .namecard input{font:800 19px var(--body,Nunito,sans-serif);text-align:center;padding:11px;border:2px solid #b08a58;border-radius:12px;background:#fffaf0;color:#3e2b1c;width:100%;box-sizing:border-box}.namecard input:focus{outline:3px solid #2f7f9a;outline-offset:1px}
 .namebtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.namex{background:none;border:0;font:700 13px var(--body,Nunito,sans-serif);color:#6a4c2a;text-decoration:underline;cursor:pointer}
+
+/* P71 */
+.cityflag{width:44px;height:44px;flex:none;filter:drop-shadow(0 2px 2px rgba(50,30,10,.35))}.jic .cityflag{width:34px;height:34px}.warline{align-items:flex-start}
+.mapfilter{display:flex;align-items:center;gap:8px;justify-content:center;font:800 13px var(--body,Nunito,sans-serif);color:#3e2b1c;background:#fff8e6;border:1.5px solid #8a6a48;border-radius:12px;padding:5px 10px;margin:0 auto 6px;width:fit-content;pointer-events:auto;box-shadow:0 2px 0 rgba(60,40,20,.5)}
+.mapfilter select{font:800 14px var(--body,Nunito,sans-serif);color:#3e2b1c;background:#fffdf4;border:1px solid #cfb388;border-radius:8px;padding:5px 6px;max-width:210px}
+.legend[hidden]{display:none}

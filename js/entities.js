@@ -1,19 +1,19 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS, IRON} from './config.js?v=49ea3d2';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=49ea3d2';
-import {G, ship, lvl} from './state.js?v=49ea3d2';
-import {men} from './crew.js?v=49ea3d2';
-import {scene} from './scene.js?v=49ea3d2';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=49ea3d2';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=49ea3d2';
-import {addTown, figure} from './town.js?v=49ea3d2';
-import {makeFire, updateFire, burn} from './fire.js?v=49ea3d2';
-import {addGrass} from './grass.js?v=49ea3d2';
-import {sinkPose} from './sinking.js?v=49ea3d2';
-import {moored} from './fleet.js?v=49ea3d2';
-import {sailCount} from './upgrades.js?v=49ea3d2';
-import {hasSail} from './crew.js?v=49ea3d2';
-import {placeOnWaves} from './combat.js?v=49ea3d2';
+import {SHIPS, IRON} from './config.js?v=8c56f6e';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=8c56f6e';
+import {G, ship, lvl} from './state.js?v=8c56f6e';
+import {men} from './crew.js?v=8c56f6e';
+import {scene} from './scene.js?v=8c56f6e';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=8c56f6e';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=8c56f6e';
+import {addTown, figure} from './town.js?v=8c56f6e';
+import {makeFire, updateFire, burn} from './fire.js?v=8c56f6e';
+import {addGrass} from './grass.js?v=8c56f6e';
+import {sinkPose} from './sinking.js?v=8c56f6e';
+import {moored} from './fleet.js?v=8c56f6e';
+import {sailCount} from './upgrades.js?v=8c56f6e';
+import {hasSail} from './crew.js?v=8c56f6e';
+import {placeOnWaves} from './combat.js?v=8c56f6e';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----

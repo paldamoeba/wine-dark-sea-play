@@ -1,8 +1,8 @@
 // The Kallisto shipwrights (P54): ship plans won in pieces are studied, then the ship is built. Both take real time, kept as
 // clock times (seconds since 1970) so they keep going while the game is closed. One study and one build at a time.
 // A video takes VIDEO_SKIP seconds off (a placeholder until real ads are chosen).
-import {PLANS, VIDEO_SKIP, SHIPS} from './config.js?v=49ea3d2';
-import {G, save, pay} from './state.js?v=49ea3d2';
+import {PLANS, VIDEO_SKIP, SHIPS} from './config.js?v=8c56f6e';
+import {G, save, pay} from './state.js?v=8c56f6e';
 
 export const clockNow = () => Date.now()/1000;
 export const piecesOf = t => (G.S.pieces || {})[t] || 0;
@@ -22,7 +22,7 @@ export function checkYard(){
   const S = G.S, done = [];
   if (S.study && clockNow() >= S.study.until){ const t = S.study.t; S.study = null; S.plans = [...new Set([...(S.plans || [0]), t])]; done.push({what:'study', t}); }
   if (S.build && clockNow() >= S.build.until){ const t = S.build.t; S.build = null;
-    S.owned = [...new Set([...(S.owned || [S.tier]), t])].sort(); S.hulls = {...(S.hulls || {}), [t]:SHIPS[t].hull}; done.push({what:'build', t}); }
+    S.owned = [...new Set([...(S.owned || [S.tier]), t])].sort((a, b) => a - b); S.hulls = {...(S.hulls || {}), [t]:SHIPS[t].hull}; done.push({what:'build', t}); }
   if (done.length) save();
   return done;
 }

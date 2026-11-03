@@ -1,20 +1,25 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=49ea3d2';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=49ea3d2';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName} from './state.js?v=49ea3d2';
-import {fleetBody, pinCard} from './fleetpage.js?v=49ea3d2';
-import {myLevel} from './levels.js?v=49ea3d2';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=49ea3d2';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=49ea3d2';
-import {planClues} from './combat.js?v=49ea3d2';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=49ea3d2';
-import {board, active, canDeliver, goal} from './quests.js?v=49ea3d2';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=49ea3d2';
-import {colorHeld, colorInfo} from './colors.js?v=49ea3d2';
-import {shipPortrait} from './portrait.js?v=49ea3d2';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=49ea3d2';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=8c56f6e';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=8c56f6e';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName} from './state.js?v=8c56f6e';
+import {fleetBody, pinCard} from './fleetpage.js?v=8c56f6e';
+import {myLevel} from './levels.js?v=8c56f6e';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=8c56f6e';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=8c56f6e';
+import {planClues} from './combat.js?v=8c56f6e';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=8c56f6e';
+import {board, active, canDeliver, goal} from './quests.js?v=8c56f6e';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=8c56f6e';
+import {colorHeld, colorInfo} from './colors.js?v=8c56f6e';
+import {shipPortrait} from './portrait.js?v=8c56f6e';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=8c56f6e';
 
+// P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
+export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
+  const sign = A ? `<path d="M9.4 6.2 L10.9 7.7 Q13 7 15.1 7.7 L16.6 6.2 L16.5 9.4 Q17.2 13.6 13 15.2 Q8.8 13.6 9.5 9.4Z" fill="#b8322a"/><circle cx="11.4" cy="9.6" r="1.55" fill="#fbf7ea"/><circle cx="14.6" cy="9.6" r="1.55" fill="#fbf7ea"/><circle cx="11.5" cy="9.7" r=".7" fill="#2a1d17"/><circle cx="14.5" cy="9.7" r=".7" fill="#2a1d17"/><path d="M12.5 11 L13 11.8 L13.5 11Z" fill="#e6c27a"/><path d="M11 13 Q13 14 15 13" fill="none" stroke="#fbf7ea" stroke-width=".6" stroke-linecap="round"/>`
+    : `<path d="M13 5.8 L9 14.8 M13 5.8 L17 14.8" stroke="#f3e2b4" stroke-width="2.3" stroke-linecap="round" fill="none"/>`;
+  return `<svg class="cityflag" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${low}"/></linearGradient></defs><path d="M3.6 3 V23" stroke="#6e4524" stroke-width="1.6" stroke-linecap="round"/><circle cx="3.6" cy="2.4" r="1.5" fill="#e2ac5a" stroke="#6b4416" stroke-width=".6"/><path d="M4.4 3.6 C8 1.8 11 4.8 15 3.6 S20 2.6 22.4 3.6 V16.4 C20 15.4 18.6 16 15 17 S8 14.8 4.4 16.6Z" fill="url(#${id})" stroke="${edge}" stroke-width="1.1" stroke-linejoin="round"/>${sign}</svg>`; };
 export const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
 // ---- icons: small drawings in the game's colors ----
@@ -35,7 +40,6 @@ export const IC = {
   hold: svg(`<rect x="4" y="7" width="16" height="13" rx="1.5" fill="${WOOD}"/><path d="M4 11h16M12 7v13" stroke="#6e4a2a" stroke-width="1.4"/><path d="M6 7 L8 3 H16 L18 7" fill="#c49c66"/>`),
   ship: svg(`<path d="M3 14 Q12 21 21 14 L20 12 H4Z" fill="${WOOD}"/><path d="M11 3 V12" stroke="#6e3d1e" stroke-width="1.6"/><path d="M11.5 4 Q17 8 11.5 11.5Z" fill="#efe4c8"/>`),
   world: svg(`<circle cx="12" cy="12" r="9" fill="${SEA}"/><path d="M7 9 Q9 6 12 8 Q11 11 8 11Z M13 14 Q16 12 17 15 Q15 18 13 16Z" fill="#76883c"/>`),
-  hull: svg(`<path d="M12 3 L20 6 V12 Q20 18 12 21 Q4 18 4 12 V6Z" fill="${WOOD}"/><path d="M5 9h14M4.5 13h15M6 17h12" stroke="#6e4a2a" stroke-width="1.3"/>`),
   speed: svg(`<path d="M4 20 L17 5" stroke="${WOOD}" stroke-width="2.4" stroke-linecap="round"/><path d="M15 3 L21 3 L21 9 L17 7Z" fill="${WOOD}"/><path d="M3 12h5M2 16h4" stroke="${SEA}" stroke-width="2" stroke-linecap="round"/>`),
   catapult: svg(`<path d="M3 20 H21" stroke="#6b4a2c" stroke-width="2.4" stroke-linecap="round"/><path d="M6 20 L12 10 L9 20" stroke="#8a5a30" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M12 10 L18 5" stroke="#8a5a30" stroke-width="2"/><circle cx="18.5" cy="5" r="3.2" fill="#f08a3a"/><circle cx="17.8" cy="4.3" r="1.2" fill="#ffd27a"/>`),
   chain: svg(`<circle cx="6" cy="17" r="4" fill="#4a525c"/><circle cx="18" cy="7" r="4" fill="#4a525c"/><circle cx="4.8" cy="15.8" r="1.2" fill="#8a96a3"/><circle cx="16.8" cy="5.8" r="1.2" fill="#8a96a3"/><path d="M9 14.5 Q11 11 12.5 12 Q14 13 15 10" stroke="#6b5a48" stroke-width="2" fill="none" stroke-dasharray="2.4 1.4"/>`),
@@ -46,7 +50,8 @@ export const IC = {
   rower: svg(`<path d="M5 3 L15.5 17" stroke="#6e4a2a" stroke-width="2.2" stroke-linecap="round"/><path d="M14 15 L19.5 13.5 L21 19 L16.5 20.5Z" fill="${WOOD}" stroke="#6e4a2a" stroke-width="1"/><path d="M2 21 Q5 19 8 21 T14 21" stroke="${SEA}" stroke-width="1.8" fill="none"/>`),
   letter: svg(`<rect x="3" y="6" width="18" height="12" rx="1.5" fill="#efe4c8" stroke="${WOOD}" stroke-width="1.4"/><path d="M3.5 7 L12 13 L20.5 7" fill="none" stroke="${WOOD}" stroke-width="1.4"/><circle cx="12" cy="14" r="2" fill="#c64a3c"/>`),
   swords: svg(`<path d="M4 4 L18 18 M20 4 L6 18" stroke="#9aa1a8" stroke-width="2.4" stroke-linecap="round"/><path d="M15 20 L20 15 M4 15 L9 20" stroke="#7a4a22" stroke-width="2.4" stroke-linecap="round"/>`),
-  wreck: svg(`<path d="M3 16 L10 10 L14 13 L21 8" stroke="${WOOD}" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M2 19 Q7 17 12 19 Q17 21 22 19" stroke="${SEA}" stroke-width="2" fill="none"/>`),
+  // P71: a broken ship going down by the stern: snapped mast, torn sail, the sea over her
+  wreck: svg(`<g transform="rotate(-24 12 14)"><path d="M12.4 11 V6.2 L14 4.4" fill="none" stroke="#6e4524" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.8 6 L17.8 6.9 L16.3 8.3 L17.4 10 L12.8 9.5Z" fill="#f1e7cd" stroke="#3a2618" stroke-width=".7" stroke-linejoin="round"/><path d="M2.5 10.6 H21.5 L18.8 17.6 H5.2Z" fill="#b17a45" stroke="#3a2618" stroke-width=".9" stroke-linejoin="round"/><path d="M3.8 13.4 H20.2" stroke="#6e4524" stroke-width=".8"/><path d="M14.4 12 L16.2 13.2 L15.3 14.2 L16.8 16 L13.2 15.6 L13.8 14Z" fill="#2a1d17"/></g><path d="M0.8 17 Q4 15.2 7 17 T13 17 T19 17 T23.2 17 V22.4 H0.8Z" fill="#3e93b8" stroke="#1f5a78" stroke-width=".8" stroke-linejoin="round"/><path d="M4 19.4 Q7 18 10 19.4 M13.4 20 Q16.4 18.6 19.4 20" fill="none" stroke="#cdeaf4" stroke-width="1" stroke-linecap="round"/>`),
   star: svg(`<path d="M12 3 L14.6 9 L21 9.5 L16 13.6 L17.6 20 L12 16.5 L6.4 20 L8 13.6 L3 9.5 L9.4 9Z" fill="${OCHRE}"/>`),
   bless: svg(`<path d="M12 3 V21 M6 6 Q12 12 18 6 M7 3 V8 M17 3 V8" stroke="#244f86" stroke-width="2" fill="none" stroke-linecap="round"/>`),
   gear: svg(`<circle cx="12" cy="12" r="7.5" fill="#9aa1a8"/><path d="M12 1.8 v4 M12 18.2 v4 M1.8 12 h4 M18.2 12 h4 M4.8 4.8 l2.8 2.8 M16.4 16.4 l2.8 2.8 M4.8 19.2 l2.8-2.8 M16.4 7.6 l2.8-2.8" stroke="#9aa1a8" stroke-width="3.4" stroke-linecap="round"/><circle cx="12" cy="12" r="3.2" fill="#e9d9b4"/>`),
@@ -61,8 +66,6 @@ Object.assign(IC, {
   // supplies: an open wooden crate with things poking out (a fish, a rolled cloth, an amphora)
   hold: svg(`<path d="M7.2 9.5 Q6.4 4.6 9 3.6 Q11.4 4.6 10.6 9.5Z" fill="#c46a3a" ${OL}/><path d="M8.2 4.1 H9.8" stroke="#2a1d17" stroke-width="1.2"/><ellipse cx="15.2" cy="7.6" rx="3.6" ry="2" fill="#7fb0c8" ${OL} transform="rotate(-25 15.2 7.6)"/><path d="M18.2 5.6 L20.6 4.4 L20.2 7.2Z" fill="#7fb0c8" ${OL}/>
     <path d="M3 9.5 H21 L20 20.5 Q12 21.6 4 20.5Z" fill="#c98a4b" ${OL}/><path d="M3.4 13.2 H20.6 M3.7 17 H20.3" stroke="#8a5a30" stroke-width="1.3"/><path d="M6 9.8 L7 20.6 M18 9.8 L17 20.6" stroke="#8a5a30" stroke-width="1.3"/><path d="M3 9.5 H21" stroke="#2a1d17" stroke-width="1.6"/><path d="M4.5 11.3 H11" stroke="#f0c48a" stroke-width="1.1" stroke-linecap="round"/>`),
-  // the hull: a boat seen from the side, planks and bronze nails
-  hull: svg(`<path d="M2 9.5 H22 L19.4 17.6 Q12 20.8 4.6 17.6Z" fill="#c98a4b" ${OL}/><path d="M2.9 12.2 H21.1 M3.9 15 H20.1" stroke="#8a5a30" stroke-width="1.3"/><path d="M2 9.5 H22" stroke="#6e3d1e" stroke-width="2.2" stroke-linecap="round"/><path d="M4 7.8 Q12 5.6 20 7.8" fill="none" stroke="#2a1d17" stroke-width="1.2"/><circle cx="7" cy="13.6" r=".9" fill="#e2ac5a"/><circle cx="12" cy="13.6" r=".9" fill="#e2ac5a"/><circle cx="17" cy="13.6" r=".9" fill="#e2ac5a"/><path d="M5 11 H11" stroke="#f0c48a" stroke-width="1.1" stroke-linecap="round"/>`),
   // oars: two crossed oars with wide blades
   rower: svg(`<path d="M4 20 L16.4 7.6 M20 20 L7.6 7.6" stroke="#2a1d17" stroke-width="3.8" stroke-linecap="round"/><path d="M4 20 L16.4 7.6 M20 20 L7.6 7.6" stroke="#d29a5c" stroke-width="2" stroke-linecap="round"/>
     <path d="M15.2 8.8 L18.6 2.6 Q21.6 2.4 21.4 5.4 L15.2 8.8Z" fill="#c98a4b" ${OL}/><path d="M8.8 8.8 L5.4 2.6 Q2.4 2.4 2.6 5.4 L8.8 8.8Z" fill="#c98a4b" ${OL}/><path d="M3 19 l2 2 M21 19 l-2 2" stroke="#2a1d17" stroke-width="2.4" stroke-linecap="round"/>`),
@@ -141,8 +144,8 @@ Object.assign(IC, {
     ${[[3, 17], [9.5, 17], [6.2, 12.2]].map(([x, y]) => face([[x + 1.5, y - 2.4], [x + 10, y - 2.4], [x + 11.5, y], [x, y]], 'url(#b3t)') + face([[x, y], [x + 11.5, y], [x + 11.5, y + 3.4], [x, y + 3.4]], 'url(#b3s)')).join('')}
     <path d="M8.6 10.6 H15" stroke="#fff" stroke-width=".9" stroke-linecap="round" opacity=".85"/>`),
   // upgrades
-  hull: svg(`<defs>${glossy('uh', [[0, '#d39257'], [1, '#7e4f2b']])}</defs>${shade(12, 21.4, 9)}<path d="M2.5 9 H21.5 C21 15.5 17.5 19.5 12 19.5 C6.5 19.5 3 15.5 2.5 9Z" fill="url(#uh)"/>
-    <path d="M3.4 12 H20.6 M4.6 15 H19.4" stroke="#5e3a1c" stroke-width=".8" opacity=".55"/><path d="M5 10.4 H19" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".5"/><rect x="2" y="7.6" width="20" height="2" rx="1" fill="#e3ad48"/>`),
+  // P71: a wooden shield: anyone can read it as "how much can I take"
+  hull: svg(`<defs><radialGradient id="uh" cx=".4" cy=".32" r=".8"><stop offset="0" stop-color="#d9a26a"/><stop offset="1" stop-color="#8c5a30"/></radialGradient></defs><circle cx="12" cy="12" r="10.2" fill="#5f3a1c" stroke="#2a1d17" stroke-width="1.2"/><circle cx="12" cy="12" r="8.1" fill="url(#uh)"/><path d="M7.2 5.5 V18.5 M12 3.9 V8.8 M12 15.2 V20.1 M16.8 5.5 V18.5" stroke="#6e4524" stroke-width="1.1" stroke-linecap="round"/><circle cx="12" cy="12" r="3.1" fill="#e2ac5a" stroke="#6b4416" stroke-width="1.1"/><circle cx="11" cy="11" r=".9" fill="#fff0c4"/>${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<circle cx="${(12 + Math.cos(a*Math.PI/180)*9.15).toFixed(1)}" cy="${(12 + Math.sin(a*Math.PI/180)*9.15).toFixed(1)}" r=".62" fill="#d8c08a"/>`).join('')}`),
   // two crossed oars: long round shafts with wide flat blades and grips
   rower: svg(`<defs>${glossy('uo', [[0, '#e6b984'], [1, '#8a5a30']])}${glossy('uob', [[0, '#d49a5e'], [1, '#7e4f2b']])}</defs>${shade(12, 22, 9)}
     ${[1, -1].map(sg => `<g transform="translate(12 12) scale(${sg} 1) translate(-12 -12)"><path d="M4.2 3.4 L15.6 14.8" stroke="url(#uo)" stroke-width="1.9" stroke-linecap="round"/>
@@ -275,7 +278,7 @@ export const matPrice = (h, k) => k === 'wood' ? woodPrice(h) : k === 'linen' ? 
 export const matStep = k => k === 'wood' ? 10 : 1; // wood is sold in bundles of 10
 export function harborHTML(h){
   const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['fleet', 'Fleet', IC.ship], ['ware', 'Warehouse', IC.hold], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['crew', 'Crew', IC.crew]] // P63: Kallisto opens on the shipyard; P65: the warehouse has its own page
-    : h.free ? [['market', 'Market', IC.market], ['dock', 'Dock', IC.dock]] : [['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['dock', 'Dock', IC.dock]];
+    : h.free ? [['market', 'Market', IC.market], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]] : [['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]];
   if (!list.some(([k]) => k === tabs.port)) tabs.port = list[0][0];
   const t = tabs.port, body = t === 'jobs' ? jobsTab(h) : t === 'fleet' ? fleetBody() : t === 'yard' ? yardTab() : t === 'ware' ? wareTab() : t === 'crew' ? crewTab() : t === 'dock' ? dockTab() : marketTab(h);
   const sub = home ? 'Your home harbor' : h.free ? 'Your free port: cheaper goods, cheap timber, purple dye' : h.is.city ? `Flies the flag of ${CITIES[h.is.city].name}` : 'A free harbor: no city rules it';
@@ -314,7 +317,7 @@ function jobsTab(h){
   return (ready ? card('Ready to hand over', ready, 'donecard') : '') + pinCard()
     + card(`Request board · ${mine.length} of ${REQUESTS.max} taken`, `${offers}${full ? '<p class="note">You have two jobs. Finish or drop one to take another.</p>' : ''}`)
     + card('Your jobs', myJobs())
-    + plansCard(); // P60: the ship plan clues live in the harbor
+    ; // P71: pin a ship in Fleet to see where its plans are
 }
 function myJobs(){
   const S = G.S, jobs = active();
@@ -354,7 +357,7 @@ export function yardAct(t, sh){
 const PLANS_FROM = {1:'From the bandit camp on Ikaria', 2:'From the bandit camps on Tinos and Syros', 3:'From the Ios bandit camp and the pirate fortresses of Thasos and Kos', 7:'From the fortresses of Athens and Sparta'};
 function yardTab(){
   const S = G.S, job = S.build ? `Building · <b data-until="${S.build.until}">${mmss(timeLeft(S.build))}</b> left` : S.study ? `Studying plans · <b data-until="${S.study.until}">${mmss(timeLeft(S.study))}</b> left` : '';
-  const ready = [1, 2, 3, 7].some(t => !owned().includes(t) && !(S.build && S.build.t === t) && !(S.study && S.study.t === t) && (studied(t) || allPieces(t)));
+  const ready = Object.keys(PLANS).map(Number).some(t => !owned().includes(t) && !(S.build && S.build.t === t) && !(S.study && S.study.t === t) && (studied(t) || allPieces(t)));
   // repairs first, then upgrades for the ship you sail, then your fleet
   return repairCard() + upgradesCard() + powersCard() + card('Your fleet', `<div class="line">${IC.ship}<div><b>${owned().length} ship${owned().length > 1 ? 's' : ''} · level ${myLevel()}</b><small>${job || (ready ? 'The shipwrights are ready for you.' : S.purse ? `${S.purse} drachmae from your captains.` : 'Change ships, hire captains and see what else you could own.')}</small></div><button class="btn ${ready || S.purse ? 'gold' : ''}" data-act="tab" data-sheet="port" data-t="fleet">Open</button></div>`)
     + looksCard();
@@ -442,10 +445,10 @@ export function councilHTML(f){
   const S = G.S, c = f.city, foe = rival(c), w = S.war;
   let body;
   if (w){ const done = w.got >= w.n, here = w.city === c;
-    body = card('Your war contract', `<div class="job ${done ? 'ready' : ''}"><span class="jic">${IC.swords}</span><div><b>${warText(w)}</b><small>For ${CITIES[w.city].name} · ${Math.min(w.got, w.n)} of ${w.n}</small>${bar(w.got/w.n)}</div>
+    body = card('Your war contract', `<div class="job ${done ? 'ready' : ''}"><span class="jic">${cityFlag(w.city)}</span><div><b>${warText(w)}</b><small>For ${CITIES[w.city].name} · ${Math.min(w.got, w.n)} of ${w.n}</small>${bar(w.got/w.n)}</div>
       <div class="btnrow tight">${done && here ? `<button class="btn gold" data-act="warclaim">Claim ${chip(IC.coin, '+' + w.gold)}</button>` : `<span class="reward">${chip(IC.coin, '+' + w.gold)}</span><button class="btn ghostdark" data-act="wardrop">Drop</button>`}</div></div>
       ${done && !here ? `<p class="note">Hand it in at any ${adjOf(w.city)} fortress.</p>` : !done ? `<p class="note">Warships of ${CITIES[w.foe].name} sail around their islands. Guard ships at fortresses count too.</p>` : ''}`, done ? 'donecard' : ''); }
-  else body = card(`Contracts from ${CITIES[c].name}`, WAR.offers.map((o, i) => `<div class="job"><span class="jic">${IC.swords}</span><div><b>${warText({...o, foe})}</b><small>The ${adjOf(c)} commander pays when it's done.</small><span class="reward">${chip(IC.coin, '+' + o.gold)}</span></div>
+  else body = card(`Contracts from ${CITIES[c].name}`, WAR.offers.map((o, i) => `<div class="job"><span class="jic">${cityFlag(c)}</span><div><b>${warText({...o, foe})}</b><small>The ${adjOf(c)} commander pays when it's done.</small><span class="reward">${chip(IC.coin, '+' + o.gold)}</span></div>
       <button class="btn gold" data-act="wartake" data-i="${i}">Take</button></div>`).join('') + '<p class="note">One war contract at a time. Sinking their ships makes that city hunt you, so watch out.</p>');
   const held = k => ISLANDS.filter(i => i.city === k).length;
   return `<div class="mtop">${top(`${f.isle.name}<small>${CITIES[c].name}'s fortress</small>`)}</div><div class="mbody">${body}
@@ -454,7 +457,7 @@ export function councilHTML(f){
 
 // ---- the bag ----
 export function bagHTML(){
-  const list = [['hold', 'Hold', IC.hold], ['ship', 'Ship', IC.ship], ['jobs', 'Jobs', IC.jobs], ['world', 'World', IC.world]];
+  const list = [['hold', 'Hold', IC.hold], ['ship', 'Ship', IC.ship], ['jobs', 'Jobs', IC.jobs], ['world', 'War', IC.swords]];
   const t = tabs.inv, body = t === 'ship' ? shipTab() : t === 'jobs' ? bagJobs() : t === 'world' ? worldTab() : holdTab();
   return `<div class="mtop">${top('Your bag')}${res()}${tabBar(list, t, 'inv')}</div><div class="mbody">${body}</div>`;
 }
@@ -475,7 +478,7 @@ function shipTab(){
       <div class="line">${IC.hull}<div><b>Hull ${Math.ceil(S.hull)} / ${sh.hull}</b>${bar(S.hull/sh.hull, S.hull/sh.hull < .35 ? 'low' : '')}</div></div>
       <div class="stats big">${IC.speed} ${sh.speed} ${IC.hold} ${sh.hold} ${IC.archer} ${fighters()} ${IC.rower} ${layout().rowers} ${IC.crew} ${men()}/${sh.men[1]}</div>
       <p class="note">${sh.storm ? 'Big waves in the Open Sea wear this ship down.' : 'Shrugs off the big waves of the Open Sea.'}</p>`)
-    + card('Upgrades', `${ups}<p class="note">Upgrade at the Kallisto shipyard.</p>`)
+    + card('Upgrades', `${ups}<p class="note">Upgrade at the Kallisto shipyard.</p>`) + card('', `<div class="line">${IC.ship}<div><b>Your fleet</b><small>All your ships, and all the ships you could own.</small></div><button class="btn" data-act="openfleet" data-to="mine">Open</button></div>`)
     + (bl ? card("Poseidon's blessing", `<div class="line">${IC.bless}<div><b>${Math.floor(bl/60)}:${String(Math.floor(bl % 60)).padStart(2, '0')} left</b><small>Faster sailing and quicker work</small></div></div>`) : '');
 }
 // Ship plans still to find, with a clue for each piece
@@ -486,12 +489,12 @@ function bagJobs(){
   return pinCard() + (g ? card(g.chapter ? `The voyage · goal ${(S.goal || 0) + 1 - STARTER_GOALS} of ${GOALS.length - STARTER_GOALS}` : `First voyage · goal ${(S.goal || 0) + 1} of ${STARTER_GOALS}`, `<div class="job"><span class="jic">${IC.star}</span><div><b>${g.text}</b>${g.n > 1 ? bar((S.goalN || 0)/g.n) : ''}<small>${g.n > 1 ? `${S.goalN || 0} of ${g.n} · ` : ''}reward</small></div><span class="reward">${chip(IC.coin, '+' + g.gold)}</span></div>`) : '')
     + (S.lastDone && Date.now() - S.lastDone.t < 600000 ? card('Just done', `<div class="job ready"><span class="jic"><svg viewBox="0 0 24 24"><path d="M5 13 L10 18 L19 7" fill="none" stroke="#3f9a4b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>${S.lastDone.text}</b></div><span class="reward">${chip(IC.coin, '+' + S.lastDone.gold)}</span></div>`, 'donecard') : '')
     + card(`Your jobs · ${active().length} of ${REQUESTS.max}`, myJobs() + (active().some(r => r.to) ? '<p class="note">The islands they send you to have a dashed red ring on the chart.</p>' : ''))
-    + (S.war ? card('War contract', `<div class="job"><span class="jic">${IC.swords}</span><div><b>${warText(S.war)}</b><small>For ${CITIES[S.war.city].name} · ${Math.min(S.war.got, S.war.n)} of ${S.war.n}</small>${bar(S.war.got/S.war.n)}</div><span class="reward">${chip(IC.coin, '+' + S.war.gold)}</span></div>`) : '')
+    + (S.war ? card('War contract', `<div class="job"><span class="jic">${cityFlag(S.war.city)}</span><div><b>${warText(S.war)}</b><small>For ${CITIES[S.war.city].name} · ${Math.min(S.war.got, S.war.n)} of ${S.war.n}</small>${bar(S.war.got/S.war.n)}</div><span class="reward">${chip(IC.coin, '+' + S.war.gold)}</span></div>`) : '')
     + (tr ? card('Treasure map', `<div class="line">${IC.map}<div><b>${tr.land ? `Buried on a beach${tr.name ? ` of ${tr.name}` : ''}` : 'Floating out at sea'}</b><small>The red X on your chart. ${tr.land ? 'Sail up close to the beach to dig it out.' : 'Sail over it.'}</small></div></div>`) : '');
 }
 function worldTab(){
   const held = c => ISLANDS.filter(i => i.city === c).length, hunt = G.hunted || {};
-  const city = c => `<div class="line"><span class="emb" style="background:${CITIES[c].color}">${IC.swords}</span><div><b>${CITIES[c].name}</b><small>${held(c)} islands</small></div><span class="tag ${hunt[c] ? 'bad' : 'on'}">${hunt[c] ? 'Hunting you' : 'Leaves you alone'}</span></div>`;
-  return card('The war', `${city('athens')}${city('sparta')}<p class="note">Raid a city's ships and only that city's navy comes after you, if they see it. To take an island: knock down its fortress, sink its guard ships, then hold the bay until the other city's flag goes up. Its fortress is rebuilt for the new owner.</p>`)
+  const city = c => `<div class="line warline">${cityFlag(c)}<div><b>${CITIES[c].name}</b><small>${held(c)} islands: ${ISLANDS.filter(i => i.city === c).map(i => i.name).join(', ')}</small></div><span class="tag ${hunt[c] ? 'bad' : 'on'}">${hunt[c] ? 'Hunting you' : 'Leaves you alone'}</span></div>`;
+  return card('Athens against Sparta', `${city('athens')}${city('sparta')}<p class="note">Raid a city's ships and only that city's navy comes after you, if they see it. To take an island: knock down its fortress, sink its guard ships, then hold the bay until the other city's flag goes up. Its fortress is rebuilt for the new owner.</p>`)
     + (founded() ? card(G.S.crewName, `<p class="note">Flag of ${(GODS[G.S.look.flag] || {name:'none'}).name}${blessing().desc ? `. Blessing: ${blessing().desc}` : ''}</p>`) : '');
 }

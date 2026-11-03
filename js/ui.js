@@ -1,29 +1,29 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=49ea3d2';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=49ea3d2';
-import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=49ea3d2';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=49ea3d2';
-import {CYCLE} from './daynight.js?v=49ea3d2';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=49ea3d2';
-import {swapBoat, refreshAllTrees} from './entities.js?v=49ea3d2';
-import {setZoom} from './input.js?v=49ea3d2';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=49ea3d2';
-import {tutHTML} from './tutorial.js?v=49ea3d2';
-import {founded, blessing} from './crew.js?v=49ea3d2';
-import {WHALE} from './wildlife.js?v=49ea3d2';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=49ea3d2';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=49ea3d2';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=49ea3d2';
-import {effectText, buy} from './upgrades.js?v=49ea3d2';
-import {fleetHTML} from './fleetpage.js?v=49ea3d2';
-import {askName} from './naming.js?v=49ea3d2';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=49ea3d2';
-import {GOODS, WAR} from './config.js?v=49ea3d2';
-import {fly} from './fly.js?v=49ea3d2';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=49ea3d2';
-import {W, KINDS} from './weather.js?v=49ea3d2';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=49ea3d2';
-import {setTimeOfDay} from './daynight.js?v=49ea3d2';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=8c56f6e';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=8c56f6e';
+import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=8c56f6e';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=8c56f6e';
+import {CYCLE} from './daynight.js?v=8c56f6e';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=8c56f6e';
+import {swapBoat, refreshAllTrees} from './entities.js?v=8c56f6e';
+import {setZoom} from './input.js?v=8c56f6e';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=8c56f6e';
+import {tutHTML} from './tutorial.js?v=8c56f6e';
+import {founded, blessing} from './crew.js?v=8c56f6e';
+import {WHALE} from './wildlife.js?v=8c56f6e';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=8c56f6e';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=8c56f6e';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=8c56f6e';
+import {effectText, buy} from './upgrades.js?v=8c56f6e';
+import {fleetHTML} from './fleetpage.js?v=8c56f6e';
+import {askName} from './naming.js?v=8c56f6e';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=8c56f6e';
+import {GOODS, WAR} from './config.js?v=8c56f6e';
+import {fly} from './fly.js?v=8c56f6e';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=8c56f6e';
+import {W, KINDS} from './weather.js?v=8c56f6e';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=8c56f6e';
+import {setTimeOfDay} from './daynight.js?v=8c56f6e';
 
 const $ = id => document.getElementById(id);
 
@@ -210,7 +210,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 70</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 71</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -294,7 +294,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(shipName(t), 2.4); } }
   if (a === 'rename'){ askName(+b.dataset.t, () => render(), true); return; }
   if (a === 'pin'){ const t = +b.dataset.t; S.pin = S.pin === t ? null : t; sfx(S.pin ? 'chime' : 'click'); if (S.pin) toast('Pinned. Its plans are on your chart', 3); }
-  if (a === 'openfleet'){ tabs.fleet = 'get'; if (sheet === 'port' && G.dock && G.dock.h === HARBORS[0]) tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
+  if (a === 'openfleet'){ tabs.fleet = b.dataset.to || 'get'; if (sheet === 'port') tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'quality'){ G.settings.quality = b.dataset.v; G.settings.detected = null; applyQuality(b.dataset.v === 'auto' ? 'high' : b.dataset.v); G.autoCheck = b.dataset.v === 'auto'; saveSettings(); }
   if (a === 'speed'){ G.settings.dev.speed = +b.dataset.v; saveSettings(); }
   if (a === 'teleport'){ G.settings.dev.teleport = !G.settings.dev.teleport; saveSettings(); }
@@ -363,7 +363,6 @@ $('blessChip').addEventListener('click', () => toast(G.S.bless ? "Poseidon's ble
 // docking: wood and bronze aboard go to the warehouse first, so the shipyard can use them
 document.addEventListener('docked', () => { if (unload().some(Boolean)) save(); openPort(); }); // unloaded quietly: the warehouse numbers in the menu show it
 $('goalPill').addEventListener('click', () => { G.S.questNew = false; if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });
-$('fleetBtn').addEventListener('click', () => sheet === 'fleet' ? closeSheet() : openSheet('fleet'));
 $('bagBtn').addEventListener('click', () => sheet === 'inv' ? closeSheet() : openSheet('inv'));
 $('gearBtn').addEventListener('click', () => sheet === 'settings' ? closeSheet() : openSheet('settings'));
 $('councilBtn').addEventListener('click', () => { if (G.council) openSheet('council'); });

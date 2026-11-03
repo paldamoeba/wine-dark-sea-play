@@ -1,17 +1,17 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=49ea3d2';
-import {makePost} from './glow.js?v=49ea3d2';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=49ea3d2';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=49ea3d2';
-import {makeFire, updateFire} from './fire.js?v=49ea3d2';
-import {updateSmoke} from './smoke.js?v=49ea3d2';
-import {addGrass, updateGrass} from './grass.js?v=49ea3d2';
-import {makeWind} from './seafx.js?v=49ea3d2';
-import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=49ea3d2';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=49ea3d2';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=49ea3d2';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=49ea3d2';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=8c56f6e';
+import {makePost} from './glow.js?v=8c56f6e';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=8c56f6e';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=8c56f6e';
+import {makeFire, updateFire} from './fire.js?v=8c56f6e';
+import {updateSmoke} from './smoke.js?v=8c56f6e';
+import {addGrass, updateGrass} from './grass.js?v=8c56f6e';
+import {makeWind} from './seafx.js?v=8c56f6e';
+import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=8c56f6e';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=8c56f6e';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=8c56f6e';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=8c56f6e';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -205,7 +205,7 @@ const SOUND_INFO = {
   sink:'Your own ship goes down.', bubbles:'Bubbles from a sinking ship.', bell:'The harbor bell as you come in to dock.', horn:'A war horn when you raid a ship, or a navy ship sees a crime.',
   chime:'A goal or a job is done.', fanfare:'Your new ship is ready, or an island raises your flag.', hammer:'The shipwright fits an upgrade or repairs your hull.', buy:'You buy something.',
   blessing:'Poseidon blesses you after you sail close to a whale.', whale:'A whale surfaces.', kraken:'The kraken rises, and again when it dives.', spout:'The whale breathes out.', splash:'Dolphins splash beside your boat.', gull:'Gulls over islands, wrecks and harbors.',
-  thunder:'Thunder a few miles off: a short crack, then a long uneven roll.', thunderNear:'A bolt right overhead: a tearing crack and a heavy thump, straight after the flash.', thunderFar:'Far away: only a low roll, a few seconds after a faint flash.', creak:'Your hull creaks as it rolls on the waves.', rain:'A storm\'s rain: waves of soft hiss with single drops landing all around you. This plays 10 seconds of it.', torch:'What your torches and fire bowls sound like at night: a soft flutter of flame with a few small cracks. This plays 10 seconds of it.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
+  thunder:'Thunder a few miles off: a long, low, slow roll.', thunderNear:'A bolt right overhead: a heavy low boom straight after the flash, then a long roll.', thunderFar:'Far away: a faint deep rumble, a few seconds after a faint flash.', creak:'Your hull creaks as it rolls on the waves.', rain:'A storm\'s rain: waves of soft hiss with single drops landing all around you. This plays 10 seconds of it.', torch:'What your torches and fire bowls sound like at night: a soft flutter of flame with a few small cracks. This plays 10 seconds of it.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
   bottle:'You open a message in a bottle.', treasure:'You dig up a treasure.', crowd:'The crowd at the Rhodes arena.', zone:'You sail into new waters.', warn:'Distant rumbling when a storm is coming.', dock:'Mooring ropes pull tight at the pier.'};
 const SOUND_MODEL = {
   coin:() => wreckModel('medium'), coins:() => harborTown('poseidon'), fish:() => buildShip('fishing'), catch:() => buildShip('fishing'), miss:() => buildShip('fishing'),

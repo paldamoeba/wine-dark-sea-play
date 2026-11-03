@@ -1,24 +1,24 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES, FISH, GOODS} from './config.js?v=49ea3d2';
-import {G, ship, lvl, shipName, capOf} from './state.js?v=49ea3d2';
-import {IC, card, top, tabBar, tabs, shipImg, costChips, bar, chip, peg, yardAct} from './menus.js?v=49ea3d2';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=49ea3d2';
-import {men} from './crew.js?v=49ea3d2';
-import {SPECS, crewLayout} from './ships.js?v=49ea3d2';
-import {piecesOf, studied, allPieces, span} from './shipyard.js?v=49ea3d2';
-import {HARBORS} from './world.js?v=49ea3d2';
-import {planSources} from './combat.js?v=49ea3d2';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=49ea3d2';
-import {ramDmg} from './upgrades.js?v=49ea3d2';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=8c56f6e';
+import {G, ship, lvl, shipName, capOf} from './state.js?v=8c56f6e';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=8c56f6e';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=8c56f6e';
+import {men} from './crew.js?v=8c56f6e';
+import {SPECS, crewLayout} from './ships.js?v=8c56f6e';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=8c56f6e';
+import {HARBORS} from './world.js?v=8c56f6e';
+import {planSources} from './combat.js?v=8c56f6e';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=8c56f6e';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
-const buildable = () => SHIPS.map((sh, t) => t).filter(t => PLANS[t] && !SHIPS[t].captured);
+const KING = 11;
+const buildable = () => SHIPS.map((sh, t) => t).filter(t => PLANS[t]);
 // real numbers for a ship: with its upgrades if it's yours, as it comes from the yard if it isn't
 function numbers(t){ const b = SHIPS[t], u = ((G.S.ups || {})[t] || {}), m = men(t), c = crewLayout(SPECS[b.model], m);
   return {hull:Math.round(b.hull*(1 + UPGRADES.hull.each*(u.hull || 0))), speed:Math.round(b.speed*(1 + UPGRADES.oars.each*(u.oars || 0) + UPGRADES.sail.each*(u.sail || 0))), turn:b.turn*(1 + UPGRADES.helm.each*(u.helm || 0)), hold:b.hold, goods:b.cap.goods, wood:b.cap.wood, men:m, most:b.men[1], archers:c.archers || m, rowers:c.rowers, ups:Object.keys(UPGRADES).filter(k => UPGRADES[k].ship).reduce((n, k) => n + (u[k] || 0), 0)}; }
-const TOP = {hull:700, speed:330, turn:2, hold:30, goods:40, men:56};
+const TOP = {hull:900, speed:340, turn:2, hold:40, goods:110, men:56};
 const row = (label, v, max, txt, cmp) => `<div class="fstat"><span>${label}</span>${bar(v/max)}<b>${txt}${cmp ? ` <i class="${cmp > 0 ? 'up' : 'down'}">${cmp > 0 ? '+' : ''}${cmp}</i>` : ''}</b></div>`;
 function statRows(n, vs){ const d = (k, dp = 0) => vs ? +((n[k] - vs[k]).toFixed(dp)) : 0;
   return row('Hull', n.hull, TOP.hull, n.hull, d('hull')) + row('Speed', n.speed, TOP.speed, n.speed, d('speed')) + row('Turning', n.turn, TOP.turn, n.turn.toFixed(2), d('turn', 2))
@@ -43,26 +43,26 @@ function mineCard(t){
 }
 // where the missing plan pieces of ship t are, easiest first, each with its level
 export function sourceRows(t, max = 99){ const src = planSources(t).map(f => ({f, lv:siteLevel(f)})).sort((a, b) => a.lv - b.lv), shown = src.slice(0, max);
-  const rows = shown.map(({f, lv}) => { const st = standing(lv); return `<div class="srcrow"><span>${f.camp ? 'Bandit camp' : f.owner === 'pirate' ? 'Pirate fortress' : 'Fortress'} on <b>${f.isle.name}</b></span><span class="lvchip ${st}">Level ${lv}</span><small class="${st}">${LEVEL_WORD[st]}</small></div>`; }).join('');
-  return rows + (src.length > shown.length ? `<p class="note">And ${src.length - shown.length} more fortresses of Athens and Sparta. Any of them will do.</p>` : ''); }
+  const rows = shown.map(({f, lv}) => { const st = standing(lv); return `<div class="srcrow"><span>${f.named ? `<b>${f.named.name}</b>, off` : f.camp ? 'Bandit camp on' : f.owner === 'pirate' ? 'Pirate fortress on' : 'Fortress on'} ${f.named ? f.isle.name : `<b>${f.isle.name}</b>`}</span><span class="lvchip ${st}">Level ${lv}</span><small class="${st}">${LEVEL_WORD[st]}</small></div>`; }).join('');
+  return rows + (src.length > shown.length ? `<p class="note">And ${src.length - shown.length} more. Any of them will do.</p>` : ''); }
 function getCard(t){
   const S = G.S, sh = SHIPS[t], P = PLANS[t], n = numbers(t), got = piecesOf(t), pin = S.pin === t, done = allPieces(t) || studied(t);
   const src = planSources(t), low = src.length ? Math.min(...src.map(siteLevel)) : 0, st = low && standing(low);
   const act = atHome() ? `<div class="yard">${yardAct(t, sh)}</div>` : done ? '<small>Take the plans to the Kallisto shipwrights.</small>' : '';
   return `<section class="card fcard ${pin ? 'pinned' : ''}"><div class="fhead">${shipImg(sh.model, {men:sh.men[0]})}<div class="fname"><h3>${sh.name}</h3>
-      <small>Plans: ${got} of ${P.pieces}${studied(t) ? ' · studied' : ''}</small>${low ? `<span class="lvchip ${st}">Needs level ${low}</span>` : ''}<button class="btn ${pin ? 'gold' : 'ghostdark'} small pinbtn" data-act="pin" data-t="${t}">${PIN}${pin ? 'Pinned' : 'Pin this ship'}</button></div></div>
+      <small>Plans: ${got} of ${P.pieces}${studied(t) ? ' · studied' : ''}</small>${low ? `<span class="lvchip ${st}">Needs level ${low}</span>` : ''}${t === KING ? '' : `<button class="btn ${pin ? 'gold' : 'ghostdark'} small pinbtn" data-act="pin" data-t="${t}">${PIN}${pin ? 'Pinned' : 'Pin this ship'}</button>`}</div></div>
     <p class="note">${sh.desc}</p>
     <h4>Compared with your ${ship().name.toLowerCase()}</h4>${statRows(n, numbers(S.tier))}
-    <h4>What it takes</h4><div class="cost">${costChips(sh.cost)}</div><p class="note">The shipwrights study the plans for ${span(P.study)}, then build her in ${span(P.build)}.</p>
-    ${done ? '' : `<h4>Where the plans are</h4>${sourceRows(t, 3)}`}${act}</section>`;
+    ${done ? '' : t === KING ? '<h4>Where the plans are</h4><p class="note">Only the pirate king has them. Beat Polycrates and they are yours.</p>' : `<h4>Where the plans are</h4>${sourceRows(t, 3)}`}${act}</section>`;
 }
+const need = t => t === KING ? 99 : allPieces(t) || studied(t) ? 0 : Math.min(50, ...planSources(t).map(siteLevel));
 export function fleetBody(){
   const S = G.S, list = [['mine', 'Your ships', IC.ship], ['get', 'Ships to get', IC.map]];
   if (!list.some(([k]) => k === tabs.fleet)) tabs.fleet = 'mine';
   const mine = owned(), rest = buildable().filter(t => !mine.includes(t)), L = myLevel();
   const purse = S.purse ? (atHome() ? card("Captains' purse", `<div class="line">${IC.coin}<div><b>${S.purse} drachmae</b><small>What your captains brought back.</small></div><button class="btn gold" data-act="collect">Collect</button></div>`, 'donecard') : `<p class="note">${S.purse} drachmae wait for you at Kallisto.</p>`) : '';
   const head = `<div class="flevel"><span class="lvchip big">Level ${L}</span><p>How strong <b>${shipName()}</b> is, from her size, upgrades and your powers. Camps and fortresses have levels too.</p></div>`;
-  const body = tabs.fleet === 'get' ? (rest.length ? rest.map(getCard).join('') : card('', '<p class="note">You own every ship there is.</p>')) : [...mine].sort((a, b) => (b === S.tier) - (a === S.tier)).map(mineCard).join('');
+  const body = tabs.fleet === 'get' ? (rest.length ? rest.sort((a, b) => need(a) - need(b)).map(getCard).join('') : card('', '<p class="note">You own every ship there is.</p>')) : [...mine].sort((a, b) => (b === S.tier) - (a === S.tier)).map(mineCard).join('');
   return `${tabBar(list, tabs.fleet, 'fleet')}${head}${purse}${body}`;
 }
 export const fleetHTML = () => `<div class="mtop">${top('Your fleet')}</div><div class="mbody">${fleetBody()}</div>`;

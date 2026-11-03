@@ -1,14 +1,15 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=49ea3d2';
-import {IC} from './menus.js?v=49ea3d2';
-import {sfx} from './audio.js?v=49ea3d2';
-import {playVideo, toast} from './ui.js?v=49ea3d2';
-import {ARENA} from './arena.js?v=49ea3d2';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=49ea3d2';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=49ea3d2';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=49ea3d2';
-import {G, ship, isExplored, reveal, save} from './state.js?v=49ea3d2';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=8c56f6e';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=8c56f6e';
+import {GOODS} from './config.js?v=8c56f6e';
+import {sfx} from './audio.js?v=8c56f6e';
+import {playVideo, toast} from './ui.js?v=8c56f6e';
+import {ARENA} from './arena.js?v=8c56f6e';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=8c56f6e';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=8c56f6e';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=8c56f6e';
+import {G, ship, isExplored, reveal, save} from './state.js?v=8c56f6e';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -87,7 +88,14 @@ function icImg(key, svg){ if (icImgs[key]) return icImgs[key]; const im = new Im
   im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" ')); return icImgs[key] = im; }
 const CAMP_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3 L22 20 H2Z" fill="#b5793f" stroke="#2a1d17" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 8 L17 20 H7Z" fill="#3a2618"/><path d="M12 3 L10 1 M12 3 L14 1" stroke="#2a1d17" stroke-width="1.4" stroke-linecap="round"/><path d="M12 12.5 C13.6 15 14.4 16 14 18 C13.6 19.6 10.4 19.6 10 18 C9.6 16 11 15 12 12.5Z" fill="#f59a3a"/></svg>';
 const X_SVG = '<svg viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" stroke="#6e1d12" stroke-width="6.5" stroke-linecap="round"/><path d="M5 5 L19 19 M19 5 L5 19" stroke="#d6503f" stroke-width="3.8" stroke-linecap="round"/></svg>';
-const icons = () => ({harbor:IC.dock, camp:CAMP_SVG, iron:IC.iron, wreck:IC.wreck, x:X_SVG, fish:IC.fish('#4f8fc0')});
+const icons = () => ({harbor:IC.dock, camp:CAMP_SVG, iron:IC.iron, wreck:IC.wreck, x:X_SVG, fish:IC.fish('#4f8fc0'), named:IC.swords});
+// P71: the chart's filter: what it shows, and for a good or material, which harbors deal in it and at what price
+const FILTER_GROUPS = [['', [['all', 'Everything'], ['harbors', 'Harbors'], ['forts', 'Camps and fortresses'], ['ships', 'Named pirates'], ['res', 'Fish, wrecks and mines']]],
+  ['Where to buy', [['buy:iron', 'Iron'], ['buy:bronze', 'Bronze'], ['buy:wood', 'Wood'], ['buy:linen', 'Linen'], ...Object.entries(GOODS).map(([k, g]) => ['buy:' + k, g.label])]],
+  ['Where to sell', Object.entries(GOODS).map(([k, g]) => ['sell:' + k, g.label])]];
+const MATS4 = ['iron', 'bronze', 'wood', 'linen'];
+function filterPrice(h, f){ const [how, k] = f.split(':'); if (how === 'sell') return goodSell(h, k); if (MATS4.includes(k)) return matPrice(h, k); return canBuyGood(h, k) ? goodPrice(h, k) : null; }
+function priceTag(x, y, txt, best){ c.save(); c.font = '800 11px Nunito, system-ui, sans-serif'; const w = c.measureText(txt).width + 10; c.fillStyle = best ? '#3f9a4b' : '#fff8e6'; c.strokeStyle = 'rgba(40,24,10,.75)'; c.lineWidth = 1; c.beginPath(); c.roundRect ? c.roundRect(x - w/2, y - 8, w, 16, 8) : c.rect(x - w/2, y - 8, w, 16); c.fill(); c.stroke(); c.fillStyle = best ? '#fff' : '#3e2b1c'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, x, y + .5); c.restore(); }
 function badge(x, y, r, key, ring, opt = {}){
   c.save(); c.shadowColor = 'rgba(50,32,12,.45)'; c.shadowBlur = 5; c.shadowOffsetY = 2;
   const g = c.createRadialGradient(x - r*.35, y - r*.4, 1, x, y, r); g.addColorStop(0, '#fffdf4'); g.addColorStop(1, '#f0e2c2'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI*2); c.fill(); c.restore();
@@ -179,17 +187,17 @@ function draw(){
   // upright marks and names, only where you have sailed
   placed = [[W - 110, 0, W, 64], [0, H - 130, W, H]]; // keep names off the header and footer
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-  const marks = G.settings.dev.markers;
-  for (const s of SPOTS){ if (!marks || !s.stock || !isExplored(s.x, s.y)) continue; const [x, y] = toScreen(s.x, s.y); badge(x, y, 10, 'fish'); }
+  const marks = G.settings.dev.markers, F = G.mapFilter || 'all', priced = F.includes(':'), showRes = F === 'all' || F === 'res', showForts = F === 'all' || F === 'forts', showShips = F === 'all' || F === 'ships' || F === 'forts', showIron = showRes || F === 'buy:iron';
+  for (const s of SPOTS){ if (!showRes || !marks || !s.stock || !isExplored(s.x, s.y)) continue; const [x, y] = toScreen(s.x, s.y); badge(x, y, 12, 'fish'); }
   c.strokeStyle = INK; c.lineWidth = 1.8;
-  for (const w of WRECKS){ if (!marks || !w.stock || !isExplored(w.x, w.y)) continue; const [x, y] = toScreen(w.x, w.y); badge(x, y, 10, 'wreck'); }
+  for (const w of WRECKS){ if (!showRes || !marks || !w.stock || !isExplored(w.x, w.y)) continue; const [x, y] = toScreen(w.x, w.y); badge(x, y, 15, 'wreck', null, {k:1.5}); }
   // iron mines
-  for (const is of ISLANDS){ if (!is.mine || !isExplored(is.mine.x, is.mine.y)) continue; const [x, y] = toScreen(is.mine.x, is.mine.y); badge(x, y, 13, 'iron', '#5d6773'); }
+  for (const is of ISLANDS){ if (!showIron || !is.mine || !isExplored(is.mine.x, is.mine.y)) continue; const [x, y] = toScreen(is.mine.x, is.mine.y); badge(x, y, 13, 'iron', '#5d6773'); }
   // buried treasure on the small islands (P52): a little gold X where a chest is waiting
-  for (const t of TREASURE_ISLES){ if (!isExplored(t.x, t.y) || !chestReady(t)) continue; const [x, y] = toScreen(t.x, t.y);
+  for (const t of TREASURE_ISLES){ if (F !== 'all' || !isExplored(t.x, t.y) || !chestReady(t)) continue; const [x, y] = toScreen(t.x, t.y);
     c.save(); c.strokeStyle = '#d9a23a'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - 5, y - 5); c.lineTo(x + 5, y + 5); c.moveTo(x + 5, y - 5); c.lineTo(x - 5, y + 5); c.stroke(); c.restore(); }
   // the treasure map's X, and a dashed ring around islands your jobs send you to
-  if (G.S.treasure){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); badge(x, y, 17, 'x', '#d9a23a', {k:1.3}); }
+  if (G.S.treasure && F === 'all'){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); badge(x, y, 17, 'x', '#d9a23a', {k:1.3}); }
   for (const r of G.S.reqs || []){ const is = (r.t === 'visit' || r.t === 'deliver') && ISLANDS.find(i => i.name === r.to); if (!is) continue;
     const [x, y] = toScreen(is.x, is.y); c.save(); c.setLineDash([6, 6]); c.strokeStyle = COURSE; c.lineWidth = 2; c.beginPath(); c.arc(x, y, Math.max(16, is.r*view.z + 12), 0, Math.PI*2); c.stroke(); c.restore(); }
   // the Arena of Rhodes: a stone ring with the gate marked
@@ -197,15 +205,20 @@ function draw(){
     c.strokeStyle = '#cbbd9a'; c.lineWidth = Math.max(2, 22*view.z); c.beginPath(); c.arc(ax, ay, r, ARENA.gate + ARENA.half, ARENA.gate - ARENA.half + Math.PI*2); c.stroke();
     label('Arena of Rhodes', ax, ay + r + 16, '400 14px Marcellus, Georgia, serif', INK); }
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
-  for (const e of enemies){ if (!e.fort || !isExplored(e.x, e.y)) continue; const [fx, fy] = toScreen(e.x, e.y);
+  for (const e of enemies){ if (!e.named || e.dead || !showShips) continue; const on = G.S.pin && planReward(e) === G.S.pin; if (!on && !isExplored(e.home.x, e.home.y)) continue; if (on && !isExplored(e.home.x, e.home.y)) reveal(e.home.x, e.home.y, 500);
+    const [nx, ny] = toScreen(e.home.x, e.home.y); badge(nx, ny, 15, 'named', '#7a2426', {k:1.3}); levelTag(nx, ny - 22, siteLevel(e)); label(e.named.name, nx, ny + 28, '700 12px Nunito, sans-serif', '#5a1e14'); }
+  for (const e of enemies){ if (!showForts || !e.fort || !isExplored(e.x, e.y)) continue; const [fx, fy] = toScreen(e.x, e.y);
     if (e.camp){ badge(fx, fy, 15, 'camp', '#b5552c', {dim:e.dead}); if (e.dead) crossOut(fx, fy, 15); else levelTag(fx, fy - 22, siteLevel(e)); continue; }
     const col = e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a'; badge(fx, fy, 15, null, col); c.save(); c.translate(fx, fy); c.scale(.92, .92); towerGlyph(0, 0, col, false); c.restore();
     if (e.dead) crossOut(fx, fy, 15); else levelTag(fx, fy - 22, siteLevel(e)); }
-  for (const f of pinned){ const [x, y] = toScreen(f.x, f.y); pinMark(x, y); }
-  for (const h of HARBORS){ if (!h.is.port && !isExplored(h.dock.x, h.dock.y)) continue;
-    const [hx, hy] = toScreen(h.dock.x, h.dock.y), port = h.is.port; badge(hx, hy, port ? 19 : 16, 'harbor', h.is.city ? CITIES[h.is.city].color : OCHRE, {k:1.35}); }
+  if (showForts || showShips) for (const f of pinned){ const [x, y] = f.named ? toScreen(f.home.x, f.home.y) : toScreen(f.x, f.y); pinMark(x, y); }
+  // a good or material picked in the filter: only the harbors that deal in it, each with its price; the best price is green
+  const known = HARBORS.filter(h => h.is.port || isExplored(h.dock.x, h.dock.y)), deals = priced ? known.map(h => [h, filterPrice(h, F)]).filter(([, p]) => p != null) : [], bestP = deals.length ? (F.startsWith('sell') ? Math.max : Math.min)(...deals.map(([, p]) => p)) : 0;
+  for (const h of known){ if (F !== 'all' && F !== 'harbors' && !priced) continue; const price = priced ? filterPrice(h, F) : 0; if (priced && price == null) continue;
+    const [hx, hy] = toScreen(h.dock.x, h.dock.y), port = h.is.port; badge(hx, hy, port ? 19 : 16, 'harbor', h.is.city ? CITIES[h.is.city].color : OCHRE, {k:1.35}); if (priced) priceTag(hx, hy - 25, F === 'buy:wood' ? `${price} per 10` : `${price} dr`, price === bestP); }
+  if (priced && !deals.length) label('No harbor you know deals in this yet. Keep exploring.', W/2, 92, '700 14px Nunito, sans-serif', '#5a1e14');
   // the chapter goal: a red ring with a name (pirate fortresses, the pirate king)
-  for (const m of G.goalMarks || []){ const [x, y] = toScreen(m.x, m.y); c.save(); c.strokeStyle = COURSE; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
+  for (const m of F === 'all' ? G.goalMarks || [] : []){ const [x, y] = toScreen(m.x, m.y); c.save(); c.strokeStyle = COURSE; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
     c.beginPath(); c.arc(x, y, 5, 0, Math.PI*2); c.fillStyle = COURSE; c.fill(); c.restore(); label(m.label, x, y - 20, '700 13px Nunito, sans-serif', '#5a1e14'); }
   // island names: harbors and city islands first, then the rest when there's room (small islands only when zoomed in)
   const named = ISLANDS.filter(is => is.name && isExplored(is.x, is.y)).sort((a, b) => (b.port || b.city ? 1 : 0) - (a.port || a.city ? 1 : 0) || b.r - a.r);
@@ -241,9 +254,11 @@ function draw(){
 // ---- open / close ----
 export function openMap(){
   if (G.sheetOpen) return;
-  G.mapOpen = true; G.joy = null; el.hidden = false; size();
+  G.mapOpen = true; G.joy = null; el.hidden = false; size(); G.mapFilter = 'all'; $('mapFilter').value = 'all'; document.querySelector('.legend').hidden = false;
   view.cx = G.S.x; view.cy = G.S.y; view.z = Math.min(W, H)/6500;
   // P65: a new treasure map: open on it, far enough out to see it and your ship
+  // P71: with a ship pinned, the chart opens wide enough to show where its plans are
+  if (G.S.pin){ const p = planSources(G.S.pin).map(f => f.named ? f.home : f).sort((a, b) => Math.hypot(a.x - G.S.x, a.y - G.S.y) - Math.hypot(b.x - G.S.x, b.y - G.S.y)).slice(0, 3); if (p.length) frame(p); }
   if (G.S.mapNew && G.S.treasure){ const T = G.S.treasure, d = Math.hypot(T.x - G.S.x, T.y - G.S.y); view.cx = (T.x + G.S.x)/2; view.cy = (T.y + G.S.y)/2; view.z = Math.min(view.z, Math.min(W, H)*.62/Math.max(d, 1)); }
   G.S.mapNew = false; clampView();
   const homeNow = !!G.dock && G.dock.h === HARBORS[0]; $('mapHome').hidden = homeNow; $('homePop').hidden = true;
@@ -321,7 +336,17 @@ $('homeNow').addEventListener('click', () => { if (combatState.threat) return; h
 $('homeCancel').addEventListener('click', hidePop);
 homePop.addEventListener('click', e => { if (e.target === homePop) hidePop(); });
 // the legend, with the same pictures as the chart
-$('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [X_SVG, 'Treasure'], ['<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Pinned plans']].map(([ic, n]) => `<li>${ic}${n}</li>`).join('');
+$('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [IC.wreck, 'Wreck'], [IC.swords, 'Named pirate'], [X_SVG, 'Treasure'], ['<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Pinned plans']].map(([ic, n]) => `<li>${ic}${n}</li>`).join('');
+$('mapFilter').innerHTML = FILTER_GROUPS.map(([g, list]) => { const o = list.map(([v, n]) => `<option value="${v}">${n}</option>`).join(''); return g ? `<optgroup label="${g}">${o}</optgroup>` : o; }).join('');
+// frame what the filter found, with your ship, so you never have to hunt for it
+function frame(pts){ if (!pts.length) return; const all = [...pts, {x:G.S.x, y:G.S.y}], xs = all.map(p => p.x), ys = all.map(p => p.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  view.cx = (x0 + x1)/2; view.cy = (y0 + y1)/2 + 700; view.z = Math.min(W*.72/Math.max(x1 - x0, 1500), H*.5/Math.max(y1 - y0, 1500)); clampView(); }
+$('mapFilter').addEventListener('change', e => { const F = G.mapFilter = e.target.value; document.querySelector('.legend').hidden = F !== 'all';
+  const known = HARBORS.filter(h => h.is.port || isExplored(h.dock.x, h.dock.y));
+  if (F.includes(':')) frame(known.filter(h => filterPrice(h, F) != null).map(h => h.dock));
+  else if (F === 'harbors') frame(known.map(h => h.dock));
+  else if (F === 'forts' || F === 'ships') frame(enemies.filter(o => !o.dead && (F === 'ships' ? o.named : o.fort || o.named) && isExplored((o.home || o).x, (o.home || o).y)).map(o => o.named ? o.home : o));
+  draw(); });
 $('mapClear').addEventListener('click', () => { G.dest = null; draw(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape' && G.mapOpen){ if (!$('homePop').hidden) $('homePop').hidden = true; else closeMap(); }

@@ -1,11 +1,11 @@
 // P70: your level. No points to earn and nothing to grind: it is simply how strong the ship you sail is right now, from its size,
 // its upgrades and your powers. Bandit camps and fortresses get a level from the same sum, so "level 8" means the same on both sides.
 // The sum: hull you can lose x damage you deal in a second (and the same for all the ships and walls of a target).
-import {SHIPS, COMBAT, ABILITIES, FIRE_ARROWS, UPGRADES, FORTS} from './config.js?v=49ea3d2';
-import {G} from './state.js?v=49ea3d2';
-import {SPECS, crewLayout} from './ships.js?v=49ea3d2';
-import {men} from './crew.js?v=49ea3d2';
-import {arrowK, showerK, ramDmg, fireSecs, powerCd} from './upgrades.js?v=49ea3d2';
+import {SHIPS, COMBAT, ABILITIES, FIRE_ARROWS, UPGRADES, FORTS} from './config.js?v=8c56f6e';
+import {G} from './state.js?v=8c56f6e';
+import {SPECS, crewLayout} from './ships.js?v=8c56f6e';
+import {men} from './crew.js?v=8c56f6e';
+import {arrowK, showerK, ramDmg, fireSecs, powerCd} from './upgrades.js?v=8c56f6e';
 
 const up = (t, k) => ((G.S.ups || {})[t] || {})[k] || 0, s = k => G.S[k] || 0;
 const P0 = 6.5, toLevel = p => Math.max(1, Math.round(1 + 6*Math.log(Math.max(p, P0)/P0)));
@@ -23,10 +23,11 @@ export const myLevel = () => shipLevel(G.S.tier);
 // What a camp or fortress adds up to: its walls and its guards are fought one after the other, so the walls count less than the sum of arrows suggests.
 export function sitePower(f){
   const shooter = e => (e.spec.fighters || 0)*(e.spec.dmg || 0)/COMBAT.enemyShotEvery*COMBAT.hitChance;
-  let hull = f.spec.hull, dps = shooter(f); if (!f.camp) dps += FORTS.stoneDmg/FORTS.stoneEvery*.35; // the catapult's stones often miss a moving ship
+  let hull = f.spec.hull, dps = shooter(f); if (f.fort && !f.camp) dps += FORTS.stoneDmg/FORTS.stoneEvery*.35; // the catapult's stones often miss a moving ship
   for (const g of f.guards){ hull += g.spec.hull; dps += shooter(g); }
-  return Math.sqrt(hull*dps*SITE_K);
+  return Math.sqrt(hull*dps*(f.named ? NAMED_K : SITE_K));
 }
+const NAMED_K = .6; // a lone ship: nothing to pick apart
 const SITE_K = .145; // you don't face all of it at once: guards come in ones and twos, and you pick your moment
 export const siteLevel = f => toLevel(sitePower(f));
 // How a target compares with you: 'ready', 'hard' (up to 2 levels above you) or 'strong'.

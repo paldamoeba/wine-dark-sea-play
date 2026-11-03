@@ -1,7 +1,7 @@
 // Your fleet: every ship you build stays yours, moored at Kallisto with its own upgrades, hull and paint.
 // Switch ships at the Kallisto shipwright. Your crew comes with you (sailors beyond the seats wait on the pier).
-import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=49ea3d2';
-import {G, ship, used, capOf, LOADS} from './state.js?v=49ea3d2';
+import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=8c56f6e';
+import {G, ship, used, capOf, LOADS} from './state.js?v=8c56f6e';
 
 export const owned = () => G.S.owned || (G.S.owned = Array.from({length:G.S.tier + 1}, (_, i) => i));
 export const has = t => owned().includes(t);
@@ -13,7 +13,7 @@ function stow(){ const S = G.S; S.hulls = {...(S.hulls || {}), [S.tier]:S.hull};
 function board(t){ const S = G.S, flag = S.look.flag; S.tier = t; S.look = {...((S.looks || {})[t] || {}), flag}; S.hull = (S.hulls || {})[t] ?? ship().hull; }
 export function switchTo(t){ if (cantSwitch(t)) return false; stow(); board(t); return true; }
 // A newly built ship joins the fleet and you go aboard it.
-export function launch(t){ owned(); stow(); G.S.owned = [...new Set([...G.S.owned, t])].sort(); board(t); G.S.hull = ship().hull; }
+export function launch(t){ owned(); stow(); G.S.owned = [...new Set([...G.S.owned, t])].sort((a, b) => a - b); board(t); G.S.hull = ship().hull; }
 
 // ---- captains: your other ships earn while you sail ----
 export const captainOf = t => (G.S.captains || {})[t] || null;

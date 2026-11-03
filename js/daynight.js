@@ -2,9 +2,9 @@
 // (bright enough to sail), then dawn again. At dusk every ship lights its torches, statues light their fire bowls
 // and town windows glow. The time of day is kept in the save (G.S.clock), so it carries on where you left it.
 // Settings can keep it always day or always night.
-import {G, stat} from './state.js?v=49ea3d2';
-import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=49ea3d2';
-import {WIN_MAT} from './models.js?v=49ea3d2';
+import {G, stat} from './state.js?v=8c56f6e';
+import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=8c56f6e';
+import {WIN_MAT} from './models.js?v=8c56f6e';
 
 const T = window.THREE;
 export const CYCLE = 600; // seconds for a whole day
