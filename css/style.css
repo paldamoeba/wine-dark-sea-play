@@ -990,3 +990,23 @@ body.ui3d .mplus{box-shadow:inset 0 2px 2px rgba(255,255,255,.7),inset 0 -4px 6p
 /* the power buttons sit bottom right, clear of the toolbar, and fold into a second row on a narrow phone instead of running off the screen */
 .abilities{left:auto!important;right:calc(10px + env(safe-area-inset-right,0px))!important;transform:none!important;max-width:calc(100vw - 86px);flex-wrap:wrap-reverse;justify-content:flex-end;gap:12px 10px!important}
 body.ui3d .sheet.menu .card{margin-bottom:10px}
+
+/* ---- P67 ---- */
+/* finished quests: green card with dark text (this used to share a class with the top bar, which turned its text white) */
+.sheet.menu .card.donecard{background:#eef6e4!important}
+.card.donecard .job{background:#fbfdf6!important}
+/* flying coins and goods */
+.flyic{position:fixed;z-index:60;width:30px;height:30px;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(40,25,10,.4));opacity:0}
+.flyic svg{width:100%;height:100%;display:block}
+.flytxt{position:fixed;z-index:60;pointer-events:none;font:800 21px/1 var(--body);color:#a86a08;text-shadow:0 1px 0 #fff,0 0 4px #fff,0 0 8px #fff;white-space:nowrap}
+.rb.rbhit{animation:rbhit .22s ease-out}
+@keyframes rbhit{40%{transform:scale(1.14)}}
+/* repairs */
+.btnrow.repairs{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:6px}
+.btnrow.repairs .btn{display:inline-flex;align-items:center;gap:5px}
+.btnrow.repairs .btn svg{width:18px;height:18px}
+/* the chart's warning while the game runs on */
+.mapwarn{position:absolute;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:3;border:0;border-radius:999px;padding:10px 20px;background:#c9422e;color:#fff;font:800 15px/1 var(--body);box-shadow:0 3px 0 #8a2a1c,0 6px 14px rgba(60,20,10,.4);cursor:pointer;animation:dotPop 1.1s ease-in-out infinite}
+.mapwarn[hidden]{display:none}
+/* many guard ships fit on the fortress card */
+.mission .mships{flex-wrap:wrap;gap:2px}.mission .mships svg{width:17px;height:11px}

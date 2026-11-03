@@ -424,8 +424,10 @@ export function setTorches(root, on, light = false){
 
 // Torch and fire bowl flames dance and their lights flicker (ships, and the fire bowls around statues).
 export function flicker(root, t){
+  const fk = root.userData.fireK ?? 1; // P67: how far the fires have caught (0 to 1): each flame starts as a small ember and grows, one torch a little after another
   for (const tc of root.userData.torches || []) if (tc.visible){ const f = tc.userData.flame, k = 1 + Math.sin(t*13 + tc.userData.ph)*.08 + Math.sin(t*23 + tc.userData.ph*2)*.06;
-    f.scale.set(1/k, k, 1/k); f.rotation.y = t*2; if (tc.userData.light) tc.userData.light.intensity = tc.userData.light.userData.base*(.85 + .15*k); }
+    const g = Math.max(.001, Math.min(1, fk*1.6 - (tc.userData.ph % 5)*.12)), s = g*(2 - g); // eased, so it doesn't pop
+    f.scale.set(s/k, s*k, s/k); f.rotation.y = t*2; if (tc.userData.light) tc.userData.light.intensity = tc.userData.light.userData.base*(.85 + .15*k)*s; }
 }
 // Who is aboard a ship with m men (the player's ships, P49): a helmsman, archers and rowers, one rower per oar.
 // The rowboat: you row, and a second hand sits at the stern. Sail boats: everyone works the deck.

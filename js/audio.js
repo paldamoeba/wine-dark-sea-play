@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=58f9730';
+import {MUSIC_REST} from './config.js?v=d678164';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -168,6 +168,7 @@ export const SOUNDS = {
   gull:{name:'Gull calls', gap:.4, sea:true, play:(t, d) => gullCry(t, d)},
   thunder:{name:'Thunder', gap:1, sea:true, play:(t, d) => { noise(t, .25, d, {type:'highpass', f:900, peak:.35}); noise(t + .05, 3.2, d, {type:'lowpass', f:260, f2:60, peak:1, buf:brownBuf, a:.08}); noise(t + .6, 2.2, d, {type:'lowpass', f:180, f2:50, peak:.6, buf:brownBuf, a:.3}); }},
   creak:{name:'Hull creaks', gap:.5, sea:true, play:(t, d) => creakAt(t, d, .35)},
+  rain:{name:'Rain', sea:true, gap:2, play:(t, d) => rainSample(t, d, 10)},
   torch:{name:'Torches at night', sea:true, gap:2, play:(t, d) => torchSample(t, d, 10)},
   oar:{name:'Oar stroke', gap:.15, sea:true, play:(t, d) => { noise(t, .4, d, {type:'lowpass', f:900, f2:400, peak:.09, a:.08}); noise(t + .22, .5, d, {f:1800, f2:900, q:.8, peak:.035, a:.12}); }}, // a soft swish of water, no click
   drum:{name:'Rowing drum', gap:.2, play:(t, d) => { osc('sine', 82, t, .22, d, .5, .004, 55); noise(t, .06, d, {type:'lowpass', f:500, peak:.2}); }},
@@ -211,7 +212,8 @@ function buildBeds(){
     waves: loop(brownBuf, 'lowpass', 420, .5, seaBus),   // the low roll of the sea
     wash:  loop(pinkBuf, 'bandpass', 700, .7, seaBus),   // waves breaking, swelling in and out
     wind:  loop(pinkBuf, 'bandpass', 500, 1.6, seaBus),  // wind, whistling higher in storms
-    rain:  loop(noiseBuf, 'highpass', 2500, .5, seaBus),
+    rain:  loop(pinkBuf, 'bandpass', 5200, .4, seaBus),  // P67: rain: a soft, wide hiss of far-off drops...
+    rainLow: loop(pinkBuf, 'bandpass', 900, .55, seaBus), // ...the patter on the water around you...
     bow:   loop(pinkBuf, 'bandpass', 1100, .9, seaBus),  // water rushing past the hull
     fire:  loop(brownBuf, 'lowpass', 420, .6, seaBus),   // P66: a torch is mostly a low, soft flutter of burning air...
     fireAir: loop(pinkBuf, 'bandpass', 850, .5, seaBus), // ...with a little breath on top that moves with it
@@ -220,7 +222,7 @@ function buildBeds(){
 // The game calls this every frame with what is going on around the ship.
 // a = {speed 0..1, waves 0..2, storm 0..1, wind 0..1, rain 0..1, night 0..1, gulls 0..1, fire 0..1, rowing, sail, docked}
 const QUIET = {speed:0, waves:1, storm:0, wind:0, rain:0, night:0, land:0, gulls:0, fire:0, rowing:false, burst:false, sail:false, docked:false};
-let swell = 0, windWander = 0, nextGull = 4, nextCreak = 3, oarT = 0, nextCricket = 1, nextCrackle = 1, nextSail = 5, flutter = .5, flutterTo = .5, nextFlutter = 0;
+let swell = 0, windWander = 0, nextGull = 4, nextCreak = 3, oarT = 0, nextCricket = 1, nextCrackle = 1, nextSail = 5, flutter = .5, flutterTo = .5, nextFlutter = 0, gust = .8, gustTo = .8, nextGust = 1, dropN = 0;
 export function updateAudio(dt, a){
   if (!ctx || !beds || !SND.on || (ctx.state !== 'running' && fakeT === null)) return;
   a = {...QUIET, ...a};
@@ -232,7 +234,10 @@ export function updateAudio(dt, a){
   set('waves', .16 + a.waves*.1 + a.storm*.08);
   set('wash', (.05 + a.waves*.05 + a.storm*.06)*sw, .25); beds.wash.fl.frequency.setTargetAtTime(500 + sw*500, t, .3);
   set('wind', a.wind*.13 + a.storm*.12); beds.wind.fl.frequency.setTargetAtTime(380 + a.storm*500 + windWander*180, t, .5);
-  set('rain', a.rain*.11);
+  // P67: rain comes in waves, never a steady jet, with single drops landing all around (that steady hiss is what sounded like a hose)
+  if ((nextGust -= dt) <= 0){ nextGust = .9 + Math.random()*2.4; gustTo = .55 + Math.random()*.6; } gust += (gustTo - gust)*Math.min(1, dt*.9);
+  set('rain', a.rain*RAIN.hiss*gust, .3); set('rainLow', a.rain*RAIN.patter*gust, .3);
+  if (a.rain > .03){ dropN += dt*a.rain*RAIN.drops*gust; while (dropN >= 1){ dropN--; const g = place(seaBus, null, a.rain); if (g) raindrop(t + Math.random()*.04, dropBus(g)); } }
   set('bow', a.speed*a.speed*.12, .2);
   // P66: the flame wanders: it swells and sinks a few times a second, never steady, like a real flame in the wind
   if ((nextFlutter -= dt) <= 0){ nextFlutter = .07 + Math.random()*.26; flutterTo = .3 + Math.random()*.7; }
@@ -254,6 +259,21 @@ export function updateAudio(dt, a){
   // P66: a few small cracks now and then, not a constant patter. A fire bowl close by is busier than your own torches.
   if (fireK > .05 && (nextCrackle -= dt) <= 0){ nextCrackle = (.9 + Math.random()*3.2)/(.45 + fireK); crackle(t, sea, fireK); }
   updateMusic(dt, a);
+}
+// P67: one raindrop: a tiny wet tick, somewhere left or right. Now and then a bigger, rounder one.
+const RAIN = {hiss:.15, patter:.22, drops:24, drop:2.4};
+function dropBus(g){ if (!ctx.createStereoPanner) return g; const p = ctx.createStereoPanner(); p.pan.value = Math.random()*1.7 - .85; g.disconnect(); g.connect(p); p.connect(seaBus); return g; }
+function raindrop(t, d){ const big = Math.random() < .14, s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), len = big ? .03 + Math.random()*.03 : .004 + Math.random()*.014, peak = RAIN.drop*(big ? .1 + Math.random()*.12 : .025 + Math.random()*Math.random()*.11);
+  s.buffer = noiseBuf; fl.type = 'bandpass'; fl.frequency.value = big ? 500 + Math.random()*800 : 1400 + Math.random()*5200; fl.Q.value = big ? 3 + Math.random()*3 : 1.5 + Math.random()*4;
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(peak, t + .001); g.gain.exponentialRampToValueAtTime(.0001, t + .001 + len);
+  s.connect(fl); fl.connect(g); g.connect(d); s.start(t, Math.random()*3); s.stop(t + len + .02); }
+function rainSample(t, d, secs){
+  const layer = (f, q, level) => { const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = pinkBuf; s.loop = true; fl.type = 'bandpass'; fl.frequency.value = f; fl.Q.value = q;
+    g.gain.setValueAtTime(.0001, t); let o = 0; while (o < secs){ const e = Math.min(1, Math.min(o, secs - o)/1); g.gain.linearRampToValueAtTime(Math.max(.0001, e*level*(.55 + Math.random()*.6)), t + o); o += .9 + Math.random()*2.4; }
+    s.connect(fl); fl.connect(g); g.connect(d); s.start(t, Math.random()*3); s.stop(t + secs); };
+  layer(5200, .4, RAIN.hiss); layer(900, .55, RAIN.patter);
+  const panned = () => { if (!ctx.createStereoPanner) return d; const p = ctx.createStereoPanner(); p.pan.value = Math.random()*1.7 - .85; p.connect(d); return p; }, pans = [0, 1, 2, 3, 4, 5].map(panned);
+  for (let o = .4; o < secs - .4; o += (.2 + Math.random()*1.8)/RAIN.drops) raindrop(t + o, pans[Math.floor(Math.random()*6)]);
 }
 // A torch: burning resin. Soft woody ticks in little runs (each one a tiny resonant click, a few milliseconds long, in a
 // different spot left or right), and now and then a rounder snap of wood with a little weight under it.

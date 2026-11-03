@@ -1,13 +1,13 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=58f9730';
-import {IC} from './menus.js?v=58f9730';
-import {sfx} from './audio.js?v=58f9730';
-import {playVideo, toast} from './ui.js?v=58f9730';
-import {ARENA} from './arena.js?v=58f9730';
-import {enemies, planReward, combatState} from './combat.js?v=58f9730';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=58f9730';
-import {G, ship, isExplored, reveal, save} from './state.js?v=58f9730';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=d678164';
+import {IC} from './menus.js?v=d678164';
+import {sfx} from './audio.js?v=d678164';
+import {playVideo, toast} from './ui.js?v=d678164';
+import {ARENA} from './arena.js?v=d678164';
+import {enemies, planReward, combatState} from './combat.js?v=d678164';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=d678164';
+import {G, ship, isExplored, reveal, save} from './state.js?v=d678164';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -243,6 +243,13 @@ export function openMap(){
 // Test hook: the whole map at once.
 export function chartAll(){ openMap(); view.cx = WORLD/2; view.cy = WORLD/2; view.z = Math.min(W, H)/WORLD; draw(); }
 export function closeMap(){ G.mapOpen = false; el.hidden = true; }
+// P67: while the chart is open the game keeps running: your ship moves on it, and a banner warns you if you're attacked.
+let tickT = 0;
+export function mapTick(dt){
+  if (G.sheetOpen || G.sinking){ closeMap(); return; }
+  $('mapWarn').hidden = !combatState.threat;
+  if ((tickT -= dt) <= 0){ tickT = .25; draw(); }
+}
 
 function setCourse(x, y){
   if (x < 0 || y < 0 || x > WORLD || y > WORLD) return;
@@ -293,6 +300,7 @@ cv.addEventListener('wheel', e => { e.preventDefault(); view.z *= Math.exp(-e.de
 
 $('mapBtn').addEventListener('click', openMap);
 $('mapClose').addEventListener('click', closeMap);
+$('mapWarn').addEventListener('click', closeMap);
 // P66: one Sail home button. It opens a little popup: go instantly with a video, or sail there by yourself.
 const homePop = $('homePop'), hidePop = () => { homePop.hidden = true; };
 $('homeNow').innerHTML = `${IC.play}<span>Go instantly</span>`;

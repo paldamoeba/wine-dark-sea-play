@@ -1,13 +1,13 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=58f9730';
-import {makePost} from './glow.js?v=58f9730';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=58f9730';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=58f9730';
-import {makeFire, updateFire} from './fire.js?v=58f9730';
-import {updateSmoke} from './smoke.js?v=58f9730';
-import {addGrass, updateGrass} from './grass.js?v=58f9730';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=58f9730';
+import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=d678164';
+import {makePost} from './glow.js?v=d678164';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=d678164';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=d678164';
+import {makeFire, updateFire} from './fire.js?v=d678164';
+import {updateSmoke} from './smoke.js?v=d678164';
+import {addGrass, updateGrass} from './grass.js?v=d678164';
+import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=d678164';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -209,7 +209,7 @@ const SOUND_INFO = {
   sink:'Your own ship goes down.', bubbles:'Bubbles from a sinking ship.', bell:'The harbor bell as you come in to dock.', horn:'A war horn when you raid a ship, or a navy ship sees a crime.',
   chime:'A goal or a job is done.', fanfare:'Your new ship is ready, or an island raises your flag.', hammer:'The shipwright fits an upgrade or repairs your hull.', buy:'You buy something.',
   blessing:'Poseidon blesses you after you sail close to a whale.', whale:'A whale surfaces.', kraken:'The kraken rises, and again when it dives.', spout:'The whale breathes out.', splash:'Dolphins splash beside your boat.', gull:'Gulls over islands, wrecks and harbors.',
-  thunder:'After each lightning flash in a storm.', creak:'Your hull creaks as it rolls on the waves.', torch:'What your torches and fire bowls sound like at night: a soft flutter of flame with a few small cracks. This plays 10 seconds of it.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
+  thunder:'After each lightning flash in a storm.', creak:'Your hull creaks as it rolls on the waves.', rain:'A storm\'s rain: waves of soft hiss with single drops landing all around you. This plays 10 seconds of it.', torch:'What your torches and fire bowls sound like at night: a soft flutter of flame with a few small cracks. This plays 10 seconds of it.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
   bottle:'You open a message in a bottle.', treasure:'You dig up a treasure.', crowd:'The crowd at the Rhodes arena.', zone:'You sail into new waters.', warn:'Distant rumbling when a storm is coming.', dock:'Mooring ropes pull tight at the pier.'};
 const SOUND_MODEL = {
   coin:() => wreckModel('medium'), coins:() => harborTown('poseidon'), fish:() => buildShip('fishing'), catch:() => buildShip('fishing'), miss:() => buildShip('fishing'),

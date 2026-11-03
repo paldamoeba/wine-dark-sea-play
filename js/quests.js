@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board', 'camp', 'fort'.
-import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS, PLANS, REVEAL} from './config.js?v=58f9730';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=58f9730';
-import {G, save, ship, lvl, rank, gain, putAboard, reveal, stat} from './state.js?v=58f9730';
-import {scene} from './scene.js?v=58f9730';
-import {mesh} from './models.js?v=58f9730';
-import {toast} from './ui.js?v=58f9730';
-import {sfx} from './audio.js?v=58f9730';
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS, PLANS, REVEAL} from './config.js?v=d678164';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=d678164';
+import {G, save, ship, lvl, rank, gain, putAboard, reveal, stat} from './state.js?v=d678164';
+import {scene} from './scene.js?v=d678164';
+import {mesh} from './models.js?v=d678164';
+import {toast} from './ui.js?v=d678164';
+import {sfx} from './audio.js?v=d678164';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -99,13 +99,13 @@ function spawnBottle(){
 }
 function openBottle(){
   const S = G.S, roll = Math.random(); sfx('bottle'); stat('bottles');
-  if (roll < BOTTLES.coins){ const c = 6 + Math.floor(Math.random()*13); S.gold += c; toast(`Bottle: +${c}`, 3.5); }
+  if (roll < BOTTLES.coins){ const c = BOTTLES.gold[0] + Math.floor(Math.random()*(BOTTLES.gold[1] - BOTTLES.gold[0] + 1)); S.gold += c; toast(`Bottle: +${c}`, 3.5); }
   else if (roll < BOTTLES.coins + BOTTLES.map && !S.treasure){
     const spot = beachSpot(1500, 3700);
-    if (spot){ S.treasure = {...spot, land:true, gold:Math.round(60 + spot.far/22 + Math.random()*40)}; // the farther it is, the more it's worth
+    if (spot){ S.treasure = {...spot, land:true, gold:Math.round(25 + spot.far/60 + Math.random()*20)}; // the farther it is, the more it's worth
       // P65: you hold a map of the place, so you know what's around it too; a bubble on the chart shows there's something new
       reveal(spot.x, spot.y, REVEAL.map); S.mapNew = true; toast('Treasure map!', 3); }
-    if (!S.treasure){ S.gold += 10; toast('Bottle: +10', 2); }
+    if (!S.treasure){ S.gold += 6; toast('Bottle: +6', 2); }
   } else toast(`A note in a bottle: "${BOTTLES.notes[Math.floor(Math.random()*BOTTLES.notes.length)]}"`, 6);
   save();
 }

@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=58f9730';
-import {SPECS} from './ships.js?v=58f9730';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=58f9730';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, unload} from './state.js?v=58f9730';
-import {W} from './weather.js?v=58f9730';
-import {steering} from './input.js?v=58f9730';
-import {toast, showZone} from './ui.js?v=58f9730';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=58f9730';
-import {startFish, stopFish} from './fishing.js?v=58f9730';
-import {blessing, rowBoost, rowBurst, hasSail, fishBoost} from './crew.js?v=58f9730';
-import {progress} from './quests.js?v=58f9730';
-import {startSink} from './sinking.js?v=58f9730';
-import {sfx} from './audio.js?v=58f9730';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=d678164';
+import {SPECS} from './ships.js?v=d678164';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=d678164';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, unload} from './state.js?v=d678164';
+import {W} from './weather.js?v=d678164';
+import {steering} from './input.js?v=d678164';
+import {toast, showZone} from './ui.js?v=d678164';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=d678164';
+import {startFish, stopFish} from './fishing.js?v=d678164';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=d678164';
+import {progress} from './quests.js?v=d678164';
+import {startSink} from './sinking.js?v=d678164';
+import {sfx} from './audio.js?v=d678164';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -95,7 +95,7 @@ function gather(dt, sh){
       // only on a school that is out right now, and only once the boat has settled
       const sch = SHOALS.find(s => Math.hypot(s.x - S.x, s.y - S.y) < SHORE_FISH.range && shoalOn(s, G.t, SHORE_FISH.period[1], SHORE_FISH.on));
       G.still = (G.still || 0) + dt;
-      if (sch && G.still > SHORE_FISH.settle) cur = {type:'shore', ref:sch, time:sh.fishTime*SHORE_FISH.timeK*k/fishBoost()/(1 + .4*G.stormK)}; // fish bite faster in a storm
+      if (sch && G.still > SHORE_FISH.settle) cur = {type:'shore', ref:sch, time:sh.fishTime*SHORE_FISH.timeK*k/(1 + .4*G.stormK)}; // fish bite faster in a storm
     }
   }
   if (!cur || cur.type !== 'fish') stopFish();
@@ -111,7 +111,7 @@ function gather(dt, sh){
   if (act.p < 1) return;
   act.p = 0;
   const r = act.ref;
-  if (act.type === 'shore'){ S.cargo[SHORE_FISH.kind]++; progress('catch', SHORE_FISH.kind); gain(SHORE_FISH.kind); } // a little fish pops up from the boat instead of a message
+  if (act.type === 'shore'){ const n = Math.min(catchRoll(), sh.hold - holdUsed()); S.cargo[SHORE_FISH.kind] += n; progress('catch', SHORE_FISH.kind, n); gain(SHORE_FISH.kind, n); } // a little fish pops up from the boat instead of a message
   else if (act.type === 'mine'){ const n = putAboard('iron', IRON.perDig); sfx('hammer'); r.mine.stock--; if (n) gain('iron', n); stat('iron', n); }
   else if (act.type === 'wood'){ const n = putAboard('wood', TUNING.woodPerCut); sfx('chop'); r.stock--; refreshTrees(r); gain('wood', n); progress('wood', null, n); }
   else {

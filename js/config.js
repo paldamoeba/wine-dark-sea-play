@@ -14,22 +14,22 @@ export const SHIPS = [
 // men = [start, most]: the crew it comes with and the most it can carry (the Crew upgrade adds the rest). On oared ships
 // speed is with every bench filled; with few rowers they're much slower (crew.js rowBoost). fighters = archers with a full crew.
 // plans = needs a blueprint (won from a bandit camp or a pirate fortress) before you can build it.
-  {name:'Rowboat',      model:'rowboat', rank:0, speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, iron:6, linen:6, goods:3}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:2, men:[1, 2], turn:1.6},
-  {name:'Fishing Boat', model:'fishing', rank:1, speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, iron:12, linen:12, goods:6}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:4, men:[1, 4], turn:1.3, cost:{wood:150, linen:10, gold:60}, plans:true,
+  {name:'Rowboat',      model:'rowboat', rank:0, speed:70, hull:40,  hold:10, cap:{wood:40, bronze:10, iron:6, linen:6, goods:12}, heavy:1.6, fishTime:2.6, woodTime:3.0, storm:1.1, len:40,  beam:17, fighters:2, men:[1, 2], turn:1.6},
+  {name:'Fishing Boat', model:'fishing', rank:1, speed:118, hull:80,  hold:20, cap:{wood:80, bronze:20, iron:12, linen:12, goods:24}, heavy:2.4, fishTime:1.8, woodTime:2.2, storm:.5, len:64,  beam:23, fighters:4, men:[1, 4], turn:1.3, cost:{wood:150, linen:10, gold:60}, plans:true,
     desc:'A sail, more speed, room for a crew of four, steadier in big waves'},
-  {name:'Bireme',       model:'bireme',  rank:2, speed:165, hull:170, hold:16, cap:{wood:140, bronze:40, iron:24, linen:20, goods:6}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:141, beam:44, fighters:4, men:[6, 33], turn:.75, cost:{wood:300, bronze:30, iron:15, linen:20, gold:250}, plans:true,
+  {name:'Bireme',       model:'bireme',  rank:2, speed:165, hull:170, hold:16, cap:{wood:140, bronze:40, iron:24, linen:20, goods:24}, heavy:4, fishTime:2.4, woodTime:2.6, storm:0,   len:141, beam:44, fighters:4, men:[6, 33], turn:.75, cost:{wood:300, bronze:30, iron:15, linen:20, gold:250}, plans:true,
     desc:'A warship. Benches for 28 rowers and four archers, a hull that shrugs off big waves, but a small hold'},
-  {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, iron:36, linen:30, goods:8}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:167, beam:49, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, iron:50, linen:40, gold:600}, plans:true,
+  {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, iron:36, linen:30, goods:32}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:167, beam:49, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, iron:50, linen:40, gold:600}, plans:true,
     desc:'The greatest warship of the Aegean: benches for 32 rowers, six archers, an outrigger and a big bronze ram'},
   // bandit ships you capture (combat.js): never built, only taken
-  {name:'Bandit boat',   model:'dinghy', rank:0, captured:true, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, iron:4, linen:4, goods:2}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
+  {name:'Bandit boat',   model:'dinghy', rank:0, captured:true, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, iron:4, linen:4, goods:8}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
     desc:'A quick little raider boat with a blood-red sail'},
-  {name:'Bandit skiff',  model:'skiff',  rank:1, captured:true, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, iron:8, linen:8, goods:4}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
+  {name:'Bandit skiff',  model:'skiff',  rank:1, captured:true, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, iron:8, linen:8, goods:16}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
     desc:'A raider skiff with a ram: three archers and a small hold'},
-  {name:'Bandit galley', model:'raider', rank:2, captured:true, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, iron:20, linen:15, goods:6}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
+  {name:'Bandit galley', model:'raider', rank:2, captured:true, speed:160, hull:200, hold:12, cap:{wood:120, bronze:40, iron:20, linen:15, goods:24}, heavy:3.6, fishTime:2.6, woodTime:2.8, storm:0, len:135, beam:28, fighters:6, men:[6, 25], turn:.62,
     desc:'A black pirate galley with a boar\'s head ram: six archers when its benches are full'},
   // P62: the biggest warship you can build: two decks
-  {name:'Quinquereme', model:'quinquereme', rank:4, speed:205, hull:420, hold:24, cap:{wood:260, bronze:90, iron:60, linen:40, goods:10}, heavy:6.5, fishTime:3, woodTime:3, storm:0, len:215, beam:62, fighters:10, men:[10, 56], turn:.5,
+  {name:'Quinquereme', model:'quinquereme', rank:4, speed:205, hull:420, hold:24, cap:{wood:260, bronze:90, iron:60, linen:40, goods:40}, heavy:6.5, fishTime:3, woodTime:3, storm:0, len:215, beam:62, fighters:10, men:[10, 56], turn:.5,
     cost:{wood:1000, bronze:200, iron:140, linen:100, gold:1500}, plans:true, desc:'Two decks: rowers below on two rows of oars, ten archers on the fighting deck above, two sails and a huge ram'},
 ];
 
@@ -55,7 +55,6 @@ export const CREW = {
     archer:{label:'Archer', desc:'One more bow in every fight'},
     rower: {label:'Rower',  desc:'Your ship sails 5% faster', boost:.05},
   },
-  fishEach:.1, // when you stop to fish, everyone aboard fishes: each sailor makes catches 10% quicker
   names:['Nikias', 'Theron', 'Phaedra', 'Lykon', 'Doris', 'Kleon', 'Ianthe', 'Myron', 'Thalia', 'Dion', 'Eudora', 'Philon', 'Melita', 'Ariston', 'Kallias', 'Xanthe', 'Timon', 'Agape', 'Stavros', 'Chloe'],
 };
 export const GOD_BLESSINGS = {
@@ -110,7 +109,7 @@ export const FIRE_ARROWS = {burnSeconds:2.5, dps:l => l ? .6 + .18*l : 0}; // P4
 export const REQUESTS = {offers:3, max:2,
   who:['Old Pelagia, for her taverna', 'The temple priest', 'A worried mother', 'Kleon the net maker', 'The harbor master', 'Two hungry fishermen', 'A traveling poet', 'The potter\'s daughter']};
 // Messages in bottles. coins / map = chance of each (the rest are notes).
-export const BOTTLES = {first:40, every:[90, 170], life:100, dist:[260, 420], coins:.45, map:.3,
+export const BOTTLES = {first:40, every:[90, 170], life:100, dist:[260, 420], coins:.45, map:.3, gold:[3, 9],
   notes:['To whoever finds this: the tuna run thick east of Paros. Signed, an old fisher.',
     'Help! Stranded on a rock with a goat. The goat is fine. I am bored.',
     'Poseidon, I promise to stop complaining about the waves. Please stop the waves.',
@@ -128,7 +127,7 @@ export const UPGRADES = {
   oars:   {label:'Oars and benches', ship:true, each:.03, unit:'speed', cost:{wood:15, gold:18}, desc:'Lighter oars and better benches: faster'},
   sail:   {label:'Sails',           ship:true, each:.05, unit:'speed', cost:{wood:5, linen:4, gold:14}, desc:'Linen from the sailmaker and wood for the yards. Every level makes the newest sail bigger; every 5 levels a new sail goes up'},
   helm:   {label:'Steering oars',   ship:true, each:.07, unit:'turning', cost:{wood:15, gold:16}, desc:'Longer steering oars: turns quicker'},
-  seats:  {label:'Crew',            ship:true, cost:{gold:9}, desc:'Hire hands for this ship. More rowers make it faster, more archers hit harder, more hands fish quicker'}, // (kept as "seats" so old crew quarters levels carry over)
+  seats:  {label:'Crew',            ship:true, cost:{gold:9}, desc:'Hire hands for this ship. More rowers make it faster, more archers hit harder, more hands bring in more fish'}, // (kept as "seats" so old crew quarters levels carry over)
   arrows: {label:'Arrowheads',      each:.08, unit:'arrow damage', cost:{bronze:2, gold:18}, desc:'Bronze arrowheads for every archer'},
   shower: {label:'Arrow rain',      power:true, cost:{bronze:2, gold:24}, desc:'Drill your archers. More damage, a shorter wait, and the arrows land closer together, so they hit what you aim at'},
   ram:    {label:'Ram',             cost:{wood:20, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it'},
@@ -162,10 +161,11 @@ export const CAPTAIN = {cost:60, grow:2.5, // 60, 150, 380, 940...
 // Bandit camps on the wild islands near Kallisto: a palisade with archers and one mothership guarding it. Easier than a
 // fortress, no catapults. Burn one and it stays burnt; some give ship blueprints (plans = SHIPS index).
 export const CAMPS = [
-  {isle:'Ikaria',  lv:1, hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[50, 70],   wood:30,  bronze:2,  plans:1},
-  {isle:'Tinos',   lv:2, hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[110, 150], wood:70,  bronze:8,  plans:2},
-  {isle:'Syros',   lv:2, plans:2, hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[200, 280], wood:110, bronze:14},
-  {isle:'Ios',     lv:3, plans:3, hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[260, 340], wood:120, bronze:20},
+  {isle:'Ikaria',  lv:1, hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[20, 30],   wood:30,  bronze:2,  plans:1},
+  // P67: ships = how many guard the camp (the mothership and smaller boats around it)
+  {isle:'Tinos',   lv:2, ships:2, hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[50, 70], wood:70,  bronze:8,  plans:2},
+  {isle:'Syros',   lv:2, ships:2, plans:2, hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[80, 110], wood:110, bronze:14},
+  {isle:'Ios',     lv:3, ships:3, plans:3, hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[110, 150], wood:120, bronze:20},
 ];
 export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme's plans (so does any city fortress you knock down)
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
@@ -182,29 +182,29 @@ export const FORTS = {pirates:['Thasos', 'Kos'], // every city island except the
 // Trade goods: each harbor makes one cheaply and wants another. Buy low, sail, sell high.
 // price at a harbor = base × (made here .6 · wanted here 1.45 · otherwise 1). You sell for 85% of the price.
 export const GOODS = {
-  wine:     {label:'Wine',      base:14, color:'#7a2e3a'},
-  oil:      {label:'Olive oil', base:16, color:'#9aa04a'},
-  pottery:  {label:'Pottery',   base:11, color:'#c46a3a'},
-  obsidian: {label:'Obsidian',  base:20, color:'#2c2a33'},
-  dye:      {label:'Purple dye', base:42, color:'#6b2a5e', rare:true}, // only sold at your free ports
+  wine:     {label:'Wine',      base:6, color:'#7a2e3a'},
+  oil:      {label:'Olive oil', base:7, color:'#9aa04a'},
+  pottery:  {label:'Pottery',   base:5, color:'#c46a3a'},
+  obsidian: {label:'Obsidian',  base:9, color:'#2c2a33'},
+  dye:      {label:'Purple dye', base:18, color:'#6b2a5e', rare:true}, // only sold at your free ports
 };
 // War contracts from a city's fortress: sink its rival's warships, or knock down one of the rival's fortresses.
 // Hand in a finished contract at any fortress of the city that gave it.
 export const WAR = {offers:[{t:'sink', n:5, gold:300}, {t:'sink', n:15, gold:1200}, {t:'fort', n:1, gold:700}]};
 // Free ports: a pirate fortress you take becomes yours. Its market sells goods cheaper, cheap timber and purple dye.
-export const FREEPORT = {goods:.6, wood:4, fish:1.2}; // wood: per 10
+export const FREEPORT = {goods:.6, wood:14, fish:1.2}; // wood: per 10
 export const TRADE = {makes:{Kallisto:'pottery', Chios:'wine', Crete:'oil', Milos:'obsidian', Naxos:'wine'},
   wants:{Kallisto:'oil', Chios:'obsidian', Crete:'pottery', Milos:'wine', Naxos:'oil'}, made:.6, wanted:1.45, sellK:.85};
 
 // Building materials: wood, bronze and linen. Wood and bronze ride aboard (each with its own limit) until you dock; linen you buy goes straight to the warehouse.
 // Prices are per 10 wood, or per 1 bronze or linen. Wood and linen are sold in every harbor (cheapest where marked);
 // bronze only by the smiths of a few cities and your free ports. Bronze also comes from warship wrecks and sunk warships.
-export const TIMBER = {price:12, at:{Naxos:6, Crete:6, Chios:8, Milos:10}};
-export const LINEN = {price:4, at:{Chios:3, Crete:3}};
-export const BRONZE = {at:{Crete:10, Chios:12, Milos:11}, free:9};
+export const TIMBER = {price:30, at:{Naxos:16, Crete:16, Chios:20, Milos:24}}; // P67: dear enough that cutting and salvaging is worth it
+export const LINEN = {price:10, at:{Chios:7, Crete:7}};
+export const BRONZE = {at:{Crete:22, Chios:26, Milos:24}, free:20};
 // P65: iron, the construction material: nails, fittings and anchors for warships, the warehouse's frames, chain shot and the catapult.
 // Dug from mines on three islands (stop at the shore, like cutting wood), found in warship wrecks and sunk warships, or bought from a few smiths.
-export const IRON = {at:{Naxos:9, Chios:8, Samos:8}, free:7, mines:['Amorgos', 'Serifos', 'Skyros'], perDig:2, digTime:1.3, stock:6, regen:45};
+export const IRON = {at:{Naxos:20, Chios:18, Samos:18}, free:16, mines:['Amorgos', 'Serifos', 'Skyros'], perDig:2, digTime:1.3, stock:6, regen:45};
 export const MATS = {wood:{label:'Wood'}, bronze:{label:'Bronze'}, iron:{label:'Iron'}, linen:{label:'Linen'}};
 // P65: hull and sail colors are found on the sea. Each ship you sink has this chance of carrying each color you don't have yet.
 // video:true colors can also be unlocked by watching a video (a placeholder until real ads). Rare ones can only be found.
@@ -225,7 +225,8 @@ export const TUNING = {
   wreckRespawn: 90,      // seconds until a new wreck washes in (sizes: WRECK_SIZES below)
   wreckGoldChance: .35,  // chance a salvage pull also finds coins
   wreckGoldMin: 4, wreckGoldMax: 9,
-  repairPerGold: 3,      // hull points per gold
+  repairGold: [.5, 1, 1.5, 2, 2.5], // P67: drachmae per hull point, by ship size (a full repair: rowboat 20, fishing boat 80, bireme 255, trireme 520, quinquereme 1050)
+  repairWood: .5,        // or wood per hull point. Out of both? A video repairs it.
   woodPerCut: 4,         // wood from one cut at the cypress trees
   plankHull: 1.2,        // hull that 1 wood mends when salvaged wreckage patches your ship
   slowSpeed: 30,         // below this speed the boat can fish / gather
@@ -237,14 +238,16 @@ export const TUNING = {
 // Three sizes of shipwreck. share = how many of the wrecks are this size; stock = salvage pulls; wood = timber per pull;
 // gold = [chance per pull, fewest, most coins]; goods = chance a pull also brings up an amphora (wine or oil) for the hold.
 export const WRECK_SIZES = {
-  small:  {label:'Fishing boat wreck', share:.45, scale:.6,  stock:4, wood:5,  gold:[.25, 3, 6]},
-  medium: {label:'Merchant wreck',     share:.35, scale:1,   stock:6, wood:10, gold:[.35, 4, 9], goods:.3},
-  large:  {label:'Warship wreck',      share:.2,  scale:1.5, stock:9, wood:15, gold:[.55, 8, 16], bronze:[.6, 1, 3], iron:[.45, 1, 2]}, // bronze, iron = [chance per pull, fewest, most]
+  small:  {label:'Fishing boat wreck', share:.45, scale:.6,  stock:4, wood:5,  gold:[.25, 2, 4]},
+  medium: {label:'Merchant wreck',     share:.35, scale:1,   stock:6, wood:10, gold:[.35, 3, 6], goods:.3},
+  large:  {label:'Warship wreck',      share:.2,  scale:1.5, stock:9, wood:15, gold:[.55, 6, 12], bronze:[.6, 1, 3], iron:[.45, 1, 2]}, // bronze, iron = [chance per pull, fewest, most]
 };
 // Graphics presets. "auto" starts on high and drops to low if the phone struggles.
 export const QUALITY = {
-  low:  {dpr:1,    shadows:false, waterSeg:64, label:'Low'},
-  high: {dpr:1.5, shadows:true,  waterSeg:100, label:'High'},
+  // P67: dpr = how sharp (a phone's screen has about 3 real pixels per point; the old High drew only 1.5, which is why it looked soft). pix = most pixels drawn, so huge tablets stay smooth.
+  low:  {dpr:1,    shadows:false, waterSeg:64, pix:1e9, label:'Low'},
+  mid:  {dpr:1.5,  shadows:true,  waterSeg:90, pix:2.2e6, label:'Medium'},
+  high: {dpr:2.25, shadows:true,  waterSeg:120, pix:3.2e6, label:'High'},
 };
 export const AUTO_QUALITY = {sampleSeconds:4, minFps:42};
 
@@ -268,24 +271,25 @@ export const COMBAT = {
   lootRange: 70,
 };
 export const ENEMIES = {
-  dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:64,  turn:1.5, fighters:1, dmg:1.5, sight:420, leash:800, gold:[5, 10], wood:10, len:44, beam:17},
-  skiff:  {name:'Raider skiff',  model:'skiff',  hull:90,  speed:80,  turn:1.05, fighters:3, dmg:2, sight:500, leash:900,  gold:[12, 24], wood:25, bronze:1, len:72,  beam:22},
-  galley: {name:'Raider galley', model:'raider', hull:220, speed:120, turn:.45, fighters:6, dmg:3, sight:600, leash:1100, gold:[60, 90], wood:60, bronze:6, iron:3, len:135, beam:28},
+  dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:64,  turn:1.5, fighters:1, dmg:1.5, sight:420, leash:800, gold:[3, 6], wood:10, len:44, beam:17},
+  skiff:  {name:'Raider skiff',  model:'skiff',  hull:90,  speed:80,  turn:1.05, fighters:3, dmg:2, sight:500, leash:900,  gold:[8, 14], wood:25, bronze:1, len:72,  beam:22},
+  galley: {name:'Raider galley', model:'raider', hull:220, speed:120, turn:.45, fighters:6, dmg:3, sight:600, leash:1100, gold:[25, 40], wood:60, bronze:6, iron:3, len:135, beam:28},
   // side: pirate (always hostile), merchant (peaceful, flees), navy (hunts pirates; hunts you only if one of them saw you raid)
-  merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:64, turn:.5, fighters:0, dmg:0, sight:450, gold:[45, 75], wood:30, len:110, beam:44},
+  merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:64, turn:.5, fighters:0, dmg:0, sight:450, gold:[18, 30], wood:30, len:110, beam:44},
   // P65: small traders in the Shallows. They never shoot back: the first good money of the game for a rowboat.
-  trader:   {name:'Small trader', side:'merchant', model:'trader', hull:32, speed:50, turn:.6, fighters:0, dmg:0, sight:380, gold:[22, 38], wood:14, len:84, beam:36},
+  trader:   {name:'Small trader', side:'merchant', model:'trader', hull:32, speed:50, turn:.6, fighters:0, dmg:0, sight:380, gold:[8, 14], wood:14, len:84, beam:36},
   // navies: one kind per city. A patrol switches city when its island changes hands.
-  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, iron:2, len:167, beam:49},
-  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[50, 80], wood:50, bronze:5, iron:2, len:141, beam:44},
+  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[25, 40], wood:50, bronze:5, iron:2, len:167, beam:49},
+  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[25, 40], wood:50, bronze:5, iron:2, len:141, beam:44},
   // P64: the two-deck quinqueremes: the navies' heaviest ships (guarding their strongest fortresses) and a pirate one
-  athensQ:  {name:'Athenian quinquereme', side:'navy', city:'athens', model:'quinquereme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[180, 260], wood:120, bronze:20, iron:8, len:215, beam:62},
-  spartaQ:  {name:'Spartan quinquereme', side:'navy', city:'sparta', model:'quinquereme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[180, 260], wood:120, bronze:20, iron:8, len:215, beam:62},
-  pirateQ:  {name:'Pirate quinquereme', model:'quinquereme', look:{paint:'raider', sail:'blood', flag:'none', helm:'pirate'}, hull:480, speed:125, turn:.42, fighters:8, dmg:3.2, sight:650, leash:1300, gold:[200, 300], wood:120, bronze:18, iron:8, len:215, beam:62},
+  athensQ:  {name:'Athenian quinquereme', side:'navy', city:'athens', model:'quinquereme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[80, 120], wood:120, bronze:20, iron:8, len:215, beam:62},
+  spartaQ:  {name:'Spartan quinquereme', side:'navy', city:'sparta', model:'quinquereme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[80, 120], wood:120, bronze:20, iron:8, len:215, beam:62},
+  pirateQ:  {name:'Pirate quinquereme', model:'quinquereme', look:{paint:'raider', sail:'blood', flag:'none', helm:'pirate'}, hull:480, speed:125, turn:.42, fighters:8, dmg:3.2, sight:650, leash:1300, gold:[90, 130], wood:120, bronze:18, iron:8, len:215, beam:62},
 };
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 // P64: three levels of fortress (by how far out they stand) and of bandit camp. Level 3 fortresses are guarded by quinqueremes.
-export const FORT_LV = [null, {hull:650, fighters:5, dmg:2, guards:1, gold:[200, 320]}, {hull:900, fighters:7, dmg:2.5, guards:2, gold:[320, 520]}, {hull:1300, fighters:9, dmg:3.2, guards:2, gold:[500, 800], big:true}];
+// P67: guards = ships around it (a level 3 fortress has 5, the farthest and Thasos 7; only the first two are quinqueremes). Richer prizes the higher the level.
+export const FORT_LV = [null, {hull:650, fighters:5, dmg:2, guards:1, gold:[150, 230], wood:80, bronze:10, iron:6}, {hull:900, fighters:7, dmg:2.5, guards:3, gold:[400, 600], wood:170, bronze:30, iron:14}, {hull:1300, fighters:9, dmg:3.2, guards:5, most:7, gold:[900, 1400], wood:320, bronze:70, iron:35, big:true}];
 // enemy ship levels: 0 near Kallisto, 1 further, 2 far out. Bigger sails, bigger rams, fuller crews, tougher hulls.
 export const SHIP_LV = {near:9000, far:16000, hull:[1, 1.3, 1.7], dmg:[1, 1.15, 1.35], gold:[1, 1.4, 2], sail:[3, 8, 14], ram:[2, 7, 12], crew:[.45, .7, 1]};
 export const WITNESS = {
@@ -294,4 +298,4 @@ export const WITNESS = {
   calm: 12,         // seconds a merchant keeps fleeing once you are far away
 };
 // Taking islands: when an island's navy guard is sunk, the island is open. Stay near it to raise the other city's flag.
-export const ISLES = {raidEvery:[120, 260], raidStay:45, takeSeconds:20, takeRange:420, aiSeconds:40, aiRange:900, reward:250, bounty:40, guardBack:25};
+export const ISLES = {raidEvery:[120, 260], raidStay:45, takeSeconds:20, takeRange:420, aiSeconds:40, aiRange:900, reward:250, bounty:15, guardBack:25};

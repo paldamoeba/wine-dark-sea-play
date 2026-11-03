@@ -1,18 +1,18 @@
 // Fishing minigame: a needle spins around a ring over your boat. Tap (or press Space) while it is in the green part.
 // Bigger fish have a smaller green part and a faster needle (see FISH in config.js).
-import {FISH} from './config.js?v=58f9730';
-import {G, ship, holdUsed, save, gain} from './state.js?v=58f9730';
-import {toast} from './ui.js?v=58f9730';
-import {blessing, fishBoost} from './crew.js?v=58f9730';
-import {progress} from './quests.js?v=58f9730';
-import {sfx} from './audio.js?v=58f9730';
+import {FISH} from './config.js?v=d678164';
+import {G, ship, holdUsed, save, gain} from './state.js?v=d678164';
+import {toast} from './ui.js?v=d678164';
+import {blessing, catchRoll} from './crew.js?v=d678164';
+import {progress} from './quests.js?v=d678164';
+import {sfx} from './audio.js?v=d678164';
 
 const TAU = Math.PI*2;
 const angDiff = (a, b) => ((a - b + Math.PI*3) % TAU) - Math.PI;
 
 export function startFish(spot){
   const f = FISH[spot.kind];
-  G.fish = {ref:spot, ang:Math.random()*TAU, speed:f.spin, size:f.green*(blessing().green || 1)*(1 + (fishBoost() - 1)*.6)*(1 + .35*G.stormK)*Math.PI/180, g:Math.random()*TAU, cool:0, flash:0, ok:false, next:false};
+  G.fish = {ref:spot, ang:Math.random()*TAU, speed:f.spin, size:f.green*(blessing().green || 1)*(1 + .35*G.stormK)*Math.PI/180, g:Math.random()*TAU, cool:0, flash:0, ok:false, next:false};
   if (!G.S.fishHint){ G.S.fishHint = true; toast('Tap in the green', 3); }
 }
 export function stopFish(){ G.fish = null; }
@@ -30,8 +30,9 @@ function tap(){
   if (holdUsed() >= ship().hold){ toast('Your hold is full'); return; }
   F.next = true; F.flash = 1;
   if (Math.abs(angDiff(F.ang, F.g)) < F.size/2){
-    S.cargo[kind]++; F.ref.stock--; F.ok = true; F.cool = .55; progress('catch', kind); sfx('catch');
-    gain(kind);
+    const n = Math.min(catchRoll(), ship().hold - holdUsed()); // P67: every hand aboard pulls on the net
+    S.cargo[kind] += n; F.ref.stock--; F.ok = true; F.cool = .55; progress('catch', kind, n); sfx('catch');
+    gain(kind, n);
     if (F.ref.stock <= 0){ toast('The fish have moved on', 2); G.fish = null; }
     save();
   } else { F.ok = false; F.cool = .9; toast('It got away'); sfx('miss'); }

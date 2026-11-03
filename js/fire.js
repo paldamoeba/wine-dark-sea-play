@@ -1,5 +1,5 @@
 // Fire and smoke on badly damaged ships. Starts below FIRE_AT of the hull and grows as the hull drops.
-import {smokeColumn} from './smoke.js?v=58f9730';
+import {smokeColumn} from './smoke.js?v=d678164';
 const T = window.THREE;
 export const FIRE_AT = .4;
 
@@ -30,26 +30,31 @@ export function makeFire(len, beam, deck){
   return g;
 }
 
-// k = 0 (no fire) to 1 (blazing).
+// k = 0 (no fire) to 1 (blazing). P67: a fire now starts small and grows: flames swell up over a couple of seconds, and each column
+// of smoke begins at the deck and climbs into the sky over several seconds, instead of being there all at once.
+const SMOKE_CLIMB = 8; // seconds for a new column to reach full height
 export function updateFire(g, k, t){
   if (!g) return;
-  g.visible = k > 0; if (!g.visible) return;
-  const {flames, smoke, embers} = g.userData;
+  const u = g.userData, dt = Math.max(0, Math.min(.1, t - (u.t ?? t))); u.t = t;
+  u.k = (u.k || 0) + (k - (u.k || 0))*Math.min(1, dt*(k > (u.k || 0) ? .7 : .5)); // eases toward the real value
+  if (k <= 0 && u.k < .012){ u.k = 0; g.visible = false; u.flames.forEach(f => { f.userData.grow = 0; }); u.smoke.forEach(m => { m.userData.rise = 0; }); return; }
+  g.visible = true; const K = u.k, {flames, smoke, embers} = u;
   flames.forEach((f, i) => {
-    const on = k > i/flames.length*.8; f.visible = on; if (!on) return;
-    const u = f.userData, fl = 1 + Math.sin(t*13 + u.ph)*.18 + Math.sin(t*21 + u.ph*2)*.1, sz = u.s*(.6 + k*.7);
+    const on = K > .015 + i/flames.length*.7, d = f.userData; d.grow = Math.max(0, Math.min(1, (d.grow || 0) + (on ? dt/2.2 : -dt/1.5))); f.visible = d.grow > 0; if (!f.visible) return;
+    const fl = 1 + Math.sin(t*13 + d.ph)*.18 + Math.sin(t*21 + d.ph*2)*.1, sz = d.s*(.6 + K*.7)*d.grow;
     f.scale.set(sz*(.85 - (fl - 1)*.5), sz*fl*1.9, sz*(.85 - (fl - 1)*.5));
-    f.rotation.y = t*2 + u.ph;
+    f.rotation.y = t*2 + d.ph;
   });
   smoke.forEach(m => {
-    const f = m.userData.from; m.visible = f.visible && k > .1;
+    const f = m.userData.from, d = m.userData; d.rise = f.visible ? Math.min(1.25, (d.rise || 0) + dt/SMOKE_CLIMB) : d.rise || 0; if (!f.visible && K < .03) d.rise = 0;
+    m.visible = d.rise > 0;
     m.position.set(f.position.x, f.position.y + 3, f.position.z);
-    const sc = .55 + k*.55; m.scale.set(sc, .6 + k*.4, sc); m.material.uniforms.uAlpha.value = .88*Math.min(1, (k - .1)*3);
+    const sc = .55 + K*.55, un = m.material.uniforms; m.scale.set(sc, .6 + K*.4, sc); un.uAlpha.value = .88*Math.min(1, K*3.5)*(f.visible ? 1 : Math.min(1, K*6)); un.uRise.value = d.rise;
   });
   embers.forEach(e => {
-    const u = e.userData, p = (t*.7 + u.ph) % 1, f = u.from;
-    e.visible = f.visible && k > .3;
-    e.position.set(f.position.x + u.dx*p, f.position.y + 4 + p*50, f.position.z + u.dz*p); e.scale.setScalar(1.2*(1 - p) + .2);
+    const d = e.userData, p = (t*.7 + d.ph) % 1, f = d.from;
+    e.visible = f.visible && K > .3;
+    e.position.set(f.position.x + d.dx*p, f.position.y + 4 + p*50, f.position.z + d.dz*p); e.scale.setScalar(1.2*(1 - p) + .2);
   });
 }
 // How much a ship is burning, from its hull points.

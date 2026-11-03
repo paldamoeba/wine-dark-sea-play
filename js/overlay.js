@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=58f9730';
-import {G, isExplored} from './state.js?v=58f9730';
-import {fogLayer, islandPath} from './map.js?v=58f9730';
-import {view, project, screenToSea} from './scene.js?v=58f9730';
-import {JOY_RADIUS} from './input.js?v=58f9730';
-import {enemies, combatState, capture, aimLeads} from './combat.js?v=58f9730';
-import {drawFish} from './fishing.js?v=58f9730';
-import {whale} from './wildlife.js?v=58f9730';
-import {SHORE_FISH} from './config.js?v=58f9730';
-import {W as WIND} from './weather.js?v=58f9730';
-import {bottle} from './quests.js?v=58f9730';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=58f9730';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=d678164';
+import {G, isExplored} from './state.js?v=d678164';
+import {fogLayer, islandPath} from './map.js?v=d678164';
+import {view, project, screenToSea} from './scene.js?v=d678164';
+import {JOY_RADIUS} from './input.js?v=d678164';
+import {enemies, combatState, capture, aimLeads} from './combat.js?v=d678164';
+import {drawFish} from './fishing.js?v=d678164';
+import {whale} from './wildlife.js?v=d678164';
+import {SHORE_FISH} from './config.js?v=d678164';
+import {W as WIND} from './weather.js?v=d678164';
+import {bottle} from './quests.js?v=d678164';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=d678164';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -311,7 +311,7 @@ function drawMini(c, cx, cy, ms, S){
   if (G.dest){ c.fillStyle = '#e0614d'; c.beginPath(); c.arc(G.dest.x*k, G.dest.y*k, 3, 0, Math.PI*2); c.fill(); }
   WRECKS.forEach(w => { if (G.settings.dev.markers && w.stock && isExplored(w.x, w.y)){ c.fillStyle = '#f4fbff'; c.fillRect(w.x*k-1.5, w.y*k-1.5, 3, 3); } });
   enemies.forEach(e => { const d = Math.hypot(e.x - S.x, e.y - S.y);
-    if (e.dead || d > (e.spec.side === 'pirate' ? e.spec.sight*1.3 : MINI_RANGE)) return;
+    if (e.dead || d > (e.guard ? 2200 : e.spec.side === 'pirate' ? e.spec.sight*1.3 : MINI_RANGE)) return; // P67: a fortress's guards show from further off, so you can see where they are
     c.fillStyle = shipColor(e); c.strokeStyle = 'rgba(30,20,12,.7)'; c.lineWidth = 1; c.beginPath(); if (e.fort) c.rect(e.x*k - 4, e.y*k - 4, 8, 8); else c.arc(e.x*k, e.y*k, 3, 0, Math.PI*2); c.fill(); c.stroke(); });
   if (whale.state !== 'gone' && whale.state !== 'dive'){ c.fillStyle = '#bfe3f5'; c.beginPath(); c.ellipse(whale.x*k, whale.y*k, 5, 3, whale.a, 0, Math.PI*2); c.fill(); }
   if (bottle.on){ c.fillStyle = '#bfe8d2'; c.fillRect(bottle.x*k - 2, bottle.y*k - 2, 4, 4); }

@@ -23,13 +23,13 @@ const vert = `uniform float uTime, uH, uR0, uR1, uSway, uSeed, uSpeed, uLean; un
     vec4 mvPosition = viewMatrix*wp; gl_Position = projectionMatrix*mvPosition;
     #include <fog_vertex>
   }`;
-const frag = `uniform vec3 uBase, uTop; uniform float uAlpha, uDim; varying float vY; varying vec3 vN;
+const frag = `uniform vec3 uBase, uTop; uniform float uAlpha, uDim, uRise; varying float vY; varying vec3 vN;
   #include <fog_pars_fragment>
   void main(){
     // soft light from the upper left of the screen, so the column looks round and fluffy
     float l = max(dot(normalize(vN), normalize(vec3(-.45, .75, .5))), 0.);
     vec3 c = mix(uBase, uTop, smoothstep(0., .6, vY))*(.78 + .32*l)*uDim;
-    float a = uAlpha*smoothstep(0., .06, vY)*(1. - smoothstep(.55, 1., vY));
+    float a = uAlpha*smoothstep(0., .06, vY)*(1. - smoothstep(.55, 1., vY))*(1. - smoothstep(uRise - .16, uRise, vY)); // uRise: how far up a new column has climbed so far
     gl_FragColor = vec4(c, a);
     #include <fog_fragment>
   }`;
@@ -37,7 +37,7 @@ const frag = `uniform vec3 uBase, uTop; uniform float uAlpha, uDim; varying floa
 // h = height, r0/r1 = radius at the bottom and the top, sway = how far it waves, base/top = colors bottom and top.
 export function smokeColumn({h = 70, r0 = 2.2, r1 = 7, sway = 8, base = '#f2f0ec', top = '#ffffff', alpha = .92, speed = 1, lean = 1} = {}){
   const u = T.UniformsUtils.merge([T.UniformsLib.fog, {uH:{value:h}, uR0:{value:r0}, uR1:{value:r1}, uSway:{value:sway}, uSeed:{value:Math.random()*6.28},
-    uSpeed:{value:speed}, uLean:{value:lean}, uBase:{value:new T.Color(base)}, uTop:{value:new T.Color(top)}, uAlpha:{value:alpha}}]);
+    uSpeed:{value:speed}, uLean:{value:lean}, uBase:{value:new T.Color(base)}, uTop:{value:new T.Color(top)}, uAlpha:{value:alpha}, uRise:{value:9}}]);
   Object.assign(u, shared); // every column shares the clock and the night dimming
   const m = new T.Mesh(geo, new T.ShaderMaterial({uniforms:u, vertexShader:vert, fragmentShader:frag, transparent:true, depthWrite:false, fog:true}));
   m.renderOrder = 2; m.userData.smoke = true; return m;

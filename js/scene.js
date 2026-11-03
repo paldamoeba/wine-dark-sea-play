@@ -1,9 +1,9 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=58f9730';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=58f9730';
-import {G} from './state.js?v=58f9730';
-import {TOD, updateDayNight} from './daynight.js?v=58f9730';
-import {showGrass} from './grass.js?v=58f9730';
+import {QUALITY, SHIPS} from './config.js?v=d678164';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=d678164';
+import {G} from './state.js?v=d678164';
+import {TOD, updateDayNight} from './daynight.js?v=d678164';
+import {showGrass} from './grass.js?v=d678164';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -25,7 +25,7 @@ export const view = {W:innerWidth, H:innerHeight, DPR:1};
 let quality = QUALITY.high;
 
 export function resize(){
-  view.DPR = Math.min(quality.dpr, devicePixelRatio || 1); view.W = innerWidth; view.H = innerHeight;
+  view.W = innerWidth; view.H = innerHeight; view.DPR = Math.min(quality.dpr, devicePixelRatio || 1, Math.sqrt(quality.pix/(view.W*view.H))); // P67: sharp, up to a limit of pixels
   renderer.setPixelRatio(view.DPR); renderer.setSize(view.W, view.H, false);
   camera.aspect = view.W/view.H; camera.updateProjectionMatrix();
 }
@@ -35,7 +35,7 @@ export function resize(){
 // smaller waves on top that are only for looks. The light is worked out for every pixel, with little ripples bent into it,
 // so the sea looks like rolling water, lighter on the crests and deeper in the troughs, not a flat sheet.
 const WS = 2800;
-let water = null, wgeo = null, wbase = null, WN = 0, waterSize = WS;
+let water = null, wgeo = null, wbase = null, WN = 0, waterSize = WS, tileTex = null, tileData = null;
 function buildWater(seg){
   if (water){ scene.remove(water); wgeo.dispose(); }
   WN = seg; waterSize = WS * zoomBucket(viewZoom());
@@ -46,6 +46,10 @@ function buildWater(seg){
   wgeo.setAttribute('aAmp', new T.BufferAttribute(new Float32Array(n), 1));
   wgeo.setAttribute('aShore', new T.BufferAttribute(new Float32Array(n), 1)); // 0 at the shore (flat water), 1 out at sea
   wgeo.setAttribute('aLand', new T.BufferAttribute(new Float32Array(n), 1)); // how far from land (0 at the shore, 1 at 340 or more), for shore foam and rings
+  // P67: the colors and the distance to land also go in a small picture, read smoothly for every pixel. Read from the mesh points alone, the shore and shallows showed soft blocks, the more so the further out the camera.
+  if (tileTex) tileTex.dispose();
+  tileData = new Uint8Array(n*4); tileTex = new T.DataTexture(tileData, WN + 1, WN + 1, T.RGBAFormat, T.UnsignedByteType); tileTex.minFilter = tileTex.magFilter = T.LinearFilter; tileTex.wrapS = tileTex.wrapT = T.ClampToEdgeWrapping;
+  foamU.uTile.value = tileTex; foamU.uTileN.value = WN + 1; foamU.uTileO.value.z = waterSize;
   wgeo.boundingSphere = new T.Sphere(new T.Vector3(), waterSize); // the waves move in the shader
   water = new T.Mesh(wgeo, waterMat);
   water.receiveShadow = true; water.frustumCulled = false; scene.add(water);
@@ -57,14 +61,23 @@ function buildWater(seg){
 }
 let bed = null;
 const bedMat = new T.MeshBasicMaterial({vertexColors:true, color:'#8fa6b8', fog:true});
+bedMat.onBeforeCompile = sh => { Object.assign(sh.uniforms, foamU);
+  sh.vertexShader = 'varying vec2 vBed;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vBed = (modelMatrix*vec4(position, 1.)).xz;');
+  sh.fragmentShader = TILE_GLSL + '\nvarying vec2 vBed;\n' + sh.fragmentShader.replace('#include <color_fragment>', 'diffuseColor.rgb *= tileAt(vBed).rgb;'); };
 // P65: two seas (a setting). 'real': water with reflections of the sky and sun on many small moving waves. 'toon': a Wind Waker style cartoon sea:
 // flat bands of color, crisp white wave lines that change with how rough the water is, and star glints on the sun's path.
 const LOOKS = {real:['#2d97bd', '#17679b', '#124e80', '#57c2bd'], toon:['#2fb4e0', '#1673d6', '#105fc4', '#6fe3e6']};
 const CCOLD = new T.Color('#3d6f8f'), CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
 const waterMat = new T.MeshPhongMaterial({color:'#ffffff', vertexColors:true, specular:'#000000', shininess:1, transparent:true, opacity:.8});
 waterMat.defines = {};
-const foamU = {uLair:{value:new T.Vector3(0, 0, 0)}, uNight:{value:0}, uTime:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
+const foamU = {uTile:{value:null}, uTileN:{value:1}, uTileO:{value:new T.Vector3()}, uZoom:{value:1}, uLair:{value:new T.Vector3(0, 0, 0)}, uNight:{value:0}, uTime:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}};
 // the same swells as waveH() in world.js, written for the graphics card, with their slope (for the light) and smaller waves on top
+// a smooth read of the picture: four linear samples weighted so the result has no corners (a bicubic filter)
+const TILE_GLSL = `uniform sampler2D uTile; uniform float uTileN; uniform vec3 uTileO;
+  vec4 tileAt(vec2 xz){ vec2 p = ((xz - uTileO.xy)/uTileO.z + .5)*(uTileN - 1.), f = fract(p), i = p - f, f2 = f*f, f3 = f2*f;
+    vec2 w0 = (1. - 3.*f + 3.*f2 - f3)/6., w1 = (4. - 6.*f2 + 3.*f3)/6., w2 = (1. + 3.*f + 3.*f2 - 3.*f3)/6., w3 = f3/6., g0 = w0 + w1, g1 = w2 + w3;
+    vec2 a = (i - 1. + w1/g0 + .5)/uTileN, b = (i + 1. + w3/g1 + .5)/uTileN;
+    return g0.y*(g0.x*texture2D(uTile, a) + g1.x*texture2D(uTile, vec2(b.x, a.y))) + g1.y*(g0.x*texture2D(uTile, vec2(a.x, b.y)) + g1.x*texture2D(uTile, b)); }`;
 const WAVES_GLSL = `
   vec3 swell(vec2 p0, float A, float t, float shore){ // height, slope along x, slope along z (keep in step with waterY() in world.js)
     vec2 p = vec2(p0.x + 70.*sin(p0.y*.0021 + 1.3) + 30.*sin(p0.y*.0057 + p0.x*.0013), p0.y + 70.*sin(p0.x*.0017 - .7) + 30.*sin(p0.x*.0049 - p0.y*.0011)); // the same uneven warp
@@ -82,7 +95,8 @@ waterMat.onBeforeCompile = sh => {
       vec3 objectNormal = normalize(vec3(-sw.y, 1., -sw.z));`)
     .replace('#include <begin_vertex>', `vec3 transformed = position; transformed.y += sw.x; vH = sw.x; vAmp = max(A, .5); vSl = sw.yz; vLand = aLand; vSh = aShore;
       vWorld = (modelMatrix*vec4(transformed, 1.0)).xyz;`);
-  sh.fragmentShader = `varying vec3 vWorld; varying vec2 vSl; varying float vH, vAmp, vLand, vSh; uniform float uTime, uGlint, uStorm, uWave, uNight; uniform vec3 uSun, uSky, uLair;
+  sh.fragmentShader = TILE_GLSL + `
+    varying vec3 vWorld; varying vec2 vSl; varying float vH, vAmp, vSh; uniform float uTime, uGlint, uStorm, uWave, uNight, uZoom; uniform vec3 uSun, uSky, uLair;
     #ifdef TOON
     ` + WAVES_GLSL + `
     #endif
@@ -119,23 +133,28 @@ waterMat.onBeforeCompile = sh => {
     #endif
     ` + sh.fragmentShader
     .replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
-      float dist = length(vWorld.xz - cameraPosition.xz), near = 1. - smoothstep(500., 2600., dist);
+      float dist = length(vWorld.xz - cameraPosition.xz), zd = dist/uZoom, near = 1. - smoothstep(500., 2600., zd); // P67: zd: how far away a point is, compared with how far the camera has pulled back, so a big ship's far-out camera still sees all the detail
       #ifdef TOON
         vec2 rp = vec2(0.); normal = normalize((viewMatrix*vec4(0., 1., 0., 0.)).xyz); // flat cartoon light: the bands below do the shading
       #else
         vec2 rw = vWorld.xz;
         vec2 rp = ripple(rw, uTime)*(.1 + .06*uStorm + .02*min(vAmp, 12.))*near;
         // fine detail from noise, close to the camera
+        // P67: from further out, wider waves take over from the small ones
+        if (zk > .01){ float t2 = uTime*.55; vec2 w2 = (rw + 240.*vec2(vnoise(rw/300.) - .5, vnoise(rw/260. + 9.) - .5))/2.3; vec2 s2 = ripple(w2, t2) + ripple(w2.yx*.61 + 40., t2*.8)*.7; rp = mix(rp, s2*(.07 + .014*min(vAmp, 12.)), zk*.6); } // two sets at an angle, pushed around by noise, so no weave shows
         if (near > .01){ float n0 = vnoise(rw/19. + uTime*.11), nx = vnoise((rw + vec2(4., 0.))/19. + uTime*.11), ny = vnoise((rw + vec2(0., 4.))/19. + uTime*.11); rp += vec2(nx - n0, ny - n0)*.8*near; }
         normal = normalize(normal + (viewMatrix*vec4(-rp.x, 0., -rp.y, 0.)).xyz);
       #endif`)
-    .replace('#include <color_fragment>', `#include <color_fragment>
+    .replace('#include <color_fragment>', `vec4 tileC = tileAt(vWorld.xz); float landF = tileC.a; diffuseColor.rgb *= tileC.rgb;
+      float zk = clamp((uZoom - 1.15)/.9, 0., 1.); // P67: 0 up close, 1 with the camera far out
       #ifdef TOON
         // worked out for every pixel, so the bands have smooth curved edges
-        vec3 swp = swell(vWorld.xz, vAmp, uTime, vSh); float hk = clamp(swp.x/vAmp, -1., 1.);
+        // P67: the shape is pushed around by soft noise and scaled by the local chop too, so the bands wander instead of lining up in a grid
+        vec2 bw = vWorld.xz + 150.*vec2(vnoise(vWorld.xz/430. + 3.) - .5, vnoise(vWorld.xz/370. + 11.) - .5) + 50.*vec2(vnoise(vWorld.xz/120.) - .5, vnoise(vWorld.xz/105. + 5.) - .5);
+        vec3 swp = swell(bw, vAmp, uTime, vSh); float hk = clamp(swp.x/(vAmp + 1.5*vSh), -1., 1.);
         // flat bands of color: lighter on the crests, deeper in the troughs, with soft big patches of another blue, all with clean edges
-        diffuseColor.rgb *= .92 + .13*smoothstep(.2, .26, hk) - .09*(1. - smoothstep(-.34, -.28, hk));
-        diffuseColor.rgb *= 1. + .05*smoothstep(.47, .5, vnoise(vWorld.xz/1100. + uTime*.004));
+        diffuseColor.rgb *= .92 + (.13 + .04*zk)*smoothstep(.2, .26, hk) - (.09 + .04*zk)*(1. - smoothstep(-.34, -.28, hk));
+        diffuseColor.rgb *= 1. + (.05 + .05*zk)*smoothstep(.47, .5, vnoise(vWorld.xz/1100. + uTime*.004));
         diffuseColor.rgb *= 1. - uNight*.22;
       #else
         float hk = clamp(vH/vAmp, -1., 1.);
@@ -154,19 +173,21 @@ waterMat.onBeforeCompile = sh => {
       vec3 Vv = normalize(cameraPosition - vWorld);
       float lair = uLair.z > 0. ? 1. - smoothstep(uLair.z*.55, uLair.z, length(vWorld.xz - uLair.xy)) : 0.;
       #ifdef TOON
-        float wobble = (vnoise(vWorld.xz/60. + uTime*.05) - .5)*.07, ll = vLand + wobble;
+        float wobble = (vnoise(vWorld.xz/60. + uTime*.05) - .5)*.07, ll = landF + wobble;
         // shallow water near land: clean rings of lighter blue, and white foam rings that roll in to the shore
         gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb*vec3(1.2, 1.26, 1.16) + vec3(.03, .07, .06), 1. - smoothstep(.46, .49, ll));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb*vec3(1.14, 1.2, 1.1) + vec3(.05, .09, .06), 1. - smoothstep(.2, .23, ll));
-        float roll = fract(ll*4.6 + uTime*.13), rollK = 1. - smoothstep(.55, .9, vLand);
+        float roll = fract(ll*4.6 + uTime*.13), rollK = 1. - smoothstep(.55, .9, landF);
         float rings = (1. - smoothstep(.07, .13, abs(roll - .5)))*rollK*smoothstep(.34, .5, vnoise(vWorld.xz/46. - uTime*.04));
         // how rough the water is here decides which lines you see: long lazy strokes when calm, more when choppy, thick doubled ones in big seas
         float wav = vAmp, wCalm = 1. - smoothstep(3., 6., wav), wRough = smoothstep(8.5, 14., wav), wNorm = clamp(1. - wCalm - wRough, 0., 1.);
         vec2 lw = vWorld.xz + vSl*150. + vec2(uTime*2.4, -uTime*1.5); // the lines ride up and down the waves
-        float px = dist*.0009, lfade = 1. - smoothstep(1300., 2700., dist), lines = 0.;
+        float px = dist*.0009, lfade = 1. - smoothstep(1300., 2700., zd), lines = 0.;
         if (wCalm > .01) lines = max(lines, wCalm*strokes(lw, 170., .05, .03, .7, .012, 0., px/170. + .004));
         if (wNorm > .01) lines = max(lines, wNorm*strokes(lw + 37., 112., .08, .042, .82, .022, 0., px/112. + .005));
         if (wRough > .01) lines = max(lines, wRough*strokes(lw*vec2(1., 1.2) + 71., 80., .13, .06, .94, .034, 1., px/80. + .006));
+        // P67: from further out, bigger strokes join in, so a big ship's far-out view is never plain blue
+        if (zk > .01) lines = max(lines, zk*strokes(lw + 13., 320., .05 + .04*wNorm, .034 + .012*wRough, .78, .018, 0., px/320. + .003));
         // the crest of each big wave gets its own broken white line, which moves with the wave itself
         float brk = smoothstep(.56, .66, vnoise(vWorld.xz/95. + vec2(uTime*.05, 0.)));
         float crest = (1. - smoothstep(.02, .06, abs(hk - .62)))*brk*clamp((wav - 4.5)*.2, 0., 1.)*lfade;
@@ -189,15 +210,15 @@ waterMat.onBeforeCompile = sh => {
         vec3 skyC = mix(uSky*1.08, uSky*vec3(.42, .62, .98), smoothstep(.45, 1., Rr.y));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, skyC, fres*(1. - .5*lair));
         // the sun on the water: a wide soft sheen, and bright glitter on the finest waves
-        float sp = max(dot(reflect(-uSun, nW), Vv), 0.), glit = vnoise(vWorld.xz/6.5 + vec2(uTime*.9, -uTime*.7));
+        float sp = max(dot(reflect(-uSun, nW), Vv), 0.), glit = mix(vnoise(vWorld.xz/6.5 + vec2(uTime*.9, -uTime*.7)), vnoise(vWorld.xz/15. + vec2(uTime*.6, -uTime*.5)), zk);
         vec3 sunC = mix(vec3(1., .95, .84), vec3(.78, .86, 1.), uNight);
         gl_FragColor.rgb += sunC*(pow(sp, 10.)*.1 + pow(sp, 60.)*.32 + pow(sp, 300.)*smoothstep(.38, .8, glit)*2.2)*uGlint*near;
         // foam: soft white on the highest crests, more in rough water, and a gentle lace where waves lap at the shore
         float n1 = vnoise(vWorld.xz/64. + vec2(uTime*.14, -uTime*.05)), n2 = vnoise(vWorld.xz/17. - vec2(uTime*.1, uTime*.16));
         float foamN = n1*.65 + n2*.35, rough = clamp((vAmp - 2.5)*.1, 0., 1.);
         float cap = smoothstep(.34, .95, hk)*smoothstep(.56 - rough*.14, .78, foamN)*(.08 + rough);
-        float lace = (1. - smoothstep(.05, .34, vLand))*smoothstep(.5, .72, n2*.55 + n1*.45 + .22*sin(vLand*26. - uTime*.8));
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, clamp(cap*.8 + lace*.55, 0., .9)*(1. - lair)*(1. - .4*uNight)*(1. - smoothstep(1700., 3000., dist)));
+        float lace = (1. - smoothstep(.05, .34, landF))*smoothstep(.5, .72, n2*.55 + n1*.45 + .22*sin(landF*26. - uTime*.8));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, clamp(cap*.8 + lace*.55, 0., .9)*(1. - lair)*(1. - .4*uNight)*(1. - smoothstep(1700., 3000., zd)));
       #endif
       // the wine-dark sea stays deep red and doesn't wash out to lilac
       gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb*vec3(.62, .28, .38) + vec3(.06, 0., .02), lair*.85);
@@ -212,7 +233,7 @@ setSeaLook((G.settings && G.settings.sea) || 'real');
 // (or the look changes), and the tile only moves in steps of about 100. The waves themselves move on the graphics card.
 let wKey = '';
 export function updateWater(){
-  foamU.uTime.value = G.t; foamU.uWave.value = WEATHER_WAVES.k;
+  foamU.uTime.value = G.t; foamU.uWave.value = WEATHER_WAVES.k; foamU.uZoom.value = Math.max(1, viewZoom());
   const step = waterSize/WN*Math.max(1, Math.round(100/(waterSize/WN))), ox = Math.round(G.cam.x/step)*step, oz = Math.round(G.cam.y/step)*step;
   water.position.set(ox, 0, oz); bed.position.set(ox, -80, oz); /* P65: well below the deepest trough: when the waves dipped under it, it showed as hard dark shapes in the water */
   const p = wbase, c = wgeo.attributes.color.array, amp = wgeo.attributes.aAmp.array, shore = wgeo.attributes.aShore.array, land = wgeo.attributes.aLand.array, key = ox + ',' + oz + ',' + CSEA.getHex() + ',' + wgeo.uuid; // a rebuilt water tile (zoom, graphics) always gets its colors again
@@ -224,7 +245,9 @@ export function updateWater(){
     tmpC.copy(CSH).lerp(CSEA, s.k0).lerp(CST, s.k1); if (ld < 170) tmpC.lerp(CLAG, sstep(170, 0, ld)*.85); // light lagoon water near every shore: the crew fishes here
     tmpC.lerp(CCOLD, sstep(WORLD*.36, WORLD*.2, z)*.6); // colder, greyer water in the far north
     c[i] = tmpC.r; c[i+1] = tmpC.g; c[i+2] = tmpC.b;
+    const q = v*4; tileData[q] = Math.min(255, tmpC.r*255); tileData[q+1] = Math.min(255, tmpC.g*255); tileData[q+2] = Math.min(255, tmpC.b*255); tileData[q+3] = land[v]*255;
   }
+  tileTex.needsUpdate = true; foamU.uTileO.value.x = ox; foamU.uTileO.value.y = oz;
   wgeo.attributes.color.needsUpdate = true; wgeo.attributes.aAmp.needsUpdate = true; wgeo.attributes.aShore.needsUpdate = true; wgeo.attributes.aLand.needsUpdate = true;
 }
 
@@ -247,7 +270,7 @@ export function applyZoom(){
 export function applyQuality(name){
   quality = QUALITY[name] || QUALITY.high;
   renderer.shadowMap.enabled = quality.shadows;
-  showGrass(quality !== QUALITY.low); // grass only on High graphics
+  showGrass(quality !== QUALITY.low); // grass on Medium and High
   sun.castShadow = quality.shadows;
   scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
   buildWater(quality.waterSeg);
@@ -300,11 +323,11 @@ export function screenToSea(sx, sy){
 // ---- the "tiny world" look (a setting): tilt-shift blur at the top and bottom of the screen, a little more color and warmth,
 // and a soft vignette, so the sea looks like a miniature model, like Tiny Glade. The middle band, where your ship is, stays sharp.
 let rt = null;
-const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.Vector2(1, 1)}, focus:{value:.5}, bloom:{value:0}}, depthTest:false, depthWrite:false,
+const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.Vector2(1, 1)}, focus:{value:.5}, bloom:{value:0}, far:{value:0}}, depthTest:false, depthWrite:false,
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
-  fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom; varying vec2 vUv;
+  fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom, far; varying vec2 vUv;
     void main(){
-      float d = abs(vUv.y - focus), r = smoothstep(.32, .52, d)*7.0; // only the outer edges blur, gently (P50: was 15)
+      float d = abs(vUv.y - focus), r = smoothstep(.32 - .07*far, .52 - .05*far, d)*(7. + 5.*far)*res.y/1200.; // only the outer edges blur, gently. P67: the same size on any screen, and a little more as the camera pulls back, so the tiny-world look holds
       // a soft round blur: 24 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
       vec4 c = texture2D(tex, vUv); float tot = 1., spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
       if (r > .02) for (int i = 1; i <= 16; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/16.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; } // the sharp middle skips the blur
@@ -327,6 +350,6 @@ export function renderFrame(on){
   if (!rt || rt.width !== w || rt.height !== h){ if (rt) rt.dispose();
     rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); }
   renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
-  post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .1 + TOD.night*1.5; // a hint by day, strong at night around flames and windows
+  post.uniforms.far.value = Math.max(0, Math.min(1, (viewZoom() - 1)/1.2)); post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .1 + TOD.night*1.5; // a hint by day, strong at night around flames and windows
   renderer.render(postScene, postCam);
 }

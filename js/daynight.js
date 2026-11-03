@@ -2,9 +2,9 @@
 // (bright enough to sail), then dawn again. At dusk every ship lights its torches, statues light their fire bowls
 // and town windows glow. The time of day is kept in the save (G.S.clock), so it carries on where you left it.
 // Settings can keep it always day or always night.
-import {G, stat} from './state.js?v=58f9730';
-import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=58f9730';
-import {WIN_MAT} from './models.js?v=58f9730';
+import {G, stat} from './state.js?v=d678164';
+import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=d678164';
+import {WIN_MAT} from './models.js?v=d678164';
 
 const T = window.THREE;
 export const CYCLE = 600; // seconds for a whole day
@@ -57,21 +57,25 @@ function addHalos(root){
 const inScene = o => { while (o.parent) o = o.parent; return o.isScene; };
 const DAY_WIN = new T.Color('#33414f'), NIGHT_WIN = new T.Color('#ffc865');
 let lit = false, scanT = 0, lantern = null, scene = null;
-// Lights torches when the evening comes and puts them out at dawn. New ships get theirs on the next check.
+// P67: torches catch little by little as it gets dark and burn down at dawn: each ship starts at its own moment and the flames grow slowly.
+// New ships get theirs on the next check.
 function updateFires(dt){
-  const on = TOD.night > .3;
-  WIN_MAT.color.copy(DAY_WIN).lerp(NIGHT_WIN, Math.min(1, Math.max(0, (TOD.night - .1)/.6)));
-  scanT -= dt; const check = scanT <= 0 || on !== lit; if (check) scanT = 1;
+  const N = TOD.night, on = N > .03;
+  WIN_MAT.color.copy(DAY_WIN).lerp(NIGHT_WIN, Math.min(1, Math.max(0, (N - .1)/.6)));
+  scanT -= dt; const check = scanT <= 0; if (check) scanT = 1;
   let near = 0;
   for (const r of TORCH_ROOTS){
-    if (check){ if (!inScene(r)){ if ((r.userData.lost = (r.userData.lost || 0) + 1) > 20) TORCH_ROOTS.delete(r); continue; } r.userData.lost = 0;
-      if (r.userData.lit !== on){ if (on) addHalos(r); setTorches(r, on); r.userData.lit = on; } }
-    if (!on || !r.userData.lit) continue;
+    if (check){ if (!inScene(r)){ if ((r.userData.lost = (r.userData.lost || 0) + 1) > 20) TORCH_ROOTS.delete(r); continue; } r.userData.lost = 0; }
+    const u = r.userData; if (u.fireAt === undefined) u.fireAt = .03 + Math.random()*.22; // when this ship lights up (how dark it has to be)
+    const k = u.fireK = Math.max(0, Math.min(1, (N - u.fireAt)/.4)), burning = k > 0;
+    if (u.lit !== burning){ if (burning) addHalos(r); setTorches(r, burning); u.lit = burning; }
+    if (!burning) continue;
     const p = r.getWorldPosition(tmp), d = Math.hypot(p.x - G.cam.x, p.z - G.cam.y);
-    if (d < 1400){ flicker(r, G.t); if (!r.userData.spec) near = Math.max(near, 1 - d/500); }
+    if (d < 3200) flicker(r, G.t);
+    if (d < 1400 && !u.spec) near = Math.max(near, (1 - d/500)*k);
   }
   lit = on;
-  G.fireNear = on ? Math.max(.25, near) : 0; // for the crackle of fires (your own torches are always close)
+  G.fireNear = on ? Math.max(.25*Math.min(1, N*2), near) : 0; // for the crackle of fires (your own torches are always close)
   if (lantern){ lantern.visible = TOD.night > .15; lantern.intensity = Math.min(1, TOD.night*1.4)*(.9 + Math.sin(G.t*11)*.05 + Math.sin(G.t*17)*.04);
     lantern.position.set(G.S.x, 26, G.S.y); }
 }

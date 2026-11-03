@@ -1,7 +1,8 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES, POWER} from './config.js?v=58f9730';
-import {G, lvl, ship, pay, rank} from './state.js?v=58f9730';
-import {SPECS, sailSizes, crewLayout} from './ships.js?v=58f9730';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES, POWER, COMBAT} from './config.js?v=d678164';
+import {blessing, fighters, catchAvg} from './crew.js?v=d678164';
+import {G, lvl, ship, pay, rank} from './state.js?v=d678164';
+import {SPECS, sailSizes, crewLayout} from './ships.js?v=d678164';
 
 export const ramMax = () => RAM.lv*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
@@ -24,7 +25,9 @@ export const sailCount = (l = lvl('sail')) => sailSizes(SPECS[ship().model], l).
 export function ramMat(l = lvl('ram')){ if (!l) return null; const m = Math.min(RAM.mats.length - 1, Math.floor((l - 1)/RAM.lv)); return {...RAM.mats[m], i:m, sub:l - m*RAM.lv}; }
 // Damage of a full-speed head-on hit with your ram (0 without one).
 export function ramDmg(l = lvl('ram')){ const m = ramMat(l); return m ? Math.round((RAM.base + RAM.per*m.sub)*m.k) : 0; }
-export const arrowK = () => 1 + UPGRADES.arrows.each*lvl('arrows');
+export const arrowK = (l = lvl('arrows')) => 1 + UPGRADES.arrows.each*l;
+// P67: damage of one arrow, the same kind of number as the ram's
+const arrowHit = (l = lvl('arrows'), k = 1) => (COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(l)*k).toFixed(1).replace(/\.0$/, '');
 // Crew: each level hires one more hand on small ships, two (a bench) on big ones, up to the ship's most (SHIPS men).
 // P62: hiring is a big step: at most 4 hires per ship, each brings a group of men. The first costs 500, each next one 2.5 times more.
 export const crewLevels = (t = G.S.tier) => Math.min(4, SHIPS[t].men[1] - SHIPS[t].men[0]);
@@ -46,15 +49,18 @@ export function costOf(k){
 // "6 men: 2 archers, 4 rowers" for a crew level
 function crewText(l){ const t = G.S.tier, m = Math.min(SHIPS[t].men[1], SHIPS[t].men[0] + l*crewPer(t)), c = crewLayout(SPECS[SHIPS[t].model], m);
   const parts = [c.archers && `${c.archers} archer${c.archers > 1 ? 's' : ''}`, c.rowers && `${c.rowers} rower${c.rowers > 1 ? 's' : ''}`].filter(Boolean);
-  return `${m} ${m === 1 ? 'man' : 'men'}${parts.length ? ': ' + parts.join(', ') : ''}`; }
+  const fish = catchAvg(m), ft = fish % 1 ? fish.toFixed(1) : fish; // what they bring in
+  return `${m} ${m === 1 ? 'man' : 'men'}${parts.length ? ': ' + parts.join(', ') : ''}. ${ft} fish a catch`; }
 // What the upgrade does now and after the next level, in plain words.
 export function effectText(k, l = lvl(k)){
   const u = UPGRADES[k];
-  if (k === 'ram'){ const m = ramMat(l); return m ? `${m.name} ram, level ${m.sub}: ${ramDmg(l)} damage` : 'No ram'; }
+  if (k === 'ram'){ const m = ramMat(l); return m ? `${m.name} ram, level ${m.sub}: ${ramDmg(l)} damage a hit` : 'No ram'; }
   if (k === 'fire') return l ? `${FIRE_ARROWS.dps(l).toFixed(1)} fire damage a second, for ${fireSecs(l).toFixed(1)} s` : 'No fire arrows';
   if (k === 'catapult') return l ? `${ABILITIES.catapult.dmg(l)} damage` : 'No catapult';
   if (k === 'chain') return l ? `${ABILITIES.chain.secs(l).toFixed(1)} s without a sail` : 'No chain shot';
-  if (k === 'shower') return `+${Math.round((showerK(l) - 1)*100)}% damage`;
+  if (k === 'arrows') return `${arrowHit(l)} damage an arrow, ${fighters()} archer${fighters() === 1 ? '' : 's'}`;
+  if (k === 'hull') return `${Math.round(SHIPS[G.S.tier].hull*(1 + u.each*l))} hull`;
+  if (k === 'shower') return `${fighters()*COMBAT.volleyArrows} arrows, ${arrowHit(lvl('arrows'), showerK(l))} damage each`;
   if (k === 'seats') return crewText(l);
   if (k === 'sail'){ const n = sailCount(l); return n ? `${n} sail${n > 1 ? 's' : ''}, +${Math.round(u.each*l*100)}% speed` : 'No sail'; }
   return `+${Math.round(u.each*l*100)}% ${u.unit}`;
