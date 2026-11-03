@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=8c56f6e';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=8c56f6e';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName} from './state.js?v=8c56f6e';
-import {fleetBody, pinCard} from './fleetpage.js?v=8c56f6e';
-import {myLevel} from './levels.js?v=8c56f6e';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=8c56f6e';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=8c56f6e';
-import {planClues} from './combat.js?v=8c56f6e';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=8c56f6e';
-import {board, active, canDeliver, goal} from './quests.js?v=8c56f6e';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=8c56f6e';
-import {colorHeld, colorInfo} from './colors.js?v=8c56f6e';
-import {shipPortrait} from './portrait.js?v=8c56f6e';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=8c56f6e';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=9de774d';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=9de774d';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName} from './state.js?v=9de774d';
+import {fleetBody, pinCard} from './fleetpage.js?v=9de774d';
+import {myLevel} from './levels.js?v=9de774d';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=9de774d';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=9de774d';
+import {planClues} from './combat.js?v=9de774d';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=9de774d';
+import {board, active, canDeliver, goal} from './quests.js?v=9de774d';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=9de774d';
+import {colorHeld, colorInfo} from './colors.js?v=9de774d';
+import {shipPortrait} from './portrait.js?v=9de774d';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=9de774d';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -173,8 +173,8 @@ Object.assign(IC, {
   catapult: svg(`<defs>${glossy('ut', [[0, '#d39257'], [1, '#7e4f2b']])}</defs>${shade(12, 21.8, 9)}<path d="M3 19.5 H21" stroke="url(#ut)" stroke-width="2.6" stroke-linecap="round"/><path d="M6 19.5 L11 11 L16 19.5" stroke="url(#ut)" stroke-width="2.2" fill="none" stroke-linejoin="round"/>
     <path d="M11 11 L18.5 4.5" stroke="url(#ut)" stroke-width="2"/><circle cx="19" cy="4.6" r="3.2" fill="#f59a3a"/><circle cx="18.2" cy="3.8" r="1.2" fill="#ffe08a"/>`),
   // war: two crossed swords with bronze guards
-  swords: svg(`<defs>${glossy('wz', [[0, '#f4f7fa'], [1, '#9aa6b2']])}</defs>${shade(12, 21.8, 8)}
-    ${[1, -1].map(sg => `<g transform="translate(12 12) scale(${sg} 1) translate(-12 -12)"><path d="M5 4 L6.4 3.6 L17.4 14.6 L16 16Z" fill="url(#wz)"/><path d="M14.4 17.6 L18.6 13.4" stroke="#c48a3e" stroke-width="2.4" stroke-linecap="round"/><path d="M17.4 16.4 L20.4 19.4" stroke="#7e4f2b" stroke-width="2.2" stroke-linecap="round"/><circle cx="20.8" cy="19.8" r="1.3" fill="#e3ad48"/></g>`).join('')}`),
+  swords: svg(`${shade(12, 21.8, 8)}
+    ${[1, -1].map(sg => `<g transform="translate(12 12) scale(${sg} 1) translate(-12 -12)"><path d="M5 4 L6.4 3.6 L17.4 14.6 L16 16Z" fill="#dfe6ec" stroke="#5f6b76" stroke-width=".5" stroke-linejoin="round"/><path d="M14.4 17.6 L18.6 13.4" stroke="#c48a3e" stroke-width="2.4" stroke-linecap="round"/><path d="M17.4 16.4 L20.4 19.4" stroke="#7e4f2b" stroke-width="2.2" stroke-linecap="round"/><circle cx="20.8" cy="19.8" r="1.3" fill="#e3ad48"/></g>`).join('')}`),
 });
 // P59: trade goods in the glossy style: an amphora with a shine (wine, oil, dye in their colors), a red-figure pot, a black glass shard
 const tone = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = c => Math.max(0, Math.min(255, Math.round(c*k))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
@@ -277,7 +277,7 @@ export const woodPrice = h => h.free ? FREEPORT.wood : TIMBER.at[h.is.name] || T
 export const matPrice = (h, k) => k === 'wood' ? woodPrice(h) : k === 'linen' ? LINEN.at[h.is.name] || LINEN.price : k === 'iron' ? (h.free ? IRON.free : IRON.at[h.is.name] || null) : h.free ? BRONZE.free : BRONZE.at[h.is.name] || null;
 export const matStep = k => k === 'wood' ? 10 : 1; // wood is sold in bundles of 10
 export function harborHTML(h){
-  const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['fleet', 'Fleet', IC.ship], ['ware', 'Warehouse', IC.hold], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['crew', 'Crew', IC.crew]] // P63: Kallisto opens on the shipyard; P65: the warehouse has its own page
+  const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['ware', 'Warehouse', IC.hold], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['crew', 'Crew', IC.crew], ['fleet', 'Fleet', IC.ship]] // P63: Kallisto opens on the shipyard; P65: the warehouse has its own page
     : h.free ? [['market', 'Market', IC.market], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]] : [['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]];
   if (!list.some(([k]) => k === tabs.port)) tabs.port = list[0][0];
   const t = tabs.port, body = t === 'jobs' ? jobsTab(h) : t === 'fleet' ? fleetBody() : t === 'yard' ? yardTab() : t === 'ware' ? wareTab() : t === 'crew' ? crewTab() : t === 'dock' ? dockTab() : marketTab(h);

@@ -1,15 +1,15 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=8c56f6e';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=8c56f6e';
-import {GOODS} from './config.js?v=8c56f6e';
-import {sfx} from './audio.js?v=8c56f6e';
-import {playVideo, toast} from './ui.js?v=8c56f6e';
-import {ARENA} from './arena.js?v=8c56f6e';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=8c56f6e';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=8c56f6e';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=8c56f6e';
-import {G, ship, isExplored, reveal, save} from './state.js?v=8c56f6e';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=9de774d';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=9de774d';
+import {GOODS} from './config.js?v=9de774d';
+import {sfx} from './audio.js?v=9de774d';
+import {playVideo, toast} from './ui.js?v=9de774d';
+import {ARENA} from './arena.js?v=9de774d';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=9de774d';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=9de774d';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=9de774d';
+import {G, ship, isExplored, reveal, save} from './state.js?v=9de774d';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -336,7 +336,7 @@ $('homeNow').addEventListener('click', () => { if (combatState.threat) return; h
 $('homeCancel').addEventListener('click', hidePop);
 homePop.addEventListener('click', e => { if (e.target === homePop) hidePop(); });
 // the legend, with the same pictures as the chart
-$('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [IC.wreck, 'Wreck'], [IC.swords, 'Named pirate'], [X_SVG, 'Treasure'], ['<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Pinned plans']].map(([ic, n]) => `<li>${ic}${n}</li>`).join('');
+$('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [IC.wreck, 'Wreck'], [IC.swords, 'Named pirate'], [X_SVG, 'Treasure'], ['<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Pinned plans']].map(([ic, n]) => `<li>${ic.replace(/id="(\w+)"/g, 'id="lg$1"').replace(/url\(#(\w+)\)/g, 'url(#lg$1)')}${n}</li>`).join(''); // P72: its own color names: the chart is hidden most of the time, and any picture borrowing colors from a hidden one loses them (the swords lost their blades)
 $('mapFilter').innerHTML = FILTER_GROUPS.map(([g, list]) => { const o = list.map(([v, n]) => `<option value="${v}">${n}</option>`).join(''); return g ? `<optgroup label="${g}">${o}</optgroup>` : o; }).join('');
 // frame what the filter found, with your ship, so you never have to hunt for it
 function frame(pts){ if (!pts.length) return; const all = [...pts, {x:G.S.x, y:G.S.y}], xs = all.map(p => p.x), ys = all.map(p => p.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);

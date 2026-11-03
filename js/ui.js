@@ -1,29 +1,30 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=8c56f6e';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=8c56f6e';
-import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=8c56f6e';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=8c56f6e';
-import {CYCLE} from './daynight.js?v=8c56f6e';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=8c56f6e';
-import {swapBoat, refreshAllTrees} from './entities.js?v=8c56f6e';
-import {setZoom} from './input.js?v=8c56f6e';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=8c56f6e';
-import {tutHTML} from './tutorial.js?v=8c56f6e';
-import {founded, blessing} from './crew.js?v=8c56f6e';
-import {WHALE} from './wildlife.js?v=8c56f6e';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=8c56f6e';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=8c56f6e';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=8c56f6e';
-import {effectText, buy} from './upgrades.js?v=8c56f6e';
-import {fleetHTML} from './fleetpage.js?v=8c56f6e';
-import {askName} from './naming.js?v=8c56f6e';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=8c56f6e';
-import {GOODS, WAR} from './config.js?v=8c56f6e';
-import {fly} from './fly.js?v=8c56f6e';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=8c56f6e';
-import {W, KINDS} from './weather.js?v=8c56f6e';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=8c56f6e';
-import {setTimeOfDay} from './daynight.js?v=8c56f6e';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=9de774d';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=9de774d';
+import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=9de774d';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=9de774d';
+import {CYCLE} from './daynight.js?v=9de774d';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=9de774d';
+import {swapBoat, refreshAllTrees} from './entities.js?v=9de774d';
+import {setZoom} from './input.js?v=9de774d';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=9de774d';
+import {tutHTML} from './tutorial.js?v=9de774d';
+import {founded, blessing} from './crew.js?v=9de774d';
+import {WHALE} from './wildlife.js?v=9de774d';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=9de774d';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=9de774d';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=9de774d';
+import {effectText, buy} from './upgrades.js?v=9de774d';
+import {fleetHTML} from './fleetpage.js?v=9de774d';
+import {myLevel} from './levels.js?v=9de774d';
+import {askName} from './naming.js?v=9de774d';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=9de774d';
+import {GOODS, WAR} from './config.js?v=9de774d';
+import {fly} from './fly.js?v=9de774d';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=9de774d';
+import {W, KINDS} from './weather.js?v=9de774d';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=9de774d';
+import {setTimeOfDay} from './daynight.js?v=9de774d';
 
 const $ = id => document.getElementById(id);
 
@@ -55,7 +56,7 @@ export function updateUI(dt, nearDock){
   $('harborBtn').hidden = G.sheetOpen || !moored;
   $('hint').hidden = !G.S.hint || G.sheetOpen;
   document.body.classList.toggle('sheeton', !!G.sheetOpen); // menus cover the whole screen: the HUD and little map step aside
-  G.doneT = Math.max(0, (G.doneT || 0) - dt); $('goalPill').classList.toggle('done', G.doneT > 0); // a check mark for a moment after a goal or job is done
+  G.doneT = Math.max(0, (G.doneT || 0) - dt); $('goalPill').classList.toggle('done', G.doneT > 0); { const L = myLevel(), m = $('rank'); if (m.textContent !== String(L)){ const up = +m.textContent < L && G.medalSeen; m.textContent = L; G.medalSeen = true; if (up){ const el = $('medal'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } } } /* P72: the level medal, with a little pop when it rises */ // a check mark for a moment after a goal or job is done
   // P65: the red bubble only means something: a quest is done and you haven't looked at it yet; on the chart, a treasure map you haven't looked at
   const pill = pillText(); $('goalDot').hidden = !G.S.questNew || G.sheetOpen || G.doneT > 0;
   $('chartDot').hidden = $('mapDot').hidden = !G.S.mapNew || G.sheetOpen;
@@ -210,7 +211,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 71</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 72</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}

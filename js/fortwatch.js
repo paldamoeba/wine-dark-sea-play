@@ -1,12 +1,12 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=8c56f6e';
-import {FORTS} from './config.js?v=8c56f6e';
-import {CITIES} from './world.js?v=8c56f6e';
-import {enemies, hostile, planReward} from './combat.js?v=8c56f6e';
-import {SHIPS, PLANS} from './config.js?v=8c56f6e';
-import {sfx} from './audio.js?v=8c56f6e';
-import {siteLevel, myLevel, standing, LEVEL_WORD} from './levels.js?v=8c56f6e';
+import {G} from './state.js?v=9de774d';
+import {FORTS} from './config.js?v=9de774d';
+import {CITIES} from './world.js?v=9de774d';
+import {enemies, hostile, planReward} from './combat.js?v=9de774d';
+import {SHIPS, PLANS} from './config.js?v=9de774d';
+import {sfx} from './audio.js?v=9de774d';
+import {siteLevel, myLevel, standing} from './levels.js?v=9de774d';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
@@ -18,11 +18,9 @@ export function updateFortWatch(dt){
     // a standing hostile fort, or a fallen pirate fort whose guards still sail
     const live = !f.dead && hostile(f), siege = f.dead && f.owner === 'pirate' && f.guards.some(g => !g.dead); if (!live && !siege) continue;
     const d = Math.hypot(f.x - G.S.x, f.y - G.S.y) - (f.camp || f.named ? WARN - 900 : 0); if (d < bd){ bd = d; best = f; } } // camps have no catapults: the warning comes closer
-  if (best && best !== inside && !best.dead){ // just sailed into its waters
+  if (best && best !== inside && !best.dead && !best.named){ // just sailed into its waters (P72: a named pirate has no message: its name is over the ship and it shows under the map)
     const who = best.city ? CITIES[best.city].name : 'Pirate';
-    // P70: its level against yours, so you know before the arrows fly
-    const lv = siteLevel(best), st = standing(lv), note = st === 'ready' ? '' : `<span class="cawarn ${st}">Level ${lv}. You are level ${myLevel()}. ${LEVEL_WORD[st]}</span>`;
-    $('cautionText').innerHTML = (best.named ? `<b>${best.named.name}!</b>` : best.camp ? '<b>Bandits!</b>' : `<b>${who === 'Pirate' ? 'Pirate' : who + "'s"} fortress!</b>`) + note;
+    $('cautionText').innerHTML = best.camp ? '<b>Bandits!</b>' : `<b>${who === 'Pirate' ? 'Pirate' : who + "'s"} fortress!</b>`;
     $('caution').hidden = false; cautionT = 5; sfx('warn');
   }
   inside = best;

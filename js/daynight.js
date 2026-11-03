@@ -2,9 +2,9 @@
 // (bright enough to sail), then dawn again. At dusk every ship lights its torches, statues light their fire bowls
 // and town windows glow. The time of day is kept in the save (G.S.clock), so it carries on where you left it.
 // Settings can keep it always day or always night.
-import {G, stat} from './state.js?v=8c56f6e';
-import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=8c56f6e';
-import {WIN_MAT} from './models.js?v=8c56f6e';
+import {G, stat} from './state.js?v=9de774d';
+import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=9de774d';
+import {WIN_MAT} from './models.js?v=9de774d';
 
 const T = window.THREE;
 export const CYCLE = 600; // seconds for a whole day
@@ -52,7 +52,7 @@ function haloTex(){
 function addHalos(root){
   if (!halo) halo = new T.SpriteMaterial({map:haloTex(), blending:T.AdditiveBlending, depthWrite:false, transparent:true, fog:true});
   for (const t of root.userData.torches){ if (t.userData.halo) continue;
-    const s = new T.Sprite(halo), f = t.userData.flame || t; s.scale.setScalar(t.userData.flame ? 58 : 36); s.position.y = t.userData.flame ? 3 : 4; s.renderOrder = 2; f.add(s); t.userData.halo = s; }
+    const s = new T.Sprite(halo), f = t.userData.flame || t; s.scale.setScalar(t.userData.flame ? 58 : 36); s.position.y = t.userData.flame ? 3 : 4; s.renderOrder = 6; f.add(s); t.userData.halo = s; }
 }
 const inScene = o => { while (o.parent) o = o.parent; return o.isScene; };
 const DAY_WIN = new T.Color('#33414f'), NIGHT_WIN = new T.Color('#ffc865');

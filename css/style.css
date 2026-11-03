@@ -1159,3 +1159,10 @@ body.uivase .mplus{background:var(--gl)!important;color:var(--cr)!important;box-
 .mapfilter{display:flex;align-items:center;gap:8px;justify-content:center;font:800 13px var(--body,Nunito,sans-serif);color:#3e2b1c;background:#fff8e6;border:1.5px solid #8a6a48;border-radius:12px;padding:5px 10px;margin:0 auto 6px;width:fit-content;pointer-events:auto;box-shadow:0 2px 0 rgba(60,40,20,.5)}
 .mapfilter select{font:800 14px var(--body,Nunito,sans-serif);color:#3e2b1c;background:#fffdf4;border:1px solid #cfb388;border-radius:8px;padding:5px 6px;max-width:210px}
 .legend[hidden]{display:none}
+
+/* P72: the level medal (the rank medal from P44, back now that there are levels): beside the hull bar, no panel */
+.medal{position:absolute;left:calc(100% + 6px);top:2px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 38% 30%,#ffe9a6,#e8b53d 55%,#a86f1e);box-shadow:inset 0 0 0 2px rgba(255,245,200,.7),0 0 0 1.5px #5a3410,0 3px 5px rgba(0,0,0,.4)}
+.medal b{font:800 21px/1 var(--body,Nunito,sans-serif);color:#5a3410;text-shadow:0 1px 0 rgba(255,255,255,.7);margin-top:-5px}
+.medal span{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:linear-gradient(#e0533e,#b0301f);color:#fff;font:800 8.5px/1 var(--body,Nunito,sans-serif);letter-spacing:.05em;text-transform:uppercase;padding:2.5px 5px;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.medal.pop{animation:medalpop .7s ease-out}@keyframes medalpop{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
+.mission .mt{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important;line-height:1.1}

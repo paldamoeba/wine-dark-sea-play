@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=8c56f6e';
+import {MUSIC_REST} from './config.js?v=9de774d';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -168,9 +168,9 @@ export const SOUNDS = {
   splash:{name:'Splash', gap:.1, sea:true, play:(t, d) => noise(t, .35, d, {f:2200, f2:500, q:.8, peak:.5})},
   gull:{name:'Gull calls', gap:.4, sea:true, play:(t, d) => gullCry(t, d)},
   // P70: thunder, three distances: the crack comes first and sharp when it's close; far off there is only a long roll
-  thunder:{name:'Thunder: a few miles off', gap:1, sea:true, vol:1.1, play:(t, d) => thunderAt(t, d, .55)},
-  thunderNear:{name:'Thunder: right overhead', gap:1, sea:true, vol:.85, play:(t, d) => thunderAt(t, d, 1)},
-  thunderFar:{name:'Thunder: far away', gap:1, sea:true, vol:1, play:(t, d) => thunderAt(t, d, .12)},
+  thunder:{name:'Thunder: a few miles off', gap:1, sea:true, vol:1.45, play:(t, d) => thunderAt(t, d, .55)},
+  thunderNear:{name:'Thunder: right overhead', gap:1, sea:true, vol:1.15, play:(t, d) => thunderAt(t, d, 1)},
+  thunderFar:{name:'Thunder: far away', gap:1, sea:true, vol:1.35, play:(t, d) => thunderAt(t, d, .12)},
   creak:{name:'Hull creaks', gap:.5, sea:true, play:(t, d) => creakAt(t, d, .35)},
   rain:{name:'Rain', sea:true, gap:2, play:(t, d) => rainSample(t, d, 10)},
   torch:{name:'Torches at night', sea:true, gap:2, play:(t, d) => torchSample(t, d, 10)},

@@ -389,7 +389,8 @@ function squareSail(w, h, tex){
 }
 // A torch on a pole: a bronze bowl and a flickering flame. The flame is marked glow, so the showroom's bloom makes it shine.
 const flameGeo = new T.ConeGeometry(2, 6, 7), coreGeo = new T.ConeGeometry(1.1, 3.6, 6), bowlGeo = new T.CylinderGeometry(2.4, 1.2, 2.2, 8);
-const flameMat = new T.MeshBasicMaterial({color:'#ff9a3c'}), coreMat = new T.MeshBasicMaterial({color:'#fff2b8'});
+// P72: flames are drawn after smoke, always. Before, the two swapped places whenever the rolling ship changed which looked nearer, and the flame blinked in and out of the smoke
+const flameMat = new T.MeshBasicMaterial({color:'#ff9a3c', transparent:true}), coreMat = new T.MeshBasicMaterial({color:'#fff2b8', transparent:true});
 let torchN = 0;
 // Everything with torches or fire bowls, so the day and night cycle can light them (daynight.js).
 export const TORCH_ROOTS = new Set();
@@ -398,8 +399,8 @@ function torch(){
   const pole = mesh(new T.CylinderGeometry(.5, .6, 12, 5), 'mast'); pole.position.y = 6; g.add(pole);
   const bowl = mesh(bowlGeo, 'bronze'); bowl.position.y = 12.6; g.add(bowl);
   const flame = new T.Group(); flame.position.y = 13.4; g.add(flame);
-  const f = new T.Mesh(flameGeo, flameMat); f.position.y = 3; f.userData.glow = true; flame.add(f);
-  const c = new T.Mesh(coreGeo, coreMat); c.position.y = 2; c.userData.glow = true; flame.add(c);
+  const f = new T.Mesh(flameGeo, flameMat); f.renderOrder = 5; f.position.y = 3; f.userData.glow = true; flame.add(f);
+  const c = new T.Mesh(coreGeo, coreMat); c.renderOrder = 5; c.position.y = 2; c.userData.glow = true; flame.add(c);
   g.userData.flame = flame; g.userData.ph = torchN++ % 97; return g;
 }
 // Light or put out a ship's torches. light = also give each one a real point light (pretty, but costly on phones).
@@ -412,7 +413,7 @@ export function setTorches(root, on, light = false){
 // Torch and fire bowl flames dance and their lights flicker (ships, and the fire bowls around statues).
 export function flicker(root, t){
   const fk = root.userData.fireK ?? 1; // P67: how far the fires have caught (0 to 1): each flame starts as a small ember and grows, one torch a little after another
-  for (const tc of root.userData.torches || []) if (tc.visible){ const f = tc.userData.flame, k = 1 + Math.sin(t*13 + tc.userData.ph)*.08 + Math.sin(t*23 + tc.userData.ph*2)*.06;
+  for (const tc of root.userData.torches || []) if (tc.visible){ const f = tc.userData.flame, k = 1 + Math.sin(t*7 + tc.userData.ph)*.07 + Math.sin(t*11 + tc.userData.ph*2)*.04;
     const g = Math.max(.001, Math.min(1, fk*1.6 - (tc.userData.ph % 5)*.12)), s = g*(2 - g); // eased, so it doesn't pop
     f.scale.set(s/k, s*k, s/k); f.rotation.y = t*2; if (tc.userData.light) tc.userData.light.intensity = tc.userData.light.userData.base*(.85 + .15*k)*s; }
 }
@@ -477,7 +478,7 @@ export function buildShip(key, look = {}, crew = true){
     // a short crew mans only some of the benches, spread along the ship; the other oars are shipped (not shown)
     if (lay && s.oarCount > 1 && lay.pairs < s.oarCount){ const keep = new Set(Array.from({length:lay.pairs}, (_, k) => Math.round((k + .5)*s.oarCount/lay.pairs - .5)));
       root.userData.oars = o.userData.list.filter(q => { const on = keep.has(q.i); q.piv.visible = on; return on; }); } }
-  if (s.oarCount !== 1 && !s.twin) body.add(steeringOars(s, info)); // the rowboat steers with its oars
+  if (s.oarCount !== 1 && !s.twin){ const st = steeringOars(s, info); body.add(st); root.userData.steer = st; } // the rowboat steers with its oars
   if (s.outrigger) for (const sg of [1, -1]){ const box = mesh(new T.BoxGeometry(s.L*.62, s.H*.2, 5), pc.top); box.position.set(-s.L*.02, info.deckLevel + s.H*.2, sg*(info.W(.3) + 2.5)); body.add(box);
     const lip = mesh(new T.BoxGeometry(s.L*.63, 1.2, 6), pc.wale); lip.position.set(-s.L*.02, info.deckLevel + s.H*.31, sg*(info.W(.3) + 2.5)); body.add(lip); }
   // Sails: the ship's own, or as many as the player's sail upgrades have put up (lk.sailLv). sz[i] = size of sail i, 0 = not up.
@@ -644,7 +645,7 @@ function brazier(){
   for (let k=0;k<3;k++){ const a = k/3*Math.PI*2, leg = sm(taper([[Math.cos(a)*3.2, 0, Math.sin(a)*3.2], [Math.cos(a)*1.6, 6, Math.sin(a)*1.6], [Math.cos(a)*2.2, 11, Math.sin(a)*2.2]], () => .45, 10, 6), 'bronze', 40); g.add(leg); }
   const bowl = sm(bowlLathe, 'bronze', 40); bowl.position.y = 10.6; g.add(bowl);
   const flame = new T.Group(); flame.position.y = 13.4; flame.visible = false; g.add(flame);
-  const f = new T.Mesh(flameGeo, flameMat); f.position.y = 2.6; f.scale.setScalar(1.15); f.userData.glow = true; flame.add(f);
+  const f = new T.Mesh(flameGeo, flameMat); f.renderOrder = 5; f.position.y = 2.6; f.scale.setScalar(1.15); f.userData.glow = true; flame.add(f);
   const c = new T.Mesh(coreGeo, coreMat); c.position.y = 1.8; c.userData.glow = true; flame.add(c);
   flame.userData = {flame, ph:torchN++ % 97, ly:5, lb:.45};
   return {g, flame};

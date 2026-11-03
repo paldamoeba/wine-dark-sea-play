@@ -1,15 +1,15 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=8c56f6e';
-import {G, ship, lvl, shipName, capOf} from './state.js?v=8c56f6e';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=8c56f6e';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=8c56f6e';
-import {men} from './crew.js?v=8c56f6e';
-import {SPECS, crewLayout} from './ships.js?v=8c56f6e';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=8c56f6e';
-import {HARBORS} from './world.js?v=8c56f6e';
-import {planSources} from './combat.js?v=8c56f6e';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=8c56f6e';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=9de774d';
+import {G, ship, lvl, shipName, capOf} from './state.js?v=9de774d';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=9de774d';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=9de774d';
+import {men} from './crew.js?v=9de774d';
+import {SPECS, crewLayout} from './ships.js?v=9de774d';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=9de774d';
+import {HARBORS} from './world.js?v=9de774d';
+import {planSources} from './combat.js?v=9de774d';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=9de774d';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
@@ -47,10 +47,9 @@ export function sourceRows(t, max = 99){ const src = planSources(t).map(f => ({f
   return rows + (src.length > shown.length ? `<p class="note">And ${src.length - shown.length} more. Any of them will do.</p>` : ''); }
 function getCard(t){
   const S = G.S, sh = SHIPS[t], P = PLANS[t], n = numbers(t), got = piecesOf(t), pin = S.pin === t, done = allPieces(t) || studied(t);
-  const src = planSources(t), low = src.length ? Math.min(...src.map(siteLevel)) : 0, st = low && standing(low);
-  const act = atHome() ? `<div class="yard">${yardAct(t, sh)}</div>` : done ? '<small>Take the plans to the Kallisto shipwrights.</small>' : '';
-  return `<section class="card fcard ${pin ? 'pinned' : ''}"><div class="fhead">${shipImg(sh.model, {men:sh.men[0]})}<div class="fname"><h3>${sh.name}</h3>
-      <small>Plans: ${got} of ${P.pieces}${studied(t) ? ' · studied' : ''}</small>${low ? `<span class="lvchip ${st}">Needs level ${low}</span>` : ''}${t === KING ? '' : `<button class="btn ${pin ? 'gold' : 'ghostdark'} small pinbtn" data-act="pin" data-t="${t}">${PIN}${pin ? 'Pinned' : 'Pin this ship'}</button>`}</div></div>
+    const act = atHome() ? `<div class="yard">${yardAct(t, sh)}</div>` : done ? '<small>Take the plans to the Kallisto shipwrights.</small>' : '';
+  return `<section class="card fcard ${pin ? 'pinned' : ''}"><div class="fhead">${shipImg(sh.model, {bare:true})}<div class="fname"><h3>${sh.name}</h3>
+      <small>Plans: ${got} of ${P.pieces}${studied(t) ? ' · studied' : ''}</small>${t === KING ? '' : `<button class="btn ${pin ? 'gold' : 'ghostdark'} small pinbtn" data-act="pin" data-t="${t}">${PIN}${pin ? 'Pinned' : 'Pin this ship'}</button>`}</div></div>
     <p class="note">${sh.desc}</p>
     <h4>Compared with your ${ship().name.toLowerCase()}</h4>${statRows(n, numbers(S.tier))}
     ${done ? '' : t === KING ? '<h4>Where the plans are</h4><p class="note">Only the pirate king has them. Beat Polycrates and they are yours.</p>' : `<h4>Where the plans are</h4>${sourceRows(t, 3)}`}${act}</section>`;
