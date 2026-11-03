@@ -1,22 +1,22 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL} from './config.js?v=a532ae4';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=a532ae4';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat} from './state.js?v=a532ae4';
-import {scene, screenToSea, setLair} from './scene.js?v=a532ae4';
-import {wreckModel} from './models.js?v=a532ae4';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=a532ae4';
-import {makeFire, updateFire, burn} from './fire.js?v=a532ae4';
-import {blessing, fighters, hasSail} from './crew.js?v=a532ae4';
-import {progress, goal} from './quests.js?v=a532ae4';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=a532ae4';
-import {rollColor, unlockColor, colorName} from './colors.js?v=a532ae4';
-import {toast} from './ui.js?v=a532ae4';
-import {sink, rowNow, ROW} from './player.js?v=a532ae4';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=a532ae4';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=a532ae4';
-import {sfx} from './audio.js?v=a532ae4';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL} from './config.js?v=49ea3d2';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=49ea3d2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat} from './state.js?v=49ea3d2';
+import {scene, screenToSea, setLair} from './scene.js?v=49ea3d2';
+import {wreckModel} from './models.js?v=49ea3d2';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=49ea3d2';
+import {makeFire, updateFire, burn} from './fire.js?v=49ea3d2';
+import {blessing, fighters, hasSail} from './crew.js?v=49ea3d2';
+import {progress, goal} from './quests.js?v=49ea3d2';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=49ea3d2';
+import {rollColor, unlockColor, colorName} from './colors.js?v=49ea3d2';
+import {toast} from './ui.js?v=49ea3d2';
+import {sink, rowNow, ROW} from './player.js?v=49ea3d2';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=49ea3d2';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=49ea3d2';
+import {sfx} from './audio.js?v=49ea3d2';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -242,7 +242,7 @@ function bossThink(e, dt){
   if (!e.called && e.hull < e.spec.hull*.5){ e.called = true; for (let i=0;i<2;i++) startFight(bossShip('skiff', {x:e.x + Math.cos(e.a + 1.6 + i*3.1)*320, y:e.y + Math.sin(e.a + 1.6 + i*3.1)*320})); toast('Two skiffs join him!', 3.5); sfx('horn', e); }
 }
 
-const angDiff = (want, a) => ((want - a + Math.PI*3) % (Math.PI*2)) - Math.PI;
+const angDiff = (want, a) => { const d = want - a; return d - Math.PI*2*Math.floor((d + Math.PI)/(Math.PI*2)); }; // P70: the short way round, however far the angle has wound up
 // Look ahead for land and turn to the side with open water. The side sticks until the way is clear, so ships don't wobble.
 function avoidLand(e, want){
   const L = Math.max(150, e.v*2.4) + e.spec.len*.5, b = e.spec.beam;
@@ -551,6 +551,8 @@ function clueFor(is){ // "Tinos, north-west of Kallisto": told from the nearest 
   const known = ISLANDS.filter(o => o !== is && o.name && !o.frame && isExplored(o.x, o.y));
   const ref = known.sort((a, b) => Math.hypot(a.x - is.x, a.y - is.y) - Math.hypot(b.x - is.x, b.y - is.y))[0] || ISLANDS[0];
   return `${is.name}, ${dirFrom(ref, is)} of ${ref.name}`; }
+// P70: the camps and fortresses that hold a piece of ship t right now (for a pinned ship: shown on the chart and the quest board)
+export const planSources = t => enemies.filter(e => e.fort && !e.dead && planReward(e) === t);
 export function planClues(){
   const S = G.S, out = [];
   for (const t of [1, 2, 3, 7]){ const need = PLANS[t].pieces, have = (S.pieces || {})[t] || 0;

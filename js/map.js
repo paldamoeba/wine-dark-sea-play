@@ -1,13 +1,14 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=a532ae4';
-import {IC} from './menus.js?v=a532ae4';
-import {sfx} from './audio.js?v=a532ae4';
-import {playVideo, toast} from './ui.js?v=a532ae4';
-import {ARENA} from './arena.js?v=a532ae4';
-import {enemies, planReward, combatState} from './combat.js?v=a532ae4';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=a532ae4';
-import {G, ship, isExplored, reveal, save} from './state.js?v=a532ae4';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=49ea3d2';
+import {IC} from './menus.js?v=49ea3d2';
+import {sfx} from './audio.js?v=49ea3d2';
+import {playVideo, toast} from './ui.js?v=49ea3d2';
+import {ARENA} from './arena.js?v=49ea3d2';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=49ea3d2';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=49ea3d2';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=49ea3d2';
+import {G, ship, isExplored, reveal, save} from './state.js?v=49ea3d2';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -95,7 +96,13 @@ function badge(x, y, r, key, ring, opt = {}){
   if (key){ const im = icImg(key, icons()[key]), s = r*(opt.k || 1.45); if (im.complete && im.naturalWidth){ c.globalAlpha = opt.dim ? .45 : 1; c.drawImage(im, x - s/2, y - s/2, s, s); c.globalAlpha = 1; } }
 }
 function crossOut(x, y, r){ c.save(); c.strokeStyle = COURSE; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - r*.7, y - r*.7); c.lineTo(x + r*.7, y + r*.7); c.stroke(); c.restore(); }
-function stars(x, y, n){ c.save(); c.font = '800 9px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round'; c.lineWidth = 3; c.strokeStyle = 'rgba(70,45,15,.85)'; const t = '★'.repeat(n); c.strokeText(t, x, y); c.fillStyle = '#ffcd5e'; c.fillText(t, x, y); c.restore(); }
+// P70: a target's level: green if you're ready, amber for a hard fight, red if it's too strong for you
+function levelTag(x, y, lv){ const st = standing(lv), t = 'Lv ' + lv; c.save(); c.font = '800 10px Nunito, system-ui, sans-serif'; const w = c.measureText(t).width + 9; c.fillStyle = LEVEL_COLOR[st]; c.strokeStyle = 'rgba(40,24,10,.75)'; c.lineWidth = 1;
+  c.beginPath(); c.roundRect ? c.roundRect(x - w/2, y - 7, w, 14, 7) : c.rect(x - w/2, y - 7, w, 14); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, x, y + .5); c.restore(); }
+// a pinned ship's plans: a gold ring and a rolled plan beside the mark
+function pinMark(x, y){ c.save(); c.strokeStyle = '#e8b53d'; c.lineWidth = 3.5; c.shadowColor = 'rgba(232,181,61,.9)'; c.shadowBlur = 8; c.beginPath(); c.arc(x, y, 20, 0, Math.PI*2); c.stroke(); c.shadowBlur = 0;
+  const px = x + 26, py = y - 4; c.fillStyle = '#fbeec8'; c.strokeStyle = '#5a381d'; c.lineWidth = 1.4; c.beginPath(); c.rect(px - 8, py - 6, 16, 12); c.fill(); c.stroke();
+  c.fillStyle = '#c4473b'; for (const s of [-1, 1]){ c.beginPath(); c.arc(px + s*8, py, 3, 0, Math.PI*2); c.fill(); c.stroke(); } c.strokeStyle = '#3f6c94'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(px - 4, py - 2); c.lineTo(px + 4, py - 2); c.moveTo(px - 4, py + 2); c.lineTo(px + 4, py + 2); c.stroke(); c.restore(); }
 // small ink pictures for the marks on the chart
 function fishGlyph(x, y){ c.beginPath(); c.ellipse(x, y, 6, 3.2, 0, 0, Math.PI*2); c.moveTo(x-5, y); c.lineTo(x-10, y-4); c.lineTo(x-10, y+4); c.closePath(); c.fill(); }
 function wreckGlyph(x, y){ c.save(); c.translate(x, y); c.lineCap = 'round';
@@ -163,6 +170,7 @@ function draw(){
   for (const r of G.S.reqs || []){ const is = r.to && ISLANDS.find(i => i.name === r.to); if (is && !isExplored(is.x, is.y)) reveal(is.x, is.y, is.r + 350); }
   for (const m of G.goalMarks || []) if (!isExplored(m.x, m.y)) reveal(m.x, m.y, 600);
   if (G.S.treasure && !isExplored(G.S.treasure.x, G.S.treasure.y)) reveal(G.S.treasure.x, G.S.treasure.y, 400);
+  const pinned = G.S.pin ? planSources(G.S.pin) : []; for (const f of pinned) if (!isExplored(f.x, f.y)) reveal(f.x, f.y, f.isle.r + 450); // P70: a pinned ship's plans are on the chart
   c.drawImage(fogLayer(FOG), 0, 0, WORLD, WORLD);
   // a double ink frame around the world
   c.strokeStyle = INK; c.lineWidth = 3*px; c.strokeRect(0, 0, WORLD, WORLD); c.lineWidth = 1*px; c.strokeRect(-9*px, -9*px, WORLD + 18*px, WORLD + 18*px);
@@ -190,9 +198,10 @@ function draw(){
     label('Arena of Rhodes', ax, ay + r + 16, '400 14px Marcellus, Georgia, serif', INK); }
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
   for (const e of enemies){ if (!e.fort || !isExplored(e.x, e.y)) continue; const [fx, fy] = toScreen(e.x, e.y);
-    if (e.camp){ badge(fx, fy, 15, 'camp', '#b5552c', {dim:e.dead}); if (e.dead) crossOut(fx, fy, 15); else stars(fx, fy + 20, e.camp.lv || 1); continue; }
+    if (e.camp){ badge(fx, fy, 15, 'camp', '#b5552c', {dim:e.dead}); if (e.dead) crossOut(fx, fy, 15); else levelTag(fx, fy - 22, siteLevel(e)); continue; }
     const col = e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a'; badge(fx, fy, 15, null, col); c.save(); c.translate(fx, fy); c.scale(.92, .92); towerGlyph(0, 0, col, false); c.restore();
-    if (e.dead) crossOut(fx, fy, 15); else stars(fx, fy + 20, e.tier || 1); }
+    if (e.dead) crossOut(fx, fy, 15); else levelTag(fx, fy - 22, siteLevel(e)); }
+  for (const f of pinned){ const [x, y] = toScreen(f.x, f.y); pinMark(x, y); }
   for (const h of HARBORS){ if (!h.is.port && !isExplored(h.dock.x, h.dock.y)) continue;
     const [hx, hy] = toScreen(h.dock.x, h.dock.y), port = h.is.port; badge(hx, hy, port ? 19 : 16, 'harbor', h.is.city ? CITIES[h.is.city].color : OCHRE, {k:1.35}); }
   // the chapter goal: a red ring with a name (pirate fortresses, the pirate king)
@@ -312,7 +321,7 @@ $('homeNow').addEventListener('click', () => { if (combatState.threat) return; h
 $('homeCancel').addEventListener('click', hidePop);
 homePop.addEventListener('click', e => { if (e.target === homePop) hidePop(); });
 // the legend, with the same pictures as the chart
-$('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [X_SVG, 'Treasure']].map(([ic, n]) => `<li>${ic}${n}</li>`).join('');
+$('mapView').querySelector('.legend').innerHTML = [[IC.dock, 'Harbor'], [CAMP_SVG, 'Camp'], ['<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortress'], [IC.iron, 'Iron'], [X_SVG, 'Treasure'], ['<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Pinned plans']].map(([ic, n]) => `<li>${ic}${n}</li>`).join('');
 $('mapClear').addEventListener('click', () => { G.dest = null; draw(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape' && G.mapOpen){ if (!$('homePop').hidden) $('homePop').hidden = true; else closeMap(); }

@@ -1,8 +1,8 @@
 // Starts the game and runs the frame loop.
-import {AUTO_QUALITY} from './config.js?v=a532ae4';
-import {zoneAt} from './world.js?v=a532ae4';
-import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=a532ae4';
-import {REVEAL} from './config.js?v=a532ae4';
+import {AUTO_QUALITY} from './config.js?v=49ea3d2';
+import {zoneAt} from './world.js?v=49ea3d2';
+import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=49ea3d2';
+import {REVEAL} from './config.js?v=49ea3d2';
 
 // P65: the main menu comes first, unless it just sent us here to start a voyage
 const GO = 'wine-dark-sea-go'; let skipMenu = false;
@@ -12,29 +12,33 @@ load();
 loadSettings();
 
 // These modules build the scene and wire up the UI as they load, so they come after the save is in.
-const {updateClouds} = await import('./clouds.js?v=a532ae4');
-const {updateWakes} = await import('./wakes.js?v=a532ae4');
-const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame} = await import('./scene.js?v=a532ae4');
-const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=a532ae4');
-const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=a532ae4');
-const {updatePlayer} = await import('./player.js?v=a532ae4');
-const {updateCombat} = await import('./combat.js?v=a532ae4');
-const {updateFish} = await import('./fishing.js?v=a532ae4');
-const {updateTowns} = await import('./town.js?v=a532ae4');
-const {updateWildlife} = await import('./wildlife.js?v=a532ae4');
-const {updateQuests} = await import('./quests.js?v=a532ae4');
-const {updateFleet} = await import('./fleet.js?v=a532ae4');
-const {updateArena} = await import('./arena.js?v=a532ae4');
-const {updateWeather: weatherTick, W} = await import('./weather.js?v=a532ae4');
-const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=a532ae4');
-const {mapTick} = await import('./map.js?v=a532ae4');
-const {updateSounds} = await import('./sounds.js?v=a532ae4');
-const {initNight} = await import('./daynight.js?v=a532ae4');
-const {updateSmoke} = await import('./smoke.js?v=a532ae4');
-const {updateGrass} = await import('./grass.js?v=a532ae4');
-const {updateFortWatch} = await import('./fortwatch.js?v=a532ae4');
-const {openMenu} = await import('./mainmenu.js?v=a532ae4');
-const {offlineEarnings} = await import('./fleet.js?v=a532ae4');
+const {updateClouds} = await import('./clouds.js?v=49ea3d2');
+const {updateWakes} = await import('./wakes.js?v=49ea3d2');
+const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame, setGust} = await import('./scene.js?v=49ea3d2');
+const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=49ea3d2');
+const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=49ea3d2');
+const {updatePlayer} = await import('./player.js?v=49ea3d2');
+const {updateCombat} = await import('./combat.js?v=49ea3d2');
+const {updateFish} = await import('./fishing.js?v=49ea3d2');
+const {updateTowns} = await import('./town.js?v=49ea3d2');
+const {updateWildlife} = await import('./wildlife.js?v=49ea3d2');
+const {updateQuests} = await import('./quests.js?v=49ea3d2');
+const {updateFleet} = await import('./fleet.js?v=49ea3d2');
+const {updateArena} = await import('./arena.js?v=49ea3d2');
+const {updateWeather: weatherTick, W} = await import('./weather.js?v=49ea3d2');
+const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=49ea3d2');
+const {mapTick} = await import('./map.js?v=49ea3d2');
+const {updateSounds} = await import('./sounds.js?v=49ea3d2');
+const {initNight} = await import('./daynight.js?v=49ea3d2');
+const {updateSmoke} = await import('./smoke.js?v=49ea3d2');
+const {updateGrass} = await import('./grass.js?v=49ea3d2');
+const {addBubbles, updateBubbles, makeWind} = await import('./seafx.js?v=49ea3d2');
+addBubbles(scene); const WIND3D = makeWind(scene);
+const seaFx = dt => { updateBubbles(); WIND3D.update(dt, W.windA, W.windK, G.cam.x, G.cam.y, G.night); setGust(W.windA, W.windK); };
+const {updateFortWatch} = await import('./fortwatch.js?v=49ea3d2');
+const {openMenu} = await import('./mainmenu.js?v=49ea3d2');
+const {offlineEarnings} = await import('./fleet.js?v=49ea3d2');
+const {askName, checkNames} = await import('./naming.js?v=49ea3d2');
 
 const startQuality = G.settings.quality === 'auto' ? (G.settings.detected || 'high') : G.settings.quality;
 applyQuality(startQuality);
@@ -54,7 +58,9 @@ startAutosave();
 // the voyage begins (from the menu, or straight away when the menu just sent us here)
 let startedOnce = false;
 function startVoyage(){ if (startedOnce) return; startedOnce = true; G.noSave = false;
-  if (G.S.hint && !G.S.tutSeen){ G.S.tutSeen = true; openTutorial(); } // a new game starts with the how-to-play pages
+  // P70: first the boat gets a name, then a new game shows the how-to-play pages
+  const pages = () => { if (G.S.hint && !G.S.tutSeen){ G.S.tutSeen = true; openTutorial(); } G.voyageOn = true; };
+  if (!(G.S.names || {})[G.S.tier] && (!window.__TEST || __TEST.get('askname'))) askName(G.S.tier, pages); else pages();
   showZone(G.curZone); if (awayPay) setTimeout(() => toast(`Captains' purse +${awayPay}`, 4), 1200); }
 
 // Auto graphics: on the first run, watch the frame rate for a few seconds and drop to Low if it is choppy.
@@ -85,7 +91,7 @@ function frame(now){
   updateSounds(dt);
   if (G.menuOpen){ // the main menu: the sea and the town live on behind it, but nothing happens to your ship
     if (!menuPlaced){ menuPlaced = true; updatePlayer(0); }
-    G.t += dt; weatherTick(dt); animateEntities(dt); updateWater(); updateCamera(); updateWeather(dt); updateClouds(dt, W.kind); updateWakes(dt); updateSmoke(G.t, G.night, W.windA, W.windK); updateGrass(G.t);
+    G.t += dt; weatherTick(dt); animateEntities(dt); updateWater(); updateCamera(); updateWeather(dt); updateClouds(dt, W.kind); updateWakes(dt); seaFx(dt); updateSmoke(G.t, G.night, W.windA, W.windK); updateGrass(G.t);
     renderFrame(G.settings.tiny !== false); requestAnimationFrame(frame); return; }
   revealT += dt; if (revealT > .25){ revealT = 0; reveal(G.S.x, G.S.y, REVEAL.sail); }
   const nearDock = updatePlayer(dt);
@@ -94,11 +100,11 @@ function frame(now){
   updateTowns(dt);
   updateWildlife(dt);
   updateQuests(dt);
-  updateFleet(dt);
+  updateFleet(dt); checkNames();
   updateArena(dt);
   weatherTick(dt);
   animateEntities(dt);
-  updateWater(); updateCamera(); updateWeather(dt); updateClouds(dt, W.kind); updateWakes(dt); updateSmoke(G.t, G.night, W.windA, W.windK); updateGrass(G.t);
+  updateWater(); updateCamera(); updateWeather(dt); updateClouds(dt, W.kind); updateWakes(dt); seaFx(dt); updateSmoke(G.t, G.night, W.windA, W.windK); updateGrass(G.t);
   // P67: the game runs on behind the chart: you keep sailing and fighting. Only the drawing rests, since the chart covers the screen.
   if (G.mapOpen) mapTick(dt); else { renderFrame(G.settings.tiny !== false); drawOverlay(fps); autoQuality(raw); }
   updateUI(dt, nearDock); updateFortWatch(dt);

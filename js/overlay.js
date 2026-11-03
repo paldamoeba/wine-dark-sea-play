@@ -1,16 +1,15 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=a532ae4';
-import {G, isExplored} from './state.js?v=a532ae4';
-import {fogLayer, islandPath} from './map.js?v=a532ae4';
-import {view, project, screenToSea} from './scene.js?v=a532ae4';
-import {JOY_RADIUS} from './input.js?v=a532ae4';
-import {enemies, combatState, capture, aimLeads} from './combat.js?v=a532ae4';
-import {drawFish} from './fishing.js?v=a532ae4';
-import {whale} from './wildlife.js?v=a532ae4';
-import {SHORE_FISH} from './config.js?v=a532ae4';
-import {W as WIND} from './weather.js?v=a532ae4';
-import {bottle} from './quests.js?v=a532ae4';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=a532ae4';
+import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=49ea3d2';
+import {G, isExplored} from './state.js?v=49ea3d2';
+import {fogLayer, islandPath} from './map.js?v=49ea3d2';
+import {view, project, screenToSea} from './scene.js?v=49ea3d2';
+import {JOY_RADIUS} from './input.js?v=49ea3d2';
+import {enemies, combatState, capture, aimLeads, planSources} from './combat.js?v=49ea3d2';
+import {drawFish} from './fishing.js?v=49ea3d2';
+import {whale} from './wildlife.js?v=49ea3d2';
+import {W as WIND} from './weather.js?v=49ea3d2';
+import {bottle} from './quests.js?v=49ea3d2';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=49ea3d2';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -98,32 +97,6 @@ function drawSplashes(W, H, t){
       c.beginPath(); c.arc(s.x - 2.5*far - a*4*far, s.y - h, 1.8*far, 0, Math.PI*2); c.arc(s.x + 2.5*far + a*4*far, s.y - h*.8, 1.5*far, 0, Math.PI*2); c.fill(); }
   }
 }
-// Wind: a few soft white streaks drifting over the sea the way the wind blows, more when it is strong (like a cartoon).
-const STREAKS = Array.from({length:10}, (_, i) => ({life:i/10, x:0, y:0, len:0, ph:0}));
-// Wind: long thin gusts that draw themselves across the sea and fade, tapered at both ends, a gentle bend, and now and then
-// a little curl at the tip, like wind in a picture book.
-const GUST_N = 18, gustPts = Array.from({length:GUST_N + 1}, () => [0, 0, 0]);
-function drawWind(t, dt){
-  const k = WIND.windK; if (k < .45 || G.mapOpen) return; // P50: only in real wind, and fewer gusts
-  const n = Math.round(STREAKS.length*.5*Math.min(1, (k - .3)*1.2)), wa = WIND.windA, sp = 60 + 120*k;
-  c.lineCap = 'round';
-  for (let i=0;i<n;i++){ const s = STREAKS[i]; s.life += dt/(2.2 + (i % 3)*.5);
-    if (s.life >= 1 || !s.len){ s.life = s.len ? 0 : Math.random(); const r = 150 + Math.random()*520, a = Math.random()*6.28;
-      s.x = G.cam.x + Math.cos(a)*r - Math.cos(wa)*220; s.y = G.cam.y + Math.sin(a)*r - Math.sin(wa)*220;
-      s.len = 150 + Math.random()*150; s.bend = (Math.random() - .5)*.5; s.curl = Math.random() < .35 ? (Math.random() < .5 ? 1 : -1) : 0; }
-    s.x += Math.cos(wa)*sp*dt; s.y += Math.sin(wa)*sp*dt;
-    // the gust's path: walk along the wind, turning slowly, and wind into a small loop at the end if it curls
-    let x = s.x, y = s.y, ang = wa - s.bend*.5; const step = s.len/GUST_N;
-    for (let j=0;j<=GUST_N;j++){ const u = j/GUST_N, p = project(x, 24, y); gustPts[j][0] = p[0]; gustPts[j][1] = p[1]; gustPts[j][2] = p[2];
-      ang += s.bend/GUST_N + (s.curl && u > .72 ? s.curl*.62 : 0); x += Math.cos(ang)*step*(s.curl && u > .72 ? .55 : 1); y += Math.sin(ang)*step*(s.curl && u > .72 ? .55 : 1); }
-    // only part of it shows at a time: the head runs ahead, the tail follows and the gust is gone
-    const head = Math.min(1, s.life/.55), tail = Math.max(0, (s.life - .4)/.6), al = .75*k*(1 - .5*(G.night || 0));
-    for (let j=0;j<GUST_N;j++){ const u0 = j/GUST_N, u1 = (j + 1)/GUST_N; if (u1 < tail || u0 > head) continue;
-      const a0 = gustPts[j], a1 = gustPts[j + 1]; if (a0[2] > 1 || a1[2] > 1) continue;
-      const m = ((u0 + u1)/2 - tail)/Math.max(.01, head - tail), w = Math.sin(Math.min(1, Math.max(0, m))*Math.PI); // thick in the middle, thin at both ends
-      c.strokeStyle = `rgba(255,255,255,${al*(.35 + .65*w)})`; c.lineWidth = .6 + 2.6*w; c.beginPath(); c.moveTo(a0[0], a0[1]); c.lineTo(a1[0], a1[1]); c.stroke(); }
-  }
-}
 // A town's name on a little ribbon banner: cream cloth with folded tails, a wooden edge, the name in carved capitals,
 // and the city that rules it on a small colored tag underneath.
 function banner(name, x, y, alpha, city){
@@ -144,11 +117,9 @@ function banner(name, x, y, alpha, city){
     c.fillStyle = '#fff'; c.fillText(city.name.toUpperCase(), x, tp + h + 3.6); }
   c.restore();
 }
-let lastT = 0;
 export function drawOverlay(fps){
   const {W, H} = view, DPR = ovDPR(), S = G.S, t = G.t;
   c.setTransform(DPR,0,0,DPR,0,0); c.clearRect(0,0,W,H);
-  drawWind(t, Math.min(.05, Math.max(0, t - lastT))); lastT = t;
   if (G.stormK > .05){
     drawDrops(t);
     drawSplashes(W, H, t);
@@ -195,13 +166,6 @@ export function drawOverlay(fps){
     const k = (G.t - G.tapMark.t)/.45;
     if (k > 1) G.tapMark = null;
     else { const [mx, my, mz] = project(G.tapMark.x, 0, G.tapMark.y); if (mz < 1){ c.strokeStyle = `rgba(244,251,255,${.8*(1 - k)})`; c.lineWidth = 2; c.beginPath(); c.ellipse(mx, my, 8 + k*10, (8 + k*10)*.6, 0, 0, Math.PI*2); c.stroke(); } }
-  }
-  // sardine schools: a few small glints on the water while the school is out
-  for (const s of SHOALS){
-    if (Math.abs(s.x - S.x) > 1100 || Math.abs(s.y - S.y) > 1100 || !shoalOn(s, t, SHORE_FISH.period[1], SHORE_FISH.on)) continue;
-    for (let k=0;k<7;k++){ const ph = (t*.9 + hash(s.x, k)) % 1; if (ph > .4 || ph < 0) continue;
-      const gx = s.x + (hash(k, s.y) - .5)*90, gy = s.y + (hash(s.y, k) - .5)*90, [px, py, pz] = project(gx, 2, gy); if (pz > 1) continue;
-      const a = Math.sin(ph/.4*Math.PI), nt = G.night || 0; c.fillStyle = `rgba(${244 - nt*110|0},${251},${255 - nt*30|0},${.75*a})`; /* at night the schools glow blue-green */ c.beginPath(); c.ellipse(px, py, 5*a + 1.5, 2.2*a + .6, 0, 0, Math.PI*2); c.fill(); }
   }
   // small "+1" pops over the boat (sardines)
   if (G.pops) G.pops = G.pops.filter(p => { if (p.ic){ return drawGain(c, p, t, S); } const k = (t - p.t)/1.1; if (k > 1) return false; const [bx, by] = project(p.x ?? S.x, 60, p.y ?? S.y);
@@ -316,6 +280,7 @@ function drawMini(c, cx, cy, ms, S){
   if (whale.state !== 'gone' && whale.state !== 'dive'){ c.fillStyle = '#bfe3f5'; c.beginPath(); c.ellipse(whale.x*k, whale.y*k, 5, 3, whale.a, 0, Math.PI*2); c.fill(); }
   if (bottle.on){ c.fillStyle = '#bfe8d2'; c.fillRect(bottle.x*k - 2, bottle.y*k - 2, 4, 4); }
   if (S.treasure){ const tx = S.treasure.x*k, ty = S.treasure.y*k; c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.moveTo(tx - 4, ty - 4); c.lineTo(tx + 4, ty + 4); c.moveTo(tx + 4, ty - 4); c.lineTo(tx - 4, ty + 4); c.stroke(); }
+  if (S.pin) for (const f of planSources(S.pin)){ c.strokeStyle = '#ffd25e'; c.lineWidth = 2; c.beginPath(); c.arc(f.x*k, f.y*k, 7, 0, Math.PI*2); c.stroke(); } // P70: where your pinned ship's plans are
   for (const m of G.goalMarks || []){ c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.arc(m.x*k, m.y*k, 4 + (G.t*2 % 1)*4, 0, Math.PI*2); c.stroke(); } // the chapter goal pulses
   // you: a white arrow pointing where the ship is heading
   c.save(); c.translate(S.x*k, S.y*k); c.rotate(S.a); c.fillStyle = '#fff'; c.strokeStyle = '#3e2b1c'; c.lineWidth = 1.4; c.lineJoin = 'round';

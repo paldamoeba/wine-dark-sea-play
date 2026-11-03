@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=a532ae4';
+import {MUSIC_REST} from './config.js?v=49ea3d2';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -166,7 +166,10 @@ export const SOUNDS = {
   spout:{name:'Whale blows', sea:true, play:(t, d) => noise(t, 1.2, d, {f:700, f2:2200, q:.5, peak:.35, a:.12})},
   splash:{name:'Splash', gap:.1, sea:true, play:(t, d) => noise(t, .35, d, {f:2200, f2:500, q:.8, peak:.5})},
   gull:{name:'Gull calls', gap:.4, sea:true, play:(t, d) => gullCry(t, d)},
-  thunder:{name:'Thunder', gap:1, sea:true, play:(t, d) => { noise(t, .25, d, {type:'highpass', f:900, peak:.35}); noise(t + .05, 3.2, d, {type:'lowpass', f:260, f2:60, peak:1, buf:brownBuf, a:.08}); noise(t + .6, 2.2, d, {type:'lowpass', f:180, f2:50, peak:.6, buf:brownBuf, a:.3}); }},
+  // P70: thunder, three distances: the crack comes first and sharp when it's close; far off there is only a long roll
+  thunder:{name:'Thunder: a few miles off', gap:1, sea:true, vol:1.1, play:(t, d) => thunderAt(t, d, .55)},
+  thunderNear:{name:'Thunder: right overhead', gap:1, sea:true, vol:1.05, play:(t, d) => thunderAt(t, d, 1)},
+  thunderFar:{name:'Thunder: far away', gap:1, sea:true, vol:1, play:(t, d) => thunderAt(t, d, .12)},
   creak:{name:'Hull creaks', gap:.5, sea:true, play:(t, d) => creakAt(t, d, .35)},
   rain:{name:'Rain', sea:true, gap:2, play:(t, d) => rainSample(t, d, 10)},
   torch:{name:'Torches at night', sea:true, gap:2, play:(t, d) => torchSample(t, d, 10)},
@@ -187,6 +190,31 @@ export const SOUNDS = {
   warn:{name:'A storm is coming', sea:true, play:(t, d) => noise(t, 3.5, d, {type:'lowpass', f:160, f2:60, peak:.7, buf:brownBuf, a:.6})},
   dock:{name:'Mooring ropes', play:(t, d) => { creakAt(t, d, .35); osc('sine', 120, t + .2, .2, d, .3, .004, 80); noise(t + .2, .1, d, {type:'lowpass', f:900, peak:.3}); }},
 };
+// P70: thunder is built like the real thing: a tearing crack (dozens of tiny snaps, the bolt itself), a heavy thump you feel, then a long
+// uneven roll that swells and sinks as sound comes back from different parts of the sky, wandering from one side to the other.
+// near: 1 overhead, 0 far off. A soft clip adds overtones, so the roll can be heard on a phone speaker, which can't play the deep notes.
+function softClip(){ const w = ctx.createWaveShaper(), n = 1024, c = new Float32Array(n); for (let i=0;i<n;i++){ const x = i/(n - 1)*2 - 1; c[i] = Math.tanh(x*2.4)/Math.tanh(2.4); } w.curve = c; w.oversample = '2x'; return w; }
+function thunderAt(t, d, near){
+  const R = Math.random, far = 1 - near, dur = 5 + far*4 + R()*2.5, mix = ctx.createGain(); mix.gain.value = .55 + near*.45;
+  let last = mix; if (ctx.createStereoPanner){ const p = ctx.createStereoPanner(), s = (R() < .5 ? -1 : 1)*(.25 + R()*.35); p.pan.setValueAtTime(s, t); p.pan.linearRampToValueAtTime(-s*.7, t + dur); mix.connect(p); last = p; }
+  last.connect(wet(d, .3 + far*.55));
+  // the crack
+  if (near > .3){ const c = near*near, snaps = 14 + Math.floor(near*16);
+    for (let i=0;i<snaps;i++){ const o = .004 + Math.pow(i/snaps, 1.6)*.34; noise(t + o, .012 + R()*.03, mix, {type:'highpass', f:1400 + R()*2600, peak:(.32 + R()*.5)*c*(1 - i/snaps*.7), a:.0008}); }
+    noise(t, .32, mix, {type:'bandpass', f:2200, f2:420, q:.7, peak:.75*c, a:.001});
+    osc('sine', 92, t + .02, .55, mix, .85*c, .003, 34); }
+  // the roll: two layers driven through the clip, with an uneven, jagged loudness
+  const roll = ctx.createGain(), clip = softClip(), start = t + .05 + far*.25; roll.gain.value = .0001; roll.connect(clip); clip.connect(mix);
+  const src = (buf, f, q, g, type = 'lowpass', f2 = f*.6) => { const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), gn = ctx.createGain(); s.buffer = buf; s.loop = true; s.playbackRate.value = .75 + R()*.2; fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f, start); fl.frequency.exponentialRampToValueAtTime(f2, start + dur); gn.gain.value = g; s.connect(fl); fl.connect(gn); gn.connect(roll); s.start(start, R()*3); s.stop(start + dur + .1); };
+  src(brownBuf, 150 + near*70, .7, 1.5);
+  src(brownBuf, 420 + near*260, .8, .7 + near*.5, 'bandpass', 170);
+  src(pinkBuf, 900 + near*700, .6, .05 + near*.12, 'bandpass', 260);
+  // the loudness: quick swells, closer together early on, each lower than the one before
+  let at = start, level = .55 + near*.5; roll.gain.setValueAtTime(.0001, start);
+  while (at < start + dur - .5){ const up = .05 + R()*.2, back = .18 + R()*.65; const peak = level*(.55 + R()*.45);
+    roll.gain.linearRampToValueAtTime(peak, at + up); roll.gain.linearRampToValueAtTime(peak*(.3 + R()*.3), at + up + back); at += up + back; level *= .86 + R()*.07; }
+  roll.gain.exponentialRampToValueAtTime(.0001, start + dur);
+}
 function bubbles(t, d, n){ for (let i=0;i<n;i++){ const o = i*.07 + Math.random()*.05, f = 300 + Math.random()*500; osc('sine', f, t + o, .06, d, .12, .004, f*2.2); } }
 function bell(t, d, f, vol){ [[1, 1], [2.02, .5], [2.76, .35], [4.07, .2], [5.4, .1]].forEach(([r, v]) => osc('sine', f*r, t, 2.4/r + .4, d, vol*v, .002)); }
 function creakAt(t, d, vol){ vol *= 1.8; const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), base = 70 + Math.random()*40;

@@ -395,7 +395,7 @@ button.goal .more{color:var(--ochre);font-weight:800}
 .sheet.menu .tab[data-t=dock] svg{background:#cfe0f0}.sheet.menu .tab[data-t=hold] svg{background:#f3e0b0}
 .sheet.menu .tab[data-t=ship] svg{background:#cfe6ee}.sheet.menu .tab[data-t=world] svg{background:#d6ecd8}
 .sheet.menu .tab[data-t=game] svg{background:#cfe6ee}.sheet.menu .tab[data-t=gfx] svg{background:#f3e0b0}.sheet.menu .tab[data-t=dev] svg{background:#e3dcef}
-#bagBtn .ic{background:#f3e0b0}#chartBtn .ic{background:#cfe6ee}#gearBtn .ic{background:#e3dcef}
+#bagBtn .ic{background:#f3e0b0}#chartBtn .ic{background:#cfe6ee}#gearBtn .ic,#fleetBtn .ic{background:#e3dcef}
 #goldChip .ic{background:#dfe6ec}#holdChip .ic{background:#f3e0b0}.lifebar .ic{background:#f6d2c4}
 .tool{background:linear-gradient(#4a372c,#2b211c)}
 .tool span{color:#f6e7c6}
@@ -776,7 +776,7 @@ body.big .abilities{zoom:1.5}
 #wxChip b{color:#eef4f6!important}
 .hi .ic svg,#goldChip .ic svg,.hi.wx span svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
 /* toolbar: a different soft color for each button */
-#bagBtn{background:#f6d9a8!important}#goalPill{background:#f5c3b5!important}#chartBtn{background:#bfe0ea!important}#gearBtn{background:#d8d0ee!important}
+#bagBtn{background:#f6d9a8!important}#goalPill{background:#f5c3b5!important}#chartBtn{background:#bfe0ea!important}#gearBtn,#fleetBtn{background:#d8d0ee!important}
 .tool{box-shadow:0 3px 0 rgba(0,0,0,.12),0 6px 14px rgba(35,30,25,.18)!important}
 .mission .reward em{color:#9a5a12;font-weight:800}
 .ab.row{--c:#3f8fb0;--c2:#2c6b86}
@@ -944,13 +944,13 @@ body.ui3d .sheet.menu .btn{margin-bottom:4px}
 /* a bought or chosen thing sits pushed in */
 body.ui3d .sheet.menu .seg.on{--c:var(--cz-teal);--c2:#17606c;background:var(--dome)!important;color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.3)!important;box-shadow:var(--pressed)!important;transform:translateY(3px)}
 /* the toolbar: four round domes, each with its own color, like the power buttons */
-body.ui3d #bagBtn{--c:#5aa873;--c2:#2d6e45}body.ui3d #goalPill{--c:#f2c04d;--c2:#b67a1c}body.ui3d #chartBtn{--c:#3f9cc2;--c2:#1f6a88}body.ui3d #gearBtn{--c:#9184c4;--c2:#574a8c}
-body.ui3d #bagBtn,body.ui3d #goalPill,body.ui3d #chartBtn,body.ui3d #gearBtn{width:58px!important;height:58px!important;overflow:visible;
+body.ui3d #bagBtn{--c:#5aa873;--c2:#2d6e45}body.ui3d #goalPill{--c:#f2c04d;--c2:#b67a1c}body.ui3d #chartBtn{--c:#3f9cc2;--c2:#1f6a88}body.ui3d #gearBtn,body.ui3d #fleetBtn{--c:#9184c4;--c2:#574a8c}
+body.ui3d #bagBtn,body.ui3d #goalPill,body.ui3d #chartBtn,body.ui3d #gearBtn,body.ui3d #fleetBtn{width:58px!important;height:58px!important;overflow:visible;
   background:radial-gradient(circle at 36% 24%,color-mix(in srgb,var(--c) 45%,#fff) 0%,var(--c) 46%,var(--c2) 100%)!important;
   box-shadow:inset 0 2px 2px rgba(255,255,255,.75),inset 0 -6px 9px rgba(0,0,0,.28),0 0 0 2px var(--edge),0 6px 0 2px var(--lip),0 11px 14px rgba(20,14,8,.42)!important}
 body.ui3d .tool::before{content:'';position:absolute;left:14%;right:14%;top:5%;height:40%;border-radius:50%;background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,0));pointer-events:none}
 body.ui3d .tool .ic{position:relative}body.ui3d .tool .ic svg{width:36px!important;height:36px!important;filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.45))}
-body.ui3d #bagBtn:active,body.ui3d #goalPill:active,body.ui3d #chartBtn:active,body.ui3d #gearBtn:active{transform:translateY(5px)!important;box-shadow:inset 0 2px 2px rgba(255,255,255,.6),inset 0 -5px 8px rgba(0,0,0,.3),0 0 0 2px var(--edge),0 1px 0 2px var(--lip),0 3px 6px rgba(20,14,8,.4)!important}
+body.ui3d #bagBtn:active,body.ui3d #goalPill:active,body.ui3d #chartBtn:active,body.ui3d #gearBtn:active,body.ui3d #fleetBtn:active{transform:translateY(5px)!important;box-shadow:inset 0 2px 2px rgba(255,255,255,.6),inset 0 -5px 8px rgba(0,0,0,.3),0 0 0 2px var(--edge),0 1px 0 2px var(--lip),0 3px 6px rgba(20,14,8,.4)!important}
 body.ui3d .toolbar{gap:18px!important}
 /* the close button: a red dome with a white cross */
 body.ui3d .sheet.menu .xbtn{background:radial-gradient(circle at 36% 24%,color-mix(in srgb,var(--c) 45%,#fff) 0%,var(--c) 46%,var(--c2) 100%)!important;color:#fff!important;box-shadow:var(--raised)!important}
@@ -1031,13 +1031,13 @@ body.uibronze .sheet.menu .seg.on{--t:var(--bz);--b:var(--bz2);--e:#16100b;color
 body.uibronze .sheet.menu .btn:disabled,body.uibronze .homecard .btn:disabled{opacity:.5;box-shadow:0 0 0 1px rgba(40,28,16,.4)!important}
 body.uibronze .sheet.menu .btn{margin-bottom:3px}
 /* round things: toolbar, power buttons, close: a medallion with a raised rim and a sunken face */
-body.uibronze #bagBtn,body.uibronze #goalPill,body.uibronze #chartBtn,body.uibronze #gearBtn,body.uibronze .tool,body.uibronze .ab{--medal:radial-gradient(circle at 50% 30%,#54412f 0%,#33271d 62%,#241a13 100%);
+body.uibronze #bagBtn,body.uibronze #goalPill,body.uibronze #chartBtn,body.uibronze #gearBtn,body.uibronze #fleetBtn,body.uibronze .tool,body.uibronze .ab{--medal:radial-gradient(circle at 50% 30%,#54412f 0%,#33271d 62%,#241a13 100%);
   box-shadow:inset 0 0 0 3px #1f1610,inset 0 0 0 4px rgba(214,171,98,.5),inset 0 2px 6px rgba(0,0,0,.6),0 0 0 1px #120c07,0 0 0 3px var(--rimc,#a57f47),0 0 0 4px #120c07,0 5px 0 4px #120c07,0 8px 10px rgba(10,6,3,.42)!important}
-body.uibronze #bagBtn,body.uibronze #goalPill,body.uibronze #chartBtn,body.uibronze #gearBtn,body.uibronze .tool{width:52px!important;height:52px!important;background:var(--medal)!important}
+body.uibronze #bagBtn,body.uibronze #goalPill,body.uibronze #chartBtn,body.uibronze #gearBtn,body.uibronze #fleetBtn,body.uibronze .tool{width:52px!important;height:52px!important;background:var(--medal)!important}
 body.uibronze .toolbar{gap:17px!important}
 body.uibronze .tool .ic{background:none!important}
 body.uibronze .tool .ic svg{width:30px!important;height:30px!important;filter:sepia(.25) saturate(.85) brightness(1.3) contrast(1.05) drop-shadow(0 1px 1px rgba(0,0,0,.7))}
-body.uibronze #bagBtn:active,body.uibronze #goalPill:active,body.uibronze #chartBtn:active,body.uibronze #gearBtn:active,body.uibronze .tool:active{transform:translateY(3px)!important}
+body.uibronze #bagBtn:active,body.uibronze #goalPill:active,body.uibronze #chartBtn:active,body.uibronze #gearBtn:active,body.uibronze #fleetBtn:active,body.uibronze .tool:active{transform:translateY(3px)!important}
 body.uibronze .ab{width:62px;height:62px;--rimc:color-mix(in srgb,var(--c) 62%,#a57f47);background:conic-gradient(rgba(5,3,2,.7) var(--cd,0deg),transparent 0),var(--medal)!important}
 body.uibronze .ab::before{display:none}
 body.uibronze .ab svg{width:30px!important;height:30px!important;margin-top:-9px;filter:sepia(.3) drop-shadow(0 1px 1px rgba(0,0,0,.7))}
@@ -1086,11 +1086,11 @@ body.uivase .dock.alt,body.uivase .raid.council,body.uivase .sheet.menu .btn.gho
 body.uivase .sheet.menu .seg.on{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important}
 body.uivase .sheet.menu .btn:disabled,body.uivase .homecard .btn:disabled{opacity:.42}
 /* round things: a black disc with a thin painted ring and terracotta figures, exactly like a painted plate */
-body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase .tool,body.uivase .ab{box-shadow:inset 0 0 0 3px var(--gl),inset 0 0 0 4.5px var(--tc),0 0 0 1.5px var(--cr)!important}
-body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase .tool{background:var(--gl)!important;width:52px!important;height:52px!important}
+body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase #fleetBtn,body.uivase .tool,body.uivase .ab{box-shadow:inset 0 0 0 3px var(--gl),inset 0 0 0 4.5px var(--tc),0 0 0 1.5px var(--cr)!important}
+body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase #fleetBtn,body.uivase .tool{background:var(--gl)!important;width:52px!important;height:52px!important}
 body.uivase .tool .ic{background:none!important}
 body.uivase .tool .ic svg{filter:grayscale(1) sepia(1) saturate(3.4) hue-rotate(-16deg) brightness(1.02) contrast(1.15)}
-body.uivase #bagBtn:active,body.uivase #goalPill:active,body.uivase #chartBtn:active,body.uivase #gearBtn:active,body.uivase .tool:active{transform:none!important;background:var(--tc)!important}
+body.uivase #bagBtn:active,body.uivase #goalPill:active,body.uivase #chartBtn:active,body.uivase #gearBtn:active,body.uivase #fleetBtn:active,body.uivase .tool:active{transform:none!important;background:var(--tc)!important}
 body.uivase .ab{width:60px;height:60px;background:conic-gradient(rgba(242,230,204,.42) var(--cd,0deg),transparent 0),var(--gl)!important}
 body.uivase .ab::before{display:none}
 body.uivase .ab svg{width:28px!important;height:28px!important;margin-top:-9px;filter:sepia(1) saturate(2.6) hue-rotate(-14deg) brightness(.92)}
@@ -1130,3 +1130,26 @@ body.uivase .toast,body.uivase .mission,body.uivase .caution,body.uivase .bossba
 body.uivase .mcard{border-radius:8px;box-shadow:inset 0 0 0 1.5px var(--gl),0 0 0 3px var(--cr)}
 body.uibronze .mplus{background:linear-gradient(var(--pol),var(--pol2))!important;color:#2a1c08!important;box-shadow:0 0 0 1px #4a3210,0 2px 0 1px #4a3210!important}
 body.uivase .mplus{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important}
+
+/* P70: the Fleet page, level chips and the naming box */
+.lvchip{display:inline-block;background:#6a7a8c;color:#fff;font:800 11.5px/1 var(--body,Nunito,sans-serif);padding:4px 8px;border-radius:99px;white-space:nowrap;align-self:flex-start}
+.lvchip.ready{background:#3f9a4b}.lvchip.hard{background:#d48a2a}.lvchip.strong{background:#c4473b}.lvchip.big{font-size:15px;padding:7px 12px;background:#2f5f8a}
+.flevel{display:flex;gap:10px;align-items:center;margin:10px 2px}.flevel p{margin:0;font-size:12.5px;line-height:1.3}
+.fcard h3{margin:0}.fcard h4{margin:12px 0 4px;font-size:13px;font-weight:800;opacity:.75}
+.fcard.on,.card.pinned{outline:2.5px solid #e8b53d;outline-offset:-2px}
+.fhead{display:flex;gap:10px;align-items:flex-start}.fhead .shippic{flex:0 0 46%;width:46%;max-width:190px;height:auto}.fhead.small .shippic{flex-basis:32%;width:32%}
+.fname{display:flex;flex-direction:column;gap:5px;align-items:flex-start;min-width:0;flex:1}.fname small{opacity:.75}.fname .pbar{width:100%}
+.linkbtn{background:none;border:0;padding:2px 0;font:700 12.5px var(--body,Nunito,sans-serif);color:#1f6b8f;text-decoration:underline;cursor:pointer}
+.fstat{display:grid;grid-template-columns:76px 1fr 86px;gap:8px;align-items:center;font-size:12.5px;margin:3px 0}.fstat>span:first-child{font-weight:700}.fstat b{text-align:right;font-weight:800;white-space:nowrap}.fstat .pbar{min-width:0;width:100%}
+.fstat b i{display:inline!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;font-style:normal;width:auto!important;height:auto!important}.fstat b i.up{color:#2f8a3f}.fstat b i.down{color:#c4473b}
+.srcrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;font-size:13px;padding:6px 0;border-top:1px solid rgba(90,60,30,.16)}.srcrow small{grid-column:1/-1;font-weight:800;font-size:11.5px}
+.srcrow small.ready{color:#2f8a3f}.srcrow small.hard{color:#b06f18}.srcrow small.strong{color:#c4473b}
+.pinbtn{display:inline-flex;align-items:center;gap:4px}.pinbtn svg{width:16px;height:16px}.line>svg{width:26px;height:26px;flex:none}
+.yard{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.cawarn{display:block;font-weight:800;font-size:12.5px}.cawarn.hard{color:#b06f18}.cawarn.strong{color:#c4473b}
+.mission .lvchip{margin-right:2px}
+.namebox{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(14,28,40,.55);padding:16px;backdrop-filter:blur(3px)}
+.namecard{width:min(340px,100%);box-sizing:border-box;background:linear-gradient(#fbf3e0,#eedcb8);border-radius:20px;padding:16px;color:#3e2b1c;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4);display:grid;gap:10px}
+.namecard h2{font:400 24px var(--display,Marcellus,serif);margin:0}.namecard p{margin:0;font-size:13.5px;font-weight:700;opacity:.8}.namepic .shippic{width:70%;max-width:220px;height:auto;margin:auto;display:block}
+.namecard input{font:800 19px var(--body,Nunito,sans-serif);text-align:center;padding:11px;border:2px solid #b08a58;border-radius:12px;background:#fffaf0;color:#3e2b1c;width:100%;box-sizing:border-box}.namecard input:focus{outline:3px solid #2f7f9a;outline-offset:1px}
+.namebtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.namex{background:none;border:0;font:700 13px var(--body,Nunito,sans-serif);color:#6a4c2a;text-decoration:underline;cursor:pointer}

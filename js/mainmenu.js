@@ -1,11 +1,11 @@
 // P65: the main menu: a grid of big tiles over the live sea. Three voyages side by side, each with its own ship, money and chart.
 // Starting another voyage saves this one and restarts the page on that slot, so the whole world loads clean.
-import {SHIPS} from './config.js?v=a532ae4';
-import {G, SLOTS, readSlot, wipeSlot, setActiveSlot, save} from './state.js?v=a532ae4';
-import {IC, shipImg} from './menus.js?v=a532ae4';
-import {openSheet, toast, sizeUI} from './ui.js?v=a532ae4';
-import {sfx} from './audio.js?v=a532ae4';
-import {PUBLIC} from './state.js?v=a532ae4';
+import {SHIPS} from './config.js?v=49ea3d2';
+import {G, SLOTS, readSlot, wipeSlot, setActiveSlot, save} from './state.js?v=49ea3d2';
+import {IC, shipImg} from './menus.js?v=49ea3d2';
+import {openSheet, toast, sizeUI} from './ui.js?v=49ea3d2';
+import {sfx} from './audio.js?v=49ea3d2';
+import {PUBLIC} from './state.js?v=49ea3d2';
 
 const el = document.getElementById('mainMenu');
 export const GO_KEY = 'wine-dark-sea-go';
@@ -16,13 +16,13 @@ function slotTile(n){
   const o = readSlot(n), on = picked === n;
   if (!o) return `<button class="mtile vslot ${on ? 'on' : ''}" data-m="pick" data-n="${n}"><span class="mplus">+</span><b>Voyage ${n}</b><small>Empty</small></button>`;
   const sh = SHIPS[o.tier] || SHIPS[0];
-  return `<button class="mtile vslot ${on ? 'on' : ''}" data-m="pick" data-n="${n}">${shipImg(sh.model, {...(o.look || {}), men:sh.men[0]})}<b>Voyage ${n}</b><small>${sh.name}</small><small class="mt2">${time(o.playSeconds || 0)}</small></button>`;
+  return `<button class="mtile vslot ${on ? 'on' : ''}" data-m="pick" data-n="${n}">${shipImg(sh.model, {...(o.look || {}), men:sh.men[0]})}<b>Voyage ${n}</b><small>${(o.names || {})[o.tier] || sh.name}</small><small class="mt2">${time(o.playSeconds || 0)}</small></button>`;
 }
 function render(){
   const o = readSlot(picked), sh = o && (SHIPS[o.tier] || SHIPS[0]);
   el.innerHTML = `<h1 class="mtitle">Wine-Dark Sea</h1><div class="mcard">
     <div class="mgrid three">${SLOTS.map(slotTile).join('')}</div>
-    <button class="mplay" data-m="play">${o ? `<span>Set sail</span><small>Voyage ${picked} · ${sh.name} · ${o.gold || 0} drachmae</small>` : `<span>New voyage</span><small>A rowboat and the open sea</small>`}</button>
+    <button class="mplay" data-m="play">${o ? `<span>Set sail</span><small>Voyage ${picked} · ${(o.names || {})[o.tier] || sh.name} · ${o.gold || 0} drachmae</small>` : `<span>New voyage</span><small>A rowboat and the open sea</small>`}</button>
     <div class="mgrid four">
       <button class="mtile" data-m="settings">${IC.gear}<b>Settings</b></button>
       <button class="mtile" data-m="tut">${IC.book}<b>How to play</b></button>

@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=a532ae4';
-import {SPECS} from './ships.js?v=a532ae4';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=a532ae4';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, unload} from './state.js?v=a532ae4';
-import {W} from './weather.js?v=a532ae4';
-import {steering} from './input.js?v=a532ae4';
-import {toast, showZone} from './ui.js?v=a532ae4';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=a532ae4';
-import {startFish, stopFish} from './fishing.js?v=a532ae4';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=a532ae4';
-import {progress} from './quests.js?v=a532ae4';
-import {startSink} from './sinking.js?v=a532ae4';
-import {sfx} from './audio.js?v=a532ae4';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=49ea3d2';
+import {SPECS} from './ships.js?v=49ea3d2';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=49ea3d2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, unload} from './state.js?v=49ea3d2';
+import {W} from './weather.js?v=49ea3d2';
+import {steering} from './input.js?v=49ea3d2';
+import {toast, showZone} from './ui.js?v=49ea3d2';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=49ea3d2';
+import {startFish, stopFish} from './fishing.js?v=49ea3d2';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=49ea3d2';
+import {progress} from './quests.js?v=49ea3d2';
+import {startSink} from './sinking.js?v=49ea3d2';
+import {sfx} from './audio.js?v=49ea3d2';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -50,8 +50,8 @@ function move(dt, sh){
   let target = 0, turn = 0; const heavy = sh.heavy || 2;
   const boost = () => G.settings.dev.speed * (S.bless > 0 ? WILDLIFE.blessSpeed : 1) * rowBoost() * windBoost() * (G.rowT > 0 ? rowBurst() : 1);
   if (!G.sheetOpen && mag > .06){
-    const want = Math.atan2(iy, ix), diff = ((want - S.a + Math.PI*3) % (Math.PI*2)) - Math.PI;
-    if (Math.abs(diff) > 2.5 && G.joy){ G.cruise = false; target = 0; } // P61: pulling the stick back behind the ship brakes (the sail is let go)
+    const want = Math.atan2(iy, ix), diff = wrap(want - S.a); // P70: wrap() stays right however many times the ship has circled (the old sum broke after about a turn and a half to the right, and the ship stopped answering)
+    if (Math.abs(diff) > 2.5 && G.joy){ G.cruise = false; target = 0; if (G.v < sh.speed*.3) turn = Math.sign(diff)*sh.turn; } // P61: pulling the stick back behind the ship brakes (the sail is let go); P70: once she has nearly stopped she comes about (before, a stopped ship with the stick right behind her just sat there)
     else {
       turn = Math.max(-1, Math.min(1, diff*1.4)) * sh.turn;
       // a sharp turn slows the boat down; it picks up speed again once it points the right way

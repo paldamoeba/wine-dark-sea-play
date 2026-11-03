@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=a532ae4';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=a532ae4';
-import {G} from './state.js?v=a532ae4';
-import {TOD, updateDayNight} from './daynight.js?v=a532ae4';
-import {showGrass} from './grass.js?v=a532ae4';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial, setSeaKind} from './water.js?v=a532ae4';
+import {QUALITY, SHIPS} from './config.js?v=49ea3d2';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=49ea3d2';
+import {G} from './state.js?v=49ea3d2';
+import {TOD, updateDayNight} from './daynight.js?v=49ea3d2';
+import {showGrass} from './grass.js?v=49ea3d2';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial, setSeaKind} from './water.js?v=49ea3d2';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -65,6 +65,7 @@ const LOOKS = SEA_LOOKS;
 const CCOLD = new T.Color('#3d6f8f'), CSH = new T.Color(), CSEA = new T.Color(), CST = new T.Color(), CLAG = new T.Color(), tmpC = new T.Color();
 const foamU = seaUniforms(), waterMat = waterMaterial(foamU), bedMat = bedMaterial(foamU);
 // P56: where the wine-dark water is (the pirate king's lair); r = 0 turns it off
+export function setGust(a, k){ foamU.uGust.value.set(Math.cos(a), Math.sin(a), k); } // P70: the wind on the water
 export function setLair(x, y, r){ foamU.uLair.value.set(x, y, r); }
 export function setSeaLook(kind = 'real'){ const toon = kind === 'toon', L = LOOKS[toon ? 'toon' : 'real']; CSH.set(L[0]); CSEA.set(L[1]); CST.set(L[2]); CLAG.set(L[3]); SKY.set(toon ? '#b8def0' : '#b3d5e6');
   setSeaKind(waterMat, kind); }

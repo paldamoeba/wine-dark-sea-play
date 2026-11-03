@@ -3,7 +3,7 @@ const T = window.THREE;
 // P65: two seas (a setting). 'real': water with reflections of the sky and sun on many small moving waves. 'toon': a Wind Waker style cartoon sea:
 // flat bands of color, crisp white wave lines that change with how rough the water is, and star glints on the sun's path.
 export const SEA_LOOKS = {real:['#2d97bd', '#17679b', '#124e80', '#57c2bd'], toon:['#2fb4e0', '#1673d6', '#105fc4', '#6fe3e6']};
-export const seaUniforms = () => ({uTile:{value:null}, uTileN:{value:1}, uTileO:{value:new T.Vector3()}, uZoom:{value:1}, uLair:{value:new T.Vector3(0, 0, 0)}, uNight:{value:0}, uTime:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}});
+export const seaUniforms = () => ({uTile:{value:null}, uTileN:{value:1}, uTileO:{value:new T.Vector3()}, uZoom:{value:1}, uLair:{value:new T.Vector3(0, 0, 0)}, uNight:{value:0}, uTime:{value:0}, uSun:{value:new T.Vector3(0, 1, 0)}, uGlint:{value:1}, uStorm:{value:0}, uSky:{value:new T.Color()}, uWave:{value:1}, uGust:{value:new T.Vector3(1, 0, 0)}});
 // the same swells as waveH() in world.js, written for the graphics card, with their slope (for the light) and smaller waves on top
 // a smooth read of the picture: four linear samples weighted so the result has no corners (a bicubic filter)
 const TILE_GLSL = `uniform sampler2D uTile; uniform float uTileN; uniform vec3 uTileO;
@@ -32,7 +32,7 @@ waterMat.onBeforeCompile = sh => {
     .replace('#include <begin_vertex>', `vec3 transformed = position; transformed.y += sw.x; vH = sw.x; vAmp = max(A, .5); vSl = sw.yz; vLand = aLand; vSh = aShore;
       vWorld = (modelMatrix*vec4(transformed, 1.0)).xyz;`);
   sh.fragmentShader = TILE_GLSL + `
-    varying vec3 vWorld; varying vec2 vSl; varying float vH, vAmp, vSh; uniform float uTime, uGlint, uStorm, uWave, uNight, uZoom; uniform vec3 uSun, uSky, uLair;
+    varying vec3 vWorld; varying vec2 vSl; varying float vH, vAmp, vSh; uniform float uTime, uGlint, uStorm, uWave, uNight, uZoom; uniform vec3 uSun, uSky, uLair, uGust;
     #ifdef TOON
     ` + WAVES_GLSL + `
     #endif
@@ -44,12 +44,10 @@ waterMat.onBeforeCompile = sh => {
     vec2 ripple(vec2 w0, float t){
       vec2 w = w0 + 22.*vec2(sin(w0.y*.017 + t*.21), sin(w0.x*.013 - t*.17));
       vec2 s = vec2(0.); float f;
-      f = cos(w.x*.052 + w.y*.021 + t*1.3); s += f*vec2(.052, .021)*5.;
-      f = cos(w.x*-.031 + w.y*.067 - t*1.5); s += f*vec2(-.031, .067)*4.;
-      f = cos(w.x*.094 - w.y*.058 + t*2.1); s += f*vec2(.094, -.058)*2.4;
-      f = cos(w.x*.041 + w.y*.137 + t*2.6); s += f*vec2(.041, .137)*1.5;
-      f = cos(w.x*-.181 + w.y*.083 - t*3.1); s += f*vec2(-.181, .083)*.9;
-      f = cos(w.x*.23 + w.y*.19 + t*3.7); s += f*vec2(.23, .19)*.6;
+      // P70: only broad, slow waves: the sea reads as smooth rolling water, with nothing fine enough to look like pixels
+      f = cos(w.x*.031 + w.y*.013 + t*.9); s += f*vec2(.031, .013)*5.5;
+      f = cos(w.x*-.019 + w.y*.041 - t*1.05); s += f*vec2(-.019, .041)*4.5;
+      f = cos(w.x*.057 - w.y*.035 + t*1.4); s += f*vec2(.057, -.035)*2.2;
       return s; }
     #ifdef TOON
     // Wind Waker wave lines: short white curved strokes that appear, drift and fade, each with its own place and tilt.
@@ -75,10 +73,8 @@ waterMat.onBeforeCompile = sh => {
       #else
         vec2 rw = vWorld.xz;
         vec2 rp = ripple(rw, uTime)*(.1 + .06*uStorm + .02*min(vAmp, 12.))*near;
-        // fine detail from noise, close to the camera
         // P67: from further out, wider waves take over from the small ones
         if (zk > .01){ float t2 = uTime*.55; vec2 w2 = (rw + 240.*vec2(vnoise(rw/300.) - .5, vnoise(rw/260. + 9.) - .5))/2.3; vec2 s2 = ripple(w2, t2) + ripple(w2.yx*.61 + 40., t2*.8)*.7; rp = mix(rp, s2*(.07 + .014*min(vAmp, 12.)), zk*.6); } // two sets at an angle, pushed around by noise, so no weave shows
-        if (near > .01){ float n0 = vnoise(rw/19. + uTime*.11), nx = vnoise((rw + vec2(4., 0.))/19. + uTime*.11), ny = vnoise((rw + vec2(0., 4.))/19. + uTime*.11); rp += vec2(nx - n0, ny - n0)*.8*near; }
         normal = normalize(normal + (viewMatrix*vec4(-rp.x, 0., -rp.y, 0.)).xyz);
       #endif`)
     .replace('#include <color_fragment>', `vec4 tileC = tileAt(vWorld.xz); float landF = tileC.a; diffuseColor.rgb *= tileC.rgb;
@@ -99,6 +95,15 @@ waterMat.onBeforeCompile = sh => {
         diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*vec3(.9, 1.1, 1.05), smoothstep(.2, 1., hk)*.65);
         diffuseColor.rgb *= (.92 + .13*vnoise(vWorld.xz/620. + uTime*.008))*(1. + uNight*.08);
       #endif
+      // P70: gusts: soft dark patches of ruffled water that race downwind across the sea, stretched along the wind
+      if (uGust.z > .3){ vec2 gs = vec2(dot(vWorld.xz, uGust.xy), dot(vWorld.xz, vec2(-uGust.y, uGust.x))) - vec2(uTime*(60. + 150.*uGust.z), 0.);
+        float gn = vnoise(gs/vec2(1500., 520.)) *.72 + vnoise(gs/vec2(620., 240.) + 7.)*.28, gk = smoothstep(.3, .85, uGust.z);
+        #ifdef TOON
+          diffuseColor.rgb *= 1. - .1*gk*smoothstep(.58, .6, gn);
+        #else
+          diffuseColor.rgb *= 1. - .17*gk*smoothstep(.5, .72, gn);
+        #endif
+      }
       // P56: the wine-dark sea around the pirate king's lair (uLair = x, z, radius): deep wine red, crests a little lighter
       if (uLair.z > 0.){ float lk = 1. - smoothstep(uLair.z*.55, uLair.z, length(vWorld.xz - uLair.xy));
         diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(.24, .04, .12), vec3(.46, .12, .22), smoothstep(-1., 1., hk)), lk*.9); }`)
@@ -146,12 +151,12 @@ waterMat.onBeforeCompile = sh => {
         vec3 skyC = mix(uSky*1.08, uSky*vec3(.42, .62, .98), smoothstep(.45, 1., Rr.y));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, skyC, fres*(1. - .5*lair));
         // the sun on the water: a wide soft sheen, and bright glitter on the finest waves
-        float sp = max(dot(reflect(-uSun, nW), Vv), 0.), glit = mix(vnoise(vWorld.xz/6.5 + vec2(uTime*.9, -uTime*.7)), vnoise(vWorld.xz/15. + vec2(uTime*.6, -uTime*.5)), zk);
+        float sp = max(dot(reflect(-uSun, nW), Vv), 0.);
         vec3 sunC = mix(vec3(1., .95, .84), vec3(.78, .86, 1.), uNight);
-        gl_FragColor.rgb += sunC*(pow(sp, 10.)*.1 + pow(sp, 60.)*.32 + pow(sp, 300.)*smoothstep(.38, .8, glit)*2.2)*uGlint*near;
+        gl_FragColor.rgb += sunC*(pow(sp, 10.)*.1 + pow(sp, 60.)*.3 + pow(sp, 260.)*.5)*uGlint*near; /* P70: a smooth shine with no speckle */
         // foam: soft white on the highest crests, more in rough water, and a gentle lace where waves lap at the shore
-        float n1 = vnoise(vWorld.xz/64. + vec2(uTime*.14, -uTime*.05)), n2 = vnoise(vWorld.xz/17. - vec2(uTime*.1, uTime*.16));
-        float foamN = n1*.65 + n2*.35, rough = clamp((vAmp - 2.5)*.1, 0., 1.);
+        float n1 = vnoise(vWorld.xz/90. + vec2(uTime*.1, -uTime*.04)), n2 = vnoise(vWorld.xz/38. - vec2(uTime*.07, uTime*.1));
+        float foamN = n1*.7 + n2*.3, rough = clamp((vAmp - 2.5)*.1, 0., 1.);
         float cap = smoothstep(.34, .95, hk)*smoothstep(.56 - rough*.14, .78, foamN)*(.08 + rough);
         float lace = (1. - smoothstep(.05, .34, landF))*smoothstep(.5, .72, n2*.55 + n1*.45 + .22*sin(landF*26. - uTime*.8));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, clamp(cap*.8 + lace*.55, 0., .9)*(1. - lair)*(1. - .4*uNight)*(1. - smoothstep(1700., 3000., zd)));

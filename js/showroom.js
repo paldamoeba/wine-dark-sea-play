@@ -1,16 +1,17 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=a532ae4';
-import {makePost} from './glow.js?v=a532ae4';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=a532ae4';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=a532ae4';
-import {makeFire, updateFire} from './fire.js?v=a532ae4';
-import {updateSmoke} from './smoke.js?v=a532ae4';
-import {addGrass, updateGrass} from './grass.js?v=a532ae4';
-import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=a532ae4';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=a532ae4';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=a532ae4';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=a532ae4';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=49ea3d2';
+import {makePost} from './glow.js?v=49ea3d2';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=49ea3d2';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=49ea3d2';
+import {makeFire, updateFire} from './fire.js?v=49ea3d2';
+import {updateSmoke} from './smoke.js?v=49ea3d2';
+import {addGrass, updateGrass} from './grass.js?v=49ea3d2';
+import {makeWind} from './seafx.js?v=49ea3d2';
+import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=49ea3d2';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=49ea3d2';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=49ea3d2';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=49ea3d2';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -27,6 +28,7 @@ const seaMat = new T.MeshLambertMaterial({color:'#2b7f93'});
 const sea = new T.Mesh(new T.CircleGeometry(6000, 64), seaMat); sea.rotation.x = -Math.PI/2; sea.receiveShadow = true; scene.add(sea);
 // P69: Full graphics is the game's own sea (water.js): the same shader, the same colors, Realistic or Cartoon. Only the shape of the water differs: it is worked out
 // around what is on show, calm around an island's real shore and open everywhere else.
+const wind3d = makeWind(scene);
 const WN = 220, WSIZE = 6000, foamU = seaUniforms(), waterMat = waterMaterial(foamU), bedMat = bedMaterial(foamU);
 const waveGeo = new T.PlaneGeometry(WSIZE, WSIZE, WN, WN); waveGeo.rotateX(-Math.PI/2);
 const wN = waveGeo.attributes.position.count;
@@ -103,7 +105,7 @@ function updateStorm(dt, t){
     if (rainPos[o + 1] < 0){ if (Math.random() < .12){ const r = rings[ringI++ % rings.length]; r.k = 0; r.m.visible = true; r.m.position.set(rainPos[o], full ? wv(rainPos[o], rainPos[o + 2], t) + .6 : .6, rainPos[o + 2]); } dropAt(i, true); } }
   rainGeo.attributes.position.needsUpdate = true;
   for (const r of rings) if (r.m.visible){ r.k += dt*1.8; r.m.scale.setScalar(2 + r.k*9); r.m.material.opacity = (1 - r.k)*.7; if (r.k >= 1) r.m.visible = false; }
-  boltT -= dt; if (boltT <= 0){ flash = 1; boltT = 2.5 + Math.random()*5; setTimeout(() => sfx('thunder'), 300 + Math.random()*1200); }
+  boltT -= dt; if (boltT <= 0){ const r = Math.random(), [name, fl, wait] = r < .22 ? ['thunderNear', 1, .05 + Math.random()*.2] : r < .68 ? ['thunder', .75, .8 + Math.random()*1.2] : ['thunderFar', .42, 2.4 + Math.random()*2.2]; flash = fl; boltT = 4 + Math.random()*6; setTimeout(() => sfx(name), wait*1000); }
   flash = Math.max(0, flash - dt*2.6); const L = LIGHTS.storm, f = flash*flash;
   sun.intensity = L.sun[1] + f*1.4; hemi.intensity = L.hemi[2] + f*.9; scene.background.set(L.sky).lerp(WHITE, f*.5);
 }
@@ -203,7 +205,7 @@ const SOUND_INFO = {
   sink:'Your own ship goes down.', bubbles:'Bubbles from a sinking ship.', bell:'The harbor bell as you come in to dock.', horn:'A war horn when you raid a ship, or a navy ship sees a crime.',
   chime:'A goal or a job is done.', fanfare:'Your new ship is ready, or an island raises your flag.', hammer:'The shipwright fits an upgrade or repairs your hull.', buy:'You buy something.',
   blessing:'Poseidon blesses you after you sail close to a whale.', whale:'A whale surfaces.', kraken:'The kraken rises, and again when it dives.', spout:'The whale breathes out.', splash:'Dolphins splash beside your boat.', gull:'Gulls over islands, wrecks and harbors.',
-  thunder:'After each lightning flash in a storm.', creak:'Your hull creaks as it rolls on the waves.', rain:'A storm\'s rain: waves of soft hiss with single drops landing all around you. This plays 10 seconds of it.', torch:'What your torches and fire bowls sound like at night: a soft flutter of flame with a few small cracks. This plays 10 seconds of it.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
+  thunder:'Thunder a few miles off: a short crack, then a long uneven roll.', thunderNear:'A bolt right overhead: a tearing crack and a heavy thump, straight after the flash.', thunderFar:'Far away: only a low roll, a few seconds after a faint flash.', creak:'Your hull creaks as it rolls on the waves.', rain:'A storm\'s rain: waves of soft hiss with single drops landing all around you. This plays 10 seconds of it.', torch:'What your torches and fire bowls sound like at night: a soft flutter of flame with a few small cracks. This plays 10 seconds of it.', oar:'Each stroke of the oars.', sail:'The sail flaps in the wind.',
   bottle:'You open a message in a bottle.', treasure:'You dig up a treasure.', crowd:'The crowd at the Rhodes arena.', zone:'You sail into new waters.', warn:'Distant rumbling when a storm is coming.', dock:'Mooring ropes pull tight at the pier.'};
 const SOUND_MODEL = {
   coin:() => wreckModel('medium'), coins:() => harborTown('poseidon'), fish:() => buildShip('fishing'), catch:() => buildShip('fishing'), miss:() => buildShip('fishing'),
@@ -216,7 +218,7 @@ const SOUND_MODEL = {
   whale:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; }, spout:() => { const w = whaleModel(); w.position.y = -8; w.userData.anim = 'whale'; return w; },
   splash:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const d = dolphinModel(); d.position.set(i*30 - 30, 6, (i % 2)*24 - 12); d.userData.ph = i*1.2; g.add(d); }); g.userData.anim = 'dolphins'; return g; },
   gull:() => { const g = new T.Group(); [0, 1, 2].forEach(i => { const b = gull(); b.position.set(i*22 - 22, 30 + (i % 2)*10, (i - 1)*14); b.scale.setScalar(1.6); g.add(b); }); g.userData.anim = 'gulls'; return g; },
-  thunder:() => buildShip('merchant'), creak:() => buildShip('merchant'), oar:() => buildShip('rowboat'), sail:() => buildShip('fishing'),
+  thunder:() => buildShip('merchant'), thunderNear:() => buildShip('merchant'), thunderFar:() => buildShip('merchant'), creak:() => buildShip('merchant'), oar:() => buildShip('rowboat'), sail:() => buildShip('fishing'),
   bottle:() => buildShip('rowboat'), treasure:() => wreckModel('medium'), crowd:() => buildColossus(300, 150), zone:() => buildShip('fishing'), warn:() => buildShip('fishing'), dock:() => harborTown('poseidon'),
 };
 let playing = null; // the item whose sound is on
@@ -441,7 +443,7 @@ function animate(t){
 let t0 = performance.now(), last = 0;
 function frame(now){
   const t = (now - t0)/1000, dt = Math.min(.05, t - last); last = t; animate(t); updateSoundScene(dt); if (spin && !pts.size) yaw += .003;
-  foamU.uTime.value = t; foamU.uSun.value.copy(sunDir).normalize(); foamU.uZoom.value = Math.max(1, dist/740); updateStorm(dt, t);
+  { const k = !full ? 0 : lightKey === 'storm' ? 1 : .6, a = t*.01 + .8; wind3d.update(dt, a, k, focus.x, focus.z, lightKey === 'night' ? 1 : 0); foamU.uGust.value.set(Math.cos(a), Math.sin(a), k); } /* P70: the game's wind, in Full */ foamU.uTime.value = t; foamU.uSun.value.copy(sunDir).normalize(); foamU.uZoom.value = Math.max(1, dist/740); updateStorm(dt, t);
   // full graphics: ships ride the waves, pitching and rolling a little
   for (const r of riders){ const p = r.o.getWorldPosition(tmpV), h = full ? wv(p.x, p.z, t) : 0;
     r.o.position.y = r.y + h*.8; r.o.rotation.z = full ? (wv(p.x + 20, p.z, t) - wv(p.x - 20, p.z, t))*.012 : 0; r.o.rotation.x = full ? (wv(p.x, p.z - 12, t) - wv(p.x, p.z + 12, t))*.02 : 0; }

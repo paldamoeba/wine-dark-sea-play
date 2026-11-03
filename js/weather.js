@@ -1,10 +1,10 @@
 // Weather: fair, calm, windy or stormy, each for a few minutes. Storms are announced a little before they hit.
 // wave = how big the waves are; storm = dark sky, rain and lightning (0 to 1).
 // Storms wear down small boats outside the Shallows, but fish bite faster in them: a reward for the brave.
-import {G} from './state.js?v=a532ae4';
-import {WEATHER_WAVES} from './world.js?v=a532ae4';
-import {toast} from './ui.js?v=a532ae4';
-import {sfx} from './audio.js?v=a532ae4';
+import {G} from './state.js?v=49ea3d2';
+import {WEATHER_WAVES} from './world.js?v=49ea3d2';
+import {toast} from './ui.js?v=49ea3d2';
+import {sfx} from './audio.js?v=49ea3d2';
 
 export const KINDS = {
   fair:  {label:'Fair',   wave:1,   storm:0,   wind:.55, dur:[150, 280], icon:'☀'},
@@ -34,7 +34,10 @@ export function updateWeather(dt){
   G.stormK += (k.storm - G.stormK)*f; G.mistK = (G.mistK ?? 1) + ((k.mist || 0) - (G.mistK ?? 1))*f;
   WEATHER_WAVES.k += (k.wave - WEATHER_WAVES.k)*f;
   // lightning now and then in a storm
-  if (G.stormK > .6){ W.bolt -= dt; if (W.bolt <= 0){ G.flash = 1; W.bolt = 3 + Math.random()*7; setTimeout(() => sfx('thunder'), 300 + Math.random()*1500); } }
+  if (G.stormK > .6){ W.bolt -= dt; if (W.bolt <= 0){ W.bolt = 4 + Math.random()*9;
+    // P70: how far off the bolt is sets everything: how bright the flash, how long until the sound arrives, and how the thunder sounds
+    const r = Math.random(), [name, flash, wait] = r < .22 ? ['thunderNear', 1, .05 + Math.random()*.2] : r < .68 ? ['thunder', .75, .8 + Math.random()*1.2] : ['thunderFar', .42, 2.4 + Math.random()*2.2];
+    G.flash = flash; setTimeout(() => sfx(name), wait*1000); } }
 }
 // How much a storm is blowing right now (0 to 1): used for wave damage and fishing.
 export const storminess = () => G.stormK;
