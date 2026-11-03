@@ -1010,3 +1010,127 @@ body.ui3d .sheet.menu .card{margin-bottom:10px}
 .mapwarn[hidden]{display:none}
 /* many guard ships fit on the fortress card */
 .mission .mships{flex-wrap:wrap;gap:2px}.mission .mships svg{width:17px;height:11px}
+
+/* ---- P68: the second versions of the two looks ---- */
+body.uibronze .raid,body.uivase .raid,body.uibronze .dock,body.uivase .dock{white-space:nowrap;font-size:15.5px!important}
+/* BRONZE (3D): cast metal. One dark bronze for everything, a thin bright rim where the light catches, a low weight below it. No shine stripes, no rainbow.
+   Change these five to recolor the whole look. */
+body.uibronze{--bz:#46362a;--bz2:#2a2019;--rim:#b8925a;--ivory:#f3e7cb;--stone:#ece2cd;--bz-ink:#2e231a;--oxb:#7c2b2b;--oxb2:#4f1717;--ver:#3b7a72;--ver2:#1f4d48;--pol:#d6ab62;--pol2:#94692a}
+body.uibronze .btn,body.uibronze .sheet.menu .btn,body.uibronze .maphead .btn,body.uibronze .mapbtns .btn,body.uibronze .dock,body.uibronze .raid,body.uibronze .volley,body.uibronze .mplay,body.uibronze .seg{
+  --t:var(--bz);--b:var(--bz2);--e:#16100b;background:linear-gradient(var(--t),var(--b))!important;color:var(--ivory)!important;border:0!important;text-shadow:0 1px 1px rgba(0,0,0,.55)!important;
+  font-family:var(--display)!important;font-weight:400!important;letter-spacing:.02em;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--t) 55%,#fff),inset 0 0 0 1px color-mix(in srgb,var(--t) 70%,var(--rim)),0 0 0 1px var(--e),0 3px 0 1px var(--e),0 5px 8px rgba(10,6,3,.35)!important}
+body.uibronze .sheet.menu .btn:active:not(:disabled),body.uibronze .btn:active:not(:disabled),body.uibronze .dock:active,body.uibronze .raid:active,body.uibronze .volley:active,body.uibronze .mplay:active,body.uibronze .seg:active{transform:translateY(2px);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.45),inset 0 0 0 1px color-mix(in srgb,var(--t) 70%,var(--rim)),0 0 0 1px var(--e),0 1px 0 1px var(--e)!important}
+body.uibronze .sheet.menu .btn.gold,body.uibronze .mapbtns .btn.gold,body.uibronze .btn.gold,body.uibronze .raid.capture,body.uibronze #homeNow{--t:var(--pol);--b:var(--pol2);--e:#4a3210;color:#2a1c08!important;text-shadow:0 1px 0 rgba(255,235,190,.45)!important}
+body.uibronze .sheet.menu .btn.danger,body.uibronze .btn.danger,body.uibronze .raid,body.uibronze .volley{--t:var(--oxb);--b:var(--oxb2);--e:#250a0a}
+body.uibronze .raid.capture{--t:var(--pol);--b:var(--pol2);--e:#4a3210}
+body.uibronze .dock,body.uibronze #homeSail,body.uibronze .mplay,body.uibronze .sheet.menu .btn:not(.gold):not(.danger):not(.ghostdark){--t:var(--ver);--b:var(--ver2);--e:#0f2a27}
+body.uibronze .dock.alt,body.uibronze .raid.council,body.uibronze .sheet.menu .btn.ghostdark,body.uibronze .btn.ghostdark,body.uibronze .seg{--t:#f0e6d0;--b:#cdbd9c;--e:#5d4a30;color:var(--bz-ink)!important;text-shadow:0 1px 0 rgba(255,255,255,.6)!important}
+body.uibronze .sheet.menu .seg.on{--t:var(--bz);--b:var(--bz2);--e:#16100b;color:var(--ivory)!important;text-shadow:0 1px 1px #000!important}
+body.uibronze .sheet.menu .btn:disabled,body.uibronze .homecard .btn:disabled{opacity:.5;box-shadow:0 0 0 1px rgba(40,28,16,.4)!important}
+body.uibronze .sheet.menu .btn{margin-bottom:3px}
+/* round things: toolbar, power buttons, close: a medallion with a raised rim and a sunken face */
+body.uibronze #bagBtn,body.uibronze #goalPill,body.uibronze #chartBtn,body.uibronze #gearBtn,body.uibronze .tool,body.uibronze .ab{--medal:radial-gradient(circle at 50% 30%,#54412f 0%,#33271d 62%,#241a13 100%);
+  box-shadow:inset 0 0 0 3px #1f1610,inset 0 0 0 4px rgba(214,171,98,.5),inset 0 2px 6px rgba(0,0,0,.6),0 0 0 1px #120c07,0 0 0 3px var(--rimc,#a57f47),0 0 0 4px #120c07,0 5px 0 4px #120c07,0 8px 10px rgba(10,6,3,.42)!important}
+body.uibronze #bagBtn,body.uibronze #goalPill,body.uibronze #chartBtn,body.uibronze #gearBtn,body.uibronze .tool{width:52px!important;height:52px!important;background:var(--medal)!important}
+body.uibronze .toolbar{gap:17px!important}
+body.uibronze .tool .ic{background:none!important}
+body.uibronze .tool .ic svg{width:30px!important;height:30px!important;filter:sepia(.25) saturate(.85) brightness(1.3) contrast(1.05) drop-shadow(0 1px 1px rgba(0,0,0,.7))}
+body.uibronze #bagBtn:active,body.uibronze #goalPill:active,body.uibronze #chartBtn:active,body.uibronze #gearBtn:active,body.uibronze .tool:active{transform:translateY(3px)!important}
+body.uibronze .ab{width:62px;height:62px;--rimc:color-mix(in srgb,var(--c) 62%,#a57f47);background:conic-gradient(rgba(5,3,2,.7) var(--cd,0deg),transparent 0),var(--medal)!important}
+body.uibronze .ab::before{display:none}
+body.uibronze .ab svg{width:30px!important;height:30px!important;margin-top:-9px;filter:sepia(.3) drop-shadow(0 1px 1px rgba(0,0,0,.7))}
+body.uibronze .ab span{bottom:8px;font:400 10px/1 var(--display);color:var(--ivory);text-shadow:0 1px 1px #000}
+body.uibronze .ab:active:not(:disabled){transform:translateY(3px);box-shadow:inset 0 0 0 3px #1f1610,inset 0 2px 8px rgba(0,0,0,.7),0 0 0 1px #120c07,0 0 0 3px var(--rimc),0 0 0 4px #120c07,0 2px 0 4px #120c07!important}
+body.uibronze .ab:disabled{filter:saturate(.6) brightness(.8)}
+body.uibronze .ab.on{--rimc:#f0c777;box-shadow:inset 0 0 0 3px #1f1610,0 0 0 1px #120c07,0 0 0 3px #f0c777,0 0 0 4px #120c07,0 5px 0 4px #120c07,0 0 18px #e9aa4d!important}
+body.uibronze .abilities{gap:15px 13px!important}
+body.uibronze .sheet.menu .xbtn{background:radial-gradient(circle at 50% 30%,#54412f,#241a13)!important;color:var(--ivory)!important;box-shadow:0 0 0 1px #120c07,0 0 0 2.5px #a57f47,0 2px 0 3px #120c07!important}
+body.uibronze .sheet.menu .xbtn:active{transform:translateY(2px)}
+/* the top-left panel: a dark bronze plaque, so the numbers read over bright water */
+body.uibronze .hud{padding:9px 10px 7px!important;background:linear-gradient(rgba(58,45,34,.93),rgba(33,25,19,.95))!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,240,205,.28),inset 0 0 0 1px rgba(184,146,90,.5),0 0 0 1px #120c07,0 3px 0 1px #120c07,0 6px 10px rgba(10,6,3,.35)}
+body.uibronze .ld,body.uibronze .hi,body.uibronze #goldChip,body.uibronze #wxChip{color:var(--ivory)!important}body.uibronze #wxChip b{color:#c9b995}
+body.uibronze .ld.full b{color:#f0957f!important}
+body.uibronze .hudbar{border-top-color:rgba(184,146,90,.4)!important}
+body.uibronze .lifebar .bar,body.uibronze .ld .bar{background:#17100b!important;box-shadow:inset 0 1px 2px #000,0 1px 0 rgba(255,240,205,.18)!important}
+body.uibronze .lifebar .bar i{background:linear-gradient(#a2bb62,#6a8a3c)!important}body.uibronze .lifebar .bar i.low{background:linear-gradient(#d0604a,#8d2f22)!important}
+body.uibronze .ld .bar i{background:linear-gradient(#e0b76e,#a97a35)!important}body.uibronze .ld.full .bar i{background:linear-gradient(#d0604a,#8d2f22)!important}
+/* menus: dressed limestone, hairline bronze edges, carved headings */
+body.uibronze .sheet.menu,body.uibronze .sheet.menu .mtop{background:var(--stone)!important}
+body.uibronze .sheet.menu .mtop{box-shadow:0 1px 0 #a57f47,0 2px 0 rgba(255,255,255,.6)!important}
+body.uibronze .sheet.menu .card{background:#f8f2e4!important;border-radius:10px;box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(110,84,50,.42),0 2px 0 1px rgba(110,84,50,.22)!important}
+body.uibronze .sheet.menu .card h3{color:#6b4a22!important;font-family:var(--display);font-weight:400;letter-spacing:.05em}
+body.uibronze .sheet.menu .mhead h1{color:var(--bz-ink)!important}
+body.uibronze .sheet.menu .tile,body.uibronze .sheet.menu .job,body.uibronze .sheet.menu .sailor,body.uibronze .sheet.menu .fship,body.uibronze .sheet.menu .upc,body.uibronze .sheet.menu .updetail,body.uibronze .sheet.menu .tut,body.uibronze .good,body.uibronze .stat{background:#efe6d3!important;border-radius:8px;box-shadow:inset 0 1px 2px rgba(70,50,25,.16),0 1px 0 rgba(255,255,255,.8)}
+body.uibronze .slot,body.uibronze .mtile{background:linear-gradient(#f8f2e4,#e4d8bf)!important;border-radius:10px!important;box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(90,68,40,.55),0 2px 0 1px rgba(90,68,40,.5)!important}
+body.uibronze .slot.on{box-shadow:inset 0 1px 0 #fff,0 0 0 2px var(--pol2),0 2px 0 2px var(--pol2)!important}
+body.uibronze .sheet.menu .tab svg{border-radius:10px;border:0!important;background:linear-gradient(#f8f2e4,#e4d8bf);opacity:1;box-shadow:0 0 0 1px rgba(90,68,40,.5),0 2px 0 1px rgba(90,68,40,.45)!important}
+body.uibronze .sheet.menu .tab.on svg{transform:translateY(1px);box-shadow:0 0 0 2px var(--pol2),0 1px 0 2px var(--pol2)!important}
+body.uibronze .sheet.menu .tab.on span{color:#6b4a22!important}
+body.uibronze .sheet.menu select,body.uibronze .sheet.menu input{background-color:#f8f2e4!important;border:0!important;border-radius:8px;box-shadow:inset 0 1px 3px rgba(70,50,25,.22),0 0 0 1px rgba(90,68,40,.55)!important}
+body.uibronze .tog{border:0!important;background:#b9ab90!important;box-shadow:inset 0 1px 3px rgba(40,28,14,.5),0 0 0 1px rgba(60,45,25,.7)}
+body.uibronze .tog.on{background:var(--ver)!important}
+body.uibronze .tog i{background:linear-gradient(#e5c483,#a97a35)!important;box-shadow:0 0 0 1px #4a3210,0 1px 2px rgba(0,0,0,.4)!important}
+body.uibronze .rbv{background:var(--bz2)!important;box-shadow:inset 0 1px 2px #000,0 0 0 1px #120c07,0 1px 0 1px rgba(184,146,90,.55)!important}
+body.uibronze .rb.gold .rbv{background:linear-gradient(var(--pol),var(--pol2))!important;box-shadow:0 0 0 1px #4a3210,0 2px 0 1px #4a3210!important}
+body.uibronze .toast,body.uibronze .mission,body.uibronze .caution,body.uibronze .bossbar,body.uibronze .legend,body.uibronze .homecard{background:#f4ecda!important;border-radius:10px!important;box-shadow:inset 0 1px 0 #fff,0 0 0 1px #5d4a30,0 3px 0 1px #5d4a30,0 7px 12px rgba(15,10,5,.35)!important}
+body.uibronze .mcard{border-radius:14px;box-shadow:inset 0 1px 0 #fff,0 0 0 1px #5d4a30,0 4px 0 1px #5d4a30,0 12px 22px rgba(15,10,5,.45)}
+
+/* VASE (flat): black-figure pottery. Only solid color and line: black glaze, fired terracotta, cream slip and a wine red, with a Greek key band. No gradients and no shadows at all. */
+body.uivase{--gl:#1f1814;--tc:#c9652f;--tc2:#e08a4e;--cr:#f2e6cc;--cr2:#e7d6b4;--wn:#7a2230;--key:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M0 11H24M5 11V2H17V8H10V5H13' fill='none' stroke='%231f1814' stroke-width='1.7'/%3E%3C/svg%3E")}
+body.uivase .btn,body.uivase .sheet.menu .btn,body.uivase .maphead .btn,body.uivase .mapbtns .btn,body.uivase .dock,body.uivase .raid,body.uivase .volley,body.uivase .mplay,body.uivase .seg{background:var(--gl)!important;color:var(--cr)!important;border:0!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important;text-shadow:none!important;font-family:var(--display)!important;font-weight:400!important;letter-spacing:.03em;border-radius:6px!important}
+body.uivase .sheet.menu .btn:active:not(:disabled),body.uivase .btn:active:not(:disabled),body.uivase .dock:active,body.uivase .raid:active,body.uivase .volley:active,body.uivase .mplay:active,body.uivase .seg:active{transform:none;background:var(--tc)!important;color:var(--gl)!important;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3px var(--gl)!important}
+body.uivase .sheet.menu .btn.gold,body.uivase .mapbtns .btn.gold,body.uivase .btn.gold,body.uivase .raid.capture,body.uivase #homeNow,body.uivase .mplay{background:var(--tc)!important;color:var(--gl)!important;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3px var(--gl)!important}
+body.uivase .sheet.menu .btn.danger,body.uivase .btn.danger,body.uivase .raid,body.uivase .volley{background:var(--wn)!important;box-shadow:inset 0 0 0 2px var(--wn),inset 0 0 0 3px var(--cr2)!important}
+body.uivase .raid.capture{background:var(--tc)!important;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3px var(--gl)!important}
+body.uivase .dock.alt,body.uivase .raid.council,body.uivase .sheet.menu .btn.ghostdark,body.uivase .btn.ghostdark,body.uivase .seg{background:var(--cr)!important;color:var(--gl)!important;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
+body.uivase .sheet.menu .seg.on{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important}
+body.uivase .sheet.menu .btn:disabled,body.uivase .homecard .btn:disabled{opacity:.42}
+/* round things: a black disc with a thin painted ring and terracotta figures, exactly like a painted plate */
+body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase .tool,body.uivase .ab{box-shadow:inset 0 0 0 3px var(--gl),inset 0 0 0 4.5px var(--tc),0 0 0 1.5px var(--cr)!important}
+body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase .tool{background:var(--gl)!important;width:52px!important;height:52px!important}
+body.uivase .tool .ic{background:none!important}
+body.uivase .tool .ic svg{filter:grayscale(1) sepia(1) saturate(3.4) hue-rotate(-16deg) brightness(1.02) contrast(1.15)}
+body.uivase #bagBtn:active,body.uivase #goalPill:active,body.uivase #chartBtn:active,body.uivase #gearBtn:active,body.uivase .tool:active{transform:none!important;background:var(--tc)!important}
+body.uivase .ab{width:60px;height:60px;background:conic-gradient(rgba(242,230,204,.42) var(--cd,0deg),transparent 0),var(--gl)!important}
+body.uivase .ab::before{display:none}
+body.uivase .ab svg{width:28px!important;height:28px!important;margin-top:-9px;filter:sepia(1) saturate(2.6) hue-rotate(-14deg) brightness(.92)}
+body.uivase .ab span{bottom:8px;font:400 10px/1 var(--display);color:var(--cr);text-shadow:none}
+body.uivase .ab:active:not(:disabled){transform:none;box-shadow:inset 0 0 0 3px var(--gl),inset 0 0 0 6px var(--tc),0 0 0 1.5px var(--cr)!important}
+body.uivase .ab:disabled{filter:none;opacity:.8}
+body.uivase .ab.on{background:var(--tc)!important;box-shadow:inset 0 0 0 3px var(--tc),inset 0 0 0 4.5px var(--gl),0 0 0 2px var(--cr)!important}
+body.uivase .ab.on svg{filter:brightness(0)}body.uivase .ab.on span{color:var(--gl)}
+body.uivase .abilities{gap:12px 10px!important}
+body.uivase .sheet.menu .xbtn{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 1.5px var(--gl),inset 0 0 0 2.5px var(--tc)!important}
+/* the top-left panel: a black glaze plaque with terracotta bars */
+body.uivase .hud{padding:9px 10px 7px!important;background:var(--gl)!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:8px;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)}
+body.uivase .ld,body.uivase .hi,body.uivase #goldChip,body.uivase #wxChip{color:var(--cr)!important}body.uivase #wxChip b{color:var(--cr2)}
+body.uivase .ld.full b{color:#f0957f!important}
+body.uivase .hudbar{border-top-color:rgba(201,101,47,.65)!important}
+body.uivase .lifebar .bar,body.uivase .ld .bar{background:#4a3a2f!important;box-shadow:none!important;border-radius:2px!important}
+body.uivase .lifebar .bar i,body.uivase .ld .bar i{background:var(--tc2)!important;border-radius:2px!important}
+body.uivase .lifebar .bar i.low,body.uivase .ld.full .bar i{background:#d9492f!important}
+/* menus: cream slip, thin black lines, a Greek key under each heading */
+body.uivase .sheet.menu,body.uivase .sheet.menu .mtop{background:var(--cr)!important}
+body.uivase .sheet.menu .mtop{box-shadow:none!important;background:var(--cr) var(--key) repeat-x left bottom/24px 12px!important;padding-bottom:15px!important}
+body.uivase .sheet.menu .card{background:#faf2e0!important;border-radius:6px;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
+body.uivase .sheet.menu .card h3{color:var(--gl)!important;font-family:var(--display);font-weight:400;letter-spacing:.06em;text-transform:none}
+body.uivase .sheet.menu .mhead h1,body.uivase .sheet.menu .mhead h1 small{color:var(--gl)!important}
+body.uivase .sheet.menu .tile,body.uivase .sheet.menu .job,body.uivase .sheet.menu .sailor,body.uivase .sheet.menu .fship,body.uivase .sheet.menu .upc,body.uivase .sheet.menu .updetail,body.uivase .sheet.menu .tut,body.uivase .good,body.uivase .stat{background:var(--cr2)!important;border-radius:4px;box-shadow:none}
+body.uivase .slot,body.uivase .mtile{background:#faf2e0!important;border-radius:6px!important;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
+body.uivase .slot.on{background:var(--cr2)!important;box-shadow:inset 0 0 0 3px var(--tc)!important}
+body.uivase .slot .badge{background:var(--tc)!important}
+body.uivase .sheet.menu .tab svg{border-radius:6px;border:0!important;background:#faf2e0;opacity:1;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
+body.uivase .sheet.menu .tab.on svg{background:var(--tc2);box-shadow:inset 0 0 0 2px var(--gl)!important}
+body.uivase .sheet.menu .tab.on span{color:var(--wn)!important}
+body.uivase .sheet.menu select,body.uivase .sheet.menu input{background-color:#faf2e0!important;border:1.5px solid var(--gl)!important;border-radius:4px}
+body.uivase .tog{border:1.5px solid var(--gl)!important;background:var(--cr2)!important;box-shadow:none}
+body.uivase .tog.on{background:var(--tc)!important}
+body.uivase .tog i{background:var(--gl)!important;box-shadow:none!important}
+body.uivase .rbv{background:var(--gl)!important;box-shadow:none!important;border-radius:4px!important}
+body.uivase .rb.gold .rbv{background:var(--tc)!important}body.uivase .rb.gold .rbv b{color:var(--gl)}
+body.uivase .toast,body.uivase .mission,body.uivase .caution,body.uivase .bossbar,body.uivase .legend,body.uivase .homecard{background:var(--cr)!important;color:var(--gl)!important;border-radius:6px!important;box-shadow:inset 0 0 0 1.5px var(--gl),0 0 0 2px var(--cr)!important}
+body.uivase .mcard{border-radius:8px;box-shadow:inset 0 0 0 1.5px var(--gl),0 0 0 3px var(--cr)}
+body.uibronze .mplus{background:linear-gradient(var(--pol),var(--pol2))!important;color:#2a1c08!important;box-shadow:0 0 0 1px #4a3210,0 2px 0 1px #4a3210!important}
+body.uivase .mplus{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important}

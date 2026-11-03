@@ -1,19 +1,19 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS, IRON} from './config.js?v=d678164';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist} from './world.js?v=d678164';
-import {G, ship, lvl} from './state.js?v=d678164';
-import {men} from './crew.js?v=d678164';
-import {scene} from './scene.js?v=d678164';
-import {mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=d678164';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=d678164';
-import {addTown, figure} from './town.js?v=d678164';
-import {makeFire, updateFire, burn} from './fire.js?v=d678164';
-import {addGrass} from './grass.js?v=d678164';
-import {sinkPose} from './sinking.js?v=d678164';
-import {moored} from './fleet.js?v=d678164';
-import {sailCount} from './upgrades.js?v=d678164';
-import {hasSail} from './crew.js?v=d678164';
-import {placeOnWaves} from './combat.js?v=d678164';
+import {SHIPS, IRON} from './config.js?v=7f87dd8';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=7f87dd8';
+import {G, ship, lvl} from './state.js?v=7f87dd8';
+import {men} from './crew.js?v=7f87dd8';
+import {scene} from './scene.js?v=7f87dd8';
+import {mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=7f87dd8';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=7f87dd8';
+import {addTown, figure} from './town.js?v=7f87dd8';
+import {makeFire, updateFire, burn} from './fire.js?v=7f87dd8';
+import {addGrass} from './grass.js?v=7f87dd8';
+import {sinkPose} from './sinking.js?v=7f87dd8';
+import {moored} from './fleet.js?v=7f87dd8';
+import {sailCount} from './upgrades.js?v=7f87dd8';
+import {hasSail} from './crew.js?v=7f87dd8';
+import {placeOnWaves} from './combat.js?v=7f87dd8';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -61,7 +61,7 @@ ISLANDS.forEach((is, i) => {
   const [beach, grass, hill] = is.tiers, size = Math.sqrt(is.area);
   // the far north is cold: snow on the islands, pale stone beaches, snowy cypresses
   const cold = is.y < WORLD_N*.3; is.cold = cold;
-  const ht = is.port ? 12 : Math.min(26, 9 + size*.02), top = 4 + ht, hillTop = top + Math.min(46, 12 + size*.03);
+  const {top, hillTop} = islandHeights(is);
   is.ht = hill ? hillTop : top;
   g.add(slab(beach, -14, 4, cold ? '#d8dfe3' : '#e6d29c'));
   if (grass) g.add(slab(grass, 4, top, cold ? '#f2f6f8' : is.trees || is.port || is.harbor || is.frame ? '#76883c' : '#8a8a74'));
@@ -71,7 +71,7 @@ ISLANDS.forEach((is, i) => {
     rock.position.set(x*1.02, 1, z*1.02); rock.rotation.set(R()*3, R()*3, 0); g.add(rock); }
   // P65: an iron mine stands on the shore of a few islands: stop beside it to dig
   if (IRON.mines.includes(is.name)){ for (let k=0;k<40;k++){ const a = R()*6.28, c = Math.cos(a), s = Math.sin(a); let r = 0; while (r < is.r*2 && landDist(is.x + c*r, is.y + s*r) < 0) r += 6;
-      if (r >= is.r*2 || landDist(is.x + c*(r + 200), is.y + s*(r + 200)) < 120) continue;
+      if (r >= is.r*2 || landDist(is.x + c*(r + 200), is.y + s*(r + 200)) < 120 || !siteClear(is, c*r, s*r) || !siteClear(is, c*(r - 60), s*(r - 60))) continue;
       const m = mineModel(); m.position.set(c*(r - 44), 2, s*(r - 44)); m.rotation.y = -a; g.add(m);
       is.mine = {x:is.x + c*(r + 30), y:is.y + s*(r + 30), stock:IRON.stock, regen:0}; break; } }
   // trees: on the grass, or on the hilltop if they land there
@@ -89,6 +89,10 @@ ISLANDS.forEach((is, i) => {
     for (const c of is.treeObjs){ if (free(c.position.x, c.position.z)) continue;
       for (let k=0;k<40;k++){ const p = spotIn(R, ground, 10); if (p && free(...p)){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } }
     is.free = free; }
+  // P68: trees that landed where the fortress or its stair stands move elsewhere
+  if (is.site){ for (const c of is.treeObjs){ if (siteClear(is, c.position.x, c.position.z)) continue;
+      for (let k=0;k<60;k++){ const p = spotIn(R, ground, 8); if (p && siteClear(is, p[0], p[1]) && (!is.free || is.free(...p))){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } }
+    const free0 = is.free; is.free = (x, z) => siteClear(is, x, z) && (!free0 || free0(x, z)); }
   // grass on the green islands (High graphics)
   if (grass && !cold && (is.trees || is.port || is.harbor || is.frame)) addGrass(g, grass, hill, top, rng(i*131 + 7), is.free, '#f2f7e4');
   scene.add(g);
@@ -98,7 +102,7 @@ ISLANDS.forEach((is, i) => {
 function buildTown(is, g, top, R, groundAll, PIER, hill){
   const px = PIER.x - is.x, pz = PIER.y - is.y, ang = Math.atan2(PIER.dy, PIER.dx);
   // houses stay on the flat grass, off the hilltop
-  const ground = groundAll, off = hill ? (x, z) => inPoly(hill, x, z) : () => false, flat = (p, m) => p && !off(p[0], p[1]) && depthIn(ground, p[0], p[1]) >= m;
+  const ground = groundAll, off = hill ? (x, z) => inPoly(hill, x, z) : () => false, flat = (p, m) => p && !off(p[0], p[1]) && siteClear(is, p[0], p[1]) && depthIn(ground, p[0], p[1]) >= m;
   // the town sits on the widest ground near the pier
   let cx = px - PIER.dx*60, cz = pz - PIER.dy*60, best = 0;
   for (let k=0;k<300;k++){ const p = spotIn(R, ground, 1, px, pz, 260); if (!p) continue; const d = depthIn(ground, p[0], p[1]); if (d > best){ best = d; cx = p[0]; cz = p[1]; } }

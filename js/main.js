@@ -1,8 +1,8 @@
 // Starts the game and runs the frame loop.
-import {AUTO_QUALITY} from './config.js?v=d678164';
-import {zoneAt} from './world.js?v=d678164';
-import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=d678164';
-import {REVEAL} from './config.js?v=d678164';
+import {AUTO_QUALITY} from './config.js?v=7f87dd8';
+import {zoneAt} from './world.js?v=7f87dd8';
+import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=7f87dd8';
+import {REVEAL} from './config.js?v=7f87dd8';
 
 // P65: the main menu comes first, unless it just sent us here to start a voyage
 const GO = 'wine-dark-sea-go'; let skipMenu = false;
@@ -12,29 +12,29 @@ load();
 loadSettings();
 
 // These modules build the scene and wire up the UI as they load, so they come after the save is in.
-const {updateClouds} = await import('./clouds.js?v=d678164');
-const {updateWakes} = await import('./wakes.js?v=d678164');
-const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame} = await import('./scene.js?v=d678164');
-const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=d678164');
-const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=d678164');
-const {updatePlayer} = await import('./player.js?v=d678164');
-const {updateCombat} = await import('./combat.js?v=d678164');
-const {updateFish} = await import('./fishing.js?v=d678164');
-const {updateTowns} = await import('./town.js?v=d678164');
-const {updateWildlife} = await import('./wildlife.js?v=d678164');
-const {updateQuests} = await import('./quests.js?v=d678164');
-const {updateFleet} = await import('./fleet.js?v=d678164');
-const {updateArena} = await import('./arena.js?v=d678164');
-const {updateWeather: weatherTick, W} = await import('./weather.js?v=d678164');
-const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=d678164');
-const {mapTick} = await import('./map.js?v=d678164');
-const {updateSounds} = await import('./sounds.js?v=d678164');
-const {initNight} = await import('./daynight.js?v=d678164');
-const {updateSmoke} = await import('./smoke.js?v=d678164');
-const {updateGrass} = await import('./grass.js?v=d678164');
-const {updateFortWatch} = await import('./fortwatch.js?v=d678164');
-const {openMenu} = await import('./mainmenu.js?v=d678164');
-const {offlineEarnings} = await import('./fleet.js?v=d678164');
+const {updateClouds} = await import('./clouds.js?v=7f87dd8');
+const {updateWakes} = await import('./wakes.js?v=7f87dd8');
+const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame} = await import('./scene.js?v=7f87dd8');
+const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=7f87dd8');
+const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=7f87dd8');
+const {updatePlayer} = await import('./player.js?v=7f87dd8');
+const {updateCombat} = await import('./combat.js?v=7f87dd8');
+const {updateFish} = await import('./fishing.js?v=7f87dd8');
+const {updateTowns} = await import('./town.js?v=7f87dd8');
+const {updateWildlife} = await import('./wildlife.js?v=7f87dd8');
+const {updateQuests} = await import('./quests.js?v=7f87dd8');
+const {updateFleet} = await import('./fleet.js?v=7f87dd8');
+const {updateArena} = await import('./arena.js?v=7f87dd8');
+const {updateWeather: weatherTick, W} = await import('./weather.js?v=7f87dd8');
+const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=7f87dd8');
+const {mapTick} = await import('./map.js?v=7f87dd8');
+const {updateSounds} = await import('./sounds.js?v=7f87dd8');
+const {initNight} = await import('./daynight.js?v=7f87dd8');
+const {updateSmoke} = await import('./smoke.js?v=7f87dd8');
+const {updateGrass} = await import('./grass.js?v=7f87dd8');
+const {updateFortWatch} = await import('./fortwatch.js?v=7f87dd8');
+const {openMenu} = await import('./mainmenu.js?v=7f87dd8');
+const {offlineEarnings} = await import('./fleet.js?v=7f87dd8');
 
 const startQuality = G.settings.quality === 'auto' ? (G.settings.detected || 'high') : G.settings.quality;
 applyQuality(startQuality);

@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R} from './config.js?v=d678164';
-import {MAPDATA} from './mapdata.js?v=d678164';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=7f87dd8';
+import {MAPDATA} from './mapdata.js?v=7f87dd8';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -226,6 +226,48 @@ function townPier(is){
   return best;
 }
 for (const is of named){ if (is.harbor || !is.city || is.r < 500) continue; const pier = townPier(is); if (pier){ is.town = {pier}; TOWN_PIERS.push(pier); } }
+// P68: where a fortress or camp stands. Like a real kastro: wholly on land, on the high ground if the island has any, on a point that
+// looks over the most open sea, well away from the town, with a stone stair down to its own little jetty. Small islands get a smaller one.
+export function islandHeights(is){ const size = Math.sqrt(is.area), top = 4 + (is.port ? 12 : Math.min(26, 9 + size*.02)); return {top, hillTop:top + Math.min(46, 12 + size*.03)}; }
+const FORT_FOOT = 168, CAMP_FOOT = 92;
+function findSite(is, camp, loose){
+  const [, grass, hill] = is.tiers; if (!grass) return null;
+  const {top, hillTop} = islandHeights(is), inHill = (x, y) => !!hill && inPoly(hill, x - is.x, y - is.y), inGrass = (x, y) => inPoly(grass, x - is.x, y - is.y);
+  const groundAt = (x, y) => inHill(x, y) ? hillTop : inGrass(x, y) ? top : 4;
+  const foot = camp ? CAMP_FOOT : FORT_FOOT, maxDepth = camp ? 190 : 300, wide = is.r > 500, busy = [...HARBORS.filter(h => h.is === is).map(h => h.pier), ...TOWN_PIERS.filter(p => Math.hypot(p.x - is.x, p.y - is.y) < is.r + 200)];
+  const toHome = Math.atan2(HOME.y - is.y, HOME.x - is.x), RAYS = 32, step = Math.max(22, is.r/34);
+  for (const s of camp ? [1, .85, .7, .58, .46] : [1, .92, .84, .76, .68, .6]){ const R = foot*s; let best = null;
+    for (let gx = -is.r; gx <= is.r; gx += step) for (let gy = -is.r; gy <= is.r; gy += step){ const x = is.x + gx, y = is.y + gy, sd = landDist(x, y);
+      if (sd > -R*(loose ? .45 : .82) || sd < -maxDepth || !inGrass(x, y) || !inPoly(is.tiers[0], gx, gy)) continue;
+      if (busy.some(p => Math.hypot(p.x - x, p.y - y) < (wide ? 560 : 230) + R)) continue; // clear of the town and its pier
+      const onHill = inHill(x, y); let ok = true;
+      for (let k=0; k<14 && ok; k++){ const a = k/14*6.283, c = Math.cos(a), n = Math.sin(a);
+        if (landDist(x + c*R, y + n*R) > (loose ? 18 : 2)) ok = false; // nothing hangs over the water (a crag covers any drop to the sand)
+        else if (onHill ? !inHill(x + c*R*.4, y + n*R*.4) : inHill(x + c*R, y + n*R) || inHill(x + c*R*.55, y + n*R*.55)) ok = false; } // on the hill, or clear of its slopes
+      if (!ok) continue;
+      // the way down to the water: the shortest walk with open sea beyond; and how much open sea it looks over
+      let view = 0, face = null;
+      for (let k=0; k<RAYS; k++){ const a = k/RAYS*6.283, c = Math.cos(a), n = Math.sin(a); let t = 0;
+        while (t < maxDepth + 120 && landDist(x + c*t, y + n*t) < 0) t += 10; if (landDist(x + c*t, y + n*t) < 0) continue;
+        if (landDist(x + c*(t + 160), y + n*(t + 160)) < (loose ? 30 : 60) || landDist(x + c*(t + 320), y + n*(t + 320)) < (loose ? 70 : 140)) continue;
+        view++; if (!face || t < face.t) face = {t, a, c, n}; }
+      if (!face || busy.some(p => Math.hypot(p.x - x - face.c*face.t, p.y - y - face.n*face.t) < (wide ? 420 : 170))) continue;
+      const score = view*4 + (onHill && !camp ? 44 : 0) + Math.cos(face.a - toHome)*10 - face.t*.04;
+      if (!best || score > best.score) best = {score, x, y, onHill, face}; }
+    if (best){ const {x, y, face:f} = best, ground = best.onHill ? hillTop : top, path = [], shore = {x:x + f.c*f.t, y:y + f.n*f.t};
+      // the stair follows the ground down, easing over each drop
+      const hs = []; for (let d = R*.62; d < f.t; d += 11) hs.push({d, h:groundAt(x + f.c*d, y + f.n*d)});
+      hs.forEach((p, i) => { const nb = hs.slice(Math.max(0, i - 3), i + 4), av = nb.reduce((q, w) => q + w.h, 0)/nb.length; path.push({d:p.d, h:Math.max(p.h, av)}); });
+      return {x, y, a:f.a, s, R, ground, onHill:best.onHill, depth:f.t, path, shore, sea:{x:shore.x + f.c*250, y:shore.y + f.n*250}}; } }
+  return null;
+}
+export function siteFor(is, camp){ if (is.site === undefined) is.site = findSite(is, camp) || findSite(is, camp, true); return is.site; }
+for (const is of named) if (is.pirate || (is.city && !is.capital)) siteFor(is, false);
+for (const is of islands) if (PIRATE_ISLES.includes(is.name)) siteFor(is, false);
+for (const c of CAMPS){ const is = islands.find(i => i.name === c.isle); if (is && is.site === undefined) siteFor(is, true); }
+// Nothing else (trees, houses, grass) stands on a fortress or on its stair. x, z are relative to the island.
+export function siteClear(is, x, z){ const t = is.site; if (!t) return true; const px = x + is.x - t.x, py = z + is.y - t.y; if (Math.hypot(px, py) < t.R + 14) return false;
+  const c = Math.cos(t.a), n = Math.sin(t.a), al = px*c + py*n; return !(al > 0 && al < t.depth + 10 && Math.abs(-px*n + py*c) < 26); }
 // No woodcutting in towns: harbor islands keep their trees for the townsfolk. Wood comes from the other islands.
 for (const h of HARBORS){ h.is.trees = h.is.stock = 0; }
 

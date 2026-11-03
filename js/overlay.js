@@ -1,16 +1,16 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=d678164';
-import {G, isExplored} from './state.js?v=d678164';
-import {fogLayer, islandPath} from './map.js?v=d678164';
-import {view, project, screenToSea} from './scene.js?v=d678164';
-import {JOY_RADIUS} from './input.js?v=d678164';
-import {enemies, combatState, capture, aimLeads} from './combat.js?v=d678164';
-import {drawFish} from './fishing.js?v=d678164';
-import {whale} from './wildlife.js?v=d678164';
-import {SHORE_FISH} from './config.js?v=d678164';
-import {W as WIND} from './weather.js?v=d678164';
-import {bottle} from './quests.js?v=d678164';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=d678164';
+import {WORLD, ISLANDS, WRECKS, SHOALS, shoalOn, HARBORS, STADION, CITIES, zoneAt, hash} from './world.js?v=7f87dd8';
+import {G, isExplored} from './state.js?v=7f87dd8';
+import {fogLayer, islandPath} from './map.js?v=7f87dd8';
+import {view, project, screenToSea} from './scene.js?v=7f87dd8';
+import {JOY_RADIUS} from './input.js?v=7f87dd8';
+import {enemies, combatState, capture, aimLeads} from './combat.js?v=7f87dd8';
+import {drawFish} from './fishing.js?v=7f87dd8';
+import {whale} from './wildlife.js?v=7f87dd8';
+import {SHORE_FISH} from './config.js?v=7f87dd8';
+import {W as WIND} from './weather.js?v=7f87dd8';
+import {bottle} from './quests.js?v=7f87dd8';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=7f87dd8';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -175,7 +175,7 @@ export function drawOverlay(fps){
   // health bars, colored by side: pirates red, navy blue, merchants ochre
   for (const e of enemies){
     if (e.dead || Math.hypot(e.x - S.x, e.y - S.y) > 900) continue;
-    const [ex, ey, ez] = project(e.x, e.spec.len*.55, e.y); if (ez > 1) continue;
+    const [ex, ey, ez] = project(e.x, e.spec.len*.55*(e.site ? e.site.s : 1) + (e.baseY || 0), e.y); if (ez > 1) continue;
     const w = e.spec.len > 100 ? 64 : 46, pct = Math.max(0, e.hull/e.spec.hull);
     c.fillStyle = 'rgba(34,40,58,.6)'; c.fillRect(ex - w/2 - 2, ey - 2, w + 4, 9);
     c.fillStyle = e.hitT ? '#f7eed6' : shipColor(e); c.fillRect(ex - w/2, ey, w*pct, 5);

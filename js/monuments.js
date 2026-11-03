@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue, person} from './ships.js?v=d678164';
+import {mat, statue, person} from './ships.js?v=7f87dd8';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -101,7 +101,7 @@ export function buildColossus(height = 480, stance = 260, fade = false, look = G
 // hanging banners, a keep with a columned porch, catapults on the bastions and a stair down to a little dock.
 // Built facing +x (the sea side). About 230 across. `owner` sets stone, roofs and banners.
 export const FORT_GUNS = [[95, 95], [95, -95], [-95, 95], [-95, -95]]; // the four bastions, where the catapults sit (local x, z)
-export function buildFortress(owner, color){
+export function buildFortress(owner, color, site){
   const g = new T.Group();
   const pirate = owner === 'pirate', stone = mat(pirate ? '#a08f78' : owner === 'sparta' ? '#d6c49e' : '#e4dac4'), shade = mat(pirate ? '#7a6b58' : '#b9a986');
   const rock = mat(pirate ? '#6f6559' : '#8c8478'), dark = mat('#3a3029'), roof = mat(pirate ? '#4a3a2e' : '#b8603a'), wood = mat('#6e4a2a'), cloth = mat(color || '#c64a3c');
@@ -149,6 +149,15 @@ export function buildFortress(owner, color){
   // the city's god watches the sea from the terrace
   const st = statue(owner === 'athens' ? 'athena' : owner === 'sparta' ? 'zeus' : 'poseidon', pirate ? 'bronze' : 'painted'); st.position.set(44, 93, 0); st.scale.setScalar(.58); g.add(st);
   // stair down to a little dock on the sea side
+  if (site && site.path){ // P68: on its island: a crag of rock under the walls, a stone stair that follows the ground to the shore, and a jetty
+    const k = 1/site.s, drop = site.ground*k, h = drop + 20, cr = new T.CylinderGeometry(126, 214, h, 15, 3), pos = cr.attributes.position;
+    for (let i=0; i<pos.count; i++){ const x = pos.getX(i), z = pos.getZ(i), a = Math.atan2(z, x), t = .5 - pos.getY(i)/h; if (t < .02) continue; // keep the top flat where the walls stand, roughen the slope below it
+      const w = 1 + (Math.sin(a*3 + 1)*.06 + Math.sin(a*7 + 2)*.05 + Math.sin(a*11)*.03)*Math.min(1, t*2.5); pos.setX(i, x*w); pos.setZ(i, z*w); pos.setY(i, pos.getY(i) + Math.sin(a*5 + t*9)*5*t); }
+    const cg = cr.toNonIndexed(); cg.computeVertexNormals(); const crag = M(cg, rock); crag.position.y = 16 - h/2; g.add(crag); base.visible = false; // a rough hill of rock, not a paved disc
+    for (const p of site.path) box(13*k, 3*k, 24, shade, p.d*k, (p.h - site.ground + 1)*k, 0);
+    box(70*k, 3*k, 22, wood, (site.depth + 24)*k, (3.5 - site.ground)*k, 0);
+    for (const z of [-9, 9]) for (const d of [8, 36, 56]) cyl(1.6*k, 1.6*k, 14*k, wood, (site.depth + d)*k, (-2 - site.ground)*k, z, 5);
+    g.scale.setScalar(site.s); return g; }
   for (let k=0;k<6;k++) box(12, 4, 30, shade, 108 + k*7, 40 - k*7, 0);
   box(40, 3, 26, wood, 160, 3, 0);
   for (const z of [-11, 11]) for (const x of [145, 175]) cyl(1.6, 1.6, 12, wood, x, 0, z, 5);

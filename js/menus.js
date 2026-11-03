@@ -1,17 +1,17 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=d678164';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=d678164';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=d678164';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=d678164';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=d678164';
-import {planClues} from './combat.js?v=d678164';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=d678164';
-import {board, active, canDeliver, goal} from './quests.js?v=d678164';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=d678164';
-import {colorHeld, colorInfo} from './colors.js?v=d678164';
-import {shipPortrait} from './portrait.js?v=d678164';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=d678164';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=7f87dd8';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=7f87dd8';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf} from './state.js?v=7f87dd8';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=7f87dd8';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=7f87dd8';
+import {planClues} from './combat.js?v=7f87dd8';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=7f87dd8';
+import {board, active, canDeliver, goal} from './quests.js?v=7f87dd8';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=7f87dd8';
+import {colorHeld, colorInfo} from './colors.js?v=7f87dd8';
+import {shipPortrait} from './portrait.js?v=7f87dd8';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=7f87dd8';
 
 export const INK = '#22283a', OCHRE = '#d48a2a', WOOD = '#a3754a', SEA = '#2f7f9a';
 const svg = (body, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${body}</svg>`;
