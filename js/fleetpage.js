@@ -1,15 +1,16 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=9de774d';
-import {G, ship, lvl, shipName, capOf} from './state.js?v=9de774d';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=9de774d';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=9de774d';
-import {men} from './crew.js?v=9de774d';
-import {SPECS, crewLayout} from './ships.js?v=9de774d';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=9de774d';
-import {HARBORS} from './world.js?v=9de774d';
-import {planSources} from './combat.js?v=9de774d';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=9de774d';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=cc42b7a';
+import {G, ship, lvl, shipName, capOf} from './state.js?v=cc42b7a';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=cc42b7a';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=cc42b7a';
+import {men} from './crew.js?v=cc42b7a';
+import {SPECS, crewLayout} from './ships.js?v=cc42b7a';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=cc42b7a';
+import {HARBORS} from './world.js?v=cc42b7a';
+import {planSources} from './combat.js?v=cc42b7a';
+import {ranksBody} from './records.js?v=cc42b7a';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=cc42b7a';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
@@ -35,7 +36,7 @@ function mineCard(t){
     : home ? `<button class="btn ghostdark" data-act="captain" data-t="${t}" ${S.gold >= captainCost() ? '' : 'disabled'}>Hire a captain ${chip(IC.coin, captainCost())}</button><small>A captain fishes with her and earns about ${perHour} drachmae an hour, even while the game is closed (up to 2 hours). Each one costs more than the last.</small>`
     : `<small>Back at Kallisto you can hire a captain to earn with her: about ${perHour} drachmae an hour.</small>`;
   const sw = on ? '' : home ? `<button class="btn" data-act="switch" data-t="${t}" ${cantSwitch(t) ? 'disabled' : ''}>${c && c.out ? 'She is at sea' : 'Sail her'}</button>${cantSwitch(t) && !(c && c.out) ? `<small>${cantSwitch(t)}</small>` : ''}` : '<small>You can change ships at Kallisto.</small>';
-  return `<section class="card fcard ${on ? 'on' : ''}"><div class="fhead">${shipImg(sh.model, look)}<div class="fname"><h3>${shipName(t)}</h3><small>${sh.name}</small>${where}${lvChip(shipLevel(t))}<button class="linkbtn" data-act="rename" data-t="${t}">Rename</button></div></div>
+  return `<section class="card fcard ${on ? 'on' : ''}"><div class="fhead">${shipImg(sh.model, look)}<div class="fname"><h3>${shipName(t)}</h3><small>${sh.name}</small>${where}${lvChip(shipLevel(t))}<button class="linkbtn" data-act="rename" data-t="${t}">Rename</button><button class="linkbtn" data-act="record" data-n="${G.slot}" data-t="${t}">Her record</button></div></div>
     <p class="note">${sh.desc || 'Your first boat: slow, small and yours.'}</p>
     <div class="line"><div><b>Hull ${hullNow} of ${n.hull}</b>${bar(hullNow/n.hull, hullNow/n.hull < .35 ? 'low' : '')}</div></div>
     ${statRows(n)}
@@ -56,8 +57,10 @@ function getCard(t){
 }
 const need = t => t === KING ? 99 : allPieces(t) || studied(t) ? 0 : Math.min(50, ...planSources(t).map(siteLevel));
 export function fleetBody(){
-  const S = G.S, list = [['mine', 'Your ships', IC.ship], ['get', 'Ships to get', IC.map]];
+  const S = G.S, list = [['mine', 'Your ships', IC.ship], ['get', 'Ships to get', IC.map], ['ranks', 'Leaderboard', IC.star]];
   if (!list.some(([k]) => k === tabs.fleet)) tabs.fleet = 'mine';
+  if (tabs.fleet === 'ranks') return `${tabBar(list, tabs.fleet, 'fleet')}${ranksBody()}`;
+  tabs.rec = null;
   const mine = owned(), rest = buildable().filter(t => !mine.includes(t)), L = myLevel();
   const purse = S.purse ? (atHome() ? card("Captains' purse", `<div class="line">${IC.coin}<div><b>${S.purse} drachmae</b><small>What your captains brought back.</small></div><button class="btn gold" data-act="collect">Collect</button></div>`, 'donecard') : `<p class="note">${S.purse} drachmae wait for you at Kallisto.</p>`) : '';
   const head = `<div class="flevel"><span class="lvchip big">Level ${L}</span><p>How strong <b>${shipName()}</b> is, from her size, upgrades and your powers. Camps and fortresses have levels too.</p></div>`;

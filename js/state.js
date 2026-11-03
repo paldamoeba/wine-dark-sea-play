@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=9de774d';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=9de774d';
-import {sfx} from './audio.js?v=9de774d';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=cc42b7a';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=cc42b7a';
+import {sfx} from './audio.js?v=cc42b7a';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -78,11 +78,16 @@ export function putAboard(k, n = 1){ const m = Math.min(n, room(loadOf(k))); G.S
 export function unload(){ const S = G.S, m = k => { const n = Math.min(S.cargo[k] || 0, wareRoom(k)); S.cargo[k] = (S.cargo[k] || 0) - n; addMat(k, n); return n; }; // what doesn't fit stays aboard
   return [m('wood'), m('bronze'), m('linen'), m('iron')]; }
 // P65: fun numbers for the voyage log in Settings
-export function stat(k, n = 1){ const s = G.S.stats || (G.S.stats = {}); s[k] = (s[k] || 0) + n; }
+// P73: what belongs to the ship goes on her own record too (records.js)
+const SHIP_STATS = new Set(['sunk', 'pirates', 'navy', 'merchants', 'forts', 'camps', 'sunkMe', 'fish', 'wood', 'iron', 'treasure', 'bottles', 'whales', 'kraken', 'dist', 'earned', 'time']);
+const shipRecord = () => { const r = G.S.shipStats || (G.S.shipStats = {}); return r[G.S.tier] || (r[G.S.tier] = {}); };
+export function stat(k, n = 1){ const s = G.S.stats || (G.S.stats = {}); s[k] = (s[k] || 0) + n; if (SHIP_STATS.has(k)){ const r = shipRecord(); r[k] = (r[k] || 0) + n; } }
+export function shipTime(dt){ const r = shipRecord(); r.time = (r.time || 0) + dt; }
+export function shipDeed(name){ const r = shipRecord(); r.deeds = [...new Set([...(r.deeds || []), name])]; }
 
 export function newSave(){
   return {version:SAVE_VERSION, econ:2, tier:0, gold:0, ware:0, bronze:0, iron:0, linen:0, cargo:{sardine:0, tuna:0, swordfish:0, wood:0, bronze:0, iron:0, linen:0, wine:0, oil:0, pottery:0, obsidian:0, dye:0},
-    x:START.x, y:START.y, a:START.a, map:MAP.key, hull:SHIPS[0].hull, hint:true, playSeconds:0, world:null, explored:null, look:{}, p49:true, ram15:true, p65:true, plans:[0], camps:[], stats:{}, colors:{paint:[], sail:[]}};
+    x:START.x, y:START.y, a:START.a, map:MAP.key, hull:SHIPS[0].hull, hint:true, playSeconds:0, world:null, explored:null, look:{}, p49:true, ram15:true, p65:true, plans:[0], camps:[], stats:{}, shipStats:{}, colors:{paint:[], sail:[]}};
 }
 
 function read(key){ try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; } }
@@ -102,6 +107,9 @@ function migrate(o){
   if (!o || typeof o !== 'object' || !o.cargo) return null;
   if (!o.version) o.version = 2;               // prototype 2 saves had no version
   if (o.version < 3){ o.playSeconds = 0; o.world = null; o.version = 3; }
+  // P73: ships keep their own records. A voyage with just one ship so far: all its numbers are hers. With more, nobody knows which ship did what, so they start clean.
+  if (!o.shipStats){ const own = o.owned || Array.from({length:(o.tier || 0) + 1}, (_, i) => i), s = o.stats || {}; o.shipStats = {};
+    if (own.length === 1){ const {days, quests, colors, repairs, ...mine} = s; o.shipStats[own[0]] = {...mine, time:o.playSeconds || 0}; } else o.oldLog = true; }
   const base = newSave();
   if (o.crew) o.crew.forEach(c => { if (c.job === 'fisher') c.job = 'rower'; }); // fishers became rowers: everyone fishes now
   // prototype 39: wood counts 5 times bigger and lives in the warehouse, never the hold

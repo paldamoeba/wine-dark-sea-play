@@ -867,9 +867,11 @@ body.sheeton #miniEl,body.menuon #miniEl{visibility:hidden}
 .mapbtns .btn{padding:10px 15px!important;font:800 13px/1.1 var(--body)!important}
 .mapbtns .homebtn{background:var(--cz-teal)!important;color:#fff!important}.mapbtns .homebtn.alt{background:#fffaf0!important;color:var(--cz-ink)!important;box-shadow:0 3px 0 rgba(90,60,25,.35)!important}.mapbtns .homebtn.alt b{color:#e2725b}
 /* the title card while the game loads */
-.boot{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(#a9d8ea,#2c86b8 62%,#1a5f94)}
+.boot{position:fixed;inset:0;z-index:50;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:calc(34px + env(safe-area-inset-top,0px));background:linear-gradient(#a9d8ea,#2c86b8 62%,#1a5f94);transition:opacity .45s ease}
 .boot h1{margin:0;font:400 clamp(34px,10vw,58px)/1.1 var(--display);color:#fff;text-shadow:0 3px 14px rgba(10,40,70,.5)}
-.boot i{width:34px;height:34px;border-radius:50%;border:4px solid rgba(255,255,255,.35);border-top-color:#fff;animation:bootspin 1s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}
+.boot canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .5s ease;transform:scale(1.05);animation:bootsway 6s ease-in-out infinite alternate}.boot canvas.on{opacity:1}@keyframes bootsway{from{transform:scale(1.05) rotate(-.45deg) translateY(-.5%)}to{transform:scale(1.05) rotate(.45deg) translateY(.5%)}}
+.boot.gone{opacity:0;pointer-events:none}.boot h1,.boot p,.boot i{position:relative}.boot p{margin:0;font:800 16px/1.2 var(--body);color:#fff;text-shadow:0 1px 8px rgba(10,40,70,.65)}
+.boot i{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom,0px));width:30px;height:30px;border-radius:50%;border:4px solid rgba(255,255,255,.35);border-top-color:#fff;animation:bootspin 1s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}
 /* the main menu */
 body.menuon .hud,body.menuon .toolbar,body.menuon .mapbtn,body.menuon #ov,body.menuon .bossbar,body.menuon .mission,body.menuon .caution,body.menuon .abilities,body.menuon .dockbar,body.menuon .raid,body.menuon .toast,body.menuon .hint,body.menuon .zone{visibility:hidden!important}
 .mainmenu{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:12px;padding:calc(26px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px));overflow:auto;background:linear-gradient(rgba(20,50,80,.34),rgba(20,50,80,0) 28%,rgba(20,30,40,0) 55%,rgba(20,30,40,.35))}
@@ -1166,3 +1168,14 @@ body.uivase .mplus{background:var(--gl)!important;color:var(--cr)!important;box-
 .medal span{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:linear-gradient(#e0533e,#b0301f);color:#fff;font:800 8.5px/1 var(--body,Nunito,sans-serif);letter-spacing:.05em;text-transform:uppercase;padding:2.5px 5px;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.4)}
 .medal.pop{animation:medalpop .7s ease-out}@keyframes medalpop{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
 .mission .mt{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important;line-height:1.1}
+
+/* P73: leaderboard and a ship's record */
+.rkby{display:flex;align-items:center;gap:10px;font-weight:800;font-size:13px;margin-bottom:8px}.rkby select{flex:1;min-width:0;font:inherit;font-size:15px;padding:8px;border-radius:10px;border:1.5px solid #cfb388;background:#fffaf0;color:#3e2b1c}
+.rklist{display:grid;gap:6px}.rkrow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 10px 6px 6px;border:0;border-radius:14px;background:rgba(120,90,50,.08);color:inherit;font:inherit;cursor:pointer}
+.rkrow.on{outline:2.5px solid #e8b53d;outline-offset:-2px}.rkrow .shippic{flex:0 0 72px;width:72px;height:auto}
+.rkpos{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;font:800 14px/1 var(--body);background:rgba(120,90,50,.16)}.rkpos.p1{background:radial-gradient(circle at 38% 30%,#ffe9a6,#e8b53d 60%,#a86f1e);color:#5a3410}.rkpos.p2{background:radial-gradient(circle at 38% 30%,#fff,#c4cbd2 60%,#7f8a94);color:#333c44}.rkpos.p3{background:radial-gradient(circle at 38% 30%,#f3c9a0,#c0803f 60%,#7c4a1e);color:#3f210a}
+.rkname{flex:1;min-width:0;display:grid;gap:1px}.rkname b{overflow-wrap:anywhere;line-height:1.15}.rkname small{font-size:11.5px;opacity:.75}.rkval{font:800 16px/1.1 var(--body);font-variant-numeric:tabular-nums;text-align:right}
+.rkback{margin:10px 0 2px}.rkmedals{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.rkmedal{font:800 11.5px/1 var(--body);padding:5px 8px;border-radius:99px;background:#e8b53d;color:#4a2c0a}.rkmedal.p2{background:#c4cbd2;color:#333c44}.rkmedal.p3{background:#c0803f;color:#fff}
+.deedgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.deed{display:grid;grid-template-columns:26px 1fr;column-gap:7px;align-items:center;padding:7px;border-radius:12px;background:rgba(120,90,50,.07);opacity:.5}.deed svg{grid-row:1/3;width:24px;height:24px;filter:grayscale(1)}.deed b{font-size:12.5px;line-height:1.15;overflow-wrap:anywhere}.deed small{font-size:10.5px;line-height:1.15}
+.deed.on{opacity:1;background:linear-gradient(#fff3c9,#f4d98a);box-shadow:inset 0 0 0 1.5px #d9a634}.deed.on svg{filter:none}
+.rklist,.rkrow,.rkby{min-width:0;max-width:100%;box-sizing:border-box}.rklist{grid-template-columns:minmax(0,1fr)}.rkrow img.shippic,.rkrow .shippic{flex:0 0 74px!important;width:74px!important;min-width:0!important;max-width:74px!important;height:auto!important;margin:0!important;aspect-ratio:auto}

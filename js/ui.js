@@ -1,30 +1,30 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=9de774d';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=9de774d';
-import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=9de774d';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=9de774d';
-import {CYCLE} from './daynight.js?v=9de774d';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=9de774d';
-import {swapBoat, refreshAllTrees} from './entities.js?v=9de774d';
-import {setZoom} from './input.js?v=9de774d';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=9de774d';
-import {tutHTML} from './tutorial.js?v=9de774d';
-import {founded, blessing} from './crew.js?v=9de774d';
-import {WHALE} from './wildlife.js?v=9de774d';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=9de774d';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=9de774d';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=9de774d';
-import {effectText, buy} from './upgrades.js?v=9de774d';
-import {fleetHTML} from './fleetpage.js?v=9de774d';
-import {myLevel} from './levels.js?v=9de774d';
-import {askName} from './naming.js?v=9de774d';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=9de774d';
-import {GOODS, WAR} from './config.js?v=9de774d';
-import {fly} from './fly.js?v=9de774d';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=9de774d';
-import {W, KINDS} from './weather.js?v=9de774d';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=9de774d';
-import {setTimeOfDay} from './daynight.js?v=9de774d';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=cc42b7a';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=cc42b7a';
+import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=cc42b7a';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=cc42b7a';
+import {CYCLE} from './daynight.js?v=cc42b7a';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=cc42b7a';
+import {swapBoat, refreshAllTrees} from './entities.js?v=cc42b7a';
+import {setZoom} from './input.js?v=cc42b7a';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=cc42b7a';
+import {tutHTML} from './tutorial.js?v=cc42b7a';
+import {founded, blessing} from './crew.js?v=cc42b7a';
+import {WHALE} from './wildlife.js?v=cc42b7a';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=cc42b7a';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=cc42b7a';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=cc42b7a';
+import {effectText, buy} from './upgrades.js?v=cc42b7a';
+import {fleetHTML} from './fleetpage.js?v=cc42b7a';
+import {myLevel} from './levels.js?v=cc42b7a';
+import {askName} from './naming.js?v=cc42b7a';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=cc42b7a';
+import {GOODS, WAR} from './config.js?v=cc42b7a';
+import {fly} from './fly.js?v=cc42b7a';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=cc42b7a';
+import {W, KINDS} from './weather.js?v=cc42b7a';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=cc42b7a';
+import {setTimeOfDay} from './daynight.js?v=cc42b7a';
 
 const $ = id => document.getElementById(id);
 
@@ -140,7 +140,7 @@ function logHTML(){
   const S = G.S, s = S.stats || {}, secs = S.playSeconds || 0, n = v => (v || 0).toLocaleString();
   const time = secs >= 3600 ? `${Math.floor(secs/3600)} h ${Math.floor(secs/60) % 60} min` : `${Math.floor(secs/60)} min`, days = Math.max(s.days || 0, Math.floor(secs/CYCLE));
   const tile = (ic, v, label) => `<div class="stat">${ic}<b>${v}</b><small>${label}</small></div>`;
-  return card('Your voyage', `<div class="statgrid">${tile(IC.star, days, days === 1 ? 'day at sea' : 'days at sea')}${tile(IC.ship, time, 'sailing')}${tile(IC.world, n(s.dist), 'stadia sailed')}${tile(IC.coin, n(s.earned), 'drachmae earned')}</div>`)
+  return `<button class="btn gold wide" data-act="openfleet" data-to="ranks">Leaderboard</button>` + card('Your voyage', `<div class="statgrid">${tile(IC.star, days, days === 1 ? 'day at sea' : 'days at sea')}${tile(IC.ship, time, 'sailing')}${tile(IC.world, n(s.dist), 'stadia sailed')}${tile(IC.coin, n(s.earned), 'drachmae earned')}</div>`)
     + card('Battles', `<div class="statgrid">${tile(IC.swords, n(s.sunk), 'ships sunk')}${tile(IC.flame, n(s.pirates), 'pirates sunk')}${tile(IC.crew, n(s.navy), 'army ships sunk')}${tile(IC.hold, n(s.merchants), 'merchants raided')}${tile(IC.catapult, n(s.forts), 'fortresses taken')}${tile(IC.jobs, n(s.camps), 'camps burned')}${tile(IC.hull, n(s.sunkMe), 'times you sank')}</div>`)
     + card('Finds', `<div class="statgrid">${tile(IC.fish(), n(s.fish), 'fish caught')}${tile(IC.wood, n(s.wood), 'wood gathered')}${tile(IC.iron, n(s.iron), 'iron dug up')}${tile(IC.map, n(s.treasure), 'treasures dug up')}${tile(IC.letter, n(s.bottles), 'bottles opened')}${tile(IC.bless, n(s.whales), 'whale blessings')}${tile(IC.chain, n(s.kraken || S.kraken), 'kraken seen')}${tile(IC.sail, n(s.colors), 'colors found')}${tile(IC.book, n(s.quests), 'quests done')}</div>`);
 }
@@ -199,7 +199,7 @@ function settingsHTML(){
   const tuner = !PUBLIC && s.builder; // P66: music style, rests, battle music and day and night are for the builder, not for players
   const list = [['game', 'Game', IC.ship], ['gfx', 'Graphics', IC.star], ...(s.builder || s.showBuilder ? [['dev', 'Builder', IC.gear]] : [])];
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
-  const game = card('Your voyage', `<div class="stats big">${IC.ship} ${shipName()} · ${mins} min at sea</div>${row('Voyage log', 'Ships sunk, days at sea and other fun numbers.', '<button class="btn" data-act="log">Open</button>')}${row('How to play', 'The pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}${row('Main menu', 'Your three voyages. This one is saved first.', '<button class="btn" data-act="mainmenu">Go</button>')}`)
+  const game = card('Your voyage', `<div class="stats big">${IC.ship} ${shipName()} · ${mins} min at sea</div>${row('Voyage log', 'Ships sunk, days at sea and other fun numbers.', '<button class="btn" data-act="log">Open</button>')}${row('Leaderboard', 'Your ships ranked, and what each one has done.', '<button class="btn" data-act="openfleet" data-to="ranks">Open</button>')}${row('How to play', 'The pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}${row('Main menu', 'Your three voyages. This one is saved first.', '<button class="btn" data-act="mainmenu">Go</button>')}`)
     + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and soft music.', tog('sound', SND.on, 'Sound'))
       + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
       + (tuner ? `<div class="looks"><label><span>Music style</span><select data-set="mstyle" ${SND.on ? '' : 'disabled'}>${Object.entries({mix:MIX, ...STYLES}).map(([k, v]) => `<option value="${k}" ${SND.style === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
@@ -211,7 +211,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 72</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 73</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -295,7 +295,8 @@ sheetEl.addEventListener('click', e => {
   if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(shipName(t), 2.4); } }
   if (a === 'rename'){ askName(+b.dataset.t, () => render(), true); return; }
   if (a === 'pin'){ const t = +b.dataset.t; S.pin = S.pin === t ? null : t; sfx(S.pin ? 'chime' : 'click'); if (S.pin) toast('Pinned. Its plans are on your chart', 3); }
-  if (a === 'openfleet'){ tabs.fleet = b.dataset.to || 'get'; if (sheet === 'port') tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
+  if (a === 'record' || a === 'recback'){ tabs.fleet = 'ranks'; tabs.rec = a === 'record' ? {slot:+b.dataset.n, t:+b.dataset.t} : null; if (sheet === 'port') tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
+  if (a === 'openfleet'){ tabs.rec = null; tabs.fleet = b.dataset.to || 'get'; if (sheet === 'port') tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'quality'){ G.settings.quality = b.dataset.v; G.settings.detected = null; applyQuality(b.dataset.v === 'auto' ? 'high' : b.dataset.v); G.autoCheck = b.dataset.v === 'auto'; saveSettings(); }
   if (a === 'speed'){ G.settings.dev.speed = +b.dataset.v; saveSettings(); }
   if (a === 'teleport'){ G.settings.dev.teleport = !G.settings.dev.teleport; saveSettings(); }
@@ -334,6 +335,7 @@ sheetEl.addEventListener('click', e => {
   save(); render();
 });
 sheetEl.addEventListener('change', e => {
+  if (e.target.id === 'rankBy'){ tabs.rankBy = e.target.value; render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'uilook'){ G.settings.uilook = e.target.value; saveSettings(); applyUiLook(); return; }
   if (e.target.dataset && e.target.dataset.set === 'sea'){ G.settings.sea = e.target.value; saveSettings(); setSeaLook(e.target.value); return; }
   if (e.target.dataset && e.target.dataset.set === 'tilt'){ G.settings.tilt = +e.target.value; saveSettings(); return; }

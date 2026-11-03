@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=9de774d';
-import {SPECS} from './ships.js?v=9de774d';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=9de774d';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, unload} from './state.js?v=9de774d';
-import {W} from './weather.js?v=9de774d';
-import {steering} from './input.js?v=9de774d';
-import {toast, showZone} from './ui.js?v=9de774d';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=9de774d';
-import {startFish, stopFish} from './fishing.js?v=9de774d';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=9de774d';
-import {progress} from './quests.js?v=9de774d';
-import {startSink} from './sinking.js?v=9de774d';
-import {sfx} from './audio.js?v=9de774d';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=cc42b7a';
+import {SPECS} from './ships.js?v=cc42b7a';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=cc42b7a';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=cc42b7a';
+import {W} from './weather.js?v=cc42b7a';
+import {steering} from './input.js?v=cc42b7a';
+import {toast, showZone} from './ui.js?v=cc42b7a';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=cc42b7a';
+import {startFish, stopFish} from './fishing.js?v=cc42b7a';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=cc42b7a';
+import {progress} from './quests.js?v=cc42b7a';
+import {startSink} from './sinking.js?v=cc42b7a';
+import {sfx} from './audio.js?v=cc42b7a';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -233,7 +233,7 @@ export function updatePlayer(dt){
   // coming back to the game at a harbor (inside or by its ring): start tied up at the pier, not out on the water
   if (!started){ started = true; const h = HARBORS.find(h => { const r = harborRing(h); return Math.hypot(S.x - r.x, S.y - r.y) < RING_R + 120; }); if (h) moorAt(h); }
   G.t += dt;
-  if (!G.sheetOpen) S.playSeconds = (S.playSeconds || 0) + dt;
+  if (!G.sheetOpen){ S.playSeconds = (S.playSeconds || 0) + dt; shipTime(dt); }
   if (S.bless > 0) S.bless = Math.max(0, S.bless - dt);
   if (G.sinking){ G.sinking.t += dt; G.v *= Math.exp(-dt*2); if (G.sinking.t > SINK_SECONDS) washUp(); return null; }
   if (G.dock){ G.nearPier = null; docking(dt); const k = Math.min(1, dt*3.5); G.cam.x += (S.x - G.cam.x)*k; G.cam.y += (S.y - G.cam.y)*k; spawnWake(); return null; }
