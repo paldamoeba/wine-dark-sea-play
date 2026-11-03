@@ -1,13 +1,13 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=7f87dd8';
-import {IC} from './menus.js?v=7f87dd8';
-import {sfx} from './audio.js?v=7f87dd8';
-import {playVideo, toast} from './ui.js?v=7f87dd8';
-import {ARENA} from './arena.js?v=7f87dd8';
-import {enemies, planReward, combatState} from './combat.js?v=7f87dd8';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=7f87dd8';
-import {G, ship, isExplored, reveal, save} from './state.js?v=7f87dd8';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=a532ae4';
+import {IC} from './menus.js?v=a532ae4';
+import {sfx} from './audio.js?v=a532ae4';
+import {playVideo, toast} from './ui.js?v=a532ae4';
+import {ARENA} from './arena.js?v=a532ae4';
+import {enemies, planReward, combatState} from './combat.js?v=a532ae4';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=a532ae4';
+import {G, ship, isExplored, reveal, save} from './state.js?v=a532ae4';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');

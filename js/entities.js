@@ -1,19 +1,19 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS, IRON} from './config.js?v=7f87dd8';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=7f87dd8';
-import {G, ship, lvl} from './state.js?v=7f87dd8';
-import {men} from './crew.js?v=7f87dd8';
-import {scene} from './scene.js?v=7f87dd8';
-import {mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=7f87dd8';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=7f87dd8';
-import {addTown, figure} from './town.js?v=7f87dd8';
-import {makeFire, updateFire, burn} from './fire.js?v=7f87dd8';
-import {addGrass} from './grass.js?v=7f87dd8';
-import {sinkPose} from './sinking.js?v=7f87dd8';
-import {moored} from './fleet.js?v=7f87dd8';
-import {sailCount} from './upgrades.js?v=7f87dd8';
-import {hasSail} from './crew.js?v=7f87dd8';
-import {placeOnWaves} from './combat.js?v=7f87dd8';
+import {SHIPS, IRON} from './config.js?v=a532ae4';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=a532ae4';
+import {G, ship, lvl} from './state.js?v=a532ae4';
+import {men} from './crew.js?v=a532ae4';
+import {scene} from './scene.js?v=a532ae4';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=a532ae4';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=a532ae4';
+import {addTown, figure} from './town.js?v=a532ae4';
+import {makeFire, updateFire, burn} from './fire.js?v=a532ae4';
+import {addGrass} from './grass.js?v=a532ae4';
+import {sinkPose} from './sinking.js?v=a532ae4';
+import {moored} from './fleet.js?v=a532ae4';
+import {sailCount} from './upgrades.js?v=a532ae4';
+import {hasSail} from './crew.js?v=a532ae4';
+import {placeOnWaves} from './combat.js?v=a532ae4';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -37,12 +37,6 @@ function updatePops(dt){
 // ---- islands ----
 // Each island is stacked flat layers of its real outline: sand, grass, and a rocky hilltop on the bigger ones.
 // The edges are bevelled so every layer has a soft rounded rim.
-function slab(pts, y0, y1, color){
-  const b = Math.min(5, (y1 - y0)/3);
-  const geo = new T.ExtrudeGeometry(new T.Shape(pts.map(([x, z]) => new T.Vector2(x, -z))), {depth:y1 - y0 - 2*b, bevelEnabled:true, bevelThickness:b, bevelSize:b, bevelOffset:-b, bevelSegments:3, curveSegments:1});
-  geo.rotateX(-Math.PI/2); geo.translate(0, y0 + b, 0);
-  return mesh(geo, color);
-}
 // How far inside an outline a point is (0 or less = outside).
 function depthIn(pts, x, z){ if (!inPoly(pts, x, z)) return 0; let best = Infinity;
   for (let i=0;i<pts.length;i++){ const [ax, az] = pts[i], [bx, bz] = pts[(i+1) % pts.length], dx = bx-ax, dz = bz-az;

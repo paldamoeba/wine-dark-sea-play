@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue, person} from './ships.js?v=7f87dd8';
+import {mat, statue, person} from './ships.js?v=a532ae4';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -150,11 +150,12 @@ export function buildFortress(owner, color, site){
   const st = statue(owner === 'athens' ? 'athena' : owner === 'sparta' ? 'zeus' : 'poseidon', pirate ? 'bronze' : 'painted'); st.position.set(44, 93, 0); st.scale.setScalar(.58); g.add(st);
   // stair down to a little dock on the sea side
   if (site && site.path){ // P68: on its island: a crag of rock under the walls, a stone stair that follows the ground to the shore, and a jetty
-    const k = 1/site.s, drop = site.ground*k, h = drop + 20, cr = new T.CylinderGeometry(126, 214, h, 15, 3), pos = cr.attributes.position;
+    const k = 1/site.s, drop = site.ground*k, h = drop + 20, cr = new T.CylinderGeometry(126, 176, h, 15, 3), pos = cr.attributes.position;
     for (let i=0; i<pos.count; i++){ const x = pos.getX(i), z = pos.getZ(i), a = Math.atan2(z, x), t = .5 - pos.getY(i)/h; if (t < .02) continue; // keep the top flat where the walls stand, roughen the slope below it
       const w = 1 + (Math.sin(a*3 + 1)*.06 + Math.sin(a*7 + 2)*.05 + Math.sin(a*11)*.03)*Math.min(1, t*2.5); pos.setX(i, x*w); pos.setZ(i, z*w); pos.setY(i, pos.getY(i) + Math.sin(a*5 + t*9)*5*t); }
     const cg = cr.toNonIndexed(); cg.computeVertexNormals(); const crag = M(cg, rock); crag.position.y = 16 - h/2; g.add(crag); base.visible = false; // a rough hill of rock, not a paved disc
-    for (const p of site.path) box(13*k, 3*k, 24, shade, p.d*k, (p.h - site.ground + 1)*k, 0);
+    const onCrag = x => x < 126 ? 16 : 16 - (x - 126)/50*h; // the stair runs down over the rock, not inside it
+    for (const p of site.path){ const x = p.d*k; box(13*k, 3*k, 24, shade, x, Math.max((p.h - site.ground)*k, onCrag(x)) + 1.5*k, 0); }
     box(70*k, 3*k, 22, wood, (site.depth + 24)*k, (3.5 - site.ground)*k, 0);
     for (const z of [-9, 9]) for (const d of [8, 36, 56]) cyl(1.6*k, 1.6*k, 14*k, wood, (site.depth + d)*k, (-2 - site.ground)*k, z, 5);
     g.scale.setScalar(site.s); return g; }

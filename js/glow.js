@@ -6,10 +6,10 @@ const blurFS = `uniform sampler2D tex; uniform vec2 dir; varying vec2 vUv;
   void main(){ vec4 c = texture2D(tex, vUv)*.227;
     c += (texture2D(tex, vUv + dir*1.385) + texture2D(tex, vUv - dir*1.385))*.316;
     c += (texture2D(tex, vUv + dir*3.231) + texture2D(tex, vUv - dir*3.231))*.07; gl_FragColor = c; }`;
-const finalFS = `uniform sampler2D tex, glowA, glowB; uniform vec2 res; uniform float glow, tilt; varying vec2 vUv;
+const finalFS = `uniform sampler2D tex, glowA, glowB; uniform vec2 res; uniform float glow, tilt, far; varying vec2 vUv;
   void main(){
     vec4 c = texture2D(tex, vUv); float tot = 1.;
-    if (tilt > 0.){ float r = smoothstep(.26, .5, abs(vUv.y - .5))*12.; float spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
+    if (tilt > 0.){ float r = smoothstep(.32 - .07*far, .52 - .05*far, abs(vUv.y - .5))*(7. + 5.*far)*res.y/1200.; /* the same as the game's */ float spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
       if (r > .4) for (int i = 1; i <= 16; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/16.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; } }
     vec3 col = c.rgb/tot;
     col += (texture2D(glowA, vUv).rgb*1.3 + texture2D(glowB, vUv).rgb*1.6)*glow;
@@ -22,7 +22,7 @@ export function makePost(renderer){
   const quad = new T.Mesh(new T.PlaneGeometry(2, 2)); quad.frustumCulled = false;
   const qs = new T.Scene(); qs.add(quad); const qc = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const blur = new T.ShaderMaterial({uniforms:{tex:{value:null}, dir:{value:new T.Vector2()}}, vertexShader:quadVS, fragmentShader:blurFS, depthTest:false, depthWrite:false});
-  const fin = new T.ShaderMaterial({uniforms:{tex:{value:null}, glowA:{value:null}, glowB:{value:null}, res:{value:new T.Vector2()}, glow:{value:0}, tilt:{value:0}}, vertexShader:quadVS, fragmentShader:finalFS, depthTest:false, depthWrite:false});
+  const fin = new T.ShaderMaterial({uniforms:{tex:{value:null}, glowA:{value:null}, glowB:{value:null}, res:{value:new T.Vector2()}, glow:{value:0}, tilt:{value:0}, far:{value:0}}, vertexShader:quadVS, fragmentShader:finalFS, depthTest:false, depthWrite:false});
   const black = new T.MeshBasicMaterial({color:0x000000}), blackLine = new T.LineBasicMaterial({color:0x000000});
   let main = null, g1 = [], g2 = [], W = 0, H = 0;
   const rt = (w, h) => new T.WebGLRenderTarget(w, h, {minFilter:T.LinearFilter, magFilter:T.LinearFilter});
@@ -37,7 +37,7 @@ export function makePost(renderer){
     for (let i=0;i<n;i++){ blur.uniforms.tex.value = s.texture; blur.uniforms.dir.value.set(1/w, 0); pass(blur, pair[1]);
       blur.uniforms.tex.value = pair[1].texture; blur.uniforms.dir.value.set(0, 1/h); pass(blur, pair[0]); s = pair[0]; } }
   // Draw the frame. glow = bloom strength (0 = off), tilt = the tiny-world look on or off.
-  return function render(scene, camera, {glow = 0, tilt = false} = {}){
+  return function render(scene, camera, {glow = 0, tilt = false, far = 0} = {}){
     if (!glow && !tilt){ renderer.setRenderTarget(null); renderer.render(scene, camera); return; }
     size();
     renderer.setRenderTarget(main); renderer.render(scene, camera);
@@ -53,7 +53,7 @@ export function makePost(renderer){
       blurInto(g1[0], g2, W >> 3, H >> 3, 2);
     }
     fin.uniforms.tex.value = main.texture; fin.uniforms.glowA.value = g1[0] ? g1[0].texture : null; fin.uniforms.glowB.value = g2[0] ? g2[0].texture : null;
-    fin.uniforms.res.value.set(W, H); fin.uniforms.glow.value = glow; fin.uniforms.tilt.value = tilt ? 1 : 0;
+    fin.uniforms.res.value.set(W, H); fin.uniforms.glow.value = glow; fin.uniforms.tilt.value = tilt ? 1 : 0; fin.uniforms.far.value = far;
     pass(fin, null);
   };
 }

@@ -1048,12 +1048,10 @@ body.uibronze .ab.on{--rimc:#f0c777;box-shadow:inset 0 0 0 3px #1f1610,0 0 0 1px
 body.uibronze .abilities{gap:15px 13px!important}
 body.uibronze .sheet.menu .xbtn{background:radial-gradient(circle at 50% 30%,#54412f,#241a13)!important;color:var(--ivory)!important;box-shadow:0 0 0 1px #120c07,0 0 0 2.5px #a57f47,0 2px 0 3px #120c07!important}
 body.uibronze .sheet.menu .xbtn:active{transform:translateY(2px)}
-/* the top-left panel: a dark bronze plaque, so the numbers read over bright water */
-body.uibronze .hud{padding:9px 10px 7px!important;background:linear-gradient(rgba(58,45,34,.93),rgba(33,25,19,.95))!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,240,205,.28),inset 0 0 0 1px rgba(184,146,90,.5),0 0 0 1px #120c07,0 3px 0 1px #120c07,0 6px 10px rgba(10,6,3,.35)}
-body.uibronze .ld,body.uibronze .hi,body.uibronze #goldChip,body.uibronze #wxChip{color:var(--ivory)!important}body.uibronze #wxChip b{color:#c9b995}
+/* ship's health and supplies float on the sea, with no panel behind them, in every look */
+body.uibronze .ld,body.uibronze .hi,body.uibronze #goldChip,body.uibronze #wxChip{color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.65)}body.uibronze #wxChip b{color:#fff}
 body.uibronze .ld.full b{color:#f0957f!important}
-body.uibronze .hudbar{border-top-color:rgba(184,146,90,.4)!important}
-body.uibronze .lifebar .bar,body.uibronze .ld .bar{background:#17100b!important;box-shadow:inset 0 1px 2px #000,0 1px 0 rgba(255,240,205,.18)!important}
+body.uibronze .lifebar .bar,body.uibronze .ld .bar{background:rgba(20,14,9,.5)!important;box-shadow:0 1px 3px rgba(0,0,0,.3)!important}
 body.uibronze .lifebar .bar i{background:linear-gradient(#a2bb62,#6a8a3c)!important}body.uibronze .lifebar .bar i.low{background:linear-gradient(#d0604a,#8d2f22)!important}
 body.uibronze .ld .bar i{background:linear-gradient(#e0b76e,#a97a35)!important}body.uibronze .ld.full .bar i{background:linear-gradient(#d0604a,#8d2f22)!important}
 /* menus: dressed limestone, hairline bronze edges, carved headings */
@@ -1103,12 +1101,10 @@ body.uivase .ab.on{background:var(--tc)!important;box-shadow:inset 0 0 0 3px var
 body.uivase .ab.on svg{filter:brightness(0)}body.uivase .ab.on span{color:var(--gl)}
 body.uivase .abilities{gap:12px 10px!important}
 body.uivase .sheet.menu .xbtn{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 1.5px var(--gl),inset 0 0 0 2.5px var(--tc)!important}
-/* the top-left panel: a black glaze plaque with terracotta bars */
-body.uivase .hud{padding:9px 10px 7px!important;background:var(--gl)!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:8px;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)}
-body.uivase .ld,body.uivase .hi,body.uivase #goldChip,body.uivase #wxChip{color:var(--cr)!important}body.uivase #wxChip b{color:var(--cr2)}
+/* ship's health and supplies float on the sea, with no panel behind them, in every look */
+body.uivase .ld,body.uivase .hi,body.uivase #goldChip,body.uivase #wxChip{color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.65)}body.uivase #wxChip b{color:#fff}
 body.uivase .ld.full b{color:#f0957f!important}
-body.uivase .hudbar{border-top-color:rgba(201,101,47,.65)!important}
-body.uivase .lifebar .bar,body.uivase .ld .bar{background:#4a3a2f!important;box-shadow:none!important;border-radius:2px!important}
+body.uivase .lifebar .bar,body.uivase .ld .bar{background:rgba(31,24,20,.55)!important;box-shadow:none!important;border-radius:2px!important}
 body.uivase .lifebar .bar i,body.uivase .ld .bar i{background:var(--tc2)!important;border-radius:2px!important}
 body.uivase .lifebar .bar i.low,body.uivase .ld.full .bar i{background:#d9492f!important}
 /* menus: cream slip, thin black lines, a Greek key under each heading */

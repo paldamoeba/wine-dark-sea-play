@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=7f87dd8';
+import {hash} from './world.js?v=a532ae4';
 
-import {smokeColumn} from './smoke.js?v=7f87dd8';
+import {smokeColumn} from './smoke.js?v=a532ae4';
 const T = window.THREE;
-import {mat} from './ships.js?v=7f87dd8';
+import {mat} from './ships.js?v=a532ae4';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -327,4 +327,11 @@ export function wreckModel(size = 'medium'){
   for (let i=0;i<nP;i++){ const p = mesh(new T.BoxGeometry(14 + R()*10, 2, 5), '#7a5a3a'), r = L*.4 + R()*30, an = R()*6.28; p.position.set(Math.cos(an)*r, 0, Math.sin(an)*r); p.rotation.y = R()*3; g.add(p); bob.push(p); }
   g.userData.bob = bob;
   return g;
+}
+// One flat layer of an island's outline, with a soft bevelled rim.
+export function slab(pts, y0, y1, color){
+  const b = Math.min(5, (y1 - y0)/3);
+  const geo = new T.ExtrudeGeometry(new T.Shape(pts.map(([x, z]) => new T.Vector2(x, -z))), {depth:y1 - y0 - 2*b, bevelEnabled:true, bevelThickness:b, bevelSize:b, bevelOffset:-b, bevelSegments:3, curveSegments:1});
+  geo.rotateX(-Math.PI/2); geo.translate(0, y0 + b, 0);
+  return mesh(geo, color);
 }

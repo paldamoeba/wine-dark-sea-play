@@ -67,20 +67,7 @@ export const SPECS = {
 function gradTex(steps){ const d = new Uint8Array(steps.length*3); steps.forEach((v, i) => d.set([v, v, v], i*3));
   const t = new T.DataTexture(d, steps.length, 1, T.RGBFormat); t.minFilter = t.magFilter = T.NearestFilter; t.needsUpdate = true; return t; }
 const GRAD = gradTex([150, 205, 255]); // three gentle steps
-// ---- the cel-shaded test look: two hard bands of light and dark ink outlines (a setting under Graphics) ----
-export const CEL = {on:(() => { try { return !!JSON.parse(localStorage.getItem('wine-dark-sea-settings')).cel; } catch (e) { return false; } })()};
-export function setCel(on){ CEL.on = on; GRAD.image.data.set(on ? [118, 118, 118, 255, 255, 255, 255, 255, 255] : [150, 150, 150, 205, 205, 205, 255, 255, 255]);
-  GRAD.minFilter = GRAD.magFilter = on ? T.NearestFilter : T.LinearFilter; GRAD.needsUpdate = true; } // the normal look shades smoothly; cel has hard bands
-setCel(CEL.on);
-const inkMat = new T.MeshBasicMaterial({color:'#1d1a22', side:T.BackSide});
-// the rim stays the same thickness however much a part is scaled up (tree crowns are small balls blown up 10 times)
-inkMat.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'float inkS = max(.001, length(vec3(modelMatrix[0][0], modelMatrix[0][1], modelMatrix[0][2])));\nvec3 transformed = position + normal * (0.9 / inkS);'); };
-// Outlines: a slightly fatter dark copy of every solid mesh, drawn inside out so only its rim shows.
-export function inkify(obj){
-  const add = []; obj.traverse(o => { if (o.isMesh && !o.userData.ink && o.material && !o.material.map && !o.material.transparent && o.geometry.attributes.normal) add.push(o); });
-  for (const o of add){ const m = new T.Mesh(o.geometry, inkMat); m.userData.ink = true; m.castShadow = m.receiveShadow = false; o.add(m); }
-  return obj;
-}
+GRAD.minFilter = GRAD.magFilter = T.LinearFilter; GRAD.needsUpdate = true; // the light shades smoothly
 const GREY = new T.Color('#a39d90');
 const KEEP = ['side', 'map', 'transparent', 'alphaTest', 'vertexColors', 'opacity', 'depthWrite', 'flatShading'];
 const mats = {};
@@ -606,7 +593,6 @@ export function buildShip(key, look = {}, crew = true){
       }
     }
   }
-  if (CEL.on) inkify(root);
   if (root.userData.torches.length) TORCH_ROOTS.add(root);
   return root;
 }

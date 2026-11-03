@@ -1,17 +1,21 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, CEL, setCel, inkify, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=7f87dd8';
-import {makePost} from './glow.js?v=7f87dd8';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=7f87dd8';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=7f87dd8';
-import {makeFire, updateFire} from './fire.js?v=7f87dd8';
-import {updateSmoke} from './smoke.js?v=7f87dd8';
-import {addGrass, updateGrass} from './grass.js?v=7f87dd8';
-import {WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=7f87dd8';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=a532ae4';
+import {makePost} from './glow.js?v=a532ae4';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=a532ae4';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=a532ae4';
+import {makeFire, updateFire} from './fire.js?v=a532ae4';
+import {updateSmoke} from './smoke.js?v=a532ae4';
+import {addGrass, updateGrass} from './grass.js?v=a532ae4';
+import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=a532ae4';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=a532ae4';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=a532ae4';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=a532ae4';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
-renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFShadowMap;
+const fitPixels = () => renderer.setPixelRatio(Math.min(QUALITY.high.dpr, devicePixelRatio || 1, Math.sqrt(QUALITY.high.pix/(innerWidth*innerHeight)))); fitPixels(); // the game's High graphics
+ renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFShadowMap;
 const scene = new T.Scene(); scene.fog = new T.Fog('#c9e3e8', 2200, 5200);
 const hemi = new T.HemisphereLight(0xeaf3f5, 0x8c927c, .8); scene.add(hemi);
 const sun = new T.DirectionalLight(0xffeccc, .65); sun.castShadow = true;
@@ -21,42 +25,27 @@ const sunDir = new T.Vector3(-400, 700, 400);
 const fill = new T.DirectionalLight(0xcfe3ff, .28); fill.position.set(300, 200, -300); scene.add(fill);
 const seaMat = new T.MeshLambertMaterial({color:'#2b7f93'});
 const sea = new T.Mesh(new T.CircleGeometry(6000, 64), seaMat); sea.rotation.x = -Math.PI/2; sea.receiveShadow = true; scene.add(sea);
-// Full graphics: a rolling sea like the game's, with drifting foam lines, white crests, sky reflections and sun glints.
-// The same wave sum runs here in JavaScript (wv) so ships ride on it. uCalm flattens it around islands and towns.
-const waveU = {uTime:{value:0}, uAmp:{value:.5}, uStorm:{value:0}, uGlint:{value:1}, uSky:{value:new T.Color()}, uSun:{value:new T.Vector3(0, 1, 0)}, uCalm:{value:new T.Vector3(0, 0, 0)}};
-const WV = `uniform float uTime, uAmp; uniform vec3 uCalm;
-  float wv(vec2 p0){ float k = uAmp*smoothstep(uCalm.z, uCalm.z + 160., length(p0 - uCalm.xy));
-    vec2 p = vec2(p0.x + 70.*sin(p0.y*.0021 + 1.3) + 30.*sin(p0.y*.0057 + p0.x*.0013), p0.y + 70.*sin(p0.x*.0017 - .7) + 30.*sin(p0.x*.0049 - p0.y*.0011));
-    return k*(sin(p.x*.012 + uTime*1.1)*3.2 + sin(p.y*.017 - uTime*1.3)*2.4 + sin((p.x + p.y)*.03 + uTime*1.9)*1.1 + sin((p.x - p.y)*.05 - uTime*2.4)*.5); }`;
-function wv(x0, z0, t){ const k = waveU.uAmp.value*Math.min(1, Math.max(0, (Math.hypot(x0 - waveU.uCalm.value.x, z0 - waveU.uCalm.value.y) - waveU.uCalm.value.z)/160));
-  const x = x0 + 70*Math.sin(z0*.0021 + 1.3) + 30*Math.sin(z0*.0057 + x0*.0013), z = z0 + 70*Math.sin(x0*.0017 - .7) + 30*Math.sin(x0*.0049 - z0*.0011);
-  return k*(Math.sin(x*.012 + t*1.1)*3.2 + Math.sin(z*.017 - t*1.3)*2.4 + Math.sin((x + z)*.03 + t*1.9)*1.1 + Math.sin((x - z)*.05 - t*2.4)*.5); }
-const waveMat = new T.MeshLambertMaterial({color:'#2b7f93'});
-waveMat.onBeforeCompile = sh => {
-  Object.assign(sh.uniforms, waveU);
-  sh.vertexShader = WV + '\nvarying vec3 vWorld;\n' + sh.vertexShader
-    .replace('#include <beginnormal_vertex>', 'vec2 pp = position.xz; float e = 2.; vec3 objectNormal = normalize(vec3(wv(pp - vec2(e, 0.)) - wv(pp + vec2(e, 0.)), 2.*e, wv(pp - vec2(0., e)) - wv(pp + vec2(0., e))));')
-    .replace('#include <begin_vertex>', 'vec3 transformed = position; transformed.y += wv(position.xz); vWorld = (modelMatrix*vec4(transformed, 1.)).xyz;');
-  sh.fragmentShader = `varying vec3 vWorld; uniform float uTime, uStorm, uGlint, uAmp; uniform vec3 uSun, uSky;
-    vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p)*43758.5453); }
-    float cells(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
-      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)), o = h2(mod(i + g, 256.));
-        o = .5 + .42*sin(uTime*.35 + 6.2831*o); float d = length(g + o - f); if (d < d1){ d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
-      return d2 - d1; }
-    ` + sh.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>
-      vec2 q = vWorld.xz/125.; q += .32*vec2(sin(q.y*1.3 + uTime*.4), cos(q.x*1.1 - uTime*.3)); q += .1*vec2(sin(q.y*4.7 - uTime*.6), cos(q.x*4.3 + uTime*.5));
-      float line = 1. - smoothstep(.02, .055, cells(q));
-      float dist = length(vWorld.xz - cameraPosition.xz), fade = smoothstep(3200., 600., dist);
-      vec3 foamC = mix(vec3(.92, .98, 1.), vec3(.42, .62, .68), uStorm);
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, line*.75*fade*(1. - .45*uStorm));
-      float crest = smoothstep(.55, .9, vWorld.y/max(.01, 7.2*uAmp)); gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, crest*.45);
-      vec3 V = normalize(cameraPosition - vWorld); gl_FragColor.rgb = mix(gl_FragColor.rgb, uSky, pow(1. - max(V.y, 0.), 3.)*.35);
-      vec2 w = vWorld.xz + 40.*vec2(sin(vWorld.z*.013), sin(vWorld.x*.011));
-      vec3 nrm = normalize(vec3(sin(w.x*.045 + uTime*1.7)*.16 + sin((w.x + w.y)*.11 - uTime*2.3)*.08, 1., cos(w.y*.05 - uTime*1.4)*.16 + sin((w.x - w.y)*.09 + uTime*2.1)*.08));
-      float sp = max(dot(reflect(-uSun, nrm), V), 0.); gl_FragColor.rgb += vec3(1., .96, .86)*(pow(sp, 24.)*.1 + pow(sp, 260.)*.75)*uGlint;`);
-};
-const waveGeo = new T.PlaneGeometry(6000, 6000, 220, 220); waveGeo.rotateX(-Math.PI/2);
-const waves = new T.Mesh(waveGeo, waveMat); waves.receiveShadow = true; waves.visible = false; scene.add(waves);
+// P69: Full graphics is the game's own sea (water.js): the same shader, the same colors, Realistic or Cartoon. Only the shape of the water differs: it is worked out
+// around what is on show, calm around an island's real shore and open everywhere else.
+const WN = 220, WSIZE = 6000, foamU = seaUniforms(), waterMat = waterMaterial(foamU), bedMat = bedMaterial(foamU);
+const waveGeo = new T.PlaneGeometry(WSIZE, WSIZE, WN, WN); waveGeo.rotateX(-Math.PI/2);
+const wN = waveGeo.attributes.position.count;
+for (const [k, n] of [['color', 3], ['aAmp', 1], ['aShore', 1], ['aLand', 1]]) waveGeo.setAttribute(k, new T.BufferAttribute(new Float32Array(wN*n), n));
+const tileData = new Uint8Array(wN*4), tileTex = new T.DataTexture(tileData, WN + 1, WN + 1, T.RGBAFormat, T.UnsignedByteType); tileTex.minFilter = tileTex.magFilter = T.LinearFilter;
+foamU.uTile.value = tileTex; foamU.uTileN.value = WN + 1; foamU.uTileO.value.set(0, 0, WSIZE);
+const waves = new T.Mesh(waveGeo, waterMat); waves.receiveShadow = true; waves.frustumCulled = false; waves.visible = false; scene.add(waves);
+const bedGeo = new T.PlaneGeometry(WSIZE, WSIZE, WN, WN); bedGeo.rotateX(-Math.PI/2); bedGeo.setAttribute('color', waveGeo.attributes.color);
+const bed = new T.Mesh(bedGeo, bedMat); bed.position.y = -80; bed.frustumCulled = false; bed.visible = false; scene.add(bed);
+let seaKind = 'real', seaAmp = 3.2; const calm = {x:0, z:0, r:0, isle:null};
+const shoreOf = (x, z) => calm.isle ? landDist(x + calm.isle.x, z + calm.isle.y) : Math.hypot(x - calm.x, z - calm.z) - calm.r; // how far from land this point is
+const swellK = ld => calm.r || calm.isle ? shoreK(ld) : 1;
+function wv(x, z, t){ const k = swellK(shoreOf(x, z)); return swellAt(x, z, seaAmp*k, t, k); }
+// the same colors as the game: open sea, and light lagoon water near a shore
+function paintSea(){ if (!full) return; const [sh, se, , lg] = SEA_LOOKS[seaKind].map(c => new T.Color(c)), sea0 = sh.clone().lerp(se, lightKey === 'storm' ? 1 : .75), c = new T.Color(), P = waveGeo.attributes.position.array, A = waveGeo.attributes;
+  for (let v=0; v<wN; v++){ const x = P[v*3], z = P[v*3 + 2], ld = shoreOf(x, z), k = swellK(ld), hasLand = calm.r || calm.isle, l = hasLand ? Math.max(0, Math.min(1, ld/340)) : 1;
+    A.aAmp.array[v] = seaAmp*k; A.aShore.array[v] = k; A.aLand.array[v] = l; c.copy(sea0); if (hasLand && ld < 170) c.lerp(lg, Math.pow(Math.max(0, 1 - ld/170), 2)*.85);
+    A.color.array[v*3] = c.r; A.color.array[v*3 + 1] = c.g; A.color.array[v*3 + 2] = c.b; const q = v*4; tileData[q] = c.r*255; tileData[q + 1] = c.g*255; tileData[q + 2] = c.b*255; tileData[q + 3] = l*255; }
+  for (const k of ['color', 'aAmp', 'aShore', 'aLand']) A[k].needsUpdate = true; tileTex.needsUpdate = true; }
 const post = makePost(renderer);
 const camera = new T.PerspectiveCamera(40, 1, 2, 9000);
 let group = 'ships', idx = 0, obj = null, focus = new T.Vector3(), dist = 300, yaw = -.9, pitch = .42, spin = false;
@@ -72,11 +61,14 @@ const LIGHTS = {
   storm:   {name:'Storm',       sky:'#6e7d85', hemi:['#a9b5ba', '#4c5550', .7],  sun:['#d8dde0', .2, [-200, 700, 200]],  fill:.1,  sea:'#2c5560'},
   studio:  {name:'Studio',      sky:'#e9e6df', hemi:['#ffffff', '#b8b2a6', .85], sun:['#ffffff', .55, [-300, 600, 500]],  fill:.35, sea:'#d6d1c6'},
 };
+// P69: with Full graphics each light uses the game's own numbers for that time of day (daynight.js)
+const GAME_LIGHT = {noon:{sky:'#b3d5e6', hemi:['#e6f0f2', '#7d8670', .62], sun:['#ffe6c4', .64, [-420, 900, 160]], water:'#ffffff', glint:1, night:0}, morning:{sky:'#e6c9bd', hemi:['#e4d6e2', '#6f6a70', .56], sun:['#ffc49a', .5, [600, 260, 200]], water:'#d6d8ea', glint:.6, night:.25},
+  golden:{sky:'#f4bf98', hemi:['#ffd8be', '#7a6a66', .58], sun:['#ffb866', .8, [-800, 380, 200]], water:'#f2d4ea', glint:1.1, night:0}, sunset:{sky:'#dc8e8c', hemi:['#eaa8b0', '#5e5068', .55], sun:['#ff9466', .58, [-900, 200, 0]], water:'#d9c2e2', glint:.9, night:.2},
+  night:{sky:'#2a3a62', hemi:['#8299d0', '#34405c', .7], sun:['#bccbff', .46, [300, 700, -300]], water:'#6f7fa8', glint:.5, night:1}, storm:{sky:'#46525c', hemi:['#a9b5ba', '#4c5550', .4], sun:['#d8dde0', .22, [-420, 900, 160]], water:'#c4ccd2', glint:.2, night:0, storm:1}};
 let lightKey = 'noon', full = false, glowOn = false;
 function setLight(k){
   lightKey = k; const L = LIGHTS[k]; scene.background = new T.Color(L.sky); scene.fog.color.set(L.sky);
   scene.fog.near = k === 'storm' ? 900 : 2200; scene.fog.far = k === 'storm' ? 3200 : 5200;
-  waveMat.color.set(L.sea); waveU.uSky.value.set(L.sky); waveU.uStorm.value = k === 'storm' ? 1 : 0; waveU.uGlint.value = k === 'storm' ? .2 : k === 'night' ? .35 : 1;
   rain.visible = k === 'storm'; lightTorches(); WIN_MAT.color.set(k === 'night' ? '#ffc865' : k === 'storm' ? '#8a7a5a' : '#33414f'); // lamplit windows at night
   hemi.color.set(L.hemi[0]); hemi.groundColor.set(L.hemi[1]); hemi.intensity = L.hemi[2];
   sun.color.set(L.sun[0]); sun.intensity = L.sun[1]; sunDir.set(...L.sun[2]); sun.position.copy(focus).add(sunDir); fill.intensity = L.fill; seaMat.color.set(L.sea);
@@ -84,7 +76,9 @@ function setLight(k){
   setWaves();
 }
 // waves: gentle in fair weather, big in a storm (full graphics only; the simple look keeps a flat sea)
-function setWaves(){ waves.visible = full; sea.visible = !full; waveU.uAmp.value = lightKey === 'storm' ? 1.25 : .5; }
+function setWaves(){ waves.visible = bed.visible = full; sea.visible = !full; seaAmp = lightKey === 'storm' ? 11 : 3.2; setSeaKind(waterMat, seaKind); const G = full && GAME_LIGHT[lightKey];
+  if (G){ hemi.color.set(G.hemi[0]); hemi.groundColor.set(G.hemi[1]); hemi.intensity = G.hemi[2]; sun.color.set(G.sun[0]); sun.intensity = G.sun[1]; sunDir.set(...G.sun[2]); sun.position.copy(focus).add(sunDir); fill.intensity = 0; scene.background.set(G.sky); scene.fog.color.set(G.sky); }
+  const g = G || {sky:LIGHTS[lightKey].sky, water:'#ffffff', glint:1, night:0}; waterMat.color.set(g.water); foamU.uSky.value.set(g.sky); foamU.uGlint.value = g.glint; foamU.uNight.value = g.night; foamU.uStorm.value = g.storm || 0; paintSea(); }
 // Torches burn at night and in storms. With a few torches each one also lights the deck around it.
 function lightTorches(){ if (!obj) return; const on = lightKey === 'night' || lightKey === 'storm', roots = [];
   obj.traverse(o => { if (o.userData.torches && o.userData.torches.length) roots.push(o); });
@@ -243,6 +237,19 @@ const bigger = k => { const s = SPECS[k], key = k + 'XL'; if (!SPECS[key]) SPECS
 // P56 prototype: the same size class, just wider and a little shorter (Nicholas: the warships look too skinny and too long)
 const wider = k => { const s = SPECS[k], key = k + 'W'; if (!SPECS[key]) SPECS[key] = {...s, L:s.L*.88, B:s.B*1.45, H:s.H*1.1}; return key; };
 function sideBySide(k, alt = bigger){ const g = new T.Group(), a = buildShip(k), b = buildShip(alt(k)); a.position.z = -SPECS[k].B*1.6; b.position.z = SPECS[k].B*1.9; g.add(a, b); return g; }
+// P69: every fortress and bandit camp where it really stands: the real island outline, the real site, its stair and jetty, and your ship in the water below.
+function isleScene(is){ const t = is.site, g = new T.Group(), {top, hillTop} = islandHeights(is), [beach, grass, hill] = is.tiers, cold = is.y < WORLD*.3, camp = CAMPS.find(c => c.isle === is.name);
+  g.add(slab(beach, -14, 4, cold ? '#d8dfe3' : '#e6d29c')); if (grass) g.add(slab(grass, 4, top, cold ? '#f2f6f8' : '#76883c')); if (hill) g.add(slab(hill, top, hillTop, cold ? '#c7d2d9' : '#8a8a74'));
+  const owner = is.pirate ? 'pirate' : is.city, f = camp ? buildCamp() : buildFortress(owner, owner === 'pirate' ? '#231d1d' : CITIES[owner].color, t), R = rng(is.name.length*97 + 5);
+  if (camp) f.scale.setScalar([.85, 1, 1.2][(camp.lv || 1) - 1]*t.s);
+  f.position.set(t.x - is.x, t.ground, t.y - is.y); f.rotation.y = -t.a; g.add(f);
+  const xs = beach.map(p => p[0]), zs = beach.map(p => p[1]); let n = 0;
+  for (let k=0; k<400 && n<Math.min(14, 3 + is.r/60); k++){ const x = Math.min(...xs) + R()*(Math.max(...xs) - Math.min(...xs)), z = Math.min(...zs) + R()*(Math.max(...zs) - Math.min(...zs)); if (!grass || !inPoly(grass, x, z) || !siteClear(is, x, z)) continue;
+    const c = cold ? cypress(['#2f4d3a', '#f4f8fa']) : R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9)); c.position.set(x, hill && inPoly(hill, x, z) ? hillTop : top, z); g.add(c); n++; }
+  const boat = buildShip('bireme'); boat.position.set(t.sea.x - is.x, 2, t.sea.y - is.y); boat.rotation.y = -t.a + Math.PI/2; g.add(boat);
+  g.userData.isle = is; g.userData.frame = f; g.userData.ships = [boat]; g.userData.view = {yaw:t.a + .45, pitch:.5, far:camp ? 3.2 : 1.55}; return g; }
+const SITE_ITEMS = ISLANDS.filter(is => is.site).sort((a, b) => !!CAMPS.find(c => c.isle === a.name) - !!CAMPS.find(c => c.isle === b.name) || a.name.localeCompare(b.name)).map(is => { const t = is.site, camp = CAMPS.some(c => c.isle === is.name), who = camp ? 'Bandit camp' : is.pirate ? 'Pirate fortress' : is.city === 'sparta' ? 'Spartan fortress' : 'Athenian fortress';
+  return {name:`${is.name}: ${who}`, desc:camp ? `Where the bandits of ${is.name} really camp, with your bireme in the water for size.` : `Exactly where it stands in the game, ${t.onHill ? 'up on the hilltop' : 'on the green land above the shore'}, with its stair and jetty, and your bireme for size.${t.s < 1 ? ' Built a little smaller to fit the island.' : ''}`, make:() => isleScene(is)}; });
 const GROUPS = {
   ships:{name:'Ships', items:[
     {name:'The pirate king\'s flagship', desc:'Polycrates\' floating fortress, waiting in the wine-dark water off Kos: a towering hull with statues along its sides, a flat deck with six towers and a hall, three masts, a great golden curl at the stern. A ghost ship: you never see a single person aboard.', make:() => buildShip('flagship', {paint:'king', sail:'plain'})},
@@ -260,6 +267,7 @@ const GROUPS = {
     {name:'Shipwrecks', desc:'Three sizes. A fishing boat wreck: 4 pulls of 1 wood. A merchant wreck: 6 pulls of 2 wood, coins, and sometimes an amphora of wine or oil. A warship wreck: 9 pulls of 3 wood and more coins.',
       make:() => { const g = new T.Group(); [['small', 'Fishing boat', -170], ['medium', 'Merchant', 0], ['large', 'Warship', 220]].forEach(([k, n, x]) => { const w = wreckModel(k); w.position.x = x; labeled(w, n, -22, 60); g.add(w); }); return g; }},
   ]},
+  fortresses:{name:'Fortresses on their islands', items:SITE_ITEMS},
   monuments:{name:'Monuments', items:[
     {name:'Colossus of Rhodes', desc:'The bronze sun god astride the arena gate: a torch held high, a bow, a quiver and a crown of sun rays.', make:() => { const c = buildColossus(300, 150); c.rotation.y = Math.PI/2; return c; }},
     {name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
@@ -341,37 +349,35 @@ const GROUPS = {
 function show(){
   if (obj) scene.remove(obj); hoppers.length = 0;
   const item = GROUPS[group].items[idx];
-  obj = item.make(); if (CEL.on) inkify(obj); obj.traverse(o => { if (o.isMesh){ o.castShadow = !(o.material && o.material.transparent); o.receiveShadow = !o.userData.ns; } }); /* see-through things (foam rings, the kraken's dark shape) cast no shadows */
+  obj = item.make(); obj.traverse(o => { if (o.isMesh){ o.castShadow = !(o.material && o.material.transparent); o.receiveShadow = !o.userData.ns; } }); /* see-through things (foam rings, the kraken's dark shape) cast no shadows */
   scene.add(obj);
   // frame the models, not the ground they stand on; fit the sun's shadow to them so shadows stay crisp
   const ground = obj.children.filter(o => o.userData.ground); ground.forEach(o => obj.remove(o));
-  const box = new T.Box3().setFromObject(obj), size = box.getSize(new T.Vector3()); box.getCenter(focus); ground.forEach(o => obj.add(o));
+  const box = new T.Box3().setFromObject(obj.userData.frame || obj), size = box.getSize(new T.Vector3()); box.getCenter(focus); ground.forEach(o => obj.add(o));
   const big = Math.max(size.x, size.y, size.z); dist = big*1.45 + 40;
   const sc = sun.shadow.camera, half = Math.max(80, big*.9); Object.assign(sc, {left:-half, right:half, top:half, bottom:-half}); sc.updateProjectionMatrix();
   sun.shadow.normalBias = Math.max(1.4, half*.02); // big scenes have coarser shadow pixels: lift the shadow off surfaces more, so no stripes
   sun.target.position.copy(focus); sun.position.copy(focus).add(sunDir); scene.add(sun.target); $('desc').textContent = item.desc;
   // the waves stay calm over islands and towns; ships ride them
   const land = ground.length || group === 'cities' || group === 'monuments' || group === 'nature' || group === 'people';
-  waveU.uCalm.value.set(focus.x, focus.z, land ? Math.max(size.x, size.z)*.62 + 30 : 0);
+  calm.isle = obj.userData.isle || null; calm.x = focus.x; calm.z = focus.z; calm.r = land ? Math.max(size.x, size.z)*.62 + 30 : 0; paintSea();
   if (item.light && !q0){ $('light').value = item.light; setLight(item.light); } if (item.glow && !q0){ setGlow(true); }
-  if (obj.userData.view && !q.get('yaw')){ yaw = obj.userData.view.yaw; pitch = obj.userData.view.pitch; dist *= .8; }
+  if (obj.userData.view && !q.get('yaw')){ yaw = obj.userData.view.yaw; pitch = obj.userData.view.pitch; dist *= obj.userData.view.far || .8; }
   lightTorches(); ridersOf(); playItem(item);
 }
 // the ships in view, so they can bob on the waves
 let riders = [];
 function ridersOf(){ riders = []; obj.traverse(o => { if (o.userData.body && o.userData.spec) riders.push({o, y:o.position.y}); }); }
 function setGlow(on){ glowOn = on; $('glow').setAttribute('aria-pressed', on); }
-function setFull(on){ full = on; $('gfx').value = on ? 'full' : 'simple'; setWaves(); } // (soft shadows the same way in both looks: PCF with a radius)
+function setFull(v){ full = v === 'full' || v === 'toon'; seaKind = v === 'toon' ? 'toon' : 'real'; $('gfx').value = full ? v : 'simple'; if (!q0) setLight(lightKey); else setWaves(); } // (soft shadows the same way in both looks: PCF with a radius)
 function fillPick(){ $('pick').innerHTML = GROUPS[group].items.map((it, i) => `<option value="${i}">${it.name}</option>`).join(''); $('pick').value = idx; }
 $('group').innerHTML = Object.entries(GROUPS).map(([k, g]) => `<option value="${k}">${g.name}</option>`).join('');
 $('light').innerHTML = Object.entries(LIGHTS).map(([k, l]) => `<option value="${k}">${l.name}</option>`).join('');
 $('group').addEventListener('change', e => { group = e.target.value; idx = 0; fillPick(); show(); });
 $('pick').addEventListener('change', e => { idx = +e.target.value; show(); });
 $('light').addEventListener('change', e => setLight(e.target.value));
-$('gfx').addEventListener('change', e => setFull(e.target.value === 'full'));
+$('gfx').addEventListener('change', e => setFull(e.target.value));
 $('glow').addEventListener('click', () => setGlow(!glowOn));
-// the cel-shaded test look: hard bands and ink outlines
-$('cel').addEventListener('click', () => { setCel(!CEL.on); $('cel').setAttribute('aria-pressed', CEL.on); show(); });
 $('play').addEventListener('click', () => { startAudio(); const it = GROUPS[group].items[idx]; if (it.sound) sfx(it.sound); if (it.music) testMusic(it.music, true, it.style, it.bstyle, it.song); });
 // Download the model as a .glb file, to open and edit in Blender (or any 3D program). Edited models can come back into the game.
 $('dl').addEventListener('click', () => {
@@ -397,16 +403,15 @@ cv.addEventListener('wheel', e => { e.preventDefault(); dist *= Math.exp(e.delta
 function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight;
   const lift = $('bar').classList.contains('folded') ? 0 : $('bar').offsetHeight*.5;
   camera.setViewOffset(innerWidth, innerHeight, 0, lift, innerWidth, innerHeight); camera.updateProjectionMatrix(); }
-addEventListener('resize', resize);
+addEventListener('resize', () => { fitPixels(); resize(); });
 
 // start: ?g=group&i=item&light=key (and test views: yaw, pitch, zoom, fx, fy, ui=0)
 const q = new URLSearchParams(location.search); let q0 = true; // q0: while starting, the address decides the light and glow
 if (GROUPS[q.get('g')]) group = q.get('g'); idx = Math.min(+(q.get('i') || 0), GROUPS[group].items.length - 1);
 $('group').value = group; fillPick();
 const lk = LIGHTS[q.get('light')] ? q.get('light') : 'noon'; $('light').value = lk; setLight(lk);
-if (q.get('cel') === '1'){ setCel(true); $('cel').setAttribute('aria-pressed', true); }
 if (q.get('ui') === '0') fold(true), $('unfold').hidden = true;
-setFull(q.get('gfx') === 'full'); setGlow(q.get('glow') === '1');
+setFull(q.get('gfx')); setGlow(q.get('glow') === '1');
 show(); resize(); q0 = false;
 if (q.get('yaw')) yaw = +q.get('yaw'); if (q.get('pitch')) pitch = +q.get('pitch'); if (q.get('zoom')) dist /= +q.get('zoom');
 const tmpV = new T.Vector3(), fx = +(q.get('fx') || 0), fy = +(q.get('fy') || 0);
@@ -436,7 +441,7 @@ function animate(t){
 let t0 = performance.now(), last = 0;
 function frame(now){
   const t = (now - t0)/1000, dt = Math.min(.05, t - last); last = t; animate(t); updateSoundScene(dt); if (spin && !pts.size) yaw += .003;
-  waveU.uTime.value = t; waveU.uSun.value.copy(sunDir).normalize(); updateStorm(dt, t);
+  foamU.uTime.value = t; foamU.uSun.value.copy(sunDir).normalize(); foamU.uZoom.value = Math.max(1, dist/740); updateStorm(dt, t);
   // full graphics: ships ride the waves, pitching and rolling a little
   for (const r of riders){ const p = r.o.getWorldPosition(tmpV), h = full ? wv(p.x, p.z, t) : 0;
     r.o.position.y = r.y + h*.8; r.o.rotation.z = full ? (wv(p.x + 20, p.z, t) - wv(p.x - 20, p.z, t))*.012 : 0; r.o.rotation.x = full ? (wv(p.x, p.z - 12, t) - wv(p.x, p.z + 12, t))*.02 : 0; }
@@ -446,6 +451,6 @@ function frame(now){
   // into stripes (it was 2 for every view, too small when looking at a whole town from far away)
   const nr = Math.max(2, dist*.05); if (Math.abs(camera.near - nr) > .5){ camera.near = nr; camera.updateProjectionMatrix(); }
   camera.lookAt(focus); focus.x -= fx; focus.y -= fy;
-  post(scene, camera, {glow:glowOn ? 1.5 : 0, tilt:full}); requestAnimationFrame(frame);
+  post(scene, camera, {glow:glowOn ? 1.5 : 0, tilt:full, far:Math.max(0, Math.min(1, (dist/740 - 1)/1.2))}); requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

@@ -1,27 +1,27 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=7f87dd8';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=7f87dd8';
-import {PUBLIC, G, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=7f87dd8';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=7f87dd8';
-import {CYCLE} from './daynight.js?v=7f87dd8';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=7f87dd8';
-import {swapBoat, refreshAllTrees} from './entities.js?v=7f87dd8';
-import {setZoom} from './input.js?v=7f87dd8';
-import {PAINTS, SAILS, GODS, SPECS, setCel} from './ships.js?v=7f87dd8';
-import {tutHTML} from './tutorial.js?v=7f87dd8';
-import {founded, blessing} from './crew.js?v=7f87dd8';
-import {WHALE} from './wildlife.js?v=7f87dd8';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=7f87dd8';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=7f87dd8';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=7f87dd8';
-import {effectText, buy} from './upgrades.js?v=7f87dd8';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=7f87dd8';
-import {GOODS, WAR} from './config.js?v=7f87dd8';
-import {fly} from './fly.js?v=7f87dd8';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=7f87dd8';
-import {W, KINDS} from './weather.js?v=7f87dd8';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=7f87dd8';
-import {setTimeOfDay} from './daynight.js?v=7f87dd8';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=a532ae4';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=a532ae4';
+import {PUBLIC, G, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=a532ae4';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=a532ae4';
+import {CYCLE} from './daynight.js?v=a532ae4';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=a532ae4';
+import {swapBoat, refreshAllTrees} from './entities.js?v=a532ae4';
+import {setZoom} from './input.js?v=a532ae4';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=a532ae4';
+import {tutHTML} from './tutorial.js?v=a532ae4';
+import {founded, blessing} from './crew.js?v=a532ae4';
+import {WHALE} from './wildlife.js?v=a532ae4';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=a532ae4';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=a532ae4';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=a532ae4';
+import {effectText, buy} from './upgrades.js?v=a532ae4';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=a532ae4';
+import {GOODS, WAR} from './config.js?v=a532ae4';
+import {fly} from './fly.js?v=a532ae4';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=a532ae4';
+import {W, KINDS} from './weather.js?v=a532ae4';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=a532ae4';
+import {setTimeOfDay} from './daynight.js?v=a532ae4';
 
 const $ = id => document.getElementById(id);
 
@@ -208,7 +208,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 68</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 69</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -217,7 +217,6 @@ function settingsHTML(){
       ${row('Button look (test)', 'Bronze: cast metal with weight. Vase: flat, painted like Greek pottery. Pick the one you like and this choice goes away.', `<select class="jobsel" data-set="uilook" aria-label="Button look">${UI_LOOKS.map(([v, n]) => `<option value="${v}" ${uiLook() === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Sea', 'Realistic: reflections of the sky and sun. Cartoon: flat colors and white wave lines that change with the weather.', `<select class="jobsel" data-set="sea" aria-label="Sea">${[['real', 'Realistic'], ['toon', 'Cartoon']].map(([v, n]) => `<option value="${v}" ${(s.sea || 'real') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Tiny world look', 'Soft blur at the top and bottom of the screen and warmer colors, so the sea looks like a little model. Turn off if the game feels slow.', tog('tiny', s.tiny !== false, 'Tiny world look'))}
-      ${row('Cel-shaded look (test)', 'Hard light and dark bands with ink outlines on ships and fortresses, like a cartoon. Try it and tell me.', tog('cel', !!s.cel, 'Cel-shaded look'))}
       ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}`);
   const dev = card('Builder tools · removed before release', `${row('Builder tools', s.builder ? 'Off plays the game the way a player would.' : 'Off: normal speed, no teleport, no hidden marks, raiders on. Your builder settings come back when you turn them on.', tog('builder', s.builder, 'Builder tools'))}
       ${s.builder ? `${mapHTML()}
@@ -318,7 +317,6 @@ sheetEl.addEventListener('click', e => {
   }
   if (a === 'builder'){ G.settings.builder = !G.settings.builder; saveSettings(); swapBoat(); document.dispatchEvent(new Event('fleet')); }
   if (a === 'tiny'){ G.settings.tiny = G.settings.tiny === false; saveSettings(); }
-  if (a === 'cel'){ G.settings.cel = !G.settings.cel; saveSettings(); setCel(G.settings.cel); document.dispatchEvent(new Event('crew')); swapBoat(); }
   if (a === 'full'){ toggleFull(); return; }
   if (a === 'sound'){ SND.on = !SND.on; saveSound(); if (SND.on) sfx('chime'); }
   if (a === 'fps'){ G.settings.showFps = !G.settings.showFps; saveSettings(); }

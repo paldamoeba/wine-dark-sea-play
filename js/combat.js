@@ -1,22 +1,22 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL} from './config.js?v=7f87dd8';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=7f87dd8';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat} from './state.js?v=7f87dd8';
-import {scene, screenToSea, setLair} from './scene.js?v=7f87dd8';
-import {wreckModel} from './models.js?v=7f87dd8';
-import {buildShip, animateShip, mesh, SPECS, CEL, inkify} from './ships.js?v=7f87dd8';
-import {makeFire, updateFire, burn} from './fire.js?v=7f87dd8';
-import {blessing, fighters, hasSail} from './crew.js?v=7f87dd8';
-import {progress, goal} from './quests.js?v=7f87dd8';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=7f87dd8';
-import {rollColor, unlockColor, colorName} from './colors.js?v=7f87dd8';
-import {toast} from './ui.js?v=7f87dd8';
-import {sink, rowNow, ROW} from './player.js?v=7f87dd8';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=7f87dd8';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=7f87dd8';
-import {sfx} from './audio.js?v=7f87dd8';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL} from './config.js?v=a532ae4';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=a532ae4';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat} from './state.js?v=a532ae4';
+import {scene, screenToSea, setLair} from './scene.js?v=a532ae4';
+import {wreckModel} from './models.js?v=a532ae4';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=a532ae4';
+import {makeFire, updateFire, burn} from './fire.js?v=a532ae4';
+import {blessing, fighters, hasSail} from './crew.js?v=a532ae4';
+import {progress, goal} from './quests.js?v=a532ae4';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=a532ae4';
+import {rollColor, unlockColor, colorName} from './colors.js?v=a532ae4';
+import {toast} from './ui.js?v=a532ae4';
+import {sink, rowNow, ROW} from './player.js?v=a532ae4';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=a532ae4';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=a532ae4';
+import {sfx} from './audio.js?v=a532ae4';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -93,9 +93,9 @@ for (const e of enemies) if (e.camp && campDone(e.isle)){ burnCamp(e); e.guards.
 export const camps = () => enemies.filter(e => e.camp);
 
 function buildFort(e){
-  if (e.camp){ const g = buildCamp(); g.rotation.y = -e.a; g.scale.setScalar([.85, 1, 1.2][(e.camp.lv || 1) - 1]*e.site.s); /* bigger camps for higher levels, smaller on a tiny island */ if (CEL.on) inkify(g); return g; }
+  if (e.camp){ const g = buildCamp(); g.rotation.y = -e.a; g.scale.setScalar([.85, 1, 1.2][(e.camp.lv || 1) - 1]*e.site.s); /* bigger camps for higher levels, smaller on a tiny island */ return g; }
   const g = buildFortress(e.owner, e.owner === 'pirate' ? '#231d1d' : e.owner === 'you' ? '#d48a2a' : CITIES[e.owner].color, e.site);
-  g.rotation.y = -e.a; if (CEL.on) inkify(g); return g;
+  g.rotation.y = -e.a; return g;
 }
 function side(e){ return e.spec.side; }
 const cityName = c => CITIES[c] ? CITIES[c].name : '';
