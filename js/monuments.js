@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue, person} from './ships.js?v=ae4eab7';
+import {mat, statue, person} from './ships.js?v=6d6ea3e';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -22,6 +22,26 @@ function limb(a, b, r1, r2, m, seg = 28){
 }
 const ball = (p, r, m, sx = 1, sy = 1, sz = 1) => { const o = M(new T.SphereGeometry(r, 36, 24), m); o.position.copy(p); o.scale.set(sx, sy, sz); return o; };
 const V = (x, y, z) => new T.Vector3(x, y, z);
+
+// ---- the marble Colossus (P79) ----
+// Made in Blender (blender/colossus.py) and loaded from models/colossus.glb: the sun god in white marble with a red cloth, a
+// fire bowl held over his head. Painted here with the game's own materials. His feet end up `stance` apart along x, soles at
+// y = 0, facing +z. The model arrives a moment later; onLoad(model, k) gets it with k = game units per model unit.
+// group.userData.mats = the materials (to fade him).
+export const COLOSSUS_FEET = 4.2, COLOSSUS_BOWL = [-.26, 8.1, .26]; // in the model: foot to foot, and the top of the fire bowl
+export function marbleColossus(stance = 300, onLoad){
+  const g = new T.Group(), o = {transparent:true};
+  const marble = new T.MeshPhongMaterial({color:'#efe9de', specular:'#2a2824', shininess:12, ...o}), cloth = new T.MeshPhongMaterial({color:'#b8473a', specular:'#2a1a14', shininess:6, ...o}),
+    gilt = new T.MeshPhongMaterial({color:'#e3b54a', specular:'#8a6a2a', shininess:40, ...o});
+  g.userData.mats = [marble, cloth, gilt];
+  const fr = new T.Mesh(new T.BoxGeometry(stance*1.4, stance*2.1, stance*.6)); fr.position.y = stance*1.05; g.userData.frame = fr; // his size before he arrives, for the art page's camera
+  if (T.GLTFLoader) new T.GLTFLoader().load('models/colossus.glb', gl => {
+    const c = gl.scene, k = stance/COLOSSUS_FEET;
+    c.traverse(m => { if (!m.isMesh) return; const n = m.material && m.material.name || ''; m.material = /cloth/.test(n) ? cloth : /gold/.test(n) ? gilt : marble; m.castShadow = true; });
+    c.scale.setScalar(k); g.add(c); if (onLoad) onLoad(c, k);
+  }, undefined, e => console.log('COLOSSUS ' + e));
+  return g;
+}
 
 // ---- the Colossus of Rhodes ----
 // A bronze sun god, eight heads tall, one foot on each side of the harbor gate: a torch held high in one hand, a bow in the

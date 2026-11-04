@@ -1,18 +1,18 @@
 // The Arena of Rhodes: a great ring of stone walls built out from the south-east coast of Rhodes, like a colosseum on the water.
-// The landward side of the ring runs up onto the island; the gate faces the open sea, and the Colossus stands astride it,
-// facing out. You sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round won.
-// The crowd on the walls cheers. The Colossus turns see-through while you're inside so he never blocks the fight.
-import {ISLANDS, landDist} from './world.js?v=ae4eab7';
-import {G, save} from './state.js?v=ae4eab7';
-import {scene} from './scene.js?v=ae4eab7';
-import {mat, torch, TORCH_ROOTS} from './ships.js?v=ae4eab7';
-import {mergeStatic} from './merge.js?v=ae4eab7';
-import {award, TROPHIES} from './trophies.js?v=ae4eab7';
-import {figure} from './town.js?v=ae4eab7';
-import {buildColossus, buildGladiator} from './monuments.js?v=ae4eab7';
-import {spawnArena, clearArena, enemies} from './combat.js?v=ae4eab7';
-import {toast} from './ui.js?v=ae4eab7';
-import {sfx} from './audio.js?v=ae4eab7';
+// The landward side of the ring runs up onto the island; the gate faces the open sea between two towers (the Colossus that
+// stood astride it moved to the harbor of Rhodes town in P79). Inside, start the games: rounds of pirate champions, a prize
+// for each round won. The crowd on the walls cheers.
+import {ISLANDS, landDist} from './world.js?v=6d6ea3e';
+import {G, save} from './state.js?v=6d6ea3e';
+import {scene} from './scene.js?v=6d6ea3e';
+import {mat, torch, TORCH_ROOTS} from './ships.js?v=6d6ea3e';
+import {mergeStatic} from './merge.js?v=6d6ea3e';
+import {award, TROPHIES} from './trophies.js?v=6d6ea3e';
+import {figure} from './town.js?v=6d6ea3e';
+import {buildGladiator} from './monuments.js?v=6d6ea3e';
+import {spawnArena, clearArena, enemies} from './combat.js?v=6d6ea3e';
+import {toast} from './ui.js?v=6d6ea3e';
+import {sfx} from './audio.js?v=6d6ea3e';
 
 const T = window.THREE;
 const R = 780, WALL_H = 58, WALL_T = 26, N = 72, GATE = .17; // radius, wall height and thickness, wall pieces, half the gate's opening (radians)
@@ -42,7 +42,7 @@ const pieceAt = a => ((Math.floor(a/(Math.PI*2)*N) % N) + N) % N;
 // ---- the build ----
 const crowd = [], stone = mat('#ddd2b8'), dark = mat('#8f846c'), ledge = mat('#c9bd9f');
 const solid = new Array(N).fill(false); // which wall pieces stand (pieces deep inland are left out: the island closes the ring there)
-let colossus = null, arenaG = null, merged = false;
+let arenaG = null, merged = false;
 const torches = [], BANNERS = ['#b8322a', '#2f5f96', '#c98a24'].map(c => mat(c)), GOLD = mat('#e3b54a');
 if (ARENA){
   const g = new T.Group(); g.position.set(ARENA.x, 0, ARENA.y); scene.add(g); arenaG = g; g.userData.torches = torches; TORCH_ROOTS.add(g);
@@ -96,12 +96,9 @@ if (ARENA){
   // end towers where the ring runs up onto Rhodes
   for (let i=0;i<N;i++) if (solid[i] && !solid[(i + 1) % N] && !inGate((i + 1)/N*Math.PI*2 + .001)) tower((i + 1)/N*Math.PI*2, WALL_H + 18, 24);
   for (let i=0;i<N;i++) if (solid[i] && !solid[(i + N - 1) % N] && !inGate(i/N*Math.PI*2 - .001)) tower(i/N*Math.PI*2, WALL_H + 18, 24);
-  // two gate towers: the Colossus stands with one foot on each
-  const tops = [-1, 1].map(sg => { const a = ARENA.gate + sg*GATE; tower(a, WALL_H + 34, 34); return new T.Vector3(Math.cos(a)*R, WALL_H + 26, Math.sin(a)*R); });
-  const mid = tops[0].clone().add(tops[1]).multiplyScalar(.5), stance = tops[0].distanceTo(tops[1]);
-  colossus = buildColossus(560, stance, true); colossus.position.copy(mid);
-  colossus.rotation.y = Math.atan2(-Math.sin(ARENA.gate), Math.cos(ARENA.gate)); // face out of the gate
-  colossus.userData.noMerge = true; g.add(colossus);
+  // two gate towers
+  for (const sg of [-1, 1]) tower(ARENA.gate + sg*GATE, WALL_H + 34, 34);
+  // P79: the Colossus moved to the harbor of Rhodes town (harbor.js); the gate keeps its two towers
 }
 // petals thrown from the walls when a round is won
 const PETALS = 260, petalPos = new Float32Array(PETALS*3), petalCol = new Float32Array(PETALS*3); let petals = null, petalT = 0;
@@ -144,9 +141,6 @@ export function updateArena(dt){
   const S = G.S, near = Math.hypot(S.x - ARENA.x, S.y - ARENA.y) < R + 900;
   if (near){ wallPush(S, 14); for (const e of enemies) if (!e.dead && Math.abs(e.x - ARENA.x) < R + 200 && Math.abs(e.y - ARENA.y) < R + 200) wallPush(e, e.spec.beam*.5); }
   const inside = inArena(S, 30);
-  // the Colossus fades while you're inside, so the fight is never behind his legs
-  const k = inside ? .2 : 1; for (const m of colossus ? colossus.userData.mats : []){ m.opacity += (k - m.opacity)*Math.min(1, dt*3); m.depthWrite = m.opacity > .9; }
-  if (colossus) colossus.userData.flame.scale.set(1 + Math.sin(G.t*9)*.08, 1 + Math.sin(G.t*13)*.15, 1);
   if (near && !merged && arenaG){ merged = true; mergeStatic(arenaG); }
   A.joy = Math.max(0, (A.joy || 0) - dt); updatePetals(dt);
   if (near) for (const f of crowd){ const up = A.joy > 0 ? 14 : A.on ? 6 : inside ? 1.5 : 0; f.position.y = (f.userData.h || WALL_H) - 1.5 + (up ? Math.abs(Math.sin(G.t*(A.joy > 0 ? 8 : 6) + f.userData.ph))*up : 0); }

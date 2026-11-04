@@ -1,17 +1,17 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=ae4eab7';
-import {makePost} from './glow.js?v=ae4eab7';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=ae4eab7';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=ae4eab7';
-import {makeFire, updateFire} from './fire.js?v=ae4eab7';
-import {updateSmoke} from './smoke.js?v=ae4eab7';
-import {addGrass, updateGrass} from './grass.js?v=ae4eab7';
-import {makeWind} from './seafx.js?v=ae4eab7';
-import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=ae4eab7';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=ae4eab7';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=ae4eab7';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=ae4eab7';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=6d6ea3e';
+import {makePost} from './glow.js?v=6d6ea3e';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=6d6ea3e';
+import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=6d6ea3e';
+import {makeFire, updateFire} from './fire.js?v=6d6ea3e';
+import {updateSmoke} from './smoke.js?v=6d6ea3e';
+import {addGrass, updateGrass} from './grass.js?v=6d6ea3e';
+import {makeWind} from './seafx.js?v=6d6ea3e';
+import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=6d6ea3e';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=6d6ea3e';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=6d6ea3e';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=6d6ea3e';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -271,7 +271,8 @@ const GROUPS = {
   ]},
   fortresses:{name:'Fortresses on their islands', items:SITE_ITEMS},
   monuments:{name:'Monuments', items:[
-    {name:'Colossus of Rhodes', desc:'The bronze sun god astride the arena gate: a torch held high, a bow, a quiver and a crown of sun rays.', make:() => { const c = buildColossus(300, 150); c.rotation.y = Math.PI/2; return c; }},
+    {name:'Colossus of Rhodes', desc:'The sun god in white marble astride the harbor mouth of Rhodes town, a fire bowl held over his head (made in Blender).', make:() => { const c = marbleColossus(150); c.rotation.y = Math.PI; return c; }},
+    {name:'Bronze Colossus (old)', desc:'The first Colossus, built in code: a torch held high, a bow, a quiver and a crown of sun rays.', make:() => { const c = buildColossus(300, 150); c.rotation.y = Math.PI/2; return c; }},
     {name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
     {name:'Spartan fortress', desc:'The same plan in warmer stone, with red banners.', make:() => buildFortress('sparta', '#9e2a22')},
     {name:'Pirate fortress', desc:'Dark stone on Thasos and Kos, with black banners.', make:() => buildFortress('pirate', '#231d1d')},

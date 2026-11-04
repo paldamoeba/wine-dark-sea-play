@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=ae4eab7';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=ae4eab7';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=ae4eab7';
-import {fleetBody, pinCard} from './fleetpage.js?v=ae4eab7';
-import {myLevel} from './levels.js?v=ae4eab7';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=ae4eab7';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=ae4eab7';
-import {planClues} from './combat.js?v=ae4eab7';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=ae4eab7';
-import {board, active, canDeliver, goal} from './quests.js?v=ae4eab7';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=ae4eab7';
-import {colorHeld, colorInfo} from './colors.js?v=ae4eab7';
-import {shipPortrait} from './portrait.js?v=ae4eab7';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=ae4eab7';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=6d6ea3e';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=6d6ea3e';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=6d6ea3e';
+import {fleetBody, pinCard} from './fleetpage.js?v=6d6ea3e';
+import {myLevel} from './levels.js?v=6d6ea3e';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=6d6ea3e';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=6d6ea3e';
+import {planClues} from './combat.js?v=6d6ea3e';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=6d6ea3e';
+import {board, active, canDeliver, goal} from './quests.js?v=6d6ea3e';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=6d6ea3e';
+import {colorHeld, colorInfo} from './colors.js?v=6d6ea3e';
+import {shipPortrait} from './portrait.js?v=6d6ea3e';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=6d6ea3e';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';

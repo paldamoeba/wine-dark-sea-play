@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=ae4eab7';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=ae4eab7';
-import {G, save, stat} from './state.js?v=ae4eab7';
-import {scene} from './scene.js?v=ae4eab7';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=ae4eab7';
-import {toast} from './ui.js?v=ae4eab7';
-import {combatState} from './combat.js?v=ae4eab7';
-import {sfx} from './audio.js?v=ae4eab7';
+import {WILDLIFE} from './config.js?v=6d6ea3e';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=6d6ea3e';
+import {G, save, stat} from './state.js?v=6d6ea3e';
+import {scene} from './scene.js?v=6d6ea3e';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=6d6ea3e';
+import {toast} from './ui.js?v=6d6ea3e';
+import {combatState} from './combat.js?v=6d6ea3e';
+import {sfx} from './audio.js?v=6d6ea3e';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
