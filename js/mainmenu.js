@@ -1,11 +1,11 @@
 // P65: the main menu: a grid of big tiles over the live sea. Three voyages side by side, each with its own ship, money and chart.
 // Starting another voyage saves this one and restarts the page on that slot, so the whole world loads clean.
-import {SHIPS} from './config.js?v=6d6ea3e';
-import {G, SLOTS, readSlot, wipeSlot, setActiveSlot, save} from './state.js?v=6d6ea3e';
-import {IC, shipImg, tabs} from './menus.js?v=6d6ea3e';
-import {openSheet, toast, sizeUI} from './ui.js?v=6d6ea3e';
-import {sfx} from './audio.js?v=6d6ea3e';
-import {PUBLIC, APP} from './state.js?v=6d6ea3e';
+import {SHIPS} from './config.js?v=4ae49e1';
+import {G, SLOTS, readSlot, wipeSlot, setActiveSlot, save} from './state.js?v=4ae49e1';
+import {IC, shipImg, tabs} from './menus.js?v=4ae49e1';
+import {openSheet, toast, sizeUI} from './ui.js?v=4ae49e1';
+import {sfx} from './audio.js?v=4ae49e1';
+import {PUBLIC, APP} from './state.js?v=4ae49e1';
 
 const el = document.getElementById('mainMenu');
 export const GO_KEY = 'wine-dark-sea-go';

@@ -2,13 +2,13 @@
 // The marble Colossus (made in Blender, models/colossus.glb) stands astride the harbor mouth, one foot on the end of each
 // breakwater, and you sail in between his legs. A round fort with a lighthouse guards the west breakwater, like St Nicholas
 // at Rhodes. Just for looks: Rhodes town has no dock. The breakwaters and the fort stop ships; only the mouth is open.
-import {ISLANDS, landDist} from './world.js?v=6d6ea3e';
-import {G} from './state.js?v=6d6ea3e';
-import {scene} from './scene.js?v=6d6ea3e';
-import {mat, torch, TORCH_ROOTS} from './ships.js?v=6d6ea3e';
-import {mergeStatic} from './merge.js?v=6d6ea3e';
-import {enemies} from './combat.js?v=6d6ea3e';
-import {marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=6d6ea3e';
+import {ISLANDS, landDist} from './world.js?v=4ae49e1';
+import {G} from './state.js?v=4ae49e1';
+import {scene} from './scene.js?v=4ae49e1';
+import {mat, torch, TORCH_ROOTS} from './ships.js?v=4ae49e1';
+import {mergeStatic} from './merge.js?v=4ae49e1';
+import {enemies} from './combat.js?v=4ae49e1';
+import {marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=4ae49e1';
 
 const T = window.THREE;
 const RB = 430, GAP = .36, N = 64, BW = 34, FORT_R = 96; // basin radius, half the mouth (radians), breakwater pieces, walkway width, fort radius

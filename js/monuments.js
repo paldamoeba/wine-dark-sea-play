@@ -1,6 +1,6 @@
 // Big stone and bronze models: the Colossus of Rhodes and the island fortresses. Pure builders (no game state),
 // so the arena, the forts and the art page all use the same models.
-import {mat, statue, person} from './ships.js?v=6d6ea3e';
+import {mat, statue, person} from './ships.js?v=4ae49e1';
 
 const T = window.THREE;
 const M = (geo, m, shadow = true) => { const o = new T.Mesh(geo, m); o.castShadow = shadow; o.receiveShadow = true; return o; };
@@ -35,11 +35,15 @@ export function marbleColossus(stance = 300, onLoad){
     gilt = new T.MeshPhongMaterial({color:'#e3b54a', specular:'#8a6a2a', shininess:40, ...o});
   g.userData.mats = [marble, cloth, gilt];
   const fr = new T.Mesh(new T.BoxGeometry(stance*1.4, stance*2.1, stance*.6)); fr.position.y = stance*1.05; g.userData.frame = fr; // his size before he arrives, for the art page's camera
-  if (T.GLTFLoader) new T.GLTFLoader().load('models/colossus.glb', gl => {
+  const ready = gl => {
     const c = gl.scene, k = stance/COLOSSUS_FEET;
     c.traverse(m => { if (!m.isMesh) return; const n = m.material && m.material.name || ''; m.material = /cloth/.test(n) ? cloth : /gold/.test(n) ? gilt : marble; m.castShadow = true; });
     c.scale.setScalar(k); g.add(c); if (onLoad) onLoad(c, k);
-  }, undefined, e => console.log('COLOSSUS ' + e));
+  };
+  // the .glb file, or where a host won't serve .glb files (the claude.ai page), the same model packed in a .js file
+  const packed = () => import('../models/colossus.glb.js').then(m => { const b = atob(m.default), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+    new T.GLTFLoader().parse(a.buffer, '', ready, e => console.log('COLOSSUS ' + e)); }).catch(e => console.log('COLOSSUS ' + e));
+  if (T.GLTFLoader) new T.GLTFLoader().load('models/colossus.glb', ready, undefined, packed);
   return g;
 }
 

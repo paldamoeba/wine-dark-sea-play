@@ -2,17 +2,17 @@
 // The landward side of the ring runs up onto the island; the gate faces the open sea between two towers (the Colossus that
 // stood astride it moved to the harbor of Rhodes town in P79). Inside, start the games: rounds of pirate champions, a prize
 // for each round won. The crowd on the walls cheers.
-import {ISLANDS, landDist} from './world.js?v=6d6ea3e';
-import {G, save} from './state.js?v=6d6ea3e';
-import {scene} from './scene.js?v=6d6ea3e';
-import {mat, torch, TORCH_ROOTS} from './ships.js?v=6d6ea3e';
-import {mergeStatic} from './merge.js?v=6d6ea3e';
-import {award, TROPHIES} from './trophies.js?v=6d6ea3e';
-import {figure} from './town.js?v=6d6ea3e';
-import {buildGladiator} from './monuments.js?v=6d6ea3e';
-import {spawnArena, clearArena, enemies} from './combat.js?v=6d6ea3e';
-import {toast} from './ui.js?v=6d6ea3e';
-import {sfx} from './audio.js?v=6d6ea3e';
+import {ISLANDS, landDist} from './world.js?v=4ae49e1';
+import {G, save} from './state.js?v=4ae49e1';
+import {scene} from './scene.js?v=4ae49e1';
+import {mat, torch, TORCH_ROOTS} from './ships.js?v=4ae49e1';
+import {mergeStatic} from './merge.js?v=4ae49e1';
+import {award, TROPHIES} from './trophies.js?v=4ae49e1';
+import {figure} from './town.js?v=4ae49e1';
+import {buildGladiator} from './monuments.js?v=4ae49e1';
+import {spawnArena, clearArena, enemies} from './combat.js?v=4ae49e1';
+import {toast} from './ui.js?v=4ae49e1';
+import {sfx} from './audio.js?v=4ae49e1';
 
 const T = window.THREE;
 const R = 780, WALL_H = 58, WALL_T = 26, N = 72, GATE = .17; // radius, wall height and thickness, wall pieces, half the gate's opening (radians)
