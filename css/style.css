@@ -1197,3 +1197,8 @@ body.uivase .mplus{background:var(--gl)!important;color:var(--cr)!important;box-
 @keyframes medalpop{0%{transform:scale(1)}30%{transform:scale(1.3)}100%{transform:scale(1)}}
 @keyframes medalring{from{transform:scale(.8);opacity:1}to{transform:scale(1.7);opacity:0}}
 .rkhead{margin:10px 0 4px;font-size:13px;font-weight:800;opacity:.75}.rkjoin{margin-top:10px;display:grid;gap:6px}
+/* P77: the arena line, the king's stages, trophies */
+body.arenaon #mission{display:none!important}
+.arenabar{gap:8px;align-items:center}.arenabar .arnd{font:800 12px/1 var(--body);opacity:.75;white-space:nowrap}.apips{display:flex;gap:3px;margin-left:auto}.apips i{width:9px;height:9px;border-radius:50%;background:#c4473b;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}.apips i.off{background:#cfc3ab}
+.bossbar .bar{position:relative}.bossbar .bar::before,.bossbar .bar::after{content:"";position:absolute;top:0;bottom:0;width:2px;background:rgba(255,235,190,.85);z-index:1}.bossbar .bar::before{left:60%}.bossbar .bar::after{left:25%}
+.cups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cupb{display:grid;justify-items:center;text-align:center;gap:2px;padding:9px 5px;border-radius:14px;background:rgba(120,90,50,.07)}.cupb .cup{width:40px;height:40px}.cupb b{font-size:12.5px;line-height:1.15;opacity:.65}.cupb small{font-size:10.5px;line-height:1.15;opacity:.7}.cupb.on{background:linear-gradient(#fff3c9,#f4d98a);box-shadow:inset 0 0 0 1.5px #d9a634}.cupb.on b{opacity:1}

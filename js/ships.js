@@ -394,7 +394,7 @@ const flameMat = new T.MeshBasicMaterial({color:'#ff9a3c', transparent:true}), c
 let torchN = 0;
 // Everything with torches or fire bowls, so the day and night cycle can light them (daynight.js).
 export const TORCH_ROOTS = new Set();
-function torch(){
+export function torch(){
   const g = new T.Group();
   const pole = mesh(new T.CylinderGeometry(.5, .6, 12, 5), 'mast'); pole.position.y = 6; g.add(pole);
   const bowl = mesh(bowlGeo, 'bronze'); bowl.position.y = 12.6; g.add(bowl);

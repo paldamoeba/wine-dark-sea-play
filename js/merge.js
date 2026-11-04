@@ -34,7 +34,7 @@ export function mergeStatic(root){
   root.traverse(o => { noteObjects(o.userData, pivots); if (!o.visible || o.userData.keep || o.isLight || o.isInstancedMesh || o.isSprite || o.isPoints || o.isLine) pivots.add(o); });
   root.updateMatrixWorld(true);
   const groups = new Map();
-  const walk = (o, pivot) => { for (const c of [...o.children]){ const isPivot = pivots.has(c);
+  const walk = (o, pivot) => { for (const c of [...o.children]){ if (c.userData.noMerge) continue; const isPivot = pivots.has(c);
       if (c.isMesh && !isPivot && c.children.length === 0 && c.geometry && c.geometry.attributes.position && !c.morphTargetInfluences && !Array.isArray(c.material) && !c.material.transparent && c.renderOrder === 0 && !(c.material.isShaderMaterial)){
         const key = `${pivot.uuid}|${c.material.uuid}|${c.castShadow}|${c.receiveShadow}`; let g = groups.get(key); if (!g) groups.set(key, g = {pivot, list:[]}); g.list.push(c); }
       walk(c, isPivot ? c : pivot); } };
@@ -46,7 +46,7 @@ export function mergeStatic(root){
     pivot.add(bake(list, list[0].material, list[0].castShadow, list[0].receiveShadow));
     for (const m of list){ delete m.bakeM; m.parent.remove(m); } }
   // drop the empty groups left behind
-  const prune = o => { for (const c of [...o.children]){ prune(c); if (!pivots.has(c) && !c.children.length && !c.isMesh && !c.isLight && !c.isSprite && !c.isLine && !c.isPoints && c.type === 'Group') o.remove(c); } }; prune(root);
+  const prune = o => { for (const c of [...o.children]){ if (c.userData.noMerge) continue; prune(c); if (!pivots.has(c) && !c.children.length && !c.isMesh && !c.isLight && !c.isSprite && !c.isLine && !c.isPoints && c.type === 'Group') o.remove(c); } }; prune(root);
   return {before, after};
 }
 // free a model that is no longer used (shared geometry simply loads again if something else draws it)

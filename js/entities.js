@@ -1,20 +1,20 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=cc3055d';
-import {SHIPS, IRON} from './config.js?v=cc3055d';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=cc3055d';
-import {G, ship, lvl} from './state.js?v=cc3055d';
-import {men} from './crew.js?v=cc3055d';
-import {scene} from './scene.js?v=cc3055d';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=cc3055d';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=cc3055d';
-import {addTown, figure} from './town.js?v=cc3055d';
-import {makeFire, updateFire, burn} from './fire.js?v=cc3055d';
-import {addGrass} from './grass.js?v=cc3055d';
-import {sinkPose} from './sinking.js?v=cc3055d';
-import {moored} from './fleet.js?v=cc3055d';
-import {sailCount} from './upgrades.js?v=cc3055d';
-import {hasSail} from './crew.js?v=cc3055d';
-import {placeOnWaves} from './combat.js?v=cc3055d';
+import {mergeStatic} from './merge.js?v=5294a34';
+import {SHIPS, IRON} from './config.js?v=5294a34';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=5294a34';
+import {G, ship, lvl} from './state.js?v=5294a34';
+import {men} from './crew.js?v=5294a34';
+import {scene} from './scene.js?v=5294a34';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=5294a34';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=5294a34';
+import {addTown, figure} from './town.js?v=5294a34';
+import {makeFire, updateFire, burn} from './fire.js?v=5294a34';
+import {addGrass} from './grass.js?v=5294a34';
+import {sinkPose} from './sinking.js?v=5294a34';
+import {moored} from './fleet.js?v=5294a34';
+import {sailCount} from './upgrades.js?v=5294a34';
+import {hasSail} from './crew.js?v=5294a34';
+import {placeOnWaves} from './combat.js?v=5294a34';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -170,7 +170,7 @@ SPOTS.forEach((s, i) => {
 export const ICEBERGS = [];
 { const R = rng(4242);
   for (let k=0, tries=0; k<26 && tries<600; tries++){ const x = R()*WORLD_N, y = R()*WORLD_N*.27;
-    if (landDist(x, y) < 180 || ICEBERGS.some(b => Math.hypot(b.x - x, b.y - y) < 260)) continue;
+    if (Math.hypot(x - WORLD_N*.83, y - WORLD_N*.15) < 3200 || landDist(x, y) < 180 || ICEBERGS.some(b => Math.hypot(b.x - x, b.y - y) < 260)) continue;
     // a big flat-topped slab of ice with a taller peak, a pale-blue skirt under the water line
     const r = 45 + R()*55, g = icebergModel(r, R);
     g.position.set(x, 0, y); scene.add(g); ICEBERGS.push({x, y, r:r*1.05, g, ph:R()*6}); k++; } }

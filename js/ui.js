@@ -1,31 +1,32 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=cc3055d';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=cc3055d';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=cc3055d';
-import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=cc3055d';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=cc3055d';
-import {CYCLE} from './daynight.js?v=cc3055d';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=cc3055d';
-import {swapBoat, refreshAllTrees} from './entities.js?v=cc3055d';
-import {setZoom} from './input.js?v=cc3055d';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=cc3055d';
-import {tutHTML} from './tutorial.js?v=cc3055d';
-import {founded, blessing} from './crew.js?v=cc3055d';
-import {WHALE} from './wildlife.js?v=cc3055d';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=cc3055d';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=cc3055d';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=cc3055d';
-import {effectText, buy} from './upgrades.js?v=cc3055d';
-import {fleetHTML} from './fleetpage.js?v=cc3055d';
-import {myLevel} from './levels.js?v=cc3055d';
-import {askName} from './naming.js?v=cc3055d';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=cc3055d';
-import {GOODS, WAR} from './config.js?v=cc3055d';
-import {fly} from './fly.js?v=cc3055d';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=cc3055d';
-import {W, KINDS} from './weather.js?v=cc3055d';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=cc3055d';
-import {setTimeOfDay} from './daynight.js?v=cc3055d';
+import {TROPHIES, has as hasTrophy, cupSVG} from './trophies.js?v=5294a34';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=5294a34';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=5294a34';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=5294a34';
+import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=5294a34';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=5294a34';
+import {CYCLE} from './daynight.js?v=5294a34';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=5294a34';
+import {swapBoat, refreshAllTrees} from './entities.js?v=5294a34';
+import {setZoom} from './input.js?v=5294a34';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5294a34';
+import {tutHTML} from './tutorial.js?v=5294a34';
+import {founded, blessing} from './crew.js?v=5294a34';
+import {WHALE} from './wildlife.js?v=5294a34';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=5294a34';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=5294a34';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=5294a34';
+import {effectText, buy} from './upgrades.js?v=5294a34';
+import {fleetHTML} from './fleetpage.js?v=5294a34';
+import {myLevel} from './levels.js?v=5294a34';
+import {askName} from './naming.js?v=5294a34';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=5294a34';
+import {GOODS, WAR} from './config.js?v=5294a34';
+import {fly} from './fly.js?v=5294a34';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=5294a34';
+import {W, KINDS} from './weather.js?v=5294a34';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=5294a34';
+import {setTimeOfDay} from './daynight.js?v=5294a34';
 
 const $ = id => document.getElementById(id);
 
@@ -141,7 +142,7 @@ function logHTML(){
   const S = G.S, s = S.stats || {}, secs = S.playSeconds || 0, n = v => (v || 0).toLocaleString();
   const time = secs >= 3600 ? `${Math.floor(secs/3600)} h ${Math.floor(secs/60) % 60} min` : `${Math.floor(secs/60)} min`, days = Math.max(s.days || 0, Math.floor(secs/CYCLE));
   const tile = (ic, v, label) => `<div class="stat">${ic}<b>${v}</b><small>${label}</small></div>`;
-  return `<button class="btn gold wide" data-act="openfleet" data-to="ranks">Leaderboard</button>` + card('Your voyage', `<div class="statgrid">${tile(IC.star, days, days === 1 ? 'day at sea' : 'days at sea')}${tile(IC.ship, time, 'sailing')}${tile(IC.world, n(s.dist), 'stadia sailed')}${tile(IC.coin, n(s.earned), 'drachmae earned')}</div>`)
+  return `<button class="btn gold wide" data-act="openfleet" data-to="ranks">Leaderboard</button>` + card('Trophies', `<div class="cups">${Object.entries(TROPHIES).map(([k, t]) => `<div class="cupb ${hasTrophy(k) ? 'on' : ''}">${cupSVG(t.c, hasTrophy(k))}<b>${t.name}</b><small>${t.how}</small></div>`).join('')}</div>`) + card('Your voyage', `<div class="statgrid">${tile(IC.star, days, days === 1 ? 'day at sea' : 'days at sea')}${tile(IC.ship, time, 'sailing')}${tile(IC.world, n(s.dist), 'stadia sailed')}${tile(IC.coin, n(s.earned), 'drachmae earned')}</div>`)
     + card('Battles', `<div class="statgrid">${tile(IC.swords, n(s.sunk), 'ships sunk')}${tile(IC.flame, n(s.pirates), 'pirates sunk')}${tile(IC.crew, n(s.navy), 'army ships sunk')}${tile(IC.hold, n(s.merchants), 'merchants raided')}${tile(IC.catapult, n(s.forts), 'fortresses taken')}${tile(IC.jobs, n(s.camps), 'camps burned')}${tile(IC.hull, n(s.sunkMe), 'times you sank')}</div>`)
     + card('Finds', `<div class="statgrid">${tile(IC.fish(), n(s.fish), 'fish caught')}${tile(IC.wood, n(s.wood), 'wood gathered')}${tile(IC.iron, n(s.iron), 'iron dug up')}${tile(IC.map, n(s.treasure), 'treasures dug up')}${tile(IC.letter, n(s.bottles), 'bottles opened')}${tile(IC.bless, n(s.whales), 'whale blessings')}${tile(IC.chain, n(s.kraken || S.kraken), 'kraken seen')}${tile(IC.sail, n(s.colors), 'colors found')}${tile(IC.book, n(s.quests), 'quests done')}</div>`);
 }
@@ -150,7 +151,7 @@ function endHTML(){
   const S = G.S, mins = Math.round((S.playSeconds || 0)/60), ships = (S.owned || []).length || S.tier + 1;
   return `<div class="mtop">${top('The Aegean is free')}</div><div class="mbody">
     ${card('The pirate king is beaten', `<div class="endpic">${IC.ship}${IC.swords}${IC.star}</div>
-      <p class="endtxt">Polycrates' black and gold galley lies at the bottom of the sea, and the merchants of the Aegean sail safe again. From one little rowboat called ${shipName(0)} you built a fleet${S.crewName ? ` and the ${S.crewName}` : ''}.</p>
+      <p class="endtxt">Polycrates' black and gold flagship lies at the bottom of the sea, and the merchants of the Aegean sail safe again. From one little rowboat called ${shipName(0)} you built a fleet${S.crewName ? ` and the ${S.crewName}` : ''}.</p>
       <div class="stats big">${IC.ship} ${ships} ships · ${IC.coin} ${S.gold} drachmae · ${mins} min at sea</div>`)}
     ${card('What next', '<p class="note">The Aegean is yours: keep fishing, trading and fighting as long as you like.</p><button class="btn gold wide" data-act="close">Keep sailing</button>')}</div>`;
 }
@@ -212,7 +213,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 76</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 77</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -227,6 +228,9 @@ function settingsHTML(){
       ${row('Ship tilt in turns', 'How far a ship under sail leans in a hard turn at full speed. 100% would be 40 degrees.', `<select class="jobsel" data-set="tilt" aria-label="Ship tilt">${[[0, 'Old (4°)'], [20, '20% (8°)'], [30, '30% (12°)'], [50, '50% (20°)'], [70, '70% (28°)']].map(([v, n]) => `<option value="${v}" ${(s.tilt ?? 30) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Camera zoom', 'Also pinch with two fingers, or scroll the mouse wheel.', `<b id="zoomVal">${s.dev.zoom.toFixed(1)}×</b>`)}
       <input type="range" id="zoomRange" min="0.4" max="3.5" step="0.1" value="${s.dev.zoom}" aria-label="Camera zoom">
+      ${row('Try a ship', 'Sail any ship to test a fight. This changes this voyage, so test in Voyage 3.', `<select class="jobsel" data-set="tryship" aria-label="Ship to try">${SHIPS.map((sh, i) => `<option value="${i}" ${i === G.S.tier ? 'selected' : ''}>${sh.name}</option>`).join('')}</select>`)}
+      ${row('Its upgrades', 'Hull, speed, crew, arrows, ram and every power.', `<select class="jobsel" data-set="tryups" aria-label="Upgrades to try"><option value="-1">Choose</option><option value="0">None</option><option value=".5">Half</option><option value="1">Full</option></select>`)}
+      ${row('Go and fight', 'Takes you there with a full hull.', '<div class="btns"><button class="btn small" data-act="tryking">Pirate king</button><button class="btn small" data-act="tryarena">Arena</button></div>')}
       ${row('Ship speed', '', '')}
       <div class="segs four">${[1,2,4,8].map(v => `<button class="seg ${s.dev.speed === v ? 'on' : ''}" data-act="speed" data-v="${v}" aria-pressed="${s.dev.speed === v}">${v}×</button>`).join('')}</div>
       ${row('Tap the chart to teleport', 'Instead of setting a course.', tog('teleport', s.dev.teleport, 'Teleport'))}
@@ -308,6 +312,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'spawn'){ document.dispatchEvent(new Event('spawnraider')); toast('A raider skiff appears'); closeSheet(); return; }
   if (a === 'fleet'){ G.settings.dev.fleet = !G.settings.dev.fleet; saveSettings(); document.dispatchEvent(new Event('fleet')); }
   if (a === 'revealall'){ revealAll(); toast('Whole chart revealed'); }
+  if (a === 'tryking' || a === 'tryarena'){ S.hull = ship().hull; document.dispatchEvent(new Event(a === 'tryking' ? 'toking' : 'toarena')); closeSheet(); return; }
   if (a === 'bottle'){ document.dispatchEvent(new Event('bottle')); closeSheet(); return; }
   if (a === 'selup'){ if (UPGRADES[b.dataset.k].power) sel.pw = b.dataset.k; else sel.up = b.dataset.k; render(); return; }
   if (a === 'wartake' && G.council){ const o = WAR.offers[+b.dataset.i]; S.war = {...o, city:G.council.city, foe:rival(G.council.city), got:0}; toast('Contract taken', 2); }
@@ -339,6 +344,9 @@ sheetEl.addEventListener('click', e => {
 $('medal').addEventListener('click', () => { if (G.sheetOpen || G.menuOpen || G.mapOpen) return; sfx('click'); tabs.fleet = 'mine'; tabs.rec = null; openSheet('fleet'); });
 document.addEventListener('ranksready', () => { if (sheet === 'fleet' || (sheet === 'port' && tabs.port === 'fleet')) if (tabs.fleet === 'ranks') render(); });
 sheetEl.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.set === 'tryship'){ const t = +e.target.value; G.S.names = {...(G.S.names || {}), [t]:(G.S.names || {})[t] || SHIPS[t].name}; launch(t); swapBoat(); render(); return; }
+  if (e.target.dataset && e.target.dataset.set === 'tryups'){ const f = +e.target.value, S = G.S, t = S.tier; if (f < 0) return; const m = n => Math.round(n*f);
+    S.ups = {...(S.ups || {}), [t]:{hull:m(10), oars:m(10), helm:m(10), sail:m(SPECS[SHIPS[t].model].sailMax || 0), seats:f ? m(99) : 0}}; for (const k of ['arrows', 'ram', 'shower', 'fire', 'catapult', 'chain']) S[k] = m(10); swapBoat(); S.hull = ship().hull; render(); return; }
   if (e.target.id === 'rankBy'){ tabs.rankBy = e.target.value; render(); return; }
   if (e.target.id === 'rankWhere'){ tabs.rankWhere = e.target.value; netState.by = null; render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'uilook'){ G.settings.uilook = e.target.value; saveSettings(); applyUiLook(); return; }

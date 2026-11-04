@@ -1,17 +1,18 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=cc3055d';
-import {SPECS} from './ships.js?v=cc3055d';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=cc3055d';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=cc3055d';
-import {W} from './weather.js?v=cc3055d';
-import {steering} from './input.js?v=cc3055d';
-import {toast, showZone} from './ui.js?v=cc3055d';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=cc3055d';
-import {startFish, stopFish} from './fishing.js?v=cc3055d';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=cc3055d';
-import {progress} from './quests.js?v=cc3055d';
-import {startSink} from './sinking.js?v=cc3055d';
-import {sfx} from './audio.js?v=cc3055d';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=5294a34';
+import {SPECS} from './ships.js?v=5294a34';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=5294a34';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=5294a34';
+import {W} from './weather.js?v=5294a34';
+import {steering} from './input.js?v=5294a34';
+import {toast, showZone} from './ui.js?v=5294a34';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=5294a34';
+import {LAIR_ROCKS} from './lair.js?v=5294a34';
+import {startFish, stopFish} from './fishing.js?v=5294a34';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=5294a34';
+import {progress} from './quests.js?v=5294a34';
+import {startSink} from './sinking.js?v=5294a34';
+import {sfx} from './audio.js?v=5294a34';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -73,6 +74,7 @@ function move(dt, sh){
   if (G.distAcc > 100){ stat('dist', Math.floor(G.distAcc/100)); G.distAcc %= 100; }
   if (pushOut(S, sh.beam*.9)) G.v *= .6;
   if (!G.dock && pierPush(S, sh.beam*.55)) G.v *= .6;
+  for (const b of LAIR_ROCKS){ const dx = S.x - b.x, dy = S.y - b.y, d = Math.hypot(dx, dy) || 1, m = b.r + sh.beam*.6; if (d < m){ S.x = b.x + dx/d*m; S.y = b.y + dy/d*m; G.v *= .6; } } // the rocks of the lair
   for (const b of ICEBERGS){ const dx = S.x - b.x, dy = S.y - b.y, d = Math.hypot(dx, dy) || 1, m = b.r + sh.beam*.6; if (d < m){ S.x = b.x + dx/d*m; S.y = b.y + dy/d*m; G.v *= .6; } } // icebergs are solid
   S.x = Math.max(60, Math.min(WORLD-60, S.x)); S.y = Math.max(60, Math.min(WORLD-60, S.y));
 }
@@ -241,7 +243,7 @@ export function updatePlayer(dt){
   const z = zoneAt(S.x, S.y), depth = z === 2 ? stormDepth(S.x, S.y) : 0;
   if (z !== G.curZone){ if (G.curZone !== -1) showZone(z); G.curZone = z; }
   // big waves in the Open Sea, and storms anywhere outside the Shallows, wear down small hulls
-  const storm = G.stormK > .5 ? G.stormK : 0, waves = z === 2 ? 1 + depth/1500 + storm : z === 1 ? storm*.5 : 0;
+  const storm = G.stormK > .5 ? G.stormK : 0, waves = z === 2 ? Math.min(3, 1 + depth/1500) + storm : z === 1 ? storm*.5 : 0;
   if (waves > 0 && sh.storm > 0){
     S.hull -= sh.storm * waves * (blessing().wave || 1) * dt;
     if (z === 1 && !S.stormTip){ S.stormTip = true; toast('The storm hurts your hull', 5); }

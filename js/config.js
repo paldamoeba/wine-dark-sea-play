@@ -92,14 +92,14 @@ export const GOALS = [
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
   {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp, the pirate fortress of Kos, and Nikandros the Scourge, who sails off Skyros', chapter:true},
   {t:'build', kind:'trireme', n:1, gold:200, text:'Study the plans and build the trireme, the greatest warship of the Aegean', chapter:true},
-  {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, off Kos', chapter:true},
+  {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, in his lair in the far north-east', chapter:true},
 ];
 export const STARTER_GOALS = 8; // the first eight goals teach the basics; past the rowboat they are skipped
 // Polycrates, the pirate king: a huge black galley with a golden boar's head ram, waiting off his fortress with two skiffs.
 // fireEvery: seconds between his flaming volleys (they set your ship alight for burnSeconds). At half hull he calls two more skiffs.
 // He never heals, so you can always sail home, repair and come back.
-export const BOSS = {name:'Polycrates, the pirate king', lair:'Kos', model:'flagship', scale:1, hull:1300, speed:125, turn:.42, fighters:8, dmg:2.2, sight:900, leash:2600,
-  gold:[1200, 1200], wood:200, bronze:60, len:280, beam:96, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2};
+export const BOSS = {name:'Polycrates, the pirate king', model:'flagship', scale:1, hull:1000, speed:125, turn:.42, fighters:8, dmg:1.4, sight:1100, leash:3000,
+  gold:[1200, 1200], wood:200, bronze:60, len:280, beam:96, fireEvery:20, fireArrows:12, burnSeconds:4, burnDps:3, escorts:2, potAt:.6, potEvery:8, pots:3, rushAt:.25, rushEvery:11, rushWarn:2.2, rushTime:2.6, rushK:3, rushDmg:60};
 // Fire arrows: a ship hit by one burns for burnSeconds, losing dps(level) hull a second.
 // P50: abilities in the bar at the bottom of the screen. fire: seconds of flaming arrows, then a cooldown.
 // chain: how long a ship stays dismasted (grows with the Chain shot level) and how slow it goes meanwhile.
@@ -269,7 +269,7 @@ export const QUALITY = {
   high: {dpr:2.25, shadows:true,  waterSeg:120, pix:3.2e6, label:'High'},
 };
 // P75: where the online Leaderboard lives (tools/leaderboard). Empty: only your own ships show.
-export const ONLINE_URL = 'https://wine-dark-sea-board.superioraire.workers.dev';
+export const ONLINE_URL = 'https://wine-dark-sea-palda-games.pages.dev';
 export const AUTO_QUALITY = {sampleSeconds:4, minFps:42};
 
 // Fighting. Your crew and raider crews shoot by themselves when in range.

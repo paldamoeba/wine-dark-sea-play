@@ -1,16 +1,17 @@
 // P71: the wind quietly leads the way. It swings round to blow toward the next thing worth finding at your level: your pinned ship's plans first,
 // otherwise the nearest camp, fortress or named pirate holding plans that you can take on. Near it, or with nothing to find, the wind goes back to wandering.
-import {G} from './state.js?v=cc3055d';
-import {W} from './weather.js?v=cc3055d';
-import {enemies, planReward, planSources} from './combat.js?v=cc3055d';
-import {PLANS} from './config.js?v=cc3055d';
-import {siteLevel, myLevel} from './levels.js?v=cc3055d';
+import {G} from './state.js?v=5294a34';
+import {W} from './weather.js?v=5294a34';
+import {enemies, planReward, planSources} from './combat.js?v=5294a34';
+import {PLANS} from './config.js?v=5294a34';
+import {siteLevel, myLevel} from './levels.js?v=5294a34';
 
 const wrap = d => d - Math.PI*2*Math.floor((d + Math.PI)/(Math.PI*2));
 let next = 0, target = null;
 export function guideTarget(){
   const S = G.S, L = myLevel(), near = list => list.map(f => ({f, d:Math.hypot(f.x - S.x, f.y - S.y)})).sort((a, b) => a.d - b.d)[0]?.f || null;
   const fit = f => siteLevel(f) <= L + 1;
+  if (G.boss) return G.boss; // the last goal: the wind blows toward the pirate king
   if (S.pin && PLANS[S.pin]){ const p = planSources(S.pin), ok = p.filter(fit); if (ok.length) return near(ok); }
   const any = enemies.filter(e => (e.fort || e.named) && !e.dead && planReward(e) && fit(e));
   if (any.length) return near(any);
