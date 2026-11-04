@@ -1,10 +1,10 @@
 // Weather: fair, calm, windy or stormy, each for a few minutes. Storms are announced a little before they hit.
 // wave = how big the waves are; storm = dark sky, rain and lightning (0 to 1).
 // Storms wear down small boats outside the Shallows, but fish bite faster in them: a reward for the brave.
-import {G} from './state.js?v=cc42b7a';
-import {WEATHER_WAVES} from './world.js?v=cc42b7a';
-import {toast} from './ui.js?v=cc42b7a';
-import {sfx} from './audio.js?v=cc42b7a';
+import {G} from './state.js?v=288f115';
+import {WEATHER_WAVES} from './world.js?v=288f115';
+import {toast} from './ui.js?v=288f115';
+import {sfx} from './audio.js?v=288f115';
 
 export const KINDS = {
   fair:  {label:'Fair',   wave:1,   storm:0,   wind:.55, dur:[150, 280], icon:'☀'},
@@ -20,6 +20,7 @@ export const W = {kind:'mist', t:45, next:'fair', warned:false, bolt:6, windA:Ma
 function pick(from){ let r = Math.random(); for (const [k, p] of NEXT[from]){ if ((r -= p) <= 0) return k; } return 'fair'; }
 
 export function updateWeather(dt){
+  G.flash = Math.max(0, (G.flash || 0) - dt*2.5); // P74: here, not in the sailing code: a bolt that struck while you were docked or in a menu stayed at full brightness
   if (!W.next) W.next = pick(W.kind);
   W.t -= dt;
   if (W.next === 'storm' && !W.warned && W.t < WARN){ W.warned = true; toast('A storm is coming', 5); sfx('warn'); }

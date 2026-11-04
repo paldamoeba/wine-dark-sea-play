@@ -1,22 +1,23 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=cc42b7a';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=cc42b7a';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=cc42b7a';
-import {scene, screenToSea, setLair} from './scene.js?v=cc42b7a';
-import {wreckModel} from './models.js?v=cc42b7a';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=cc42b7a';
-import {makeFire, updateFire, burn} from './fire.js?v=cc42b7a';
-import {blessing, fighters, hasSail} from './crew.js?v=cc42b7a';
-import {progress, goal} from './quests.js?v=cc42b7a';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=cc42b7a';
-import {rollColor, unlockColor, colorName} from './colors.js?v=cc42b7a';
-import {toast} from './ui.js?v=cc42b7a';
-import {sink, rowNow, ROW} from './player.js?v=cc42b7a';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=cc42b7a';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=cc42b7a';
-import {sfx} from './audio.js?v=cc42b7a';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=288f115';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=288f115';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=288f115';
+import {scene, screenToSea, setLair} from './scene.js?v=288f115';
+import {wreckModel} from './models.js?v=288f115';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=288f115';
+import {mergeStatic, freeModel} from './merge.js?v=288f115';
+import {makeFire, updateFire, burn} from './fire.js?v=288f115';
+import {blessing, fighters, hasSail} from './crew.js?v=288f115';
+import {progress, goal} from './quests.js?v=288f115';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=288f115';
+import {rollColor, unlockColor, colorName} from './colors.js?v=288f115';
+import {toast} from './ui.js?v=288f115';
+import {sink, rowNow, ROW} from './player.js?v=288f115';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=288f115';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=288f115';
+import {sfx} from './audio.js?v=288f115';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -136,12 +137,30 @@ function levelLook(e){
   if (s.ram && !s.raider) out.ram = SHIP_LV.ram[L]; // the pirates keep their boar's head
   return out;
 }
-function buildEnemy(e){ if (e.obj) scene.remove(e.obj);
-  if (e.fort){ e.obj = buildFort(e); e.obj.position.set(e.x, e.baseY, e.y); e.fire = makeFire(140, 120, 90); e.obj.add(e.fire); scene.add(e.obj); return; }
-  e.obj = buildShip(e.model || e.spec.model, {...lookOf(e), ...levelLook(e)}, G.settings.dev.crew);
-  e.fire = makeFire(e.spec.len, e.spec.beam, SPECS[e.spec.model].H*.9); e.obj.add(e.fire); scene.add(e.obj); }
-export function rebuildEnemies(){ enemies.forEach(buildEnemy); }
-enemies.forEach(buildEnemy);
+// P74: the Aegean holds 130 ships and forts, and only the ones near you exist as 3D models. The rest are an empty stand-in that sails and thinks the same.
+// This is what makes the game load fast and run smoothly: most of the world's thousands of parts are never made, and models far behind you are freed.
+const standIn = () => { const g = new T.Group(); g.userData = {oars:[], flags:[], sails:[], crew:[], torches:[], standIn:true}; return g; };
+const alwaysReal = e => e.boss || e.temp || e.ally || e.arena;
+const NEAR_BUILD = () => Math.max(2600, scene.fog.far + 800);
+function buildEnemy(e, real = e.real || alwaysReal(e)){ const old = e.obj;
+  if (!e.fire) e.fire = e.fort ? makeFire(140, 120, 90) : makeFire(e.spec.len, e.spec.beam, SPECS[e.spec.model].H*.9);
+  if (!real) e.obj = standIn();
+  else if (e.fort) e.obj = buildFort(e);
+  else e.obj = buildShip(e.model || e.spec.model, {...lookOf(e), ...levelLook(e)}, G.settings.dev.crew);
+  if (real) mergeStatic(e.obj);
+  e.real = real; e.obj.add(e.fire);
+  if (old){ e.obj.position.copy(old.position); e.obj.rotation.order = old.rotation.order; e.obj.rotation.copy(old.rotation); e.obj.scale.copy(old.scale); e.obj.visible = old.visible; scene.remove(old); if (old.userData.standIn !== true){ old.remove(e.fire); freeModel(old); } if (e.dismastT > 0) (e.obj.userData.sails || []).forEach(s => s.visible = false); }
+  else if (e.fort) e.obj.position.set(e.x, e.baseY, e.y);
+  scene.add(e.obj); }
+export function rebuildEnemies(){ enemies.forEach(e => buildEnemy(e, e.real || alwaysReal(e))); }
+enemies.forEach(e => buildEnemy(e, false));
+// one model per frame, the closest first, so nothing stalls; ships far behind you give their parts back
+let farCheck = 0;
+function realizeNear(){ const S = G.S, r = NEAR_BUILD(); let best = null, bd = r;
+  for (const e of enemies){ if (e.real || (e.dead && (e.respawn > 60 && !e.sinkT))) continue; const d = dist(e, S); if (d < bd){ bd = d; best = e; } }
+  if (best) buildEnemy(best, true);
+  if (++farCheck > 8){ farCheck = 0; const drop = r + 2200; for (const e of enemies) if (e.real && !alwaysReal(e) && dist(e, S) > drop){ buildEnemy(e, false); break; } } }
+export function realizeAllNear(reach){ for (const e of enemies) if (!e.real && dist(e, G.S) < reach) buildEnemy(e, true); }
 document.addEventListener('crew', rebuildEnemies);
 document.addEventListener('spawnraider', () => spawnNear('skiff'));
 
@@ -873,6 +892,7 @@ addEventListener('keydown', e => { if (e.code === 'Space' && !G.fish && !G.sheet
 
 // Called every frame.
 export function updateCombat(dt){
+  realizeNear();
   updateAbilities(dt); syncAllies(); updateScrolls(); updateLair();
   for (const e of enemies){
     if (e.fort){ // forts don't float: they crumble when they fall and rise again when rebuilt

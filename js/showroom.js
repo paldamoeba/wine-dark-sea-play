@@ -1,17 +1,18 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=cc42b7a';
-import {makePost} from './glow.js?v=cc42b7a';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=cc42b7a';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=cc42b7a';
-import {makeFire, updateFire} from './fire.js?v=cc42b7a';
-import {updateSmoke} from './smoke.js?v=cc42b7a';
-import {addGrass, updateGrass} from './grass.js?v=cc42b7a';
-import {makeWind} from './seafx.js?v=cc42b7a';
-import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=cc42b7a';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=cc42b7a';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=cc42b7a';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=cc42b7a';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=288f115';
+import {makePost} from './glow.js?v=288f115';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=288f115';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=288f115';
+import {makeFire, updateFire} from './fire.js?v=288f115';
+import {updateSmoke} from './smoke.js?v=288f115';
+import {addGrass, updateGrass} from './grass.js?v=288f115';
+import {makeWind} from './seafx.js?v=288f115';
+import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=288f115';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=288f115';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=288f115';
+import {ANIMALS} from './animals.js?v=288f115';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=288f115';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -328,6 +329,15 @@ const GROUPS = {
       const boat = buildShip('fishing'); boat.position.set(-22, 2, 26); boat.rotation.y = .5; boat.scale.setScalar(.7); g.add(boat); g.userData.ships = [boat];
       g.userData.anim = 'spot'; return g; }},
   ]},
+  wild:{name:'New animals (35)', items:ANIMALS.flatMap(A => {
+    const tag = {Whale:[-36, 90], Dolphin:[-9, 24], Kraken:[-6, 170], 'Sea bird':[-8, 24], 'Small fish':[-3.4, 8], Tuna:[-4.8, 11], Billfish:[-4.4, 11]}[A.name];
+    const lineup = {name:`${A.name}: all five`, desc:`Five new kinds of ${A.name.toLowerCase()}. They are not in the sea yet: tell Claude which ones you want in the game.`, make:() => {
+      const g = new T.Group(), sp = {Whale:92, Dolphin:50, Kraken:430, 'Sea bird':70, 'Small fish':30, Tuna:40, Billfish:40}[A.name]; // a column, so all five fit a phone screen
+      A.list.forEach((a, i) => { const o = a.make(); o.userData.ph = i*1.1; if (A.name === 'Sea bird') o.scale.setScalar(1.6); o.position.z = (i - 2)*sp; if (A.y) o.position.y = A.y; labeled(o, a.name, tag[0], tag[1]); g.add(o); });
+      g.userData.view = {yaw:Math.PI/2 - .28, pitch:.72, far:1.12}; g.userData.anim = A.anim === 'whale' ? 'whales' : A.anim === 'kraken' ? 'krakens' : A.anim; return g; }};
+    return [lineup, ...A.list.map(a => ({name:`${A.name}: ${a.name}`, desc:a.desc, make:() => {
+      if (A.anim === 'whale' || A.anim === 'kraken'){ const o = a.make(); if (A.y) o.position.y = A.y; o.userData.anim = A.anim; o.userData.far = 1.5; return o; }
+      const g = new T.Group(); [0, 1, 2].slice(0, A.anim === 'dolphins' ? 3 : 1).forEach(i => { const o = a.make(); o.userData.ph = i*1.2; if (A.anim === 'dolphins') o.position.set(i*30 - 30, 6, (i % 2)*24 - 12); if (A.anim === 'gulls') o.scale.setScalar(1.6); g.add(o); }); g.userData.anim = A.anim; g.userData.far = 1.5; return g; }}))]; })},
   nature:{name:'Trees and ice', items:[
     {name:'All trees', desc:'Every tree color on the islands: cypress greens, and round trees in blossom pink, orange, gold, lilac and greens.', make:() => { const g = new T.Group();
       CYPRESS_TINTS.forEach((t, i) => { const c = cypress(t); c.position.set(-60 + i*40, 0, -30); g.add(c); });
@@ -364,6 +374,7 @@ function show(){
   const land = ground.length || group === 'cities' || group === 'monuments' || group === 'nature' || group === 'people';
   calm.isle = obj.userData.isle || null; calm.x = focus.x; calm.z = focus.z; calm.r = land ? Math.max(size.x, size.z)*.62 + 30 : 0; paintSea();
   if (item.light && !q0){ $('light').value = item.light; setLight(item.light); } if (item.glow && !q0){ setGlow(true); }
+  if (obj.userData.far) dist *= obj.userData.far;
   if (obj.userData.view && !q.get('yaw')){ yaw = obj.userData.view.yaw; pitch = obj.userData.view.pitch; dist *= obj.userData.view.far || .8; }
   lightTorches(); ridersOf(); playItem(item);
 }
@@ -428,6 +439,8 @@ function animate(t){
   if (a === 'fire') updateFire(obj.userData.fire, .9, t);
   updateSmoke(t, lightKey === 'night' ? .6 : 0, -.8, .35); updateGrass(t);
   if (a === 'whale'){ obj.userData.tail.rotation.z = Math.sin(t*1.4)*.25; obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
+  if (a === 'whales') obj.children.forEach((w, i) => { w.userData.tail.rotation.z = Math.sin(t*1.4 + i)*.25; w.userData.body.rotation.z = Math.sin(t*.7 + i)*.04; });
+  if (a === 'krakens') obj.children.forEach(o => o.userData.tents.forEach(tn => { tn.piv.rotation.z = Math.sin(t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(t*.9 + tn.ph*2)*.15; }));
   if (a === 'kraken'){ obj.userData.shadow.material.opacity = 1; obj.userData.tents.forEach(tn => { tn.piv.rotation.z = Math.sin(t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(t*.9 + tn.ph*2)*.15; }); obj.userData.body.rotation.z = Math.sin(t*.7)*.04; }
   if (a === 'dolphins') obj.children.forEach(d => { const p = (t*.9 + d.userData.ph) % (Math.PI*2); d.position.y = 6 + Math.max(0, Math.sin(p))*26 - 8; d.rotation.z = Math.cos(p)*.7; });
   if (a === 'gulls') obj.children.forEach((b, i) => { b.userData.flap(Math.sin(t*2.4 + i)*.45 + .1); b.position.y = 34 + Math.sin(t*1.5 + i)*4; });

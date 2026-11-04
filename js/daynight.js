@@ -2,9 +2,9 @@
 // (bright enough to sail), then dawn again. At dusk every ship lights its torches, statues light their fire bowls
 // and town windows glow. The time of day is kept in the save (G.S.clock), so it carries on where you left it.
 // Settings can keep it always day or always night.
-import {G, stat} from './state.js?v=cc42b7a';
-import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=cc42b7a';
-import {WIN_MAT} from './models.js?v=cc42b7a';
+import {G, stat} from './state.js?v=288f115';
+import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=288f115';
+import {WIN_MAT} from './models.js?v=288f115';
 
 const T = window.THREE;
 export const CYCLE = 600; // seconds for a whole day
@@ -76,7 +76,7 @@ function updateFires(dt){
   }
   lit = on;
   G.fireNear = on ? Math.max(.25*Math.min(1, N*2), near) : 0; // for the crackle of fires (your own torches are always close)
-  if (lantern){ lantern.visible = TOD.night > .15; lantern.intensity = Math.min(1, TOD.night*1.4)*(.9 + Math.sin(G.t*11)*.05 + Math.sin(G.t*17)*.04);
+  if (lantern){ lantern.visible = TOD.night > .15; lantern.intensity = Math.min(1, TOD.night*1.4)*.42*(.9 + Math.sin(G.t*11)*.05 + Math.sin(G.t*17)*.04); // P74: a warm glow, not a floodlight: at the pier it blew out the deck and the beach
     lantern.position.set(G.S.x, 26, G.S.y); }
 }
 const tmp = new T.Vector3();

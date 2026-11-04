@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=cc42b7a">
+<link rel="stylesheet" href="css/style.css?v=288f115">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -12,7 +12,7 @@
 <canvas id="ov"></canvas>
 <canvas id="miniEl" aria-hidden="true"></canvas>
 <div class="hud" aria-live="polite">
-  <div class="medal" id="medal" title="Your level"><b id="rank">1</b><span>Level</span></div>
+  <button class="medal" id="medal" aria-label="Your level. Open your fleet"><span>LV</span><b id="rank">1</b></button>
   <div class="lifebar" title="Hull"><div class="bar"><i id="hullbar"></i></div></div>
   <div class="loads" id="loads" aria-label="What your ship carries"></div>
   <div class="hudbar">
@@ -86,4 +86,4 @@
 <script>
   if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
 </script>
-<script type="module" src="js/main.js?v=cc42b7a"></script>
+<script type="module" src="js/main.js?v=288f115"></script>

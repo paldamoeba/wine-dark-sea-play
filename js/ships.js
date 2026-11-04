@@ -195,7 +195,7 @@ function hull(s, paint){
 // Round, cute bodies: a bean shape (wide in the middle, rounded at the bottom) and a big round head, no face. Shared by crews and towns.
 const beans = {};
 export function beanGeo(h = 7.4){ return beans[h] || (beans[h] = new T.LatheGeometry([[0, 0], [2.1, .25], [3, 1.3], [3.3, 2.9], [3.1, 4.5], [2.5, 5.9], [1.5, 6.9], [0, 7.3]].map(([r, y]) => new T.Vector2(r, y*h/7.3)), 18)); }
-const headGeo = new T.SphereGeometry(3, 22, 16);
+const headGeo = new T.SphereGeometry(3, 16, 12);
 const SM = {flatShading:false}; // people are smooth and round
 const capGeo = new T.SphereGeometry(3.15, 22, 9, 0, Math.PI*2, 0, Math.PI/2.1), helmGeo = new T.SphereGeometry(3.35, 24, 10, 0, Math.PI*2, 0, Math.PI/1.75);
 const cheekGeo = new T.SphereGeometry(1.5, 14, 10), standGeo = new T.CylinderGeometry(.5, .7, 1.2, 10);
@@ -263,7 +263,7 @@ function helmetOn(parent, y, kind){
 }
 // The hair has a shape of its own: fuller on top and at the back, a wavy fringe in front with a few soft locks, and it
 // comes lower over the ears and the back of the neck. (Hats sit over the plain cap below.)
-const hairGeo = (() => { const g = new T.SphereGeometry(1, 48, 32), p = g.attributes.position, v = new T.Vector3();
+const hairGeo = (() => { const g = new T.SphereGeometry(1, 24, 16), p = g.attributes.position, v = new T.Vector3();
   const sst = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a)/(b - a))); return t*t*(3 - 2*t); };
   for (let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i); const a = Math.atan2(v.z, v.x), fr = Math.cos(a), lat = Math.acos(Math.max(-1, Math.min(1, v.y)))/Math.PI; // 0 top, 1 bottom
     // the hairline: high over the forehead with soft locks (bangs), lower over the ears, lowest at the back of the neck

@@ -1,24 +1,28 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {SHIPS, IRON} from './config.js?v=cc42b7a';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=cc42b7a';
-import {G, ship, lvl} from './state.js?v=cc42b7a';
-import {men} from './crew.js?v=cc42b7a';
-import {scene} from './scene.js?v=cc42b7a';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=cc42b7a';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=cc42b7a';
-import {addTown, figure} from './town.js?v=cc42b7a';
-import {makeFire, updateFire, burn} from './fire.js?v=cc42b7a';
-import {addGrass} from './grass.js?v=cc42b7a';
-import {sinkPose} from './sinking.js?v=cc42b7a';
-import {moored} from './fleet.js?v=cc42b7a';
-import {sailCount} from './upgrades.js?v=cc42b7a';
-import {hasSail} from './crew.js?v=cc42b7a';
-import {placeOnWaves} from './combat.js?v=cc42b7a';
+import {mergeStatic} from './merge.js?v=288f115';
+import {SHIPS, IRON} from './config.js?v=288f115';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=288f115';
+import {G, ship, lvl} from './state.js?v=288f115';
+import {men} from './crew.js?v=288f115';
+import {scene} from './scene.js?v=288f115';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=288f115';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=288f115';
+import {addTown, figure} from './town.js?v=288f115';
+import {makeFire, updateFire, burn} from './fire.js?v=288f115';
+import {addGrass} from './grass.js?v=288f115';
+import {sinkPose} from './sinking.js?v=288f115';
+import {moored} from './fleet.js?v=288f115';
+import {sailCount} from './upgrades.js?v=288f115';
+import {hasSail} from './crew.js?v=288f115';
+import {placeOnWaves} from './combat.js?v=288f115';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
+const ISLE_GROUPS = [];
+// one island per frame, nearest first
+export function mergeNearIslands(reach = 3600, all = false){ let best = null, bd = reach; for (let i = ISLE_GROUPS.length - 1; i >= 0; i--){ const g = ISLE_GROUPS[i], d = Math.hypot(g.position.x - G.cam.x, g.position.z - G.cam.y); if (all){ if (d < reach){ mergeStatic(g); ISLE_GROUPS.splice(i, 1); } } else if (d < bd){ bd = d; best = i; } } if (best != null){ mergeStatic(ISLE_GROUPS[best]); ISLE_GROUPS.splice(best, 1); } }
 const POPS = [], POP_R = 1300, popEase = t => { const c = 1.9; return 1 + (c + 1)*Math.pow(t - 1, 3) + c*Math.pow(t - 1, 2); };
-function popIn(o){ Object.assign(o.userData, {s0:o.scale.x, y0:o.position.y, on:false, pop:0}); o.scale.setScalar(.001); POPS.push(o); }
+function popIn(o){ o.userData.keep = true; Object.assign(o.userData, {s0:o.scale.x, y0:o.position.y, on:false, pop:0}); o.scale.setScalar(.001); POPS.push(o); }
 const popV = new T.Vector3();
 function updatePops(dt){
   const z = Math.max(1, G.settings.dev.zoom || 1), r = POP_R*z, cx = G.cam.x, cy = G.cam.y;
@@ -89,6 +93,8 @@ ISLANDS.forEach((is, i) => {
     const free0 = is.free; is.free = (x, z) => siteClear(is, x, z) && (!free0 || free0(x, z)); }
   // grass on the green islands (High graphics)
   if (grass && !cold && (is.trees || is.port || is.harbor || is.frame)) addGrass(g, grass, hill, top, rng(i*131 + 7), is.free, '#f2f7e4');
+  // P74: the houses, walls and rocks that never move are glued together when you first come near (see updatePops)
+  for (const o of [...is.treeObjs]) o.userData.keep = true; g.userData.mergeLater = true; ISLE_GROUPS.push(g);
   scene.add(g);
 });
 
@@ -211,7 +217,7 @@ export function showHomeFleet(){
   let nx = -PIER.dy, ny = PIER.dx, k = 60; const tip = PIER_LEN*.8, wet = sg => landDist(PIER.x + PIER.dx*tip - nx*sg*160, PIER.y + PIER.dy*tip - ny*sg*160);
   if (wet(-1) > wet(1)){ nx = -nx; ny = -ny; }
   for (const t of list){ const sh = SHIPS[t], s = SPECS[sh.model], up = (G.S.ups || {})[t] || {};
-    const f = buildShip(sh.model, {...((G.S.looks || {})[t] || {}), flag:G.S.crewName ? G.S.look.flag : 'none', ram:t === G.S.tier ? lvl('ram') : 0, plate:up.hull || 0, sailLv:up.sail || 0, men:men(t)}, G.settings.dev.crew);
+    const f = buildShip(sh.model, {...((G.S.looks || {})[t] || {}), flag:G.S.crewName ? G.S.look.flag : 'none', ram:t === G.S.tier ? lvl('ram') : 0, plate:up.hull || 0, sailLv:up.sail || 0, men:men(t)}, G.settings.dev.crew); mergeStatic(f);
     k += s.B/2 + (s.oarCount > 1 ? 34 : 10); const along = PIER_LEN*.8;
     f.userData.at = {x:PIER.x + PIER.dx*along - nx*k, y:PIER.y + PIER.dy*along - ny*k, a:Math.atan2(PIER.dy, PIER.dx), len:s.L};
     k += s.B/2 + (s.oarCount > 1 ? 34 : 10); scene.add(f); homeFleet.push(f); }
@@ -290,11 +296,12 @@ function animateRods(t){
     q.bob.position.set(q.x, y + .6, q.z);
     const p = q.line.geometry.attributes.position; p.setXYZ(0, q.tip.x, q.tip.y, q.tip.z); p.setXYZ(1, q.x, y + 1.6, q.z); p.needsUpdate = true; }
 }
-export function swapBoat(){ if (boat) scene.remove(boat); const sh = SHIPS[G.S.tier]; boat = buildShip(sh.model, {...G.S.look, ...(G.S.crewName ? {} : {flag:'none'}), ram:lvl('ram'), plate:lvl('hull'), sailLv:lvl('sail'), men:men()}, G.settings.dev.crew); // no flag until you found a crew
+export function swapBoat(){ if (boat) scene.remove(boat); const sh = SHIPS[G.S.tier]; boat = buildShip(sh.model, {...G.S.look, ...(G.S.crewName ? {} : {flag:'none'}), ram:lvl('ram'), plate:lvl('hull'), sailLv:lvl('sail'), men:men()}, G.settings.dev.crew); mergeStatic(boat); // no flag until you found a crew
   boat.userData.fire = makeFire(sh.len, sh.beam, SPECS[sh.model].H*.9); boat.add(boat.userData.fire);
   boat.userData.rodset = makeRods(sh); boat.add(boat.userData.rodset); scene.add(boat); }
 
 export function animateEntities(dt){
+  mergeNearIslands();
   updatePops(dt);
   for (const b of ICEBERGS){ if (Math.abs(b.x - G.cam.x) > 1800 || Math.abs(b.y - G.cam.y) > 1800) continue; b.g.position.y = Math.sin(G.t*.6 + b.ph)*1.5; b.g.rotation.y = Math.sin(G.t*.1 + b.ph)*.2; }
   const S = G.S, t = G.t, sh = SHIPS[S.tier];

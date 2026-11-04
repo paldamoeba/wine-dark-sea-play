@@ -1,10 +1,10 @@
 // P71: the wind quietly leads the way. It swings round to blow toward the next thing worth finding at your level: your pinned ship's plans first,
 // otherwise the nearest camp, fortress or named pirate holding plans that you can take on. Near it, or with nothing to find, the wind goes back to wandering.
-import {G} from './state.js?v=cc42b7a';
-import {W} from './weather.js?v=cc42b7a';
-import {enemies, planReward, planSources} from './combat.js?v=cc42b7a';
-import {PLANS} from './config.js?v=cc42b7a';
-import {siteLevel, myLevel} from './levels.js?v=cc42b7a';
+import {G} from './state.js?v=288f115';
+import {W} from './weather.js?v=288f115';
+import {enemies, planReward, planSources} from './combat.js?v=288f115';
+import {PLANS} from './config.js?v=288f115';
+import {siteLevel, myLevel} from './levels.js?v=288f115';
 
 const wrap = d => d - Math.PI*2*Math.floor((d + Math.PI)/(Math.PI*2));
 let next = 0, target = null;

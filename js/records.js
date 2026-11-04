@@ -1,8 +1,8 @@
 // P73: every ship keeps her own record (S.shipStats[tier], written by stat() in state.js). This page ranks all your ships,
 // from all three voyages, and shows what one ship has done. Only this device's saves: there is no server behind it.
-import {SHIPS, NAMED} from './config.js?v=cc42b7a';
-import {G, SLOTS, readSlot} from './state.js?v=cc42b7a';
-import {IC, card, shipImg, tabs} from './menus.js?v=cc42b7a';
+import {SHIPS, NAMED} from './config.js?v=288f115';
+import {G, SLOTS, readSlot} from './state.js?v=288f115';
+import {IC, card, shipImg, tabs} from './menus.js?v=288f115';
 
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const n = v => Math.floor(v || 0).toLocaleString();

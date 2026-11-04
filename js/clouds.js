@@ -1,7 +1,7 @@
 // Clouds: soft white puffs drifting between the camera and the sea. A few on fair days, many in mist (instead of one white
 // fog over everything), grey in storms. They wrap around the camera so there are always some nearby.
-import {G} from './state.js?v=cc42b7a';
-import {scene, camera} from './scene.js?v=cc42b7a';
+import {G} from './state.js?v=288f115';
+import {scene, camera} from './scene.js?v=288f115';
 
 const T = window.THREE;
 const N = 22, R = 1100;
@@ -16,7 +16,7 @@ const clouds = Array.from({length:N}, (_, i) => {
   for (let k=0;k<n;k++){ const b = new T.Sprite(m); const r = 70 + Math.random()*70; b.scale.set(r*1.6, r, 1);
     b.position.set((k - n/2)*55 + Math.random()*20, Math.random()*18, (Math.random() - .5)*60); g.add(b); }
   g.rotation.y = Math.random()*6.28; g.userData = {m, x:(Math.random() - .5)*2*R, z:(Math.random() - .5)*2*R, y:.4 + Math.random()*.2, rank:Math.random()};
-  scene.add(g); return g;
+  g.userData.noCull = true; scene.add(g); return g;
 });
 const WANT = {fair:.3, calm:.18, windy:.45, storm:.7, mist:1};
 const WHITE = new T.Color('#ffffff'), GREY = new T.Color('#8c97a0');

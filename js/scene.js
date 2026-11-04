@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=cc42b7a';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=cc42b7a';
-import {G} from './state.js?v=cc42b7a';
-import {TOD, updateDayNight} from './daynight.js?v=cc42b7a';
-import {showGrass} from './grass.js?v=cc42b7a';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial, setSeaKind} from './water.js?v=cc42b7a';
+import {QUALITY, SHIPS} from './config.js?v=288f115';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=288f115';
+import {G} from './state.js?v=288f115';
+import {TOD, updateDayNight} from './daynight.js?v=288f115';
+import {showGrass} from './grass.js?v=288f115';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial, setSeaKind} from './water.js?v=288f115';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -169,9 +169,9 @@ const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.
   fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom, far; varying vec2 vUv;
     void main(){
       float d = abs(vUv.y - focus), r = smoothstep(.32 - .07*far, .52 - .05*far, d)*(7. + 5.*far)*res.y/1200.; // only the outer edges blur, gently. P67: the same size on any screen, and a little more as the camera pulls back, so the tiny-world look holds
-      // a soft round blur: 24 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
+      // a soft round blur: 12 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
       vec4 c = texture2D(tex, vUv); float tot = 1., spin = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453)*6.2831;
-      if (r > .02) for (int i = 1; i <= 16; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/16.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; } // the sharp middle skips the blur
+      if (r > .02) for (int i = 1; i <= 11; i++){ float k = float(i), a = k*2.39996 + spin, rr = sqrt(k/11.)*r; c += texture2D(tex, vUv + vec2(cos(a), sin(a))*rr/res); tot += 1.; } // the sharp middle skips the blur
       vec3 col = c.rgb/tot;
       // bloom: a wide ring of samples, only the bright parts, added back as a warm glow
       if (bloom > .01){ vec3 b = vec3(0.); for (int i = 0; i < 16; i++){ float k = float(i), a = k*.7854 + (i >= 8 ? .39 : 0.), rr = (i >= 8 ? 15. : 7.)*res.y/900.; // two fixed rings: smooth, no grain
@@ -185,12 +185,34 @@ const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.
 const quad = new T.Mesh(new T.PlaneGeometry(2, 2), post); quad.frustumCulled = false;
 const postScene = new T.Scene(); postScene.add(quad);
 const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+// P74: anything past the far edge of the fog can't be seen, so it isn't drawn, and its thousands of little parts aren't worked out either. Nothing you can see changes.
+scene.autoUpdate = false;
+const hiddenNow = [], cullSph = new T.Sphere();
+function cullInfo(c){ // how far this thing reaches, once
+  let r = 0, far = false; const cen = new T.Vector3(), box = new T.Box3(), pts = [];
+  c.updateMatrixWorld(true);
+  c.traverse(o => { if (far || !(o.isMesh || o.isSprite || o.isLine || o.isPoints)) return; if (o.frustumCulled === false){ far = true; return; }
+    const g = o.geometry; if (!g) return; if (!g.boundingSphere) g.computeBoundingSphere(); cullSph.copy(g.boundingSphere).applyMatrix4(o.matrixWorld); pts.push(cullSph.center.x, cullSph.center.y, cullSph.center.z, cullSph.radius); box.expandByPoint(cullSph.center); });
+  box.isEmpty() ? cen.copy(c.position) : box.getCenter(cen);
+  for (let i = 0; i < pts.length; i += 4) r = Math.max(r, Math.hypot(pts[i] - cen.x, pts[i + 1] - cen.y, pts[i + 2] - cen.z) + pts[i + 3]);
+  return {never:far || !pts.length, dx:cen.x - c.position.x, dy:cen.y - c.position.y, dz:cen.z - c.position.z, r:r + 260, n:pts.length}; }
+function cullBegin(){
+  const lim = scene.fog.far*1.04, cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+  const kids = scene.children;
+  for (let i = 0; i < kids.length; i++){ const c = kids[i]; if (!c.visible) continue;
+    if (!c.isLight && !c.userData.noCull){ let u = c.userData.__cull; if (!u || (u.n === 0 && c.children.length)) u = c.userData.__cull = cullInfo(c);
+      if (!u.never && Math.hypot(c.position.x + u.dx - cx, c.position.y + u.dy - cy, c.position.z + u.dz - cz) - u.r > lim){ c.visible = false; hiddenNow.push(c); continue; } }
+    c.updateMatrixWorld(); } }
+function cullEnd(){ for (const c of hiddenNow) c.visible = true; hiddenNow.length = 0; }
 export function renderFrame(on){
+  cullBegin(); drawFrame(on); cullEnd();
+}
+function drawFrame(on){
   if (!on){ renderer.render(scene, camera); return; }
   const w = Math.round(view.W*view.DPR), h = Math.round(view.H*view.DPR);
   if (!rt || rt.width !== w || rt.height !== h){ if (rt) rt.dispose();
     rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); }
   renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
-  post.uniforms.far.value = Math.max(0, Math.min(1, (viewZoom() - 1)/1.2)); post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = .1 + TOD.night*1.5; // a hint by day, strong at night around flames and windows
+  post.uniforms.far.value = Math.max(0, Math.min(1, (viewZoom() - 1)/1.2)); post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = TOD.night*.85; // P74: only at night, around flames and windows (the old faint daytime glow couldn't be seen and cost a lot)
   renderer.render(postScene, postCam);
 }

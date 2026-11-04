@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=cc42b7a';
-import {SPECS} from './ships.js?v=cc42b7a';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=cc42b7a';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=cc42b7a';
-import {W} from './weather.js?v=cc42b7a';
-import {steering} from './input.js?v=cc42b7a';
-import {toast, showZone} from './ui.js?v=cc42b7a';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=cc42b7a';
-import {startFish, stopFish} from './fishing.js?v=cc42b7a';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=cc42b7a';
-import {progress} from './quests.js?v=cc42b7a';
-import {startSink} from './sinking.js?v=cc42b7a';
-import {sfx} from './audio.js?v=cc42b7a';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=288f115';
+import {SPECS} from './ships.js?v=288f115';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=288f115';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=288f115';
+import {W} from './weather.js?v=288f115';
+import {steering} from './input.js?v=288f115';
+import {toast, showZone} from './ui.js?v=288f115';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=288f115';
+import {startFish, stopFish} from './fishing.js?v=288f115';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=288f115';
+import {progress} from './quests.js?v=288f115';
+import {startSink} from './sinking.js?v=288f115';
+import {sfx} from './audio.js?v=288f115';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -248,7 +248,6 @@ export function updatePlayer(dt){
     if (z === 2 && !S.waveTip){ S.waveTip = true; toast('Big waves hurt small hulls', 5); }
     if (S.hull <= 0){ sink(); return null; }
   }
-  G.flash = Math.max(0, G.flash - dt*2.5);
   gather(dt, sh);
   regrow(dt);
   spawnWake();
