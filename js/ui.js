@@ -1,30 +1,31 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=288f115';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=288f115';
-import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=288f115';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=288f115';
-import {CYCLE} from './daynight.js?v=288f115';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=288f115';
-import {swapBoat, refreshAllTrees} from './entities.js?v=288f115';
-import {setZoom} from './input.js?v=288f115';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=288f115';
-import {tutHTML} from './tutorial.js?v=288f115';
-import {founded, blessing} from './crew.js?v=288f115';
-import {WHALE} from './wildlife.js?v=288f115';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=288f115';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=288f115';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=288f115';
-import {effectText, buy} from './upgrades.js?v=288f115';
-import {fleetHTML} from './fleetpage.js?v=288f115';
-import {myLevel} from './levels.js?v=288f115';
-import {askName} from './naming.js?v=288f115';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=288f115';
-import {GOODS, WAR} from './config.js?v=288f115';
-import {fly} from './fly.js?v=288f115';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=288f115';
-import {W, KINDS} from './weather.js?v=288f115';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=288f115';
-import {setTimeOfDay} from './daynight.js?v=288f115';
+import {join, leave, load as netLoad, state as netState} from './online.js?v=628a65a';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=628a65a';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=628a65a';
+import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=628a65a';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=628a65a';
+import {CYCLE} from './daynight.js?v=628a65a';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=628a65a';
+import {swapBoat, refreshAllTrees} from './entities.js?v=628a65a';
+import {setZoom} from './input.js?v=628a65a';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=628a65a';
+import {tutHTML} from './tutorial.js?v=628a65a';
+import {founded, blessing} from './crew.js?v=628a65a';
+import {WHALE} from './wildlife.js?v=628a65a';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=628a65a';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=628a65a';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=628a65a';
+import {effectText, buy} from './upgrades.js?v=628a65a';
+import {fleetHTML} from './fleetpage.js?v=628a65a';
+import {myLevel} from './levels.js?v=628a65a';
+import {askName} from './naming.js?v=628a65a';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=628a65a';
+import {GOODS, WAR} from './config.js?v=628a65a';
+import {fly} from './fly.js?v=628a65a';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=628a65a';
+import {W, KINDS} from './weather.js?v=628a65a';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=628a65a';
+import {setTimeOfDay} from './daynight.js?v=628a65a';
 
 const $ = id => document.getElementById(id);
 
@@ -211,7 +212,7 @@ function settingsHTML(){
     + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 74</p>`;
+    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 75</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -295,7 +296,8 @@ sheetEl.addEventListener('click', e => {
   if (a === 'switch'){ const t = +b.dataset.t; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(shipName(t), 2.4); } }
   if (a === 'rename'){ askName(+b.dataset.t, () => render(), true); return; }
   if (a === 'pin'){ const t = +b.dataset.t; S.pin = S.pin === t ? null : t; sfx(S.pin ? 'chime' : 'click'); if (S.pin) toast('Pinned. Its plans are on your chart', 3); }
-  if (a === 'record' || a === 'recback'){ tabs.fleet = 'ranks'; tabs.rec = a === 'record' ? {slot:+b.dataset.n, t:+b.dataset.t} : null; if (sheet === 'port') tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
+  if (a === 'onlinejoin' || a === 'onlineleave' || a === 'onlineretry'){ (a === 'onlinejoin' ? join() : a === 'onlineleave' ? leave() : netLoad(tabs.rankBy === 'deeds' ? 'deedN' : tabs.rankBy || 'sunk')); return; }
+  if (a === 'record' || a === 'recback'){ tabs.fleet = 'ranks'; tabs.rec = a === 'record' ? (b.dataset.o ? {o:b.dataset.o} : {slot:+b.dataset.n, t:+b.dataset.t}) : null; if (sheet === 'port') tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'openfleet'){ tabs.rec = null; tabs.fleet = b.dataset.to || 'get'; if (sheet === 'port') tabs.port = 'fleet'; else sheet = 'fleet'; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'quality'){ G.settings.quality = b.dataset.v; G.settings.detected = null; applyQuality(b.dataset.v === 'auto' ? 'high' : b.dataset.v); G.autoCheck = b.dataset.v === 'auto'; saveSettings(); }
   if (a === 'speed'){ G.settings.dev.speed = +b.dataset.v; saveSettings(); }
@@ -335,8 +337,10 @@ sheetEl.addEventListener('click', e => {
   save(); render();
 });
 $('medal').addEventListener('click', () => { if (G.sheetOpen || G.menuOpen || G.mapOpen) return; sfx('click'); tabs.fleet = 'mine'; tabs.rec = null; openSheet('fleet'); });
+document.addEventListener('ranksready', () => { if (sheet === 'fleet' || (sheet === 'port' && tabs.port === 'fleet')) if (tabs.fleet === 'ranks') render(); });
 sheetEl.addEventListener('change', e => {
   if (e.target.id === 'rankBy'){ tabs.rankBy = e.target.value; render(); return; }
+  if (e.target.id === 'rankWhere'){ tabs.rankWhere = e.target.value; netState.by = null; render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'uilook'){ G.settings.uilook = e.target.value; saveSettings(); applyUiLook(); return; }
   if (e.target.dataset && e.target.dataset.set === 'sea'){ G.settings.sea = e.target.value; saveSettings(); setSeaLook(e.target.value); return; }
   if (e.target.dataset && e.target.dataset.set === 'tilt'){ G.settings.tilt = +e.target.value; saveSettings(); return; }

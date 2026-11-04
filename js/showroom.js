@@ -1,18 +1,18 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=288f115';
-import {makePost} from './glow.js?v=288f115';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=288f115';
-import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=288f115';
-import {makeFire, updateFire} from './fire.js?v=288f115';
-import {updateSmoke} from './smoke.js?v=288f115';
-import {addGrass, updateGrass} from './grass.js?v=288f115';
-import {makeWind} from './seafx.js?v=288f115';
-import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=288f115';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=288f115';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=288f115';
-import {ANIMALS} from './animals.js?v=288f115';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=288f115';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=628a65a';
+import {makePost} from './glow.js?v=628a65a';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=628a65a';
+import {buildColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=628a65a';
+import {makeFire, updateFire} from './fire.js?v=628a65a';
+import {updateSmoke} from './smoke.js?v=628a65a';
+import {addGrass, updateGrass} from './grass.js?v=628a65a';
+import {makeWind} from './seafx.js?v=628a65a';
+import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=628a65a';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=628a65a';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=628a65a';
+import {ANIMALS} from './animals.js?v=628a65a';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=628a65a';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -242,7 +242,7 @@ const wider = k => { const s = SPECS[k], key = k + 'W'; if (!SPECS[key]) SPECS[k
 function sideBySide(k, alt = bigger){ const g = new T.Group(), a = buildShip(k), b = buildShip(alt(k)); a.position.z = -SPECS[k].B*1.6; b.position.z = SPECS[k].B*1.9; g.add(a, b); return g; }
 // P69: every fortress and bandit camp where it really stands: the real island outline, the real site, its stair and jetty, and your ship in the water below.
 function isleScene(is){ const t = is.site, g = new T.Group(), {top, hillTop} = islandHeights(is), [beach, grass, hill] = is.tiers, cold = is.y < WORLD*.3, camp = CAMPS.find(c => c.isle === is.name);
-  g.add(slab(beach, -14, 4, cold ? '#d8dfe3' : '#e6d29c')); if (grass) g.add(slab(grass, 4, top, cold ? '#f2f6f8' : '#76883c')); if (hill) g.add(slab(hill, top, hillTop, cold ? '#c7d2d9' : '#8a8a74'));
+  g.add(slab(beach, -1.5, 4, cold ? '#d8dfe3' : '#e6d29c')); /* P75: stops just under the water, so no pale block shows below the beach from a low angle */ if (grass) g.add(slab(grass, 4, top, cold ? '#f2f6f8' : '#76883c')); if (hill) g.add(slab(hill, top, hillTop, cold ? '#c7d2d9' : '#8a8a74'));
   const owner = is.pirate ? 'pirate' : is.city, f = camp ? buildCamp() : buildFortress(owner, owner === 'pirate' ? '#231d1d' : CITIES[owner].color, t), R = rng(is.name.length*97 + 5);
   if (camp) f.scale.setScalar([.85, 1, 1.2][(camp.lv || 1) - 1]*t.s);
   f.position.set(t.x - is.x, t.ground, t.y - is.y); f.rotation.y = -t.a; g.add(f);

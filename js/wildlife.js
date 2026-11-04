@@ -1,12 +1,13 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=288f115';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=288f115';
-import {G, save, stat} from './state.js?v=288f115';
-import {scene} from './scene.js?v=288f115';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=288f115';
-import {toast} from './ui.js?v=288f115';
-import {combatState} from './combat.js?v=288f115';
-import {sfx} from './audio.js?v=288f115';
+import {WILDLIFE} from './config.js?v=628a65a';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=628a65a';
+import {G, save, stat} from './state.js?v=628a65a';
+import {scene} from './scene.js?v=628a65a';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=628a65a';
+import {animal} from './animals.js?v=628a65a';
+import {toast} from './ui.js?v=628a65a';
+import {combatState} from './combat.js?v=628a65a';
+import {sfx} from './audio.js?v=628a65a';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -17,12 +18,16 @@ const openSea = (x, y, gap) => x > 200 && y > 200 && x < WORLD - 200 && y < WORL
 export const WHALE = {up:false};
 const W = {obj:whaleModel(), state:'gone', wait:rand(WILDLIFE.whaleFirst), x:0, y:0, a:0, t:0, blessed:false, puff:0};
 W.obj.visible = false; scene.add(W.obj);
+// P75: a different whale each time: the northern kinds in the cold waters, the ocean kinds elsewhere. All of them bless you the same way.
+const whales = {};
+function whaleKind(y){ const list = y < WORLD*.3 ? ['beluga', 'narwhal', 'hump'] : ['hump', 'blue', 'sperm', 'orca'], k = list[Math.floor(Math.random()*list.length)];
+  const o = whales[k] || (whales[k] = (() => { const m = k === 'hump' ? whaleModel() : animal(k); if (k === 'orca' || k === 'beluga' || k === 'narwhal') m.userData.lift = 6; m.visible = false; scene.add(m); return m; })()); if (W.obj !== o){ W.obj.visible = false; W.obj = o; } }
 function spawnWhale(){
   const S = G.S;
   for (let k=0;k<20;k++){
     const a = S.a + (Math.random() - .5)*2.2, d = 300 + Math.random()*140, x = S.x + Math.cos(a)*d, y = S.y + Math.sin(a)*d;
     if (!openSea(x, y, 650)) continue; // whales keep well away from land
-    Object.assign(W, {state:'rise', x, y, a:Math.random()*6.28, t:0, blessed:false, puff:1});
+    whaleKind(y); Object.assign(W, {state:'rise', x, y, a:Math.random()*6.28, t:0, blessed:false, puff:1});
     W.obj.visible = true; sfx('whale', W); // no message: the blessing icon lights up in the corner (ui.js)
     return true;
   }
@@ -52,7 +57,7 @@ function updateWhale(dt){
     const k = Math.min(1, W.t/3.5); pitch = -.5*Math.sin(k*Math.PI*.9); y = -k*80;
     if (k >= 1){ W.state = 'gone'; W.obj.visible = false; W.wait = rand(WILDLIFE.whaleEvery); }
   }
-  W.obj.position.set(W.x, waveAt(W.x, W.y, G.t) + y - 8, W.y); // only the back shows above the water
+  W.obj.position.set(W.x, waveAt(W.x, W.y, G.t) + y - 8 + (ud.lift || 0), W.y); // only the back shows above the water (P75: smaller whales ride a little higher)
   W.obj.rotation.set(0, -W.a, 0); ud.body.rotation.z = pitch;
   ud.tail.rotation.z = Math.sin(G.t*1.6)*.18 + (W.state === 'dive' ? .5 : 0);
   // spout
@@ -69,7 +74,9 @@ document.addEventListener('whale', () => { W.state = 'gone'; W.wait = 0; });
 
 // ---- dolphins: a small pod crosses the sea on its own course, leaping as it goes, then swims off ----
 // Like the whale, they don't follow you: they appear ahead, pass by and are gone.
-const pod = [0, 1, 2].map(() => { const d = dolphinModel(); d.visible = false; scene.add(d); return d; });
+// P75: each pod is one kind of dolphin
+const pods = {}, podOf = k => pods[k] || (pods[k] = [0, 1, 2].map(() => { const d = k === 'bottlenose' ? dolphinModel() : animal(k); d.visible = false; scene.add(d); return d; }));
+let pod = podOf('bottlenose');
 const P = {on:false, wait:rand(WILDLIFE.dolphinEvery), t:0, x:0, y:0, a:0};
 const POD_SPEED = 95, POD_TIME = 16;
 function updateDolphins(dt){
@@ -81,7 +88,7 @@ function updateDolphins(dt){
       // start off to one side ahead of the boat and swim across in front of it
       const side = Math.random() < .5 ? 1 : -1, ahead = S.a + side*(.5 + Math.random()*.5), d = 280 + Math.random()*80;
       const x = S.x + Math.cos(ahead)*d, y = S.y + Math.sin(ahead)*d, a = S.a - side*(1.6 + (Math.random() - .5)*.6);
-      if (openSea(x, y, 160) && openSea(x + Math.cos(a)*POD_SPEED*POD_TIME, y + Math.sin(a)*POD_SPEED*POD_TIME, 60)){ Object.assign(P, {on:true, t:0, x, y, a}); }
+      if (openSea(x, y, 160) && openSea(x + Math.cos(a)*POD_SPEED*POD_TIME, y + Math.sin(a)*POD_SPEED*POD_TIME, 60)){ pod = podOf(['bottlenose', 'spinner', 'striped', 'common', 'rissos'][Math.floor(Math.random()*5)]); Object.assign(P, {on:true, t:0, x, y, a}); }
       else P.wait = 8;
     }
     return;

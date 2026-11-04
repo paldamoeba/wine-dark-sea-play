@@ -1,10 +1,10 @@
 // Wakes: every moving ship pushes the water aside. Two smooth bands of foam spread out from the bow in a V, and a wider,
 // softer trail stays behind the stern, widening and fading as it goes. Each band is a ribbon that follows the ship's path,
 // so turns leave curved wakes. All ships share one mesh, rebuilt every frame (a few thousand points at most).
-import {G, ship} from './state.js?v=288f115';
-import {scene} from './scene.js?v=288f115';
-import {waterY} from './world.js?v=288f115';
-import {enemies} from './combat.js?v=288f115';
+import {G, ship} from './state.js?v=628a65a';
+import {scene} from './scene.js?v=628a65a';
+import {waterY} from './world.js?v=628a65a';
+import {enemies} from './combat.js?v=628a65a';
 
 const T = window.THREE;
 const MAXV = 30000;

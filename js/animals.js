@@ -1,6 +1,6 @@
 // P74: 35 new animals for the Showroom: five real species for each animal in the game. Made in the same style as whaleModel, dolphinModel, gull, krakenModel and fishModel.
-// They are not in the sea yet. Nicholas picks which ones go in.
-import {soft, softMat, latheBody, blade, tentacleGeo} from './models.js?v=288f115';
+// P75: all but the rose dolphin (a river animal) and the krakens swim in the game; wildlife.js and entities.js pick them. The krakens wait for a decision.
+import {soft, softMat, latheBody, blade, tentacleGeo} from './models.js?v=628a65a';
 const T = window.THREE;
 const C = new T.Color(), A = new T.Color(), B = new T.Color();
 const mix = (a, b, k) => { A.set(a); B.set(b); return A.lerp(B, Math.max(0, Math.min(1, k))); };
@@ -22,7 +22,8 @@ function whale(o){ const g = new T.Group(), body = new T.Group(); g.add(body);
   for (const sd of [-1, 1]){ const fl = blade(34*k, 12*k, 1.8, .75, -.55*sd, 0, o.fin); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*1.05); fl.position.x = 1; tail.add(fl); }
   eye(body, o.eye[0], o.eye[1], o.eye[2], o.eye[3]);
   if (o.more) o.more(body);
-  g.userData = {body, tail, spout:[]}; return g; }
+  const spout = []; for (let k = 0; k < 7; k++){ const p = new T.Mesh(new T.SphereGeometry(5, 10, 8), new T.MeshLambertMaterial({color:'#f4fbff', transparent:true, opacity:.8})); p.visible = false; g.add(p); spout.push(p); }
+  g.userData = {body, tail, spout}; return g; }
 const WHALES = [
   {key:'blue', name:'Blue whale', desc:'The biggest animal that has ever lived: very long and slim, mottled blue, with a tiny fin far back.', make:() => whale({
     prof:[[-120, 0], [-114, 2.6], [-96, 5], [-70, 10], [-36, 16], [4, 21], [46, 23], [78, 21], [100, 16], [114, 8], [119, 0]], fin:'#567d9e', flip:[36, 6.5], flipAt:[62, -9, 17], dorsal:[8, 3, -70, 8, 1.15], eye:[92, -5, 15.8, 1.6], fl:1.25,
@@ -40,7 +41,7 @@ const WHALES = [
   {key:'narwhal', name:'Narwhal', desc:'The unicorn of the sea: a spotted grey back, a pale belly and one long spiral tusk.', make:() => whale({
     prof:[[-46, 0], [-42, 2.3], [-30, 5], [-14, 10.5], [4, 14], [20, 14], [32, 11.5], [41, 8], [45, 4], [46, 0]], fin:'#464d57', flip:[11, 4], flipAt:[26, -7, 11], eye:[36, 1, 8.1, .95], fl:.68,
     paint:(x, u, s) => { const sp = Math.sin(x*1.2 + s*5)*Math.sin(u*7 - x*.6); return mix(sp > .35 ? '#30363e' : '#616873', '#e5e7e2', sst(.1, -.6, u)); },
-    more:b => { const geo = new T.ConeGeometry(1.55, 60, 12, 24), p = geo.attributes.position, col = new Float32Array(p.count*3), c = new T.Color(); for (let i = 0; i < p.count; i++){ const y = p.getY(i), a = Math.atan2(p.getZ(i), p.getX(i)); c.set(Math.sin(y*.9 + a*2) > 0 ? '#efe6cc' : '#b9a981'); col.set([c.r, c.g, c.b], i*3); } geo.setAttribute('color', new T.BufferAttribute(col, 3)); const m = new T.Mesh(geo, softMat('#ffffff', true)); m.rotation.z = -Math.PI/2 + .04; m.position.set(74, 2.2, 0); m.castShadow = true; b.add(m); }})},
+    more:b => { const geo = new T.ConeGeometry(1.55, 60, 12, 24), p = geo.attributes.position, col = new Float32Array(p.count*3), c = new T.Color(); for (let i = 0; i < p.count; i++){ const y = p.getY(i), a = Math.atan2(p.getZ(i), p.getX(i)); c.set(Math.sin(y*.9 + a*2) > 0 ? '#efe6cc' : '#b9a981'); col.set([c.r, c.g, c.b], i*3); } geo.setAttribute('color', new T.BufferAttribute(col, 3)); const m = new T.Mesh(geo, softMat('#ffffff', true)); m.rotation.z = -Math.PI/2 + .14; m.position.set(73, 6, 0); m.castShadow = true; b.add(m); }})},
 ];
 
 // ---------- dolphins ----------
@@ -179,3 +180,12 @@ export const ANIMALS = [
   {name:'Whale', list:WHALES, anim:'whale', y:24, gap:44}, {name:'Dolphin', list:DOLPHINS, anim:'dolphins', y:6, gap:16}, {name:'Kraken', list:KRAKENS, anim:'kraken', gap:80},
   {name:'Sea bird', list:BIRDS, anim:'gulls', gap:16}, {name:'Small fish', list:SMALL, anim:'wiggle', gap:8}, {name:'Tuna', list:TUNAS, anim:'wiggle', gap:8}, {name:'Billfish', list:SWORDS, anim:'wiggle', gap:8},
 ];
+
+// ---- for the game: one model of a species, cached and copied ----
+const ALL = {}; for (const A of ANIMALS) for (const a of A.list) ALL[a.key + (A.name === 'Billfish' && a.key === 'striped' ? 'marlin' : '')] = a;
+const tmpl = {}; const master = key => tmpl[key] || (tmpl[key] = ALL[key].make());
+export const animal = key => ALL[key].make();
+// fish and birds are many, so they are copies that share their shapes
+export function fishCopy(key, scale = .85){ const c = master(key).clone(); c.scale.setScalar(scale); return c; }
+export function birdCopy(key){ const c = master(key).clone(), m = c.children[0]; m.morphTargetInfluences = [0]; c.userData.flap = v => { m.morphTargetInfluences[0] = Math.max(-.5, v); }; c.userData.wings = []; return c; }
+export const SMALL_FISH = SMALL.map(a => a.key), TUNA_FISH = TUNAS.map(a => a.key), BILL_FISH = ['bluemarlin', 'sailfish', 'stripedmarlin', 'spearfish', 'blackmarlin'], SEA_BIRDS = BIRDS.map(a => a.key);

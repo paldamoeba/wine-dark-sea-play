@@ -1,20 +1,21 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=288f115';
-import {SHIPS, IRON} from './config.js?v=288f115';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=288f115';
-import {G, ship, lvl} from './state.js?v=288f115';
-import {men} from './crew.js?v=288f115';
-import {scene} from './scene.js?v=288f115';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=288f115';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=288f115';
-import {addTown, figure} from './town.js?v=288f115';
-import {makeFire, updateFire, burn} from './fire.js?v=288f115';
-import {addGrass} from './grass.js?v=288f115';
-import {sinkPose} from './sinking.js?v=288f115';
-import {moored} from './fleet.js?v=288f115';
-import {sailCount} from './upgrades.js?v=288f115';
-import {hasSail} from './crew.js?v=288f115';
-import {placeOnWaves} from './combat.js?v=288f115';
+import {mergeStatic} from './merge.js?v=628a65a';
+import {fishCopy, birdCopy, SMALL_FISH, TUNA_FISH, BILL_FISH, SEA_BIRDS} from './animals.js?v=628a65a';
+import {SHIPS, IRON} from './config.js?v=628a65a';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=628a65a';
+import {G, ship, lvl} from './state.js?v=628a65a';
+import {men} from './crew.js?v=628a65a';
+import {scene} from './scene.js?v=628a65a';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=628a65a';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=628a65a';
+import {addTown, figure} from './town.js?v=628a65a';
+import {makeFire, updateFire, burn} from './fire.js?v=628a65a';
+import {addGrass} from './grass.js?v=628a65a';
+import {sinkPose} from './sinking.js?v=628a65a';
+import {moored} from './fleet.js?v=628a65a';
+import {sailCount} from './upgrades.js?v=628a65a';
+import {hasSail} from './crew.js?v=628a65a';
+import {placeOnWaves} from './combat.js?v=628a65a';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -162,7 +163,8 @@ const ringGeo = new T.RingGeometry(10, 13.5, 20); ringGeo.rotateX(-Math.PI/2);
 SPOTS.forEach((s, i) => {
   const g = new T.Group(); g.position.set(s.x, 0, s.y);
   s.rings = [0,1].map(() => { const m = new T.Mesh(ringGeo, new T.MeshBasicMaterial({color:0xf4fbff, transparent:true, opacity:.5, depthWrite:false})); g.add(m); return m; });
-  s.fish = [0,1,2].map(k => { const f = fishModel(s.kind); f.userData.ph = hash(i,k); f.userData.ang = hash(k,i)*6.28; g.add(f); return f; });
+  const fam = s.kind === 'sardine' ? SMALL_FISH : s.kind === 'tuna' ? TUNA_FISH : BILL_FISH, kind = Math.floor(hash(i, 7)*(fam.length + 1)); // P75: each fishing spot has its own kind of fish leaping (what you catch is the same)
+  s.fish = [0,1,2].map(k => { const f = kind < fam.length ? fishCopy(fam[kind]) : fishModel(s.kind); f.userData.ph = hash(i,k); f.userData.ang = hash(k,i)*6.28; g.add(f); return f; });
   s.g = g; scene.add(g);
 });
 
@@ -179,7 +181,7 @@ export const ICEBERGS = [];
 WRECKS.forEach((w, i) => {
   const g = wreckModel(w.size); g.position.set(w.x, w.stock ? 0 : -60, w.y); g.rotation.y = w.rot;
   w.bob = g.userData.bob;
-  w.gulls = [0,1,2,3].map(k => { const gl = gull(); Object.assign(gl.userData, {R:34 + k*12, h:70 + k*9, sp:(.5 + hash(i,k)*.4) * (k%2 ? 1 : -1), a:k*1.7}); scene.add(gl); return gl; });
+  w.gulls = [0,1,2,3].map(k => { const b = Math.floor(hash(i*3 + 1, k + 2)*(SEA_BIRDS.length*2)), gl = b < SEA_BIRDS.length ? birdCopy(SEA_BIRDS[b]) : gull(); /* P75: mostly gulls, and other sea birds among them */ Object.assign(gl.userData, {R:34 + k*12, h:70 + k*9, sp:(.5 + hash(i,k)*.4) * (k%2 ? 1 : -1), a:k*1.7}); scene.add(gl); return gl; });
   w.g = g; scene.add(g);
 });
 

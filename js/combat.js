@@ -1,23 +1,23 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=288f115';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=288f115';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=288f115';
-import {scene, screenToSea, setLair} from './scene.js?v=288f115';
-import {wreckModel} from './models.js?v=288f115';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=288f115';
-import {mergeStatic, freeModel} from './merge.js?v=288f115';
-import {makeFire, updateFire, burn} from './fire.js?v=288f115';
-import {blessing, fighters, hasSail} from './crew.js?v=288f115';
-import {progress, goal} from './quests.js?v=288f115';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=288f115';
-import {rollColor, unlockColor, colorName} from './colors.js?v=288f115';
-import {toast} from './ui.js?v=288f115';
-import {sink, rowNow, ROW} from './player.js?v=288f115';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=288f115';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=288f115';
-import {sfx} from './audio.js?v=288f115';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=628a65a';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=628a65a';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=628a65a';
+import {scene, screenToSea, setLair} from './scene.js?v=628a65a';
+import {wreckModel} from './models.js?v=628a65a';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=628a65a';
+import {mergeStatic, freeModel} from './merge.js?v=628a65a';
+import {makeFire, updateFire, burn} from './fire.js?v=628a65a';
+import {blessing, fighters, hasSail} from './crew.js?v=628a65a';
+import {progress, goal} from './quests.js?v=628a65a';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=628a65a';
+import {rollColor, unlockColor, colorName} from './colors.js?v=628a65a';
+import {toast} from './ui.js?v=628a65a';
+import {sink, rowNow, ROW} from './player.js?v=628a65a';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=628a65a';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=628a65a';
+import {sfx} from './audio.js?v=628a65a';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -778,7 +778,7 @@ function playerCrew(dt){
   pCool -= dt; volleyT = Math.max(0, volleyT - dt);
   combatState.side = !tgt || broadside(null, tgt);
   if (tgt && !G.sheetOpen && !G.sinking && pCool <= 0 && combatState.side){ pCool = COMBAT.shotEvery*(.85 + Math.random()*.3); salvo(null, tgt, fighters(), COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(), 120);
-    if (tgt.spec.hull > ship().hull*1.5 && tgt.spec.fighters > fighters() && !G.S.bigTip){ G.S.bigTip = true; toast('Too strong. Run!', 5); } }
+    }
 }
 // ---- aimed shots (P51): arrow shower, chain shot and catapult are lobbed at a spot on the sea and land a moment later ----
 // Each projectile flies in a high arc from your ship to its own landing point, then hurts whatever ship is there when it lands.
