@@ -1,17 +1,17 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=628a65a';
-import {SPECS} from './ships.js?v=628a65a';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=628a65a';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=628a65a';
-import {W} from './weather.js?v=628a65a';
-import {steering} from './input.js?v=628a65a';
-import {toast, showZone} from './ui.js?v=628a65a';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=628a65a';
-import {startFish, stopFish} from './fishing.js?v=628a65a';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=628a65a';
-import {progress} from './quests.js?v=628a65a';
-import {startSink} from './sinking.js?v=628a65a';
-import {sfx} from './audio.js?v=628a65a';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=cc3055d';
+import {SPECS} from './ships.js?v=cc3055d';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=cc3055d';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=cc3055d';
+import {W} from './weather.js?v=cc3055d';
+import {steering} from './input.js?v=cc3055d';
+import {toast, showZone} from './ui.js?v=cc3055d';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=cc3055d';
+import {startFish, stopFish} from './fishing.js?v=cc3055d';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=cc3055d';
+import {progress} from './quests.js?v=cc3055d';
+import {startSink} from './sinking.js?v=cc3055d';
+import {sfx} from './audio.js?v=cc3055d';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){

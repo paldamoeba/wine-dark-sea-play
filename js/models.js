@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=628a65a';
+import {hash} from './world.js?v=cc3055d';
 
-import {smokeColumn} from './smoke.js?v=628a65a';
+import {smokeColumn} from './smoke.js?v=cc3055d';
 const T = window.THREE;
-import {mat} from './ships.js?v=628a65a';
+import {mat} from './ships.js?v=cc3055d';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -157,9 +157,9 @@ export const amphoraGeo = new T.LatheGeometry([[0,0],[3,1],[5,4],[5.5,8],[4,12],
 const smooth = (pts, n = 16) => new T.SplineCurve(pts.map(([x, y]) => new T.Vector2(x, y))).getPoints(n).map(v => [v.x, v.y]);
 // Animals get smooth, slightly glossy shading instead of the banded look of boats and houses, so they read as soft and wet.
 const softs = {};
-export const softMat = (color, vc = false) => softs[color + vc] || (softs[color + vc] = new T.MeshPhongMaterial({color:vc ? '#ffffff' : color, vertexColors:vc, shininess:18, specular:new T.Color('#2a3036')}));
-export const soft = (geo, color) => { const m = new T.Mesh(geo, softMat(color)); m.castShadow = m.receiveShadow = true; return m; };
-export function latheBody(prof, top, belly, ys = 1, zs = 1, seg = 24, line = -.15){
+const softMat = (color, vc = false) => softs[color + vc] || (softs[color + vc] = new T.MeshPhongMaterial({color:vc ? '#ffffff' : color, vertexColors:vc, shininess:18, specular:new T.Color('#2a3036')}));
+const soft = (geo, color) => { const m = new T.Mesh(geo, softMat(color)); m.castShadow = m.receiveShadow = true; return m; };
+function latheBody(prof, top, belly, ys = 1, zs = 1, seg = 24, line = -.15){
   prof = smooth(prof, 48); // a smooth outline from tail to nose, so the body has no corners along its length
   const geo = new T.LatheGeometry(prof.map(([x, r]) => new T.Vector2(Math.max(r, .001), x)), seg); geo.rotateZ(-Math.PI/2);
   const pos = geo.attributes.position, col = new Float32Array(pos.count*3), A = new T.Color(top), B = new T.Color(belly), c = new T.Color();
@@ -178,7 +178,7 @@ function fin(pts, d, color){
 // and its root can sink into the body without a seam. It points along +x from x = 0 (the root) to x = len.
 // w, th = width and thickness at the root; taper = how much thinner at the tip (0 to 1); sweep = bends the tip back (-y);
 // lift = bends the tip up (+z).
-export function blade(len, w, th, taper = .6, sweep = 0, lift = 0, color = '#ffffff', vc = null){
+function blade(len, w, th, taper = .6, sweep = 0, lift = 0, color = '#ffffff', vc = null){
   const geo = new T.SphereGeometry(1, 28, 16), p = geo.attributes.position;
   for (let i=0;i<p.count;i++){ const x = p.getX(i), u = (x + 1)/2, k = 1 - taper*Math.pow(u, 1.2);
     p.setXYZ(i, u*len, p.getY(i)*w*k - sweep*u*u*len, p.getZ(i)*th*(1 - taper*.6*u) + lift*u*u*len); }
@@ -239,7 +239,7 @@ export function whaleModel(){
 }
 // The kraken: a huge plum-colored sea monster. Only its curling tentacles show above the water, spread far apart.
 // userData.tents = [{piv, ph}] so they can sway; the group's y is how far it has risen out of the sea.
-export function tentacleGeo(len, r0){
+function tentacleGeo(len, r0){
   const pts = []; for (let i=0;i<=10;i++){ const u = i/10; pts.push(new T.Vector3(len*.32*Math.sin(u*Math.PI*1.15), len*.9*Math.sin(u*Math.PI*.5), 0)); } // up and curling over at the tip
   const curve = new T.CatmullRomCurve3(pts), segs = 28, rad = 10, geo = new T.TubeGeometry(curve, segs, r0, rad, false), p = geo.attributes.position, v = new T.Vector3();
   for (let i=0;i<=segs;i++){ const c = curve.getPointAt(i/segs), k = 1 - .86*Math.pow(i/segs, .9); // thick at the base, thin at the tip

@@ -1,15 +1,15 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=628a65a';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=628a65a';
-import {GOODS} from './config.js?v=628a65a';
-import {sfx} from './audio.js?v=628a65a';
-import {playVideo, toast} from './ui.js?v=628a65a';
-import {ARENA} from './arena.js?v=628a65a';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=628a65a';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=628a65a';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=628a65a';
-import {G, ship, isExplored, reveal, save} from './state.js?v=628a65a';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=cc3055d';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=cc3055d';
+import {GOODS} from './config.js?v=cc3055d';
+import {sfx} from './audio.js?v=cc3055d';
+import {playVideo, toast} from './ui.js?v=cc3055d';
+import {ARENA} from './arena.js?v=cc3055d';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=cc3055d';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=cc3055d';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=cc3055d';
+import {G, ship, isExplored, reveal, save} from './state.js?v=cc3055d';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');

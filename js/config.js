@@ -269,7 +269,7 @@ export const QUALITY = {
   high: {dpr:2.25, shadows:true,  waterSeg:120, pix:3.2e6, label:'High'},
 };
 // P75: where the online Leaderboard lives (tools/leaderboard). Empty: only your own ships show.
-export const ONLINE_URL = '';
+export const ONLINE_URL = 'https://wine-dark-sea-board.superioraire.workers.dev';
 export const AUTO_QUALITY = {sampleSeconds:4, minFps:42};
 
 // Fighting. Your crew and raider crews shoot by themselves when in range.

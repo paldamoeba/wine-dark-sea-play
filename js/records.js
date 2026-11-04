@@ -1,9 +1,9 @@
 // P73: every ship keeps her own record (S.shipStats[tier], written by stat() in state.js). This page ranks all your ships,
 // from all three voyages, and shows what one ship has done. Only this device's saves: there is no server behind it.
-import {SHIPS, NAMED} from './config.js?v=628a65a';
-import {G, SLOTS, readSlot} from './state.js?v=628a65a';
-import {IC, card, shipImg, tabs} from './menus.js?v=628a65a';
-import {hasOnline, me, state as net, load as netLoad, setShips, push as netPush} from './online.js?v=628a65a';
+import {SHIPS, NAMED} from './config.js?v=cc3055d';
+import {G, SLOTS, readSlot} from './state.js?v=cc3055d';
+import {IC, card, shipImg, tabs} from './menus.js?v=cc3055d';
+import {hasOnline, me, state as net, load as netLoad, setShips, push as netPush} from './online.js?v=cc3055d';
 
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const n = v => Math.floor(v || 0).toLocaleString();
@@ -47,7 +47,7 @@ const place = i => ['1st', '2nd', '3rd'][i] || `${i + 1}th`;
 
 // ---- online ----
 const sendKey = k => k === 'deeds' ? 'deedN' : k;
-setShips(() => allShips().map(e => { const {deeds, ...nums} = e.rec; return {slot:e.slot, t:e.t, name:e.name, paint:e.look.paint, sail:e.look.sail, rec:{...nums, deeds:deeds || [], deedN:deedCount(e.rec)}}; }));
+setShips(() => allShips().filter(e => (e.rec.time || 0) > 30).map(e => { const {deeds, ...nums} = e.rec; return {slot:e.slot, t:e.t, name:e.name, paint:e.look.paint, sail:e.look.sail, rec:{...nums, deeds:deeds || [], deedN:deedCount(e.rec)}}; }));
 const netShip = r => { const sh = SHIPS[r.t] || SHIPS[0]; return {online:true, id:`${r.who}-${r.slot}-${r.t}`, slot:r.slot, t:r.t, sh, name:r.name, rec:r.rec, on:r.who === me().who, look:{...(r.paint ? {paint:r.paint} : {}), ...(r.sail ? {sail:r.sail} : {})}}; };
 const netRows = () => (net.rows || []).map(netShip);
 const whereBox = cur => hasOnline() ? `<label class="rkby"><span>Board</span><select id="rankWhere" aria-label="Which board"><option value="mine" ${cur === 'mine' ? 'selected' : ''}>My ships</option><option value="online" ${cur === 'online' ? 'selected' : ''}>Everyone online</option></select></label>` : '';
@@ -60,12 +60,12 @@ function onlineHTML(k){ const key = sendKey(k), m = me();
     : net.loading && !net.rows ? '<p class="note">Loading the board...</p>'
     : rows.length ? `<div class="rklist">${rows.map((e, i) => row(e, i, value(e))).join('')}</div>` : '<p class="note">Nobody is on this board yet. Yours could be the first ship.</p>';
   const mine = net.mine && !rows.some(e => e.on) ? `<h4 class="rkhead">Your best ship</h4><div class="rklist">${(() => { const e = netShip(net.mine); return row(e, net.mine.rank - 1, value(e)); })()}</div>` : '';
-  const foot = m.joined ? `<p class="note">Your ships are on the board. Their names, types, colors and numbers are public.</p><button class="linkbtn" data-act="onlineleave">Take my ships off</button>`
-    : `<div class="rkjoin"><p class="note">Put your ships on the board? Only their names, types, colors and numbers are shared.</p><button class="btn gold wide" data-act="onlinejoin">Join the online board</button></div>`;
+  const foot = m.off ? `<div class="rkjoin"><p class="note">Your ships are off the board.</p><button class="btn ghostdark" data-act="onlineback">Put my ships back</button></div>`
+    : `<p class="note">Every ship is counted automatically. Ship names, types, colors and numbers are public.</p><button class="linkbtn" data-act="onlineleave">Take my ships off</button>`;
   return `<section class="card">${whereBox('online')}${rankBox(k)}${body}${mine}${foot}<p class="note">${net.total ? `${net.total.toLocaleString()} ships on the board. Top 25 shown.` : ''}</p></section>`; }
 function boardHTML(){
   const k0 = RANKS.some(r => r[0] === tabs.rankBy) ? tabs.rankBy : (tabs.rankBy = 'sunk');
-  if (hasOnline() && tabs.rankWhere === 'online') return onlineHTML(k0);
+  if (hasOnline() && (tabs.rankWhere || 'online') === 'online') return onlineHTML(k0); // the world's board first
   const list = allShips(), k = k0, many = new Set(list.map(e => e.slot)).size > 1;
   const rows = ranked(list, k).map((e, i) => { const v = valueOf(e, k);
     return `<button class="rkrow ${e.on ? 'on' : ''}" data-act="record" data-n="${e.slot}" data-t="${e.t}"><span class="rkpos ${v && i < 3 ? 'p' + (i + 1) : ''}">${v ? i + 1 : '-'}</span>${picOf(e)}<span class="rkname"><b>${esc(e.name)}</b><small>${e.sh.name}${many ? ` · Voyage ${e.slot}` : ''}</small></span><b class="rkval">${show(v, k)}</b></button>`; }).join('');
