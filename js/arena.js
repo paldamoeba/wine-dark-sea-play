@@ -1,21 +1,21 @@
-// The Arena of Rhodes: a great ring of stone walls built out from the south-east coast of Rhodes, like a colosseum on the water.
-// The landward side of the ring runs up onto the island; the gate faces the open sea between two towers (the Colossus that
-// stood astride it moved to the harbor of Rhodes town in P79). Inside, start the games: rounds of pirate champions, a prize
-// for each round won. The crowd on the walls cheers.
-import {ISLANDS, landDist} from './world.js?v=4ae49e1';
-import {G, save} from './state.js?v=4ae49e1';
-import {scene} from './scene.js?v=4ae49e1';
-import {mat, torch, TORCH_ROOTS} from './ships.js?v=4ae49e1';
-import {mergeStatic} from './merge.js?v=4ae49e1';
-import {award, TROPHIES} from './trophies.js?v=4ae49e1';
-import {figure} from './town.js?v=4ae49e1';
-import {buildGladiator} from './monuments.js?v=4ae49e1';
-import {spawnArena, clearArena, enemies} from './combat.js?v=4ae49e1';
-import {toast} from './ui.js?v=4ae49e1';
-import {sfx} from './audio.js?v=4ae49e1';
+// The Arena of Rhodes: a square basin of straight breakwaters built out from the south-east coast of Rhodes (P80, from the
+// Blender picture; it was a stone ring before). The marble Colossus stands astride the gate in the front breakwater, facing
+// the open sea, and you sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round
+// won. The crowd on the walkways cheers.
+import {ISLANDS, landDist} from './world.js?v=2a982a2';
+import {G, save} from './state.js?v=2a982a2';
+import {scene} from './scene.js?v=2a982a2';
+import {mat, torch, TORCH_ROOTS} from './ships.js?v=2a982a2';
+import {mergeStatic} from './merge.js?v=2a982a2';
+import {award, TROPHIES} from './trophies.js?v=2a982a2';
+import {figure} from './town.js?v=2a982a2';
+import {buildGladiator, marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=2a982a2';
+import {spawnArena, clearArena, enemies} from './combat.js?v=2a982a2';
+import {toast} from './ui.js?v=2a982a2';
+import {sfx} from './audio.js?v=2a982a2';
 
 const T = window.THREE;
-const R = 780, WALL_H = 58, WALL_T = 26, N = 72, GATE = .17; // radius, wall height and thickness, wall pieces, half the gate's opening (radians)
+const R = 780, H = 700, GW = 150, SEG = 64, BW = 34, DECK_Y = 7.2, FORT_R = 96; // R only picks the spot; H half the basin's side, GW half the gate (his stance), piece length, walkway width and top, fort radius
 const ROUNDS = [['dinghy', 'dinghy', 'dinghy'], ['skiff', 'skiff'], ['skiff', 'skiff', 'dinghy', 'dinghy'], ['galley', 'skiff'], ['galley', 'galley'], ['galley', 'galley', 'skiff', 'skiff']];
 const PRIZE = 80, FINAL = ROUNDS.length, TOTAL = FINAL + 1;
 // P77: every time you win all the fights the next games are harder and pay more: Bronze, Silver, Gold, then Glory without end. Spartacus' champion ship closes each one.
@@ -31,74 +31,91 @@ export const ARENA = (() => {
   const dx = Math.SQRT1_2, dy = Math.SQRT1_2;
   for (let t = 0; t < rhodes.r + 4000; t += 20){
     const x = rhodes.x + dx*t, y = rhodes.y + dy*t;
-    if (landDist(x, y) > R*.8) return {x, y, gate:Math.atan2(dy, dx), R, half:GATE};
+    if (landDist(x, y) > R*.8) return {x, y, gate:Math.atan2(dy, dx), R:H};
   }
   return null;
 })();
-const angDiff = (a, b) => { const d = a - b; return d - Math.PI*2*Math.floor((d + Math.PI)/(Math.PI*2)); };
-const inGate = a => Math.abs(angDiff(a, ARENA.gate)) < GATE - .02;
-const pieceAt = a => ((Math.floor(a/(Math.PI*2)*N) % N) + N) % N;
 
-// ---- the build ----
-const crowd = [], stone = mat('#ddd2b8'), dark = mat('#8f846c'), ledge = mat('#c9bd9f');
-const solid = new Array(N).fill(false); // which wall pieces stand (pieces deep inland are left out: the island closes the ring there)
-let arenaG = null, merged = false;
-const torches = [], BANNERS = ['#b8322a', '#2f5f96', '#c98a24'].map(c => mat(c)), GOLD = mat('#e3b54a');
+// ---- the build (P80): straight breakwaters of boulders with red walkways, like the Blender picture, not a ring ----
+// A square basin: the front breakwater faces the open sea with the gate in its middle, where the marble Colossus stands
+// with one foot on each white plinth; two side breakwaters run back to Rhodes, and a back one closes it wherever there's sea.
+// A round fort with a lighthouse stands on the west front corner. The crowd watches from the walkways.
+const crowd = [], stone = mat('#ddd2b8'), ledge = mat('#c9bd9f'), rock = mat('#8f8a80'), core = mat('#a49c8c'), deck = mat('#b9583d'), white = mat('#eee6d6');
+const pieces = [], posts = []; // standing breakwater pieces (for walls and the chart), round things ships bump into (plinths, the fort)
+let arenaG = null, colossus = null, merged = false;
+const torches = [], BANNERS = ['#b8322a', '#2f5f96', '#c98a24'].map(c => mat(c));
+const rnd = (i, k) => Math.abs(Math.sin(i*12.9898 + k*78.233)*43758.5453) % 1;
+const ux = ARENA ? Math.cos(ARENA.gate) : 1, uy = ARENA ? Math.sin(ARENA.gate) : 0;
+const at = (u, v) => [ux*u - uy*v, uy*u + ux*v]; // basin frame (u out through the gate, v across it) to offsets from the centre
 if (ARENA){
   const g = new T.Group(); g.position.set(ARENA.x, 0, ARENA.y); scene.add(g); arenaG = g; g.userData.torches = torches; TORCH_ROOTS.add(g);
-  const seg = Math.PI*2*R/N + 2;
-  const tower = (a, h = WALL_H + 30, r = 30) => { const tw = new T.Mesh(new T.CylinderGeometry(r, r + 4, h, 12), stone); tw.position.set(Math.cos(a)*R, h/2 - 8, Math.sin(a)*R); tw.castShadow = tw.receiveShadow = true; g.add(tw);
-    const top = new T.Mesh(new T.CylinderGeometry(r + 3, r + 3, 5, 12), ledge); top.position.set(Math.cos(a)*R, h - 8, Math.sin(a)*R); g.add(top); return tw; };
-  for (let i=0;i<N;i++){
-    const a = (i + .5)/N*Math.PI*2; if (Math.abs(angDiff(a, ARENA.gate)) < GATE) continue;
-    const wx = ARENA.x + Math.cos(a)*R, wy = ARENA.y + Math.sin(a)*R; if (landDist(wx, wy) < -40) continue;
-    solid[i] = true;
-    const p = new T.Group(); p.position.set(Math.cos(a)*R, 0, Math.sin(a)*R); p.rotation.y = -a + Math.PI/2; g.add(p);
-    // the wall rises and falls: some pieces taller, some crumbled, a square tower every few pieces
-    const rnd = Math.abs(Math.sin(i*12.9898)*43758.5453) % 1, towerHere = i % 8 === 4, broken = !towerHere && rnd < .14;
-    const h = towerHere ? WALL_H + 34 : Math.round(WALL_H*(.82 + .36*Math.abs(Math.sin(i*.9) + Math.sin(i*.37))/2));
-    const B = (w, hh, d, m, x, y, z) => { const o = new T.Mesh(new T.BoxGeometry(w, hh, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; p.add(o); return o; };
-    if (broken){ B(seg*.55, h*.7 + 14, WALL_T, stone, -seg*.22, h*.35 - 13, 0); B(seg*.5, h*.45 + 14, WALL_T, stone, seg*.25, h*.22 - 13, 0); // a crumbled gap
-      B(10, 8, 10, dark, seg*.1, h*.45 - 8, WALL_T*.7).rotation.y = rnd*3; }
-    else {
-      B(seg, h + 14, WALL_T, stone, 0, h/2 - 13, 0);
-      // P77: long banners of the games down the wall, and fire bowls along the top that burn at night
-      if (i % 3 === 1 && !towerHere) for (const sg of [1, -1]){ const c = BANNERS[(i/3 | 0) % 3]; B(seg*.26, h*.56, 1.2, c, 0, h*.62, sg*(WALL_T/2 + 3)); B(seg*.26, 3, 1.5, ledge, 0, h*.9, sg*(WALL_T/2 + 3.2)); B(seg*.26, 2.4, 1.5, GOLD, 0, h*.33, sg*(WALL_T/2 + 3.2)); }
-      if (i % 4 === 2 && !towerHere){ const t = torch(); t.position.set(seg*.42, h - 2, 0); t.scale.setScalar(1.5); p.add(t); torches.push(t); }
-      B(seg + 1, 5, WALL_T + 8, ledge, 0, h - 4, 0); B(seg + 1, 3, WALL_T + 5, ledge, 0, h*.44, 0); // cornice and a middle ledge
-      for (const sg of [1, -1]){ // two rows of arches between pilasters, like a colosseum
-        for (const k of [-.25, .25]){ B(seg*.28, h*.3, 1, dark, k*seg, h*.2, sg*(WALL_T/2 + .3)); B(seg*.22, h*.22, 1, dark, k*seg, h*.66, sg*(WALL_T/2 + .3)); }
-        for (const k of [-.5, 0, .5]) B(3.5, h*.9, 2.5, ledge, k*seg, h*.45 - 4, sg*(WALL_T/2 + 1)); }
-      if (towerHere){ B(seg*.8, 6, WALL_T + 14, ledge, 0, h + 1, 0); // a square tower with merlons and a flag
-        for (let k=0;k<4;k++) for (const sg of [1, -1]) B(6, 7, 6, stone, (k - 1.5)*seg*.22, h + 7, sg*(WALL_T/2 + 4));
-        const flag = new T.Mesh(new T.BoxGeometry(1, 18, 28), mat(['#c64a3c', '#3f6c94', '#d48a2a'][(i/8 | 0) % 3])); flag.position.set(0, h + 34, 14); p.add(flag);
-        const pole = new T.Mesh(new T.CylinderGeometry(.9, .9, 40, 5), mat('#6e3d1e')); pole.position.set(0, h + 24, 0); p.add(pole); }
-      else for (let k=0;k<3;k++){ const f = figure(['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f'][(i + k) % 5]); f.scale.setScalar(1.1); f.visible = true;
-        f.position.set((k - 1)*seg*.3, h - 1.5, (k % 2 ? 4 : -4)); f.userData.ph = Math.random()*6; f.userData.h = h; f.userData.noMerge = true; p.add(f); crowd.push(f); }
+  const rockGeo = new T.DodecahedronGeometry(1, 0);
+  const add = (o, parent = g) => { o.castShadow = o.receiveShadow = true; parent.add(o); return o; };
+  const box = (w, h, d, m, x, y, z, parent) => { const o = add(new T.Mesh(new T.BoxGeometry(w, h, d), m), parent); o.position.set(x, y, z); return o; };
+  const drum = (r, h, m, x, y, z, seg = 28) => { const o = add(new T.Mesh(new T.CylinderGeometry(r, r*1.03, h, seg), m)); o.position.set(x, y + h/2, z); return o; };
+  const boulder = (x, y, z, s, k, parent = g) => { const o = add(new T.Mesh(rockGeo, rock), parent); o.position.set(x, y, z); o.scale.set(s*(1 + rnd(k, 1)*.5), s*(.55 + rnd(k, 2)*.3), s*(1 + rnd(k, 3)*.4)); o.rotation.y = rnd(k, 4)*6; return o; };
+  // the fort on the west front corner
+  const west = [-1, 1].sort((p, q) => at(H, p*H)[0] - at(H, q*H)[0])[0], [fx, fz] = at(H, west*H); ARENA.fort = {x:ARENA.x + fx, y:ARENA.y + fz}; posts.push({x:ARENA.fort.x, y:ARENA.fort.y, r:FORT_R + 16});
+  // the breakwaters, side by side as pieces about SEG long; pieces on the island are left out
+  const SIDES = [[[H, -H], [H, -GW]], [[H, GW], [H, H]], [[H, H], [-H, H]], [[-H, H], [-H, -H]], [[-H, -H], [H, -H]]];
+  let i = 0;
+  for (const [[u0, v0], [u1, v1]] of SIDES){
+    const len = Math.hypot(u1 - u0, v1 - v0), n = Math.max(1, Math.round(len/SEG)), L = len/n, [tx, tz] = at((u1 - u0)/len, (v1 - v0)/len);
+    for (let k = 0; k < n; k++, i++){
+      const f = (k + .5)/n, [x, z] = at(u0 + (u1 - u0)*f, v0 + (v1 - v0)*f); if (landDist(ARENA.x + x, ARENA.y + z) < -30) continue;
+      pieces.push({x:ARENA.x + x, y:ARENA.y + z, tx, ty:tz, L}); if (Math.hypot(x - fx, z - fz) < FORT_R - 10) continue;
+      const p = new T.Group(); p.position.set(x, 0, z); p.rotation.y = -Math.atan2(tz, tx); g.add(p);
+      box(L + 2, 16, BW + 12, core, 0, -3, 0, p); box(L + 3, 2.4, BW, deck, 0, 6, 0, p);
+      for (let b = 0; b < 6; b++){ const sd = b % 2 ? 1 : -1; boulder((rnd(i, b) - .5)*L, -1 + rnd(i, b + 9)*3, sd*(BW/2 + 7 + rnd(i, b + 5)*8), 9 + rnd(i, b + 7)*7, i*13 + b, p); }
+      if (i % 4 === 2){ const t = torch(); t.position.set(0, 7, BW/2 - 3); t.scale.setScalar(1.2); p.add(t); torches.push(t); }
+      if (i % 6 === 4){ // a banner of the games on a tall pole
+        box(1.8, 46, 1.8, mat('#6e3d1e'), 0, 30, -BW/2 + 4, p); box(1, 22, 20, BANNERS[(i/6 | 0) % 3], 0, 41, -BW/2 + 14, p); }
+      else if (i % 2 === 0) for (let c = 0; c < 3; c++){ const fg = figure(['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f'][(i + c) % 5]); fg.scale.setScalar(1.1); fg.visible = true;
+        fg.position.set((c - 1)*L*.3, DECK_Y, (c % 2 ? 5 : -5)); fg.userData.ph = Math.random()*6; fg.userData.h = DECK_Y + 1.5; fg.userData.noMerge = true; p.add(fg); crowd.push(fg); }
     }
   }
-  // ruins inside the ring: standing columns of different heights, a fallen one and an old arch, close to the walls
+  ARENA.walls = pieces;
+  // a white plinth at each side of the gate, for his feet
+  const plinths = [-1, 1].map(s => { const [x, z] = at(H, s*GW);
+    const pl = box(80, 34, 80, white, x, 5, z); pl.rotation.y = -ARENA.gate; box(88, 4, 88, ledge, x, 23, z).rotation.y = -ARENA.gate;
+    for (let k = 0; k < 5; k++) boulder(x + (rnd(s + 3, k) - .5)*110, -2, z + (rnd(s + 7, k) - .5)*110, 12 + rnd(s, k)*8, 90 + s*7 + k);
+    posts.push({x:ARENA.x + x, y:ARENA.y + z, r:62}); return new T.Vector3(x, 25, z); });
+  // the round fort: three stepped drums with battlements, a lighthouse turret with its fire on top, boulders all round
+  drum(FORT_R, 46, stone, fx, -10, fz, 36); drum(FORT_R + 4, 4, ledge, fx, 34, fz, 36);
+  for (let k = 0; k < 30; k++){ const a = k/30*Math.PI*2; box(9, 9, 9, stone, fx + Math.cos(a)*(FORT_R - 3), 42, fz + Math.sin(a)*(FORT_R - 3)).rotation.y = -a; }
+  drum(64, 36, stone, fx, 36, fz, 30); drum(67, 3, ledge, fx, 70, fz, 30);
+  for (let k = 0; k < 20; k++){ const a = k/20*Math.PI*2; box(8, 8, 8, stone, fx + Math.cos(a)*61, 76, fz + Math.sin(a)*61).rotation.y = -a; }
+  drum(28, 58, stone, fx - 12, 72, fz + 6, 18); drum(31, 3, ledge, fx - 12, 128, fz + 6, 18);
+  for (let k = 0; k < 10; k++){ const a = k/10*Math.PI*2; box(6, 7, 6, stone, fx - 12 + Math.cos(a)*27, 133, fz + 6 + Math.sin(a)*27); }
+  const lx = fx + 26, lz = fz - 22; drum(14, 36, stone, lx, 72, lz, 14); drum(16, 2.5, ledge, lx, 108, lz, 14);
+  const roof = add(new T.Mesh(new T.ConeGeometry(17, 18, 14), ledge)); roof.position.set(lx, 126, lz);
+  { const t = torch(); t.position.set(lx, 98, lz); t.scale.setScalar(1.8); g.add(t); torches.push(t); }
+  for (let k = 0; k < 22; k++){ const a = k/22*Math.PI*2 + rnd(k, 1)*.2, r = FORT_R + 4 + rnd(k, 2)*14; boulder(fx + Math.cos(a)*r, -3, fz + Math.sin(a)*r, 12 + rnd(k, 3)*10, 200 + k); }
+  // the Colossus astride the gate: the Blender model, painted with the game's marble, red cloth and gilded bowl
+  const mid = plinths[0].clone().add(plinths[1]).multiplyScalar(.5);
+  colossus = marbleColossus(GW*2, (c, k) => {
+    // the fire in his bowl: a torch flame without its pole, sized in game units (the model is scaled by k)
+    const fire = torch(), s = 4/k; fire.children.forEach(o => { if (o !== fire.userData.flame) o.visible = false; });
+    fire.scale.setScalar(s); fire.position.set(COLOSSUS_BOWL[0], COLOSSUS_BOWL[1] - .25 - 13.4*s, COLOSSUS_BOWL[2]); c.add(fire); torches.push(fire);
+  });
+  colossus.position.copy(mid); colossus.rotation.y = Math.atan2(ux, uy); // he faces out to sea
+  colossus.userData.noMerge = true; g.add(colossus);
+  // ruins inside: standing columns of different heights, a fallen one and an old arch, close to the walls
   const marble = mat('#eee6d6'), col = new T.CylinderGeometry(6, 7, 1, 10);
-  for (let k=0;k<14;k++){ const a = ARENA.gate + .6 + k/14*(Math.PI*2 - 1.2), r = R - 70 - (k % 3)*26, x = Math.cos(a)*r, z = Math.sin(a)*r;
+  for (let k=0;k<14;k++){ const a = ARENA.gate + .6 + k/14*(Math.PI*2 - 1.2), r = H - 90 - (k % 3)*26, x = Math.cos(a)*r, z = Math.sin(a)*r;
     if (landDist(ARENA.x + x, ARENA.y + z) < 30) continue;
     const hh = k % 4 === 0 ? 8 : 24 + (k*37 % 40);
     const c = new T.Mesh(col, marble); c.scale.y = hh + 10; c.position.set(x, hh/2 - 5, z); c.castShadow = true; g.add(c);
     if (hh > 40){ const cap = new T.Mesh(new T.BoxGeometry(16, 4, 16), marble); cap.position.set(x, hh - 3, z); g.add(cap); }
     if (k % 5 === 2){ const fallen = new T.Mesh(col, marble); fallen.scale.y = 44; fallen.rotation.z = Math.PI/2; fallen.rotation.y = a; fallen.position.set(x + Math.cos(a + 1.6)*30, 2, z + Math.sin(a + 1.6)*30); g.add(fallen); }
   }
-  { const a = ARENA.gate + Math.PI*.75, r = R - 120, x = Math.cos(a)*r, z = Math.sin(a)*r; // an old arch standing in the water
+  { const a = ARENA.gate + Math.PI*.75, r = H - 140, x = Math.cos(a)*r, z = Math.sin(a)*r; // an old arch standing in the water
     if (landDist(ARENA.x + x, ARENA.y + z) > 40){ const arch = new T.Group(); arch.position.set(x, 0, z); arch.rotation.y = -a; g.add(arch);
       for (const s2 of [-1, 1]){ const c = new T.Mesh(col, marble); c.scale.y = 70; c.position.set(0, 30, s2*26); c.castShadow = true; arch.add(c); }
       const lin = new T.Mesh(new T.BoxGeometry(16, 10, 70), marble); lin.position.y = 68; lin.castShadow = true; arch.add(lin);
       const ped = new T.Mesh(new T.CylinderGeometry(.01, 14, 70, 3), marble); ped.rotation.x = Math.PI/2; ped.rotation.y = Math.PI/2; ped.scale.set(1, 1, .5); ped.position.y = 80; arch.add(ped); } }
-  // Spartacus, the champion of the games, in white marble in the middle of the ring
+  // Spartacus, the champion of the games, in white marble in the middle
   { const sp = buildGladiator('marble'); sp.scale.setScalar(1.3); sp.rotation.y = Math.atan2(-Math.sin(ARENA.gate), Math.cos(ARENA.gate)); g.add(sp); }
-  // end towers where the ring runs up onto Rhodes
-  for (let i=0;i<N;i++) if (solid[i] && !solid[(i + 1) % N] && !inGate((i + 1)/N*Math.PI*2 + .001)) tower((i + 1)/N*Math.PI*2, WALL_H + 18, 24);
-  for (let i=0;i<N;i++) if (solid[i] && !solid[(i + N - 1) % N] && !inGate(i/N*Math.PI*2 - .001)) tower(i/N*Math.PI*2, WALL_H + 18, 24);
-  // two gate towers
-  for (const sg of [-1, 1]) tower(ARENA.gate + sg*GATE, WALL_H + 34, 34);
-  // P79: the Colossus moved to the harbor of Rhodes town (harbor.js); the gate keeps its two towers
 }
 // petals thrown from the walls when a round is won
 const PETALS = 260, petalPos = new Float32Array(PETALS*3), petalCol = new Float32Array(PETALS*3); let petals = null, petalT = 0;
@@ -107,13 +124,16 @@ function throwPetals(k = 1){ if (!ARENA) return; if (!petals){ const geo = new T
   const S = G.S; for (let i = 0; i < PETALS; i++){ const a = Math.random()*6.28, r = Math.sqrt(Math.random())*520; petalPos[i*3] = S.x + Math.cos(a)*r; petalPos[i*3 + 1] = 90 + Math.random()*210; petalPos[i*3 + 2] = S.y + Math.sin(a)*r; } petalT = 6*k; petals.visible = true; petals.material.opacity = 1; }
 function updatePetals(dt){ if (!(petalT > 0)) return; petalT -= dt; for (let i = 0; i < PETALS; i++){ const y = petalPos[i*3 + 1] - dt*(26 + i % 17); petalPos[i*3 + 1] = Math.max(1, y); petalPos[i*3] += Math.sin(G.t*1.6 + i)*dt*14; petalPos[i*3 + 2] += Math.cos(G.t*1.3 + i*2)*dt*14; } petals.geometry.attributes.position.needsUpdate = true; petals.material.opacity = Math.min(1, petalT); if (petalT <= 0) petals.visible = false; }
 
-// ---- walls: ships can't pass them except through the gate ----
+// ---- breakwaters, plinths and the fort: ships can't pass them except through the gate ----
 function wallPush(p, rad){
-  const dx = p.x - ARENA.x, dy = p.y - ARENA.y, d = Math.hypot(dx, dy) || 1, gap = rad + WALL_T/2 + 4, a = Math.atan2(dy, dx);
-  if (Math.abs(d - R) > gap || inGate(a) || !solid[pieceAt(a)]) return false;
-  const to = d < R ? R - gap : R + gap; p.x = ARENA.x + dx/d*to; p.y = ARENA.y + dy/d*to; return true;
+  const gap = rad + BW/2 + 14;
+  for (const w of pieces){ const dx = p.x - w.x, dy = p.y - w.y; if (Math.abs(dx) > w.L + gap || Math.abs(dy) > w.L + gap) continue;
+    const along = dx*w.tx + dy*w.ty, across = -dx*w.ty + dy*w.tx; if (Math.abs(along) > w.L/2 + 2 || Math.abs(across) >= gap) continue;
+    const to = (across < 0 ? -gap : gap) - across; p.x -= w.ty*to; p.y += w.tx*to; }
+  for (const o of posts){ const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy) || 1, r = o.r + rad; if (d < r){ p.x = o.x + dx/d*r; p.y = o.y + dy/d*r; } }
 }
-export const inArena = (p, m = 0) => ARENA && Math.hypot(p.x - ARENA.x, p.y - ARENA.y) < R - m;
+const local = p => { const dx = p.x - ARENA.x, dy = p.y - ARENA.y; return [dx*ux + dy*uy, -dx*uy + dy*ux]; };
+export const inArena = (p, m = 0) => { if (!ARENA) return false; const [u, v] = local(p); return Math.abs(u) < H - m && Math.abs(v) < H - m; };
 
 // ---- the games ----
 const A = {round:0, on:false, foes:[]};
@@ -121,7 +141,7 @@ const btn = document.getElementById('arenaBtn');
 // Champions sail out from both sides of the ring, wherever there's open water.
 function spawnSpot(i, n){
   const a = ARENA.gate + (i % 2 ? 1 : -1)*(Math.PI/2 + Math.floor(i/2)*.35);
-  let r = R*.6; while (r > 80 && landDist(ARENA.x + Math.cos(a)*r, ARENA.y + Math.sin(a)*r) < 110) r -= 40;
+  let r = H*.6; while (r > 80 && landDist(ARENA.x + Math.cos(a)*r, ARENA.y + Math.sin(a)*r) < 110) r -= 40;
   return {x:ARENA.x + Math.cos(a)*r, y:ARENA.y + Math.sin(a)*r};
 }
 function startRound(){
@@ -138,12 +158,15 @@ btn && btn.addEventListener('click', () => { if (!A.on) startRound(); });
 
 export function updateArena(dt){
   if (!ARENA) return;
-  const S = G.S, near = Math.hypot(S.x - ARENA.x, S.y - ARENA.y) < R + 900;
-  if (near){ wallPush(S, 14); for (const e of enemies) if (!e.dead && Math.abs(e.x - ARENA.x) < R + 200 && Math.abs(e.y - ARENA.y) < R + 200) wallPush(e, e.spec.beam*.5); }
+  const S = G.S, near = Math.hypot(S.x - ARENA.x, S.y - ARENA.y) < H*1.42 + 900;
+  if (near){ wallPush(S, 14); for (const e of enemies) if (!e.dead && Math.abs(e.x - ARENA.x) < H*1.42 + 200 && Math.abs(e.y - ARENA.y) < H*1.42 + 200) wallPush(e, e.spec.beam*.5); }
+  // the Colossus fades while you sail between and behind his legs, so he never hides your ship
+  const [gx, gy] = at(H, 0), under = Math.hypot(S.x - ARENA.x - gx, S.y - ARENA.y - gy) < 330, ko = under ? .3 : 1;
+  for (const m of colossus ? colossus.userData.mats : []){ m.opacity += (ko - m.opacity)*Math.min(1, dt*3); m.depthWrite = m.opacity > .9; }
   const inside = inArena(S, 30);
   if (near && !merged && arenaG){ merged = true; mergeStatic(arenaG); }
   A.joy = Math.max(0, (A.joy || 0) - dt); updatePetals(dt);
-  if (near) for (const f of crowd){ const up = A.joy > 0 ? 14 : A.on ? 6 : inside ? 1.5 : 0; f.position.y = (f.userData.h || WALL_H) - 1.5 + (up ? Math.abs(Math.sin(G.t*(A.joy > 0 ? 8 : 6) + f.userData.ph))*up : 0); }
+  if (near) for (const f of crowd){ const up = A.joy > 0 ? 14 : A.on ? 6 : inside ? 1.5 : 0; f.position.y = f.userData.h - 1.5 + (up ? Math.abs(Math.sin(G.t*(A.joy > 0 ? 8 : 6) + f.userData.ph))*up : 0); }
   if (A.on){
     if (G.sinking){ endGames('Defeated in the arena'); return; }
     if (!inArena(S, -60)){ endGames('You fled. The crowd boos.'); return; }
@@ -161,4 +184,4 @@ export function updateArena(dt){
   const bar = document.getElementById('arenaBar'); if (bar){ bar.hidden = !A.on; if (A.on){ const left = A.foes.filter(e => !e.dead).length, key = gamesWon() + '|' + A.round + '|' + left + '|' + A.foes.length; if (bar.dataset.k !== key){ bar.dataset.k = key; bar.innerHTML = `<b class="mt">${A.round >= FINAL ? 'Spartacus' : gamesName(gamesWon()) + ' games'}</b><span class="arnd">${A.round >= FINAL ? 'Final' : `${A.round + 1} of ${TOTAL}`}</span><span class="apips">${A.foes.map(e => `<i class="${e.dead ? 'off' : ''}"></i>`).join('')}</span>`; } } }
 }
 // Test / builder: jump to the arena gate.
-document.addEventListener('toarena', () => { if (!ARENA) return; const S = G.S; G.dock = null; S.x = ARENA.x + Math.cos(ARENA.gate)*(R + (window.__TEST && __TEST.get("adist") ? +__TEST.get("adist") : 300)); S.y = ARENA.y + Math.sin(ARENA.gate)*(R + (window.__TEST && __TEST.get("adist") ? +__TEST.get("adist") : 300)); S.a = ARENA.gate + Math.PI; G.cam = {x:S.x, y:S.y}; });
+document.addEventListener('toarena', () => { if (!ARENA) return; const S = G.S; G.dock = null; S.x = ARENA.x + Math.cos(ARENA.gate)*(H + (window.__TEST && __TEST.get("adist") ? +__TEST.get("adist") : 300)); S.y = ARENA.y + Math.sin(ARENA.gate)*(H + (window.__TEST && __TEST.get("adist") ? +__TEST.get("adist") : 300)); S.a = ARENA.gate + Math.PI; G.cam = {x:S.x, y:S.y}; });

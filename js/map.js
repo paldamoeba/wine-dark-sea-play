@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=4ae49e1';
-import {OMENS} from './config.js?v=4ae49e1';
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=4ae49e1';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=4ae49e1';
-import {GOODS} from './config.js?v=4ae49e1';
-import {sfx} from './audio.js?v=4ae49e1';
-import {playVideo, toast} from './ui.js?v=4ae49e1';
-import {ARENA} from './arena.js?v=4ae49e1';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=4ae49e1';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=4ae49e1';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=4ae49e1';
-import {G, ship, isExplored, reveal, save} from './state.js?v=4ae49e1';
+import {omen} from './omens.js?v=2a982a2';
+import {OMENS} from './config.js?v=2a982a2';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=2a982a2';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=2a982a2';
+import {GOODS} from './config.js?v=2a982a2';
+import {sfx} from './audio.js?v=2a982a2';
+import {playVideo, toast} from './ui.js?v=2a982a2';
+import {ARENA} from './arena.js?v=2a982a2';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=2a982a2';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=2a982a2';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=2a982a2';
+import {G, ship, isExplored, reveal, save} from './state.js?v=2a982a2';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -202,10 +202,11 @@ function draw(){
   if (G.S.treasure && F === 'all'){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); badge(x, y, 17, 'x', '#d9a23a', {k:1.3}); }
   for (const r of G.S.reqs || []){ const is = (r.t === 'visit' || r.t === 'deliver') && ISLANDS.find(i => i.name === r.to); if (!is) continue;
     const [x, y] = toScreen(is.x, is.y); c.save(); c.setLineDash([6, 6]); c.strokeStyle = COURSE; c.lineWidth = 2; c.beginPath(); c.arc(x, y, Math.max(16, is.r*view.z + 12), 0, Math.PI*2); c.stroke(); c.restore(); }
-  // the Arena of Rhodes: a stone ring with the gate marked
-  if (ARENA && isExplored(ARENA.x, ARENA.y)){ const [ax, ay] = toScreen(ARENA.x, ARENA.y), r = Math.max(5, ARENA.R*view.z);
-    c.strokeStyle = '#cbbd9a'; c.lineWidth = Math.max(2, 22*view.z); c.beginPath(); c.arc(ax, ay, r, ARENA.gate + ARENA.half, ARENA.gate - ARENA.half + Math.PI*2); c.stroke();
-    label('Arena of Rhodes', ax, ay + r + 16, '400 14px Marcellus, Georgia, serif', INK); }
+  // the Arena of Rhodes: its breakwaters, with the gate open in the front one
+  if (ARENA && isExplored(ARENA.x, ARENA.y)){ const [ax, ay] = toScreen(ARENA.x, ARENA.y);
+    c.strokeStyle = '#cbbd9a'; c.lineWidth = Math.max(2, 22*view.z); c.lineCap = 'butt'; c.beginPath();
+    for (const w of ARENA.walls || []){ const [x0, y0] = toScreen(w.x - w.tx*w.L/2, w.y - w.ty*w.L/2), [x1, y1] = toScreen(w.x + w.tx*w.L/2, w.y + w.ty*w.L/2); c.moveTo(x0, y0); c.lineTo(x1, y1); }
+    c.stroke(); label('Arena of Rhodes', ax, ay + Math.max(5, ARENA.R*1.45*view.z) + 16, '400 14px Marcellus, Georgia, serif', INK); }
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
   for (const e of enemies){ if (!e.named || e.dead || !showShips) continue; const on = G.S.pin && planReward(e) === G.S.pin; if (!on && !isExplored(e.home.x, e.home.y)) continue; if (on && !isExplored(e.home.x, e.home.y)) reveal(e.home.x, e.home.y, 500);
     const [nx, ny] = toScreen(e.home.x, e.home.y); badge(nx, ny, 15, 'named', '#7a2426', {k:1.3}); levelTag(nx, ny - 22, siteLevel(e)); label(e.named.name, nx, ny + 28, '700 12px Nunito, sans-serif', '#5a1e14'); }

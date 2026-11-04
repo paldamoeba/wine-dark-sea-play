@@ -1,25 +1,25 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=4ae49e1';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=4ae49e1';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=4ae49e1';
-import {scene, screenToSea, setLair} from './scene.js?v=4ae49e1';
-import {wreckModel} from './models.js?v=4ae49e1';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=4ae49e1';
-import {mergeStatic, freeModel} from './merge.js?v=4ae49e1';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=4ae49e1';
-import {award} from './trophies.js?v=4ae49e1';
-import {makeFire, updateFire, burn} from './fire.js?v=4ae49e1';
-import {blessing, fighters, hasSail} from './crew.js?v=4ae49e1';
-import {progress, goal} from './quests.js?v=4ae49e1';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=4ae49e1';
-import {rollColor, unlockColor, colorName} from './colors.js?v=4ae49e1';
-import {toast} from './ui.js?v=4ae49e1';
-import {sink, rowNow, ROW} from './player.js?v=4ae49e1';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=4ae49e1';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=4ae49e1';
-import {sfx} from './audio.js?v=4ae49e1';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=2a982a2';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=2a982a2';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=2a982a2';
+import {scene, screenToSea, setLair} from './scene.js?v=2a982a2';
+import {wreckModel} from './models.js?v=2a982a2';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=2a982a2';
+import {mergeStatic, freeModel} from './merge.js?v=2a982a2';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=2a982a2';
+import {award} from './trophies.js?v=2a982a2';
+import {makeFire, updateFire, burn} from './fire.js?v=2a982a2';
+import {blessing, fighters, hasSail} from './crew.js?v=2a982a2';
+import {progress, goal} from './quests.js?v=2a982a2';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=2a982a2';
+import {rollColor, unlockColor, colorName} from './colors.js?v=2a982a2';
+import {toast} from './ui.js?v=2a982a2';
+import {sink, rowNow, ROW} from './player.js?v=2a982a2';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=2a982a2';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=2a982a2';
+import {sfx} from './audio.js?v=2a982a2';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);

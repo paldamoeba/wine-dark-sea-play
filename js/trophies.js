@@ -1,5 +1,5 @@
 // P77: trophies. Each one lives in the save, and in the Google Play app it also unlocks the matching Play Games achievement (set PLAY_IDS once they exist in Play Console).
-import {G, save, shipDeed} from './state.js?v=4ae49e1';
+import {G, save, shipDeed} from './state.js?v=2a982a2';
 export const TROPHIES = {
   bronze:{name:'Bronze of Rhodes', how:'Win the Bronze games in the arena', c:['#e2a36a', '#9a5b28']},
   silver:{name:'Silver of Rhodes', how:'Win the Silver games in the arena', c:['#f1f4f6', '#8f9aa3']},

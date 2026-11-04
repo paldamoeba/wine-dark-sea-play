@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=4ae49e1';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=4ae49e1';
-import {G} from './state.js?v=4ae49e1';
-import {TOD, updateDayNight} from './daynight.js?v=4ae49e1';
-import {showGrass} from './grass.js?v=4ae49e1';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial, setSeaKind} from './water.js?v=4ae49e1';
+import {QUALITY, SHIPS} from './config.js?v=2a982a2';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=2a982a2';
+import {G} from './state.js?v=2a982a2';
+import {TOD, updateDayNight} from './daynight.js?v=2a982a2';
+import {showGrass} from './grass.js?v=2a982a2';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial, setSeaKind} from './water.js?v=2a982a2';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
