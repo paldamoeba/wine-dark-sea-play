@@ -1,18 +1,18 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=5294a34';
-import {SPECS} from './ships.js?v=5294a34';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=5294a34';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=5294a34';
-import {W} from './weather.js?v=5294a34';
-import {steering} from './input.js?v=5294a34';
-import {toast, showZone} from './ui.js?v=5294a34';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=5294a34';
-import {LAIR_ROCKS} from './lair.js?v=5294a34';
-import {startFish, stopFish} from './fishing.js?v=5294a34';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=5294a34';
-import {progress} from './quests.js?v=5294a34';
-import {startSink} from './sinking.js?v=5294a34';
-import {sfx} from './audio.js?v=5294a34';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=ae4eab7';
+import {SPECS} from './ships.js?v=ae4eab7';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=ae4eab7';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=ae4eab7';
+import {W} from './weather.js?v=ae4eab7';
+import {steering} from './input.js?v=ae4eab7';
+import {toast, showZone} from './ui.js?v=ae4eab7';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=ae4eab7';
+import {LAIR_ROCKS} from './lair.js?v=ae4eab7';
+import {startFish, stopFish} from './fishing.js?v=ae4eab7';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=ae4eab7';
+import {progress} from './quests.js?v=ae4eab7';
+import {startSink} from './sinking.js?v=ae4eab7';
+import {sfx} from './audio.js?v=ae4eab7';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -23,7 +23,7 @@ export function sink(){
 const SINK_SECONDS = 4.5;
 function washUp(){
   const S = G.S, name = ship().name.toLowerCase(); G.sinking = null;
-  for (const k in S.cargo) S.cargo[k] = 0; S.bless = 0; S.hull = Math.round(ship().hull*COMBAT.washUpHull); S.x = START.x; S.y = START.y; S.a = START.a;
+  for (const k in S.cargo) S.cargo[k] = 0; S.bless = 0; S.omen = null; S.hull = Math.round(ship().hull*COMBAT.washUpHull); S.x = START.x; S.y = START.y; S.a = START.a;
   G.v = 0; G.dest = null; G.flash = 0; G.cam = {x:S.x, y:S.y}; ringArmed = false; moorAt(HARBORS[0]); // towed in to the Kallisto pier
   toast('Sunk! Towed home to Kallisto', 4.5); save();
 }

@@ -1,11 +1,11 @@
 // P65: the main menu: a grid of big tiles over the live sea. Three voyages side by side, each with its own ship, money and chart.
 // Starting another voyage saves this one and restarts the page on that slot, so the whole world loads clean.
-import {SHIPS} from './config.js?v=5294a34';
-import {G, SLOTS, readSlot, wipeSlot, setActiveSlot, save} from './state.js?v=5294a34';
-import {IC, shipImg} from './menus.js?v=5294a34';
-import {openSheet, toast, sizeUI} from './ui.js?v=5294a34';
-import {sfx} from './audio.js?v=5294a34';
-import {PUBLIC} from './state.js?v=5294a34';
+import {SHIPS} from './config.js?v=ae4eab7';
+import {G, SLOTS, readSlot, wipeSlot, setActiveSlot, save} from './state.js?v=ae4eab7';
+import {IC, shipImg, tabs} from './menus.js?v=ae4eab7';
+import {openSheet, toast, sizeUI} from './ui.js?v=ae4eab7';
+import {sfx} from './audio.js?v=ae4eab7';
+import {PUBLIC, APP} from './state.js?v=ae4eab7';
 
 const el = document.getElementById('mainMenu');
 export const GO_KEY = 'wine-dark-sea-go';
@@ -27,7 +27,7 @@ function render(){
       <button class="mtile" data-m="settings">${IC.gear}<b>Settings</b></button>
       <button class="mtile" data-m="tut">${IC.book}<b>How to play</b></button>
       <button class="mtile" data-m="log" ${o && picked === G.slot ? '' : 'disabled'}>${IC.star}<b>Log</b></button>
-      <a class="mtile" href="${PUBLIC ? 'builds/' : 'showroom.html'}" target="_blank" rel="noopener">${IC.ship}<b>${PUBLIC ? 'Old builds' : 'Showroom'}</b></a>
+      ${APP ? `<button class="mtile" data-m="ranks">${IC.ship}<b>Ranks</b></button>` : `<a class="mtile" href="${PUBLIC ? 'builds/' : 'showroom.html'}" target="_blank" rel="noopener">${IC.ship}<b>${PUBLIC ? 'Old builds' : 'Showroom'}</b></a>`}
     </div>
     ${o ? `<button class="merase" data-m="erase">${armed ? `Tap again to erase Voyage ${picked}` : `Erase Voyage ${picked}`}</button>` : ''}
   </div>`;
@@ -52,6 +52,7 @@ el.addEventListener('click', e => {
     if (picked === G.slot){ setActiveSlot(picked); location.reload(); return; } // the loaded voyage is gone: start clean, back on this menu
     toast('Voyage erased', 2); render();
   }
+  if (m === 'ranks'){ el.hidden = true; tabs.fleet = 'ranks'; tabs.rec = null; openSheet('fleet'); }
   if (m === 'settings' || m === 'tut' || m === 'log'){ el.hidden = true; openSheet(m === 'tut' ? 'tut' : m === 'log' ? 'log' : 'settings'); }
 });
 // back from a menu page opened from here

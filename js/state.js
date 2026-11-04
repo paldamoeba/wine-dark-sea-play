@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=5294a34';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=5294a34';
-import {sfx} from './audio.js?v=5294a34';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=ae4eab7';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=ae4eab7';
+import {sfx} from './audio.js?v=ae4eab7';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -79,7 +79,7 @@ export function unload(){ const S = G.S, m = k => { const n = Math.min(S.cargo[k
   return [m('wood'), m('bronze'), m('linen'), m('iron')]; }
 // P65: fun numbers for the voyage log in Settings
 // P73: what belongs to the ship goes on her own record too (records.js)
-const SHIP_STATS = new Set(['sunk', 'pirates', 'navy', 'merchants', 'forts', 'camps', 'sunkMe', 'fish', 'wood', 'iron', 'treasure', 'bottles', 'whales', 'kraken', 'dist', 'earned', 'time']);
+const SHIP_STATS = new Set(['sunk', 'pirates', 'navy', 'merchants', 'forts', 'camps', 'sunkMe', 'fish', 'wood', 'iron', 'treasure', 'bottles', 'whales', 'kraken', 'dist', 'earned', 'time', 'omens']);
 const shipRecord = () => { const r = G.S.shipStats || (G.S.shipStats = {}); return r[G.S.tier] || (r[G.S.tier] = {}); };
 export function stat(k, n = 1){ const s = G.S.stats || (G.S.stats = {}); s[k] = (s[k] || 0) + n; if (SHIP_STATS.has(k)){ const r = shipRecord(); r[k] = (r[k] || 0) + n; } }
 export function shipTime(dt){ const r = shipRecord(); r.time = (r.time || 0) + dt; }
@@ -91,6 +91,9 @@ export function newSave(){
 }
 
 function read(key){ try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; } }
+// P78: a voyage is the one thing a player must never lose. Each slot also keeps a copy from a few minutes ago; if the main save can't be read, the copy is used.
+const BAK = '-backup'; let lastBak = 0;
+const readSave = key => { const main = migrate(read(key)); return main || migrate(read(key + BAK)); };
 // ---- save slots (P65): three voyages side by side. Slot 1 keeps the old save's name, so nobody loses their game. ----
 export const SLOTS = [1, 2, 3];
 const ACTIVE_KEY = SAVE_KEY + '-active';
@@ -98,13 +101,14 @@ const slotKey = n => n === 1 ? SAVE_KEY : `${SAVE_KEY}-slot${n}`;
 export function activeSlot(){ try { const n = +localStorage.getItem(ACTIVE_KEY); return SLOTS.includes(n) ? n : 1; } catch(e){ return 1; } }
 export function setActiveSlot(n){ try { localStorage.setItem(ACTIVE_KEY, String(n)); } catch(e){} }
 // what's in a slot, for the main menu (null if it's empty)
-export function readSlot(n){ if (n === 1) for (const k of [SAVE_KEY, ...OLD_SAVE_KEYS]){ const o = migrate(read(k)); if (o) return o; } return n === 1 ? null : migrate(read(slotKey(n))); }
-export function wipeSlot(n){ try { localStorage.removeItem(slotKey(n)); if (n === 1) OLD_SAVE_KEYS.forEach(k => localStorage.removeItem(k)); } catch(e){} }
+export function readSlot(n){ if (n === 1) for (const k of [SAVE_KEY, ...OLD_SAVE_KEYS]){ const o = readSave(k); if (o) return o; } return n === 1 ? null : readSave(slotKey(n)); }
+export function wipeSlot(n){ try { localStorage.removeItem(slotKey(n)); localStorage.removeItem(slotKey(n) + BAK); if (n === 1) OLD_SAVE_KEYS.forEach(k => localStorage.removeItem(k)); } catch(e){} }
 function write(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch(e){ return false; } }
 
 // Bring an older save up to the current shape.
 function migrate(o){
   if (!o || typeof o !== 'object' || !o.cargo) return null;
+  for (const k of ['x', 'y', 'a', 'hull', 'gold']) if (k in o && !Number.isFinite(o[k])) delete o[k]; // anything broken falls back to a fresh value
   if (!o.version) o.version = 2;               // prototype 2 saves had no version
   if (o.version < 3){ o.playSeconds = 0; o.world = null; o.version = 3; }
   // P73: ships keep their own records. A voyage with just one ship so far: all its numbers are hers. With more, nobody knows which ship did what, so they start clean.
@@ -160,7 +164,11 @@ export function save(){
     owners: ISLANDS.map(i => i.city || null),
   };
   G.S.explored = encodeExplored();
-  write(slotKey(G.slot || 1), G.S);
+  // never save broken numbers: they would stop the game every time it loads
+  for (const k of ['x', 'y', 'a', 'hull', 'gold']) if (!Number.isFinite(G.S[k])) G.S[k] = k === 'x' ? START.x : k === 'y' ? START.y : k === 'a' ? START.a : k === 'hull' ? 1 : 0;
+  const key = slotKey(G.slot || 1), now = Date.now();
+  if (now - lastBak > 180000){ lastBak = now; try { const cur = localStorage.getItem(key); if (cur && read(key)) localStorage.setItem(key + BAK, cur); } catch(e){} }
+  if (!write(key, G.S)){ try { localStorage.removeItem(key + BAK); } catch(e){} if (!write(key, G.S)) G.saveFailed = true; else G.saveFailed = false; } else G.saveFailed = false;
 }
 
 export function resetSave(){
@@ -171,7 +179,9 @@ export function resetSave(){
   save();
 }
 
-export const PUBLIC = /github\.io$/.test(location.hostname); // the public play link
+export const APP = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()); // the phone app
+export const RELEASE = !!window.__RELEASE; // the store build: no builder tools at all
+export const PUBLIC = (APP && RELEASE) || /github\.io$/.test(location.hostname); // the public play link or the store app. The test app keeps the Builder tab.
 export function loadSettings(){
   const saved = read(SETTINGS_KEY) || {};
   const {dev, ...rest} = saved;

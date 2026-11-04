@@ -1,8 +1,8 @@
 // The upgrade board: 10 levels each of planking, oars, crew quarters and arrowheads, and a 30-level ram (wood, bronze, gold).
-import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES, POWER, COMBAT} from './config.js?v=5294a34';
-import {blessing, fighters, catchAvg} from './crew.js?v=5294a34';
-import {G, lvl, ship, pay, rank} from './state.js?v=5294a34';
-import {SPECS, sailSizes, crewLayout} from './ships.js?v=5294a34';
+import {UPGRADES, UPGRADE_MAX, SHIP_K, RAM, FIRE_ARROWS, SHIPS, ABILITIES, POWER, COMBAT} from './config.js?v=ae4eab7';
+import {blessing, fighters, catchAvg} from './crew.js?v=ae4eab7';
+import {G, lvl, ship, pay, rank} from './state.js?v=ae4eab7';
+import {SPECS, sailSizes, crewLayout} from './ships.js?v=ae4eab7';
 
 export const ramMax = () => RAM.lv*RAM.mats.length;
 // The upgrades this ship can take: crew quarters from the fishing boat on. Sails: 5 levels per sail the ship can carry
@@ -13,7 +13,7 @@ export const powerKeys = () => Object.keys(UPGRADES).filter(k => UPGRADES[k].pow
 // How good a power is at level l: how often it can be used, how fast it flies, how tight it lands, how far it bends onto a ship.
 // Arrow rain starts usable at level 0; chain shot and the catapult are bought first, so their first level is the plain one.
 const pl = (k, l) => k === 'shower' ? l : Math.max(0, l - 1);
-export const powerCd = (k, l = lvl(k)) => ABILITIES[k === 'shower' ? 'shower' : k].cd*(1 - POWER.cd*pl(k, l));
+export const powerCd = (k, l = lvl(k)) => ABILITIES[k === 'shower' ? 'shower' : k].cd*(1 - POWER.cd*pl(k, l))*(blessing().cd || 1);
 export const powerFlight = (k, l = lvl(k)) => ABILITIES[k].flight*(1 - POWER.flight*pl(k, l));
 export const powerR = (k, l = lvl(k)) => k === 'shower' ? ABILITIES.shower.r*(1 - POWER.spread*l) : ABILITIES[k].r*(1 + POWER.blast*pl(k, l));
 export const powerSeek = (k, l = lvl(k)) => POWER.seek0 + POWER.seek*pl(k, l);

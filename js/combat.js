@@ -1,25 +1,25 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=5294a34';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=5294a34';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=5294a34';
-import {scene, screenToSea, setLair} from './scene.js?v=5294a34';
-import {wreckModel} from './models.js?v=5294a34';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=5294a34';
-import {mergeStatic, freeModel} from './merge.js?v=5294a34';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=5294a34';
-import {award} from './trophies.js?v=5294a34';
-import {makeFire, updateFire, burn} from './fire.js?v=5294a34';
-import {blessing, fighters, hasSail} from './crew.js?v=5294a34';
-import {progress, goal} from './quests.js?v=5294a34';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=5294a34';
-import {rollColor, unlockColor, colorName} from './colors.js?v=5294a34';
-import {toast} from './ui.js?v=5294a34';
-import {sink, rowNow, ROW} from './player.js?v=5294a34';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=5294a34';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=5294a34';
-import {sfx} from './audio.js?v=5294a34';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=ae4eab7';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=ae4eab7';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=ae4eab7';
+import {scene, screenToSea, setLair} from './scene.js?v=ae4eab7';
+import {wreckModel} from './models.js?v=ae4eab7';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=ae4eab7';
+import {mergeStatic, freeModel} from './merge.js?v=ae4eab7';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=ae4eab7';
+import {award} from './trophies.js?v=ae4eab7';
+import {makeFire, updateFire, burn} from './fire.js?v=ae4eab7';
+import {blessing, fighters, hasSail} from './crew.js?v=ae4eab7';
+import {progress, goal} from './quests.js?v=ae4eab7';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=ae4eab7';
+import {rollColor, unlockColor, colorName} from './colors.js?v=ae4eab7';
+import {toast} from './ui.js?v=ae4eab7';
+import {sink, rowNow, ROW} from './player.js?v=ae4eab7';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=ae4eab7';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=ae4eab7';
+import {sfx} from './audio.js?v=ae4eab7';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -57,7 +57,7 @@ const fortSpec = (owner, lv = 2) => ({name:fortName(owner), side:'fort', city:ow
 const siteFields = t => ({x:t.x, y:t.y, a:t.a, sea:t.sea, shore:t.shore, site:t, baseY:t.ground, reach:Math.max(0, t.depth - 60)});
 // P64: a fortress's level comes from how far out it stands (the nearest third level 1, the farthest level 3); Thasos is level 3, Kos level 2
 const FORT_ISLES = ISLANDS.filter(is => !FORTS.pirates.includes(is.name) && is.city && !is.capital).sort((a, b) => Math.hypot(a.x - HOME.x, a.y - HOME.y) - Math.hypot(b.x - HOME.x, b.y - HOME.y));
-const fortLv = is => is.name === 'Thasos' ? 3 : is.name === 'Kos' ? 2 : 1 + Math.min(2, Math.floor(FORT_ISLES.indexOf(is)/Math.max(1, FORT_ISLES.length/3)));
+const fortLv = is => is.name === 'Thasos' ? 3 : is.name === 'Kos' ? 1 : 1 + Math.min(2, Math.floor(FORT_ISLES.indexOf(is)/Math.max(1, FORT_ISLES.length/3)));
 for (const is of ISLANDS){
   const owner = FORTS.pirates.includes(is.name) ? 'pirate' : is.city && !is.capital ? is.city : null; if (!owner) continue;
   const site = is.site || siteFor(is, false); if (!site) continue;
@@ -699,7 +699,7 @@ function collide(){
 function shove(e, nx, ny, v){ e.shx = (e.shx || 0) + nx*v; e.shy = (e.shy || 0) + ny*v; e.spin = (Math.random() < .5 ? -1 : 1)*Math.min(.9, v/150); e.heel = Math.max(-.3, Math.min(.3, (e.heel || 0) + (Math.random() - .5)*.4)); }
 // A head-on hit. With a ram it hurts them a lot and you a little; without one, both ships take the same small knock.
 function ramHit(e, k){
-  const S = G.S, r = ramDmg(), dmg = Math.max(1, Math.round((r || RAM.bump)*k)), self = r ? Math.round(1 + dmg*.04) : dmg;
+  const S = G.S, r = ramDmg()*(blessing().ram || 1), dmg = Math.max(1, Math.round((r || RAM.bump)*k)), self = r ? Math.round(1 + dmg*.04) : dmg;
   e.hull -= dmg; e.hitT = .3; e.kick = .18; sfx('ram', e);
   S.hull -= self; G.hurt = 1; G.kick = Math.min(.25, (G.kick || 0) + .15); G.shake = 1;
   G.pops = [...(G.pops || []), {t:G.t, txt:`-${dmg}`, x:e.x, y:e.y, c:'#f2a093'}];

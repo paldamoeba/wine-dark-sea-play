@@ -75,6 +75,15 @@ export const GOD_BLESSINGS = {
   hermes:  {desc:'Fish sell for 15% more', price:1.15},
 };
 
+// P78: blessings found at sea (omens.js). Each lasts OMEN.seconds; they are stronger than the flag blessings because they are short.
+export const OMENS = {
+  ares:{name:'Ares', color:'#ff4a30', text:'arrows and ram hit 30% harder', dmg:1.3, ram:1.3},
+  aphrodite:{name:'Aphrodite', color:'#ff8cc4', text:'sea foam mends your hull', regen:.012},
+  apollo:{name:'Apollo', color:'#ffc53a', text:'powers recharge 30% faster', cd:.7},
+  artemis:{name:'Artemis', color:'#a4e87a', text:'a bigger green zone when fishing', green:1.4},
+  hermes:{name:'Hermes', color:'#62d6ff', text:'fish sell for 25% more', price:1.25},
+};
+export const OMEN = {seconds:150, life:240, reach:75, first:[70, 130], every:[140, 280], dist:[700, 1700]};
 // First voyages: shown one at a time under the top bar. t = what counts, n = how many, gold = reward.
 export const GOALS = [
   {t:'catch', kind:'sardine', n:3, gold:5, text:'Catch 3 sardines on glinting water'},
@@ -174,7 +183,7 @@ export const CAMPS = [
   // P67: ships = how many guard the camp (the mothership and smaller boats around it)
   {isle:'Tinos',   lv:2, ships:2, hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[50, 70], wood:70,  bronze:8,  plans:2},
   {isle:'Syros',   lv:2, ships:2, plans:2, hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[80, 110], wood:110, bronze:14},
-  {isle:'Ios',     lv:3, ships:3, plans:3, hull:380, fighters:3, dmg:2.2, sight:520, mother:'galley', motherHull:260, gold:[110, 150], wood:120, bronze:20},
+  {isle:'Ios',     lv:3, ships:2, plans:3, hull:340, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:260, gold:[110, 150], wood:120, bronze:20},
 ];
 export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme's plans (so does any city fortress you knock down)
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
@@ -188,7 +197,7 @@ export const NAMED = [
   {name:'Lysandra Red-Sail', near:'Samos', kind:'skiff', plans:5, hull:220, fighters:5, dmg:2.4, gold:[120, 170], paint:'raider', sail:'blood'},
   {name:'Hermon the Smuggler', near:'Astypalaia', kind:'galley', plans:9, hull:380, fighters:6, dmg:3.2, gold:[220, 320], paint:'white', sail:'purple'},
   {name:'Black Lykos', near:'Kea', kind:'galley', plans:6, hull:520, fighters:7, dmg:3.6, gold:[320, 460], paint:'black', sail:'blood'},
-  {name:'Nikandros the Scourge', near:'Skyros', kind:'pirateQ', plans:3, hull:1000, fighters:9, dmg:4.6, gold:[600, 800], paint:'black', sail:'purple'},
+  {name:'Nikandros the Scourge', near:'Skyros', kind:'pirateQ', plans:3, hull:640, fighters:8, dmg:3.2, gold:[600, 800], paint:'black', sail:'purple'},
   {name:'Aristaios the Ghost', near:'Skopelos', kind:'pirateQ', plans:7, hull:1800, fighters:10, dmg:5.5, gold:[900, 1300], paint:'king', sail:'plain'},
 ];
 export const VIDEO_SKIP = 600; // each video takes 10 minutes off studying or building (a placeholder until real ads)
@@ -196,7 +205,7 @@ export const VIDEO_SKIP = 600; // each video takes 10 minutes off studying or bu
 export const NEUTRAL_R = 8000; // P52: the fortresses stand far out
 export const FORTS = {pirates:['Thasos', 'Kos'], // every city island except the capitals has a fortress too
   hull:{city:900, pirate:700}, fighters:7, dmg:2.5, range:560, every:3.4, gold:[320, 520], wood:150, bronze:25, rebuild:600, guards:2,
-  stoneEvery:5.2, stoneRange:950, stoneFlight:2.6, stoneDmg:14, stoneHit:58, heal:4, healAfter:30};
+  stoneEvery:5.2, stoneRange:950, stoneFlight:2.6, stoneDmg:14, stoneHit:58, heal:2.5, healAfter:120};
 
 // Trade goods: each harbor makes one cheaply and wants another. Buy low, sail, sell high.
 // price at a harbor = base × (made here .6 · wanted here 1.45 · otherwise 1). You sell for 85% of the price.

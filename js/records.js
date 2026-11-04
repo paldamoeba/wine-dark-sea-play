@@ -1,9 +1,9 @@
 // P73: every ship keeps her own record (S.shipStats[tier], written by stat() in state.js). This page ranks all your ships,
 // from all three voyages, and shows what one ship has done. Only this device's saves: there is no server behind it.
-import {SHIPS, NAMED} from './config.js?v=5294a34';
-import {G, SLOTS, readSlot} from './state.js?v=5294a34';
-import {IC, card, shipImg, tabs} from './menus.js?v=5294a34';
-import {hasOnline, me, state as net, load as netLoad, setShips, push as netPush} from './online.js?v=5294a34';
+import {SHIPS, NAMED} from './config.js?v=ae4eab7';
+import {G, SLOTS, readSlot} from './state.js?v=ae4eab7';
+import {IC, card, shipImg, tabs} from './menus.js?v=ae4eab7';
+import {hasOnline, me, state as net, load as netLoad, setShips, push as netPush} from './online.js?v=ae4eab7';
 
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const n = v => Math.floor(v || 0).toLocaleString();
@@ -26,6 +26,7 @@ const DEEDS = [
   ['Far sailor', 'Sail 10,000 stadia', r => r.dist >= 10000, () => IC.world],
   ['Rich haul', 'Earn 10,000 drachmae', r => r.earned >= 10000, () => IC.coin],
   ['Never sunk', 'Sail one hour without sinking', r => r.time >= 3600 && !r.sunkMe, () => IC.hull],
+  ['Touched by the gods', 'Sail through 5 gods\' fires', r => r.omens >= 5, () => IC.bless],
   ['Bronze of Rhodes', 'Win the Bronze games', r => (r.deeds || []).includes('Bronze of Rhodes'), () => IC.star],
   ['Silver of Rhodes', 'Win the Silver games', r => (r.deeds || []).includes('Silver of Rhodes'), () => IC.star],
   ['Champion of Rhodes', 'Win the Gold games', r => (r.deeds || []).includes('Champion of Rhodes'), () => IC.star],

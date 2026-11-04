@@ -1,14 +1,16 @@
 // Your crew. Each ship has its own crew (P49): it comes with a few men (SHIPS men[0]) and the Crew upgrade at the shipyard
 // fills its benches up to men[1]. You see every one of them aboard: rowers on the oars, archers, a helmsman.
 // Once you own a second ship you can also name your crew and fly a god's flag (each god gives a blessing).
-import {GOD_BLESSINGS, SHIPS} from './config.js?v=5294a34';
-import {G} from './state.js?v=5294a34';
-import {SPECS, crewLayout} from './ships.js?v=5294a34';
-import {crewPer} from './upgrades.js?v=5294a34';
+import {GOD_BLESSINGS, SHIPS, OMENS} from './config.js?v=ae4eab7';
+import {G} from './state.js?v=ae4eab7';
+import {SPECS, crewLayout} from './ships.js?v=ae4eab7';
+import {crewPer} from './upgrades.js?v=ae4eab7';
 
 export const founded = () => !!G.S.crewName;
 // The current god's blessing, or {} before the crew is founded or with no flag.
-export const blessing = () => (founded() && GOD_BLESSINGS[G.S.look.flag]) || {};
+const NO_GOD = {}; let blessKey = '', blessV = NO_GOD;
+// P78: a blessing found at sea (omens.js) adds to the one on your flag
+export const blessing = () => { const f = (founded() && GOD_BLESSINGS[G.S.look.flag]) || NO_GOD, o = G.S.omen && OMENS[G.S.omen.g]; if (!o) return f; const key = G.S.omen.g + (G.S.look.flag || ''); if (key !== blessKey){ blessKey = key; blessV = {...f}; for (const k of ['dmg', 'ram', 'cd', 'volley', 'green', 'price']) if (o[k]) blessV[k] = (f[k] || 1)*o[k]; } return blessV; };
 // How many men ship t carries (its Crew upgrade level is kept with the ship as "seats").
 export function men(t = G.S.tier){ const [m0, m1] = SHIPS[t].men, l = (((G.S.ups || {})[t] || {}).seats) || 0; return Math.min(m1, m0 + l*crewPer(t)); }
 export const layout = (t = G.S.tier) => crewLayout(SPECS[SHIPS[t].model], men(t));

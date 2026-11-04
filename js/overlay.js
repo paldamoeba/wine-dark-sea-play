@@ -1,15 +1,17 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=5294a34';
-import {G, isExplored} from './state.js?v=5294a34';
-import {fogLayer, islandPath} from './map.js?v=5294a34';
-import {view, project, screenToSea} from './scene.js?v=5294a34';
-import {JOY_RADIUS} from './input.js?v=5294a34';
-import {enemies, combatState, capture, aimLeads, planSources} from './combat.js?v=5294a34';
-import {drawFish} from './fishing.js?v=5294a34';
-import {whale} from './wildlife.js?v=5294a34';
-import {W as WIND} from './weather.js?v=5294a34';
-import {bottle} from './quests.js?v=5294a34';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=5294a34';
+import {omen} from './omens.js?v=ae4eab7';
+import {OMENS} from './config.js?v=ae4eab7';
+import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=ae4eab7';
+import {G, isExplored} from './state.js?v=ae4eab7';
+import {fogLayer, islandPath} from './map.js?v=ae4eab7';
+import {view, project, screenToSea} from './scene.js?v=ae4eab7';
+import {JOY_RADIUS} from './input.js?v=ae4eab7';
+import {enemies, combatState, capture, aimLeads, planSources} from './combat.js?v=ae4eab7';
+import {drawFish} from './fishing.js?v=ae4eab7';
+import {whale} from './wildlife.js?v=ae4eab7';
+import {W as WIND} from './weather.js?v=ae4eab7';
+import {bottle} from './quests.js?v=ae4eab7';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=ae4eab7';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -282,6 +284,7 @@ function drawMini(c, cx, cy, ms, S){
   if (bottle.on){ c.fillStyle = '#bfe8d2'; c.fillRect(bottle.x*k - 2, bottle.y*k - 2, 4, 4); }
   if (S.treasure){ const tx = S.treasure.x*k, ty = S.treasure.y*k; c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.moveTo(tx - 4, ty - 4); c.lineTo(tx + 4, ty + 4); c.moveTo(tx + 4, ty - 4); c.lineTo(tx - 4, ty + 4); c.stroke(); }
   if (S.pin) for (const f of planSources(S.pin)){ c.strokeStyle = '#ffd25e'; c.lineWidth = 2; c.beginPath(); c.arc(f.x*k, f.y*k, 7, 0, Math.PI*2); c.stroke(); } // P70: where your pinned ship's plans are
+  if (omen.on){ const p = G.t % 1; c.fillStyle = OMENS[omen.g].color; c.strokeStyle = 'rgba(30,20,12,.8)'; c.lineWidth = 1.5; c.beginPath(); c.arc(omen.x*k, omen.y*k, 3.5 + p*2, 0, Math.PI*2); c.fill(); c.stroke(); } // P78: a god's fire
   for (const m of G.goalMarks || []){ c.strokeStyle = '#e0614d'; c.lineWidth = 2; c.beginPath(); c.arc(m.x*k, m.y*k, 4 + (G.t*2 % 1)*4, 0, Math.PI*2); c.stroke(); } // the chapter goal pulses
   // you: a white arrow pointing where the ship is heading
   c.save(); c.translate(S.x*k, S.y*k); c.rotate(S.a); c.fillStyle = '#fff'; c.strokeStyle = '#3e2b1c'; c.lineWidth = 1.4; c.lineJoin = 'round';

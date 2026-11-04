@@ -1,32 +1,32 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG} from './trophies.js?v=5294a34';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=5294a34';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE} from './config.js?v=5294a34';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=5294a34';
-import {PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=5294a34';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=5294a34';
-import {CYCLE} from './daynight.js?v=5294a34';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=5294a34';
-import {swapBoat, refreshAllTrees} from './entities.js?v=5294a34';
-import {setZoom} from './input.js?v=5294a34';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5294a34';
-import {tutHTML} from './tutorial.js?v=5294a34';
-import {founded, blessing} from './crew.js?v=5294a34';
-import {WHALE} from './wildlife.js?v=5294a34';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=5294a34';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=5294a34';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=5294a34';
-import {effectText, buy} from './upgrades.js?v=5294a34';
-import {fleetHTML} from './fleetpage.js?v=5294a34';
-import {myLevel} from './levels.js?v=5294a34';
-import {askName} from './naming.js?v=5294a34';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=5294a34';
-import {GOODS, WAR} from './config.js?v=5294a34';
-import {fly} from './fly.js?v=5294a34';
-import {launch, switchTo, hireCaptain} from './fleet.js?v=5294a34';
-import {W, KINDS} from './weather.js?v=5294a34';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=5294a34';
-import {setTimeOfDay} from './daynight.js?v=5294a34';
+import {TROPHIES, has as hasTrophy, cupSVG} from './trophies.js?v=ae4eab7';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=ae4eab7';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=ae4eab7';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=ae4eab7';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=ae4eab7';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=ae4eab7';
+import {CYCLE} from './daynight.js?v=ae4eab7';
+import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=ae4eab7';
+import {swapBoat, refreshAllTrees} from './entities.js?v=ae4eab7';
+import {setZoom} from './input.js?v=ae4eab7';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=ae4eab7';
+import {tutHTML} from './tutorial.js?v=ae4eab7';
+import {founded, blessing} from './crew.js?v=ae4eab7';
+import {WHALE} from './wildlife.js?v=ae4eab7';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=ae4eab7';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=ae4eab7';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=ae4eab7';
+import {effectText, buy} from './upgrades.js?v=ae4eab7';
+import {fleetHTML} from './fleetpage.js?v=ae4eab7';
+import {myLevel} from './levels.js?v=ae4eab7';
+import {askName} from './naming.js?v=ae4eab7';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=ae4eab7';
+import {GOODS, WAR} from './config.js?v=ae4eab7';
+import {fly} from './fly.js?v=ae4eab7';
+import {launch, switchTo, hireCaptain} from './fleet.js?v=ae4eab7';
+import {W, KINDS} from './weather.js?v=ae4eab7';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=ae4eab7';
+import {setTimeOfDay} from './daynight.js?v=ae4eab7';
 
 const $ = id => document.getElementById(id);
 
@@ -67,6 +67,7 @@ export function updateUI(dt, nearDock){
   // at night a clear sky shows the moon instead of the sun
   const wk = KINDS[W.kind], moon = (G.night || 0) > .5 && (W.kind === 'fair' || W.kind === 'calm'), wkey = W.kind + (moon ? '-n' : '');
   if ($('wxChip').dataset.k !== wkey){ $('wxChip').dataset.k = wkey; $('wxName').textContent = moon ? (W.kind === 'calm' ? 'Calm night' : 'Clear night') : wk.label; $('wxIcon').innerHTML = (moon ? WX_IC.night : WX_IC[W.kind]) || wk.icon; $('wxChip').className = 'hi wx ' + W.kind; }
+  { const o = G.S.omen, c = $('omenChip'); c.hidden = !o; if (o){ const god = OMENS[o.g]; $('omenDot').style.background = god.color; $('omenT').textContent = `${Math.floor(o.t/60)}:${String(Math.floor(o.t % 60)).padStart(2, '0')}`; } }
   const bl = G.S.bless || 0, wh = WHALE.up && !bl; $('blessChip').hidden = !bl && !wh; $('blessChip').classList.toggle('call', wh);
   if (wh) $('blessT').textContent = '';
   if (bl) $('blessT').textContent = `${Math.floor(bl/60)}:${String(Math.floor(bl % 60)).padStart(2, '0')}`;
@@ -92,6 +93,7 @@ function drawLoads(){
 // A video reward (studying or building faster, a color, sailing home). For now a 5-second placeholder; real ads come in when we choose an ad company.
 const coinsFor = g => Math.max(3, Math.min(12, 2 + Math.round(Math.sqrt(g)))); // more money, more coins in the air
 export function playVideo(done, what = 'This one takes 10 minutes off.', after = '10 minutes faster!'){
+  if (RELEASE){ done(); toast(after, 2); return; } // P78: no ads in the store build: no fake video either
   const v = document.createElement('div'); v.className = 'videobox'; v.innerHTML = `<div><b>A short video would play here</b><small>Ads come later. ${what}</small><em>5</em></div>`; document.body.appendChild(v);
   let n = 5; const iv = setInterval(() => { n--; v.querySelector('em').textContent = n; if (n <= 0){ clearInterval(iv); v.remove(); done(); if (after) toast(after, 2); } }, 1000);
 }
@@ -209,11 +211,11 @@ function settingsHTML(){
       <p class="note">${(SND.style === 'mix' ? MIX : STYLES[SND.style]).desc} Every song is in the Showroom too.</p>
       <div class="looks"><label><span>Battle music</span><select data-set="bstyle" ${SND.on ? '' : 'disabled'}>${Object.entries(BATTLE).map(([k, v]) => `<option value="${k}" ${SND.battle === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
       <p class="note">${BATTLE[SND.battle].desc}</p>` : ''))
-    + card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`))
-    + card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
-      + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : ''))
+    + (APP ? '' : card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`)))
+    + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
+      + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" data-act="ver">Wine-Dark Sea · Prototype 77</p>`;
+    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 78'}</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -238,6 +240,7 @@ function settingsHTML(){
       ${row('Crew on ships', 'On by default now. Turn off to compare.', tog('crew', s.dev.crew, 'Crew'))}
       ${row('Raiders attack', 'Off = a peaceful sea for testing other things.', tog('raiders', s.dev.raiders, 'Raiders'))}
       ${row('Every ship moored at Kallisto', 'All ships in a row south of the pier.', tog('fleet', s.dev.fleet, 'Fleet'))}
+      ${row('A god\'s fire ahead of me', 'A blessing found at sea.', '<button class="btn" data-act="omen">Fire</button>')}
       ${row('Drop a bottle ahead of me', 'Coins, a note or a treasure map.', '<button class="btn" data-act="bottle">Bottle</button>')}
       ${row('Bury a treasure nearby', 'On a beach close to you, marked with an X.', '<button class="btn" data-act="treasure">Treasure</button>')}
       ${row('Weather now', '', `<div class="btns">${['calm', 'fair', 'windy', 'storm', 'mist'].map(k => `<button class="btn small" data-act="wx" data-v="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>`)}
@@ -313,6 +316,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'fleet'){ G.settings.dev.fleet = !G.settings.dev.fleet; saveSettings(); document.dispatchEvent(new Event('fleet')); }
   if (a === 'revealall'){ revealAll(); toast('Whole chart revealed'); }
   if (a === 'tryking' || a === 'tryarena'){ S.hull = ship().hull; document.dispatchEvent(new Event(a === 'tryking' ? 'toking' : 'toarena')); closeSheet(); return; }
+  if (a === 'omen'){ document.dispatchEvent(new Event('omen')); closeSheet(); return; }
   if (a === 'bottle'){ document.dispatchEvent(new Event('bottle')); closeSheet(); return; }
   if (a === 'selup'){ if (UPGRADES[b.dataset.k].power) sel.pw = b.dataset.k; else sel.up = b.dataset.k; render(); return; }
   if (a === 'wartake' && G.council){ const o = WAR.offers[+b.dataset.i]; S.war = {...o, city:G.council.city, foe:rival(G.council.city), got:0}; toast('Contract taken', 2); }
@@ -375,6 +379,7 @@ $('harborBtn').addEventListener('click', openPort);
 // P49: hired sailors became each ship's own crew; say so once to players who had some
 setTimeout(() => { const S = G.S; if (S && S.crewRefund){ toast(`Sailors paid back: +${30*S.crewRefund}`, 7); delete S.crewRefund; save(); } }, 4000);
 // tapping the blessing icon explains it
+$('omenChip').addEventListener('click', () => { const o = G.S.omen && OMENS[G.S.omen.g]; if (o) toast(`${o.name}: ${o.text}`, 3); });
 $('blessChip').addEventListener('click', () => toast(G.S.bless ? "Poseidon's blessing: faster sailing and quicker work" : 'A whale! Sail close for Poseidon\'s blessing', 3));
 // docking: wood and bronze aboard go to the warehouse first, so the shipyard can use them
 document.addEventListener('docked', () => { if (unload().some(Boolean)) save(); openPort(); }); // unloaded quietly: the warehouse numbers in the menu show it

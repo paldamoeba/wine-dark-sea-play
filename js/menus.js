@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=5294a34';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=5294a34';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName} from './state.js?v=5294a34';
-import {fleetBody, pinCard} from './fleetpage.js?v=5294a34';
-import {myLevel} from './levels.js?v=5294a34';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5294a34';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=5294a34';
-import {planClues} from './combat.js?v=5294a34';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=5294a34';
-import {board, active, canDeliver, goal} from './quests.js?v=5294a34';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=5294a34';
-import {colorHeld, colorInfo} from './colors.js?v=5294a34';
-import {shipPortrait} from './portrait.js?v=5294a34';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=5294a34';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=ae4eab7';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=ae4eab7';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=ae4eab7';
+import {fleetBody, pinCard} from './fleetpage.js?v=ae4eab7';
+import {myLevel} from './levels.js?v=ae4eab7';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=ae4eab7';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=ae4eab7';
+import {planClues} from './combat.js?v=ae4eab7';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=ae4eab7';
+import {board, active, canDeliver, goal} from './quests.js?v=ae4eab7';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=ae4eab7';
+import {colorHeld, colorInfo} from './colors.js?v=ae4eab7';
+import {shipPortrait} from './portrait.js?v=ae4eab7';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=ae4eab7';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -343,7 +343,7 @@ function dockTab(){ return repairCard() + (founded() && (G.S.crew || []).length 
 // ---- the shipyard: your fleet, repairs, upgrades, paint ----
 // P54: what the shipwrights can do for a ship you don't have yet: collect its plan pieces, study them, build it.
 // Times count down live (ui.js fills any [data-until] with the time left). A video takes 10 minutes off.
-const video = kind => `<button class="btn ghostdark small" data-act="video" data-k="${kind}">${IC.play} Video: 10 min faster</button>`;
+const video = kind => `<button class="btn ghostdark small" data-act="video" data-k="${kind}">${IC.play} ${RELEASE ? 'Hurry: 10 min faster' : 'Video: 10 min faster'}</button>`;
 export function yardAct(t, sh){
   const S = G.S, P = PLANS[t], n = piecesOf(t);
   if (S.build && S.build.t === t) return `<span class="tag on">Building · <b data-until="${S.build.until}">${mmss(timeLeft(S.build))}</b> left</span>${video('build')}`;

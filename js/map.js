@@ -1,15 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=5294a34';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=5294a34';
-import {GOODS} from './config.js?v=5294a34';
-import {sfx} from './audio.js?v=5294a34';
-import {playVideo, toast} from './ui.js?v=5294a34';
-import {ARENA} from './arena.js?v=5294a34';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=5294a34';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=5294a34';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=5294a34';
-import {G, ship, isExplored, reveal, save} from './state.js?v=5294a34';
+import {omen} from './omens.js?v=ae4eab7';
+import {OMENS} from './config.js?v=ae4eab7';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=ae4eab7';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=ae4eab7';
+import {GOODS} from './config.js?v=ae4eab7';
+import {sfx} from './audio.js?v=ae4eab7';
+import {playVideo, toast} from './ui.js?v=ae4eab7';
+import {ARENA} from './arena.js?v=ae4eab7';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=ae4eab7';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=ae4eab7';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=ae4eab7';
+import {G, ship, isExplored, reveal, save} from './state.js?v=ae4eab7';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -217,6 +219,8 @@ function draw(){
   for (const h of known){ if (F !== 'all' && F !== 'harbors' && !priced) continue; const price = priced ? filterPrice(h, F) : 0; if (priced && price == null) continue;
     const [hx, hy] = toScreen(h.dock.x, h.dock.y), port = h.is.port; badge(hx, hy, port ? 19 : 16, 'harbor', h.is.city ? CITIES[h.is.city].color : OCHRE, {k:1.35}); if (priced) priceTag(hx, hy - 25, F === 'buy:wood' ? `${price} per 10` : `${price} dr`, price === bestP); }
   if (priced && !deals.length) label('No harbor you know deals in this yet. Keep exploring.', W/2, 92, '700 14px Nunito, sans-serif', '#5a1e14');
+  // P78: a god's fire on the sea
+  if (F === 'all' && omen.on){ const [x, y] = toScreen(omen.x, omen.y), o = OMENS[omen.g], p = (performance.now()/900) % 1; c.save(); c.globalAlpha = 1 - p; c.strokeStyle = o.color; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 10 + p*16, 0, Math.PI*2); c.stroke(); c.globalAlpha = 1; c.fillStyle = o.color; c.strokeStyle = '#3e2b1c'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 8, 0, Math.PI*2); c.fill(); c.stroke(); c.restore(); label(o.name, x, y - 18, '700 13px Nunito, sans-serif', '#5a1e14'); }
   // the chapter goal: a red ring with a name (pirate fortresses, the pirate king)
   for (const m of F === 'all' ? G.goalMarks || [] : []){ const [x, y] = toScreen(m.x, m.y); c.save(); c.strokeStyle = COURSE; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
     c.beginPath(); c.arc(x, y, 5, 0, Math.PI*2); c.fillStyle = COURSE; c.fill(); c.restore(); label(m.label, x, y - 20, '700 13px Nunito, sans-serif', '#5a1e14'); }
