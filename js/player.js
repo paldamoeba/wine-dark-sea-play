@@ -1,25 +1,35 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=1917ac5';
-import {SPECS} from './ships.js?v=1917ac5';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=1917ac5';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=1917ac5';
-import {W} from './weather.js?v=1917ac5';
-import {steering} from './input.js?v=1917ac5';
-import {toast, showZone} from './ui.js?v=1917ac5';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=1917ac5';
-import {LAIR_ROCKS} from './lair.js?v=1917ac5';
-import {startFish, stopFish} from './fishing.js?v=1917ac5';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=1917ac5';
-import {progress} from './quests.js?v=1917ac5';
-import {startSink} from './sinking.js?v=1917ac5';
-import {sfx} from './audio.js?v=1917ac5';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=733c6b7';
+import {SPECS} from './ships.js?v=733c6b7';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=733c6b7';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=733c6b7';
+import {W} from './weather.js?v=733c6b7';
+import {steering} from './input.js?v=733c6b7';
+import {toast, showZone} from './ui.js?v=733c6b7';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=733c6b7';
+import {LAIR_ROCKS} from './lair.js?v=733c6b7';
+import {startFish, stopFish} from './fishing.js?v=733c6b7';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=733c6b7';
+import {progress} from './quests.js?v=733c6b7';
+import {startSink} from './sinking.js?v=733c6b7';
+import {sfx} from './audio.js?v=733c6b7';
+import {ARENA} from './arena.js?v=733c6b7';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
   if (G.sinking) return;
   stat('sunkMe'); G.sinking = {t:0, side:Math.random() < .5 ? 1 : -1}; sfx('sink'); G.dest = null; G.joy = null; stopFish(); G.act = null;
   startSink(G.S.x, G.S.y, ship().len);
+  // P82 (Nicholas): a video brings you back afloat, up to three times each time you put out to sea (not in the arena's games)
+  if (revivesLeft() > 0 && !ARENA.on){ G.sinking.ask = true; document.dispatchEvent(new CustomEvent('askrevive', {detail:revivesLeft()})); }
 }
+export const REVIVES = 3;
+export const revivesLeft = () => REVIVES - (G.revives || 0);
+export function revive(){ if (!G.sinking) return; G.sinking = null; G.revives = (G.revives || 0) + 1; G.S.hull = Math.round(ship().hull*.5); G.burnT = 0; G.v = 0; G.hurt = 0; sfx('blessing'); toast('Back afloat!', 2.4); }
+document.addEventListener('docked', () => { G.revives = 0; });
+document.addEventListener('revive', () => revive());
+document.addEventListener('giveup', () => giveUp());
+export function giveUp(){ if (G.sinking) G.sinking.ask = false; }
 const SINK_SECONDS = 4.5;
 function washUp(){
   const S = G.S, name = ship().name.toLowerCase(); G.sinking = null;
@@ -216,7 +226,7 @@ export const RING_R = 70;
 export const harborRing = h => ({x:h.pier.x + h.pier.dx*(PIER_LEN + 75), y:h.pier.y + h.pier.dy*(PIER_LEN + 75)});
 let ringArmed = false, started = false;
 // Tied up at harbor h right away (no sailing in): when the game starts near a harbor, and after you're towed home.
-export function moorAt(h){ const b = berth(ship(), h.pier); Object.assign(G.S, {x:b.x, y:b.y, a:b.a}); G.v = 0; G.dest = null; G.joy = null;
+export function moorAt(h){ G.revives = 0; const b = berth(ship(), h.pier); Object.assign(G.S, {x:b.x, y:b.y, a:b.a}); G.v = 0; G.dest = null; G.joy = null;
   G.dock = {mode:'moored', t:1, dur:1, x0:b.x, y0:b.y, a0:b.a, h, ...b}; G.cam = {x:b.x, y:b.y}; }
 function harborRings(){
   const S = G.S; let near = Infinity, hit = null;
@@ -237,7 +247,8 @@ export function updatePlayer(dt){
   G.t += dt;
   if (!G.sheetOpen){ S.playSeconds = (S.playSeconds || 0) + dt; shipTime(dt); }
   if (S.bless > 0) S.bless = Math.max(0, S.bless - dt);
-  if (G.sinking){ G.sinking.t += dt; G.v *= Math.exp(-dt*2); if (G.sinking.t > SINK_SECONDS) washUp(); return null; }
+  // P82: while you choose (video or towed home) she lists over but stays up
+  if (G.sinking){ G.sinking.t = G.sinking.ask ? Math.min(G.sinking.t + dt, 1.5) : G.sinking.t + dt; G.v *= Math.exp(-dt*2); if (G.sinking.t > SINK_SECONDS) washUp(); return null; }
   if (G.dock){ G.nearPier = null; docking(dt); const k = Math.min(1, dt*3.5); G.cam.x += (S.x - G.cam.x)*k; G.cam.y += (S.y - G.cam.y)*k; spawnWake(); return null; }
   move(dt, sh);
   const z = zoneAt(S.x, S.y), depth = z === 2 ? stormDepth(S.x, S.y) : 0;

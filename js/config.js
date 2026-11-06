@@ -22,7 +22,7 @@ export const SHIPS = [
   {name:'Trireme',      model:'trireme', rank:3, speed:195, hull:260, hold:18, cap:{wood:200, bronze:60, iron:36, linen:30, goods:32}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0,   len:167, beam:49, fighters:6, men:[6, 39], turn:.62, cost:{wood:600, bronze:80, iron:50, linen:40, gold:600}, plans:true,
     desc:'The greatest warship of the Aegean: benches for 32 rowers, six archers, an outrigger and a big bronze ram'},
   // bandit ships: built from plans won from the named pirates who sail them
-  {name:'Bandit boat',   model:'dinghy', rank:0, plans:true, cost:{wood:60, linen:4, gold:40}, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, iron:4, linen:4, goods:8}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[2, 5], turn:1.6,
+  {name:'Bandit boat',   model:'dinghy', rank:0, plans:true, cost:{wood:60, linen:4, gold:40}, speed:84, hull:36, hold:6, cap:{wood:30, bronze:10, iron:4, linen:4, goods:8}, heavy:1.5, fishTime:2.8, woodTime:3.2, storm:1, len:44, beam:17, fighters:1, men:[1, 5], turn:1.6,
     desc:'A quick little raider boat with a blood-red sail'},
   {name:'Bandit skiff',  model:'skiff',  rank:1, plans:true, cost:{wood:140, linen:8, gold:100}, speed:125, hull:95, hold:10, cap:{wood:60, bronze:20, iron:8, linen:8, goods:16}, heavy:2.2, fishTime:2.4, woodTime:2.6, storm:.6, len:72, beam:22, fighters:3, men:[3, 9], turn:1.15,
     desc:'A raider skiff with a ram: three archers and a small hold'},
@@ -170,7 +170,7 @@ export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Br
 // Captains: hire one for a ship you're not sailing and it goes out fishing on its own, bringing back gold.
 // One trip: tripSeconds at sea, then restSeconds moored at Kallisto. Pay per trip = hold × perHold, plus 4% per upgrade level on that ship.
 // P65: much less money (about a quarter per hour), and they keep working for 2 hours after you close the game (offline).
-export const CAPTAIN = {cost:60, grow:2.5, // 60, 150, 380, 940...
+export const CAPTAIN = {cost:1000, grow:1.5, // P82 (Nicholas: far too cheap): 1000, 1500, 2250, 3380...
   tripSeconds:300, restSeconds:60, perHold:1, perLevel:.04, offline:7200,
   names:['Captain Dion', 'Captain Hero', 'Captain Lysias', 'Captain Ione', 'Captain Polybos', 'Captain Thaleia']};
 
@@ -254,7 +254,7 @@ export const TUNING = {
   wreckGoldChance: .35,  // chance a salvage pull also finds coins
   wreckGoldMin: 4, wreckGoldMax: 9,
   repairGold: [.5, 1, 1.5, 2, 2.5], // P67: drachmae per hull point, by ship size (a full repair: rowboat 20, fishing boat 80, bireme 255, trireme 520, quinquereme 1050)
-  repairWood: .5,        // or wood per hull point. Out of both? A video repairs it.
+  repairWood: .3,        // P82: or wood, a third of the drachmae (wood is much harder to come by than drachmae). Out of both? A video repairs it.
   woodPerCut: 4,         // wood from one cut at the cypress trees
   plankHull: 1.2,        // hull that 1 wood mends when salvaged wreckage patches your ship
   slowSpeed: 30,         // below this speed the boat can fish / gather

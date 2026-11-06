@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=1917ac5';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=1917ac5';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=1917ac5';
-import {fleetBody, pinCard} from './fleetpage.js?v=1917ac5';
-import {myLevel} from './levels.js?v=1917ac5';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=1917ac5';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=1917ac5';
-import {planClues} from './combat.js?v=1917ac5';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=1917ac5';
-import {board, active, canDeliver, goal} from './quests.js?v=1917ac5';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=1917ac5';
-import {colorHeld, colorInfo} from './colors.js?v=1917ac5';
-import {shipPortrait} from './portrait.js?v=1917ac5';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=1917ac5';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=733c6b7';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=733c6b7';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=733c6b7';
+import {fleetBody, pinCard} from './fleetpage.js?v=733c6b7';
+import {myLevel} from './levels.js?v=733c6b7';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=733c6b7';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=733c6b7';
+import {planClues} from './combat.js?v=733c6b7';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=733c6b7';
+import {board, active, canDeliver, goal} from './quests.js?v=733c6b7';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=733c6b7';
+import {colorHeld, colorInfo} from './colors.js?v=733c6b7';
+import {shipPortrait} from './portrait.js?v=733c6b7';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=733c6b7';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -277,7 +277,7 @@ export const woodPrice = h => h.free ? FREEPORT.wood : TIMBER.at[h.is.name] || T
 export const matPrice = (h, k) => k === 'wood' ? woodPrice(h) : k === 'linen' ? LINEN.at[h.is.name] || LINEN.price : k === 'iron' ? (h.free ? IRON.free : IRON.at[h.is.name] || null) : h.free ? BRONZE.free : BRONZE.at[h.is.name] || null;
 export const matStep = k => k === 'wood' ? 10 : 1; // wood is sold in bundles of 10
 export function harborHTML(h){
-  const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['ware', 'Warehouse', IC.hold], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['crew', 'Crew', IC.crew], ['fleet', 'Fleet', IC.ship]] // P63: Kallisto opens on the shipyard; P65: the warehouse has its own page
+  const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['ware', 'Warehouse', IC.hold], ['crew', 'Crew', IC.crew], ['fleet', 'Fleet', IC.ship]] // P63: Kallisto opens on the shipyard; P65: the warehouse has its own page
     : h.free ? [['market', 'Market', IC.market], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]] : [['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]];
   if (!list.some(([k]) => k === tabs.port)) tabs.port = list[0][0];
   const t = tabs.port, body = t === 'jobs' ? jobsTab(h) : t === 'fleet' ? fleetBody() : t === 'yard' ? yardTab() : t === 'ware' ? wareTab() : t === 'crew' ? crewTab() : t === 'dock' ? dockTab() : marketTab(h);
@@ -328,7 +328,7 @@ function myJobs(){
     || '<p class="note">No jobs yet. Every harbor has a request board.</p>';
 }
 // P67: repair with drachmae or with wood. Short of both? A video does it. Either button mends as much as you can pay for.
-export const repairCost = () => { const dmg = Math.max(0, ship().hull - Math.ceil(G.S.hull)); return {dmg, gold:Math.ceil(dmg*TUNING.repairGold[rank()]), wood:Math.ceil(dmg*TUNING.repairWood)}; };
+export const repairCost = () => { const dmg = Math.max(0, ship().hull - Math.ceil(G.S.hull)); return {dmg, gold:Math.ceil(dmg*TUNING.repairGold[rank()]), wood:Math.ceil(dmg*TUNING.repairGold[rank()]*TUNING.repairWood)}; };
 function repairCard(){
   const S = G.S, sh = ship(), {dmg, gold, wood} = repairCost(), stuck = dmg > 0 && S.gold < gold && S.ware < wood;
   const line = `<div class="line">${IC.hull}<div><b>Hull ${Math.ceil(S.hull)} / ${sh.hull}</b>${bar(S.hull/sh.hull, S.hull/sh.hull < .35 ? 'low' : '')}</div>${dmg > 0 ? '' : '<span class="tag on">Sound</span>'}</div>`;
@@ -412,16 +412,22 @@ const sailSw = sl => { const st = sl.stripes, w = 30/st.length; return `<svg vie
   <path d="M5 5 H35 C36.5 14 36 22 33 29 H7 C4 22 3.5 14 5 5Z" fill="none" stroke="${sl.border || 'rgba(60,40,20,.35)'}" stroke-width="${sl.border ? 2.4 : 1}"/></svg>`; };
 const flagSw = g => g.bg ? `<svg viewBox="0 0 40 30"><path d="M5 3 V28" stroke="#8a5a30" stroke-width="2.2" stroke-linecap="round"/><path d="M6 4 H35 L29 11.5 L35 19 H6Z" fill="${g.bg}"/><circle cx="17" cy="11.5" r="4.2" fill="${g.fg}"/></svg>`
   : `<svg viewBox="0 0 40 30"><path d="M5 3 V28" stroke="#8a5a30" stroke-width="2.2" stroke-linecap="round"/><path d="M10 9 L22 21 M22 9 L10 21" stroke="#c9b48e" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+// P82 (Nicholas): you fly the god you chose when you founded your crew for free; every other god's flag is bought or unlocked with a video
+export const FLAG_COST = 600;
+export function flagHeld(v){ const S = G.S; if (S.crewName && !S.crewGod) S.crewGod = S.look.flag; return v === 'none' || v === S.crewGod || (S.flags || []).includes(v); }
+function flagBuy(){ const v = tabs.flagPick; if (!v || flagHeld(v) || !GODS[v]) return ''; const ok = G.S.gold >= FLAG_COST;
+  return `<div class="btnrow flagbuy"><b>Flag of ${GODS[v].name}</b><button class="btn ${ok ? 'gold' : ''}" data-act="flagbuy" data-v="${v}" ${ok ? '' : 'disabled'}>Buy ${chip(IC.coin, FLAG_COST, ok)}</button><button class="btn ghostdark" data-act="flagvideo" data-v="${v}">${IC.play} Video</button></div>`; }
 function looksCard(){
   const spec = SPECS[ship().model], lk = {...spec.look, ...G.S.look};
   // P65: colors you haven't found yet show as a lock; some can be unlocked with a video
-  const pick = (k, obj, sel, draw) => `<div class="swatches">${Object.entries(obj).filter(([, v]) => !v.city && !v.hidden).map(([v, o]) => { if (k === 'flag' || colorHeld(k, v)) return `<button class="sw ${v === sel ? 'on' : ''}" data-act="look" data-k="${k}" data-v="${v}" aria-label="${o.name}">${draw(o)}<small>${o.name}</small></button>`;
+  const pick = (k, obj, sel, draw) => `<div class="swatches">${Object.entries(obj).filter(([, v]) => !v.city && !v.hidden).map(([v, o]) => { if (k === 'flag' ? flagHeld(v) : colorHeld(k, v)) return `<button class="sw ${v === sel ? 'on' : ''}" data-act="look" data-k="${k}" data-v="${v}" aria-label="${o.name}">${draw(o)}<small>${o.name}</small></button>`;
+    if (k === 'flag') return `<button class="sw locked ${tabs.flagPick === v ? 'on' : ''}" data-act="flagpick" data-v="${v}" aria-label="${o.name}: locked">${draw(o)}<span class="swlock">${IC.lock}</span><small>${o.name}</small></button>`;
     const info = colorInfo(k, v), rare = info.drop <= .01;
     return `<button class="sw locked" ${info.video ? `data-act="colorvideo" data-k="${k}" data-v="${v}"` : 'data-act="colorlocked"'} aria-label="${o.name}: locked">${draw(o)}<span class="swlock">${info.video ? IC.play : IC.lock}</span><small>${info.video ? 'Video' : rare ? 'Rare' : 'Find it'}</small></button>`; }).join('')}</div>`;
   return card('Paint and flag', `${shipImg(ship().model, {...G.S.look, ram:lvl('ram'), sailLv:lvl('sail'), men:men()})}
     <h4 class="swh">Hull</h4>${pick('paint', PAINTS, lk.paint, paintSw)}
     <h4 class="swh">Sail</h4>${spec.mast || lvl('sail') ? pick('sail', SAILS, lk.sail, sailSw) : '<p class="note">Your boat needs a sail first (Sail upgrade).</p>'}
-    <h4 class="swh">Flag</h4>${founded() ? pick('flag', GODS, lk.flag, flagSw) : '<p class="note">Found a crew first (Crew tab).</p>'}`);
+    <h4 class="swh">Flag</h4>${founded() ? pick('flag', GODS, lk.flag, flagSw) + flagBuy() : '<p class="note">Found a crew first (Crew tab).</p>'}`);
 }
 
 // ---- crew ----

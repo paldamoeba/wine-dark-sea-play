@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#2b211c">
 <title>Wine-Dark Sea</title>
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
-<link rel="stylesheet" href="css/style.css?v=1917ac5">
+<link rel="stylesheet" href="css/style.css?v=733c6b7">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -36,7 +36,7 @@
   </header>
   <button class="mapwarn" id="mapWarn" hidden>Under attack!</button>
   <footer class="mapfoot">
-    <label class="mapfilter"><span>Show</span><select id="mapFilter" aria-label="What the chart shows"></select></label>
+    <label class="mapfilter"><span>Prices</span><select id="mapFilter" aria-label="What the chart shows"></select></label>
     <ul class="legend">
       <li><i class="lg-you"></i>You</li>
       <li><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#d48a2a" stroke="#4a3b28" stroke-width="1.5"/><path d="M10 5.2a1.5 1.5 0 1 0 0 .1M10 7.6v7M7 9.4h6M5.6 11.6q.9 3.4 4.4 3.4t4.4-3.4" fill="none" stroke="#fff8e6" stroke-width="1.6" stroke-linecap="round"/></svg>Harbor</li>
@@ -64,6 +64,7 @@
 <div class="caution" id="caution" hidden><span class="cic">!</span><p id="cautionText"></p></div>
 <div class="zone" id="zone"><h2 id="zoneName">The Shallows</h2><p id="zoneSub">Calm water around Kallisto</p></div>
 <div class="toast" id="toast" hidden></div>
+<div class="revive" id="revive" hidden><b>Sinking!</b><button class="btn gold" id="reviveGo"></button><button class="homeno" id="reviveNo">Get towed home</button></div>
 <div class="hint" id="hint" hidden>Double tap the sea to sail there, or press and drag to steer.<br>Stop on glinting water near islands and your crew fishes. Bubbling water holds big fish.</div>
 <button class="raid" id="raidBtn" hidden>Raid</button>
 <button class="raid arena" id="arenaBtn" hidden>Start the games</button>
@@ -87,4 +88,4 @@
 <script>
   if (!window.THREE) document.body.insertAdjacentHTML('beforeend', '<div class="err">The 3D engine did not load. Check your connection and reopen the game.</div>');
 </script>
-<script type="module" src="js/main.js?v=1917ac5"></script>
+<script type="module" src="js/main.js?v=733c6b7"></script>

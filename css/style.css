@@ -556,7 +556,7 @@ button.goal .more{color:var(--ochre);font-weight:800}
 /* menus fill the whole screen, and the HUD, toolbar and little map step aside while one is open */
 body.sheeton .hud,body.sheeton .toolbar,body.sheeton .mapbtn,body.sheeton #ov,body.sheeton .bossbar{visibility:hidden}
 .sheet{top:0;max-height:none;border-radius:0}
-.sheet.menu{max-height:none;border-width:0 4px;border-radius:0;padding-top:env(safe-area-inset-top,0px)}
+.sheet.menu{max-height:none;border-width:0 4px;border-radius:0;padding-top:0} /* P82: the header pads for the notch itself; padding here too left a gap above the sticky header where the page showed through */
 .sheet.menu .mtop{border-radius:0;padding-top:calc(12px + env(safe-area-inset-top,0px))}
 @media (min-width:560px){ .sheet,.sheet.menu{top:12px;bottom:12px;border-radius:22px;border-width:4px;max-width:520px}
   body.sheeton #cv{filter:blur(3px) brightness(.85)} }
@@ -1205,3 +1205,37 @@ body.arenaon #mission{display:none!important}
 /* P78: a blessing found at sea, next to the coins and weather */
 #omenChip{pointer-events:auto;cursor:pointer;color:#fff}#omenChip b{color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.55)}#omenDot{display:inline-block;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),0 0 8px 1px rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.5);flex:none}
 .hud .omenchip[hidden]{display:none!important}
+/* P82: the fortress / bandit warning lives in the bar under the map, never in the middle of the screen */
+.mission .mwarn{display:none;flex:none;width:18px;height:18px;border-radius:50%;background:#c4473b;color:#fff;font:400 14px/18px var(--display);text-align:center}
+.mission.alert .mwarn{display:inline-block}
+.mission.alert{border-color:#c4473b!important;box-shadow:0 0 0 2px #c4473b,0 4px 14px rgba(160,40,20,.45)!important;animation:mpulse .8s ease-in-out 3}
+@keyframes mpulse{50%{box-shadow:0 0 0 5px rgba(196,71,59,.55),0 4px 14px rgba(160,40,20,.45)}}
+/* P82: on a phone with a notch the menu header itself steps down below it (see .sheet.menu padding-top:0 above) */
+@media (max-width:559px){.sheet.menu .mtop{padding-top:env(safe-area-inset-top,0px)}}
+.flagbuy{align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}.flagbuy b{flex:1 1 100%;font-size:14px}
+/* P82: the leaderboard like an old high score table: tabs, a big title between arrows, dots, column heads */
+.rkseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:rgba(120,90,50,.12);margin-bottom:10px}
+.rkseg button{font:800 15px/1 var(--body);border:0;border-radius:11px;padding:10px 6px;background:transparent;color:inherit;opacity:.7;cursor:pointer}
+.rkseg button.on{background:linear-gradient(#f6bd55,#d9902b);color:#3a240c;opacity:1;box-shadow:0 2px 0 #8f5a17}
+.rkcat{display:flex;align-items:center;gap:6px}
+.rkarrow{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:linear-gradient(#a57347,#7f532e);color:#fff4dc;font:400 30px/40px var(--display);box-shadow:0 3px 0 #4a2e17;cursor:pointer}
+.rkarrow:active{transform:translateY(2px);box-shadow:0 1px 0 #4a2e17}
+.rktitle{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.rktitle svg{width:28px;height:28px;flex:none}.rktitle b{font:400 clamp(19px,5.4vw,24px)/1.1 var(--display);letter-spacing:.03em}
+.rkdots{display:flex;justify-content:center;gap:5px;margin:8px 0 10px}.rkdots i{width:6px;height:6px;border-radius:50%;background:rgba(120,90,50,.25)}.rkdots i.on{background:#d9902b;transform:scale(1.4)}
+.rkcols{display:grid;grid-template-columns:44px 1fr auto;padding:0 12px 4px 4px;font:800 11px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;opacity:.55}
+/* P82: the chart's checkboxes: tap a picture to show or hide that kind of place */
+.mapview .legend{pointer-events:auto!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 6px!important;max-width:min(520px,calc(100vw - 32px));box-sizing:border-box}
+.mapview .legend li{min-width:0}
+.mapview .legend label{display:flex;align-items:center;gap:5px;padding:5px 4px;border-radius:9px;cursor:pointer;min-width:0}
+.mapview .legend label span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mapview .legend input{width:17px;height:17px;margin:0;flex:none;accent-color:#b5552c}
+.mapview .legend label:has(input:not(:checked)){opacity:.5}
+.mapview .legend svg{width:17px;height:17px;flex:none}
+/* P82: sinking: back afloat with a video. Low on the screen, never in the middle */
+.revive{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:6;width:min(320px,calc(100vw - 32px));box-sizing:border-box;display:grid;gap:8px;justify-items:center;
+  background:#fbf6ec;border-radius:20px;padding:12px 14px;box-shadow:0 0 0 2px #c4473b,0 8px 22px rgba(40,10,5,.4)}
+.revive[hidden]{display:none}.revive b{font:400 20px/1 var(--display);color:#8a2a1a}
+.revive .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}.revive .btn svg{width:24px;height:24px}.revive .btn small{opacity:.75;font-size:12px}
+body.reviving .toolbar,body.reviving .abilities,body.reviving .mapbtn{visibility:hidden}
+.mtowers{display:flex;gap:3px;flex:1}.mtowers svg{width:13px;height:15px}

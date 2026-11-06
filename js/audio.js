@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=1917ac5';
+import {MUSIC_REST} from './config.js?v=733c6b7';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -86,6 +86,12 @@ function noise(t, dur, dest, {type = 'bandpass', f = 1000, f2, q = 1, peak = .4,
   fl.type = type; fl.frequency.setValueAtTime(f, t); fl.Q.value = q; if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
   env(g, t, a, peak, dur); s.connect(fl); fl.connect(g); g.connect(dest); s.start(t, Math.random()*3); s.stop(t + a + dur + .05);
 }
+// P82 (Nicholas: the catch sounded like a slap): water. A soft wash of spray, a run of rising bubbles and a few drops falling back.
+function water(t, d, k = 1){
+  noise(t, .5*k, d, {type:'lowpass', f:1600, f2:380, q:.5, peak:.32*k, a:.035});
+  for (let i = 0; i < Math.round(5*k); i++){ const f = 380 + Math.random()*520, t0 = t + .02 + i*.045 + Math.random()*.02; osc('sine', f, t0, .07, d, .1*k, .004, f*2.3); }
+  for (let i = 0; i < 3; i++){ const f = 1300 + Math.random()*900, t0 = t + .26 + i*.08 + Math.random()*.04; osc('sine', f, t0, .05, d, .05*k, .002, f*1.5); }
+}
 function wet(dest, amt){ const g = ctx.createGain(); g.gain.value = amt; g.connect(verb); const split = ctx.createGain(); split.connect(dest); split.connect(g); return split; }
 
 // a plucked string (Karplus-Strong), rendered once per note and kept
@@ -123,8 +129,8 @@ export const SOUNDS = {
   coin:{name:'Coin', gap:.05, play:(t, d) => { [0, .07].forEach((o, i) => { const f = i ? 2637 : 1976; osc('sine', f, t + o, .35, d, .22); osc('sine', f*2.76, t + o, .12, d, .06); }); }},
   coins:{name:'Selling: a pile of coins', play:(t, d) => { for (let i=0;i<9;i++){ const o = i*.045 + Math.random()*.03, f = 1800 + Math.random()*1400; osc('sine', f, t + o, .28, d, .16); osc('sine', f*2.7, t + o, .08, d, .05); } noise(t, .5, d, {type:'highpass', f:5000, peak:.05}); }},
   fish:{name:'Fish caught', gap:.08, play:(t, d) => { noise(t, .25, d, {f:2400, f2:500, q:.8, peak:.5}); osc('sine', 210, t + .05, .1, d, .25, .003, 130); osc('sine', 260, t + .18, .08, d, .18, .003, 160); }},
-  catch:{name:'Big fish landed', play:(t, d) => { noise(t, .5, d, {f:2600, f2:350, q:.7, peak:.6}); const w = wet(d, .5); [62, 66, 69, 74].forEach((m, i) => jingle(m + 12, t + .15 + i*.08, w, .5)); }},
-  miss:{name:'The fish got away', play:(t, d) => { noise(t, .2, d, {f:1800, f2:600, peak:.3}); const w = wet(d, .4); [69, 65, 62].forEach((m, i) => jingle(m, t + .05 + i*.12, w, .4, .3)); }},
+  catch:{name:'Big fish landed', play:(t, d) => { water(t, d, 1); const w = wet(d, .5); [62, 66, 69, 74].forEach((m, i) => jingle(m + 12, t + .15 + i*.08, w, .5)); }},
+  miss:{name:'The fish got away', play:(t, d) => { water(t, d, .6); const w = wet(d, .4); [69, 65, 62].forEach((m, i) => jingle(m, t + .05 + i*.12, w, .4, .3)); }},
   wood:{name:'Wood picked up', gap:.08, play:(t, d) => { [0, .11].forEach(o => { osc('triangle', 240, t + o, .09, d, .35, .002, 150); noise(t + o, .05, d, {f:1100, q:2, peak:.3}); }); }},
   chop:{name:'Axe on a tree', gap:.15, play:(t, d) => { noise(t, .07, d, {type:'lowpass', f:2600, peak:.7}); osc('triangle', 180, t, .14, d, .45, .002, 110); noise(t + .05, .25, d, {f:3500, f2:6000, q:4, peak:.04}); }},
   bow:{name:'Arrow fired', gap:.04, play:(t, d) => { osc('triangle', 190, t, .09, d, .35, .002, 120); noise(t + .02, .32, d, {f:2200, f2:600, q:2, peak:.3, a:.04}); }},
@@ -143,11 +149,11 @@ export const SOUNDS = {
   sink:{name:'Your ship sinks', play:(t, d) => { const w = wet(d, .4); noise(t, 2, w, {type:'lowpass', f:500, f2:90, peak:.8, buf:brownBuf}); creakAt(t, w, .6); creakAt(t + .7, w, .5); bubbles(t + 1, w, 16); [62, 61, 57, 50].forEach((m, i) => jingle(m, t + 1.2 + i*.35, w, .4, .25)); }},
   bubbles:{name:'Bubbles', play:(t, d) => bubbles(t, d, 12)},
   bell:{name:'Harbor bell', gap:.5, play:(t, d) => { const w = wet(d, .9); bell(t, w, 523, .4); bell(t + .9, w, 523, .3); }},
-  horn:{name:'War horn', gap:1, play:(t, d) => { const w = wet(d, .5), o = ctx.createOscillator(), o2 = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-    o.type = 'sawtooth'; o2.type = 'sawtooth'; o.frequency.setValueAtTime(196, t); o.frequency.linearRampToValueAtTime(220, t + .25); o2.frequency.setValueAtTime(197.5, t); o2.frequency.linearRampToValueAtTime(221.5, t + .25);
-    f.type = 'lowpass'; f.frequency.setValueAtTime(400, t); f.frequency.linearRampToValueAtTime(1500, t + .3); f.frequency.linearRampToValueAtTime(700, t + 1.3);
-    g.gain.value = .0001; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.2, t + .15); g.gain.setValueAtTime(.2, t + 1); g.gain.exponentialRampToValueAtTime(.0001, t + 1.5);
-    o.connect(f); o2.connect(f); f.connect(g); g.connect(w); o.start(t); o2.start(t); o.stop(t + 1.6); o2.stop(t + 1.6); }},
+  // P82: a conch shell, soft and breathy. The old horn was two buzzing sawtooth tones and could sound like an engine.
+  horn:{name:'War horn (conch)', gap:1, play:(t, d) => { const w = wet(d, .6), f = ctx.createBiquadFilter(), g = ctx.createGain(); f.type = 'lowpass'; f.frequency.value = 1100; f.Q.value = .7;
+    g.gain.value = .0001; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.26, t + .14); g.gain.setValueAtTime(.24, t + .95); g.gain.exponentialRampToValueAtTime(.0001, t + 1.45); f.connect(g); g.connect(w);
+    [[196, 'triangle', 1], [392, 'sine', .35], [588, 'sine', .12]].forEach(([fr, ty, v]) => { const o = ctx.createOscillator(), og = ctx.createGain(); o.type = ty; o.frequency.setValueAtTime(fr*.94, t); o.frequency.linearRampToValueAtTime(fr, t + .18); og.gain.value = v; o.connect(og); og.connect(f); o.start(t); o.stop(t + 1.55); });
+    noise(t, 1.3, w, {f:420, q:1.2, peak:.07, a:.12}); }},
   chime:{name:'Goal or job done', play:(t, d) => { const w = wet(d, .6); [62, 66, 69, 74, 78].forEach((m, i) => jingle(m + 12, t + i*.09, w, .45, .6)); }},
   fanfare:{name:'New ship ready', play:(t, d) => { SOUNDS.horn.play(t, d); const w = wet(d, .6); [[62, 66, 69], [64, 67, 71], [66, 69, 74]].forEach((ch, i) => ch.forEach((m, k) => jingle(m + 12, t + .4 + i*.3 + k*.025, w, .4, .6))); }},
   hammer:{name:'Shipwright at work', play:(t, d) => { for (let i=0;i<3;i++){ const o = i*.2; noise(t + o, .05, d, {f:2500, q:3, peak:.5}); osc('triangle', 330, t + o, .08, d, .3, .001, 200); osc('sine', 2900, t + o, .12, d, .05); } SOUNDS.chime.play(t + .65, d); }},
@@ -182,7 +188,7 @@ export const SOUNDS = {
     noise(t + .12, .85, d, {type:'highpass', f:2200, peak:.07});
     const flaps = [0, .17, .31, .43, .53, .61, .68, .74]; flaps.forEach((o, i) => noise(t + .08 + o, .1, d, {f:520 + i*70, f2:300 + i*40, q:1.1, peak:.26 + i*.035, buf:pinkBuf}));
     osc('sine', 70, t + .84, .3, d, .42, .006, 44); noise(t + .84, .2, d, {f:360, f2:150, q:.8, peak:.45, buf:pinkBuf});
-    osc('sawtooth', 118, t + 1, .24, d, .05, .03, 168); osc('sawtooth', 171, t + 1.2, .18, d, .035, .03, 225); }},
+    creakAt(t + 1, d, .22); }}, // P82: the ropes taking the strain creak like wood now (two rising sawtooth tones sounded like an engine)
   sail:{name:'Sail flaps', gap:.6, sea:true, play:(t, d) => { for (let i=0;i<3;i++) noise(t + i*.09, .12, d, {f:500, f2:300, q:.8, peak:.5 - i*.12, buf:pinkBuf}); }},
   bottle:{name:'Bottle opened', play:(t, d) => { osc('sine', 2400, t, .3, d, .2); osc('sine', 3900, t + .05, .2, d, .1); osc('sine', 700, t + .4, .06, d, .22, .001, 300); noise(t + .4, .05, d, {type:'highpass', f:2000, peak:.3}); }},
   treasure:{name:'Treasure found', play:(t, d) => { creakAt(t, d, .4); SOUNDS.coins.play(t + .3, d); SOUNDS.chime.play(t + .5, d); }},
@@ -213,11 +219,23 @@ function thunderAt(t, d, near){
 }
 function bubbles(t, d, n){ for (let i=0;i<n;i++){ const o = i*.07 + Math.random()*.05, f = 300 + Math.random()*500; osc('sine', f, t + o, .06, d, .12, .004, f*2.2); } }
 function bell(t, d, f, vol){ [[1, 1], [2.02, .5], [2.76, .35], [4.07, .2], [5.4, .1]].forEach(([r, v]) => osc('sine', f*r, t, 2.4/r + .4, d, vol*v, .002)); }
-function creakAt(t, d, vol){ vol *= 1.8; const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), base = 70 + Math.random()*40;
-  o.type = 'sawtooth'; o.frequency.setValueAtTime(base, t); o.frequency.linearRampToValueAtTime(base*1.6, t + .25); o.frequency.linearRampToValueAtTime(base*1.2, t + .5);
-  f.type = 'bandpass'; f.frequency.value = 900 + Math.random()*500; f.Q.value = 6;
-  g.gain.value = .0001; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol*.5, t + .08); g.gain.linearRampToValueAtTime(vol*.3, t + .35); g.gain.exponentialRampToValueAtTime(.0001, t + .6);
-  o.connect(f); f.connect(g); g.connect(d); o.start(t); o.stop(t + .7); }
+// P82 (Nicholas: something sounded like an engine running): the creak was a buzzing sawtooth whose pitch rose, like a motor revving.
+// Wood creaks by sticking and slipping: an uneven run of tiny clicks that speeds up and slows down, never a steady pitch.
+const creaks = [];
+function creakBuf(){
+  if (creaks.length >= 6) return creaks[Math.floor(Math.random()*creaks.length)];
+  const sr = ctx.sampleRate, n = Math.floor(sr*.6), b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0), r0 = 18 + Math.random()*14, r1 = r0*(1.4 + Math.random()*.8);
+  let x = Math.floor(sr*.01);
+  while (x < n){ const u = x/n, rate = u < .45 ? r0 + (r1 - r0)*u/.45 : r1 - (r1 - r0)*.7*(u - .45)/.55, len = Math.floor(sr*.0025), amp = .5 + Math.random()*.5;
+    for (let i = 0; i < len && x + i < n; i++) d[x + i] += (Math.random()*2 - 1)*amp*Math.exp(-i/(len*.3));
+    x += Math.floor(sr/rate*(.6 + Math.random()*.8)); }
+  creaks.push(b); return b;
+}
+function creakAt(t, d, vol){ vol *= 2.2; const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), f2 = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = creakBuf(); s.playbackRate.value = .85 + Math.random()*.3;
+  f.type = 'bandpass'; f.frequency.value = 650 + Math.random()*300; f.Q.value = 4; f2.type = 'peaking'; f2.frequency.value = 1700 + Math.random()*500; f2.Q.value = 5; f2.gain.value = 8;
+  g.gain.value = .0001; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol*.5, t + .06); g.gain.linearRampToValueAtTime(vol*.35, t + .35); g.gain.exponentialRampToValueAtTime(.0001, t + .6);
+  s.connect(f); f.connect(f2); f2.connect(g); g.connect(d); s.start(t); s.stop(t + .7); }
 // a gull: two or three falling "kee-ow" cries
 function gullCry(t, d){ const n = 2 + Math.floor(Math.random()*2), p = .9 + Math.random()*.25;
   for (let i=0;i<n;i++){ const s = t + i*(.26 + Math.random()*.08), o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();

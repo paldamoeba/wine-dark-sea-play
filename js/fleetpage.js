@@ -1,16 +1,16 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=1917ac5';
-import {G, ship, lvl, shipName, capOf} from './state.js?v=1917ac5';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=1917ac5';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=1917ac5';
-import {men} from './crew.js?v=1917ac5';
-import {SPECS, crewLayout} from './ships.js?v=1917ac5';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=1917ac5';
-import {HARBORS} from './world.js?v=1917ac5';
-import {planSources} from './combat.js?v=1917ac5';
-import {ranksBody} from './records.js?v=1917ac5';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=1917ac5';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=733c6b7';
+import {G, ship, lvl, shipName, capOf} from './state.js?v=733c6b7';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=733c6b7';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=733c6b7';
+import {men} from './crew.js?v=733c6b7';
+import {SPECS, crewLayout} from './ships.js?v=733c6b7';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=733c6b7';
+import {HARBORS} from './world.js?v=733c6b7';
+import {planSources} from './combat.js?v=733c6b7';
+import {ranksBody} from './records.js?v=733c6b7';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=733c6b7';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
@@ -33,10 +33,11 @@ function mineCard(t){
   const where = on ? '<span class="tag on">You are sailing her</span>' : c && c.out ? `<span class="tag">At sea with ${c.n}</span>` : '<span class="tag">Moored at Kallisto</span>';
   const perHour = Math.round(tripPay(t)*3600/(CAPTAIN.tripSeconds + CAPTAIN.restSeconds));
   const cap = on ? '' : c ? `<div class="cap">${peg('#2f5f8a', true)}<div><b>${c.n}</b><small>${c.out ? `Out fishing · back in ${clock(c.t)}` : `In port · sails in ${clock(c.t)}`}<br>${tripPay(t)} drachmae a trip, about ${perHour} an hour</small></div></div>`
+    : home && (G.S.idleCaps || []).length ? `<button class="btn ghostdark" data-act="capgive" data-t="${t}">Give her ${G.S.idleCaps[0]}</button>`
     : home ? `<button class="btn ghostdark" data-act="captain" data-t="${t}" ${S.gold >= captainCost() ? '' : 'disabled'}>Hire a captain ${chip(IC.coin, captainCost())}</button><small>A captain fishes with her and earns about ${perHour} drachmae an hour, even while the game is closed (up to 2 hours). Each one costs more than the last.</small>`
     : `<small>Back at Kallisto you can hire a captain to earn with her: about ${perHour} drachmae an hour.</small>`;
   const sw = on ? '' : home ? `<button class="btn" data-act="switch" data-t="${t}" ${cantSwitch(t) ? 'disabled' : ''}>${c && c.out ? 'She is at sea' : 'Sail her'}</button>${cantSwitch(t) && !(c && c.out) ? `<small>${cantSwitch(t)}</small>` : ''}` : '<small>You can change ships at Kallisto.</small>';
-  return `<section class="card fcard ${on ? 'on' : ''}"><div class="fhead">${shipImg(sh.model, look)}<div class="fname"><h3>${shipName(t)}</h3><small>${sh.name}</small>${where}${lvChip(shipLevel(t))}<button class="linkbtn" data-act="rename" data-t="${t}">Rename</button><button class="linkbtn" data-act="record" data-n="${G.slot}" data-t="${t}">Her record</button></div></div>
+  return `<section class="card fcard ${on ? 'on' : ''}"><div class="fhead">${shipImg(sh.model, look)}<div class="fname"><h3>${shipName(t)}</h3><small>${sh.name}</small>${where}${lvChip(shipLevel(t))}<button class="linkbtn" data-act="rename" data-t="${t}">${IC.play} Rename</button><button class="linkbtn" data-act="record" data-n="${G.slot}" data-t="${t}">Her record</button></div></div>
     <p class="note">${sh.desc || 'Your first boat: slow, small and yours.'}</p>
     <div class="line"><div><b>Hull ${hullNow} of ${n.hull}</b>${bar(hullNow/n.hull, hullNow/n.hull < .35 ? 'low' : '')}</div></div>
     ${statRows(n)}
@@ -64,8 +65,12 @@ export function fleetBody(){
   const mine = owned(), rest = buildable().filter(t => !mine.includes(t)), L = myLevel();
   const purse = S.purse ? (atHome() ? card("Captains' purse", `<div class="line">${IC.coin}<div><b>${S.purse} drachmae</b><small>What your captains brought back.</small></div><button class="btn gold" data-act="collect">Collect</button></div>`, 'donecard') : `<p class="note">${S.purse} drachmae wait for you at Kallisto.</p>`) : '';
   const head = `<div class="flevel"><span class="lvchip big">Level ${L}</span><p>How strong <b>${shipName()}</b> is, from her size, upgrades and your powers. Camps and fortresses have levels too.</p></div>`;
+  const caps = allCaptains(), capCard = tabs.fleet === 'mine' && caps.length ? card('Your captains', caps.map(c => {
+    const opts = [[-1, 'Resting at Kallisto'], ...owned().filter(t => t !== S.tier && (!captainOf(t) || captainOf(t).n === c.n)).map(t => [t, `Sails ${shipName(t)}`])];
+    return `<div class="line capline">${peg('#2f5f8a', true)}<b>${c.n}</b>${atHome() ? `<select class="jobsel" data-set="captain" data-n="${c.n}" aria-label="Ship for ${c.n}">${opts.map(([t, l]) => `<option value="${t}" ${t === c.t ? 'selected' : ''}>${l}</option>`).join('')}</select>` : `<small>${c.t < 0 ? 'Resting at Kallisto' : `Sails ${shipName(c.t)}`}</small>`}</div>`; }).join('')
+    + `<p class="note">${atHome() ? 'Choose the ship each captain takes out. A captain on the ship you sail yourself rests.' : 'Back at Kallisto you can choose which ship each captain takes out.'}</p>`) : '';
   const body = tabs.fleet === 'get' ? (rest.length ? rest.sort((a, b) => need(a) - need(b)).map(getCard).join('') : card('', '<p class="note">You own every ship there is.</p>')) : [...mine].sort((a, b) => (b === S.tier) - (a === S.tier)).map(mineCard).join('');
-  return `${tabBar(list, tabs.fleet, 'fleet')}${head}${purse}${body}`;
+  return `${tabBar(list, tabs.fleet, 'fleet')}${head}${purse}${capCard}${body}`;
 }
 export const fleetHTML = () => `<div class="mtop">${top('Your fleet')}</div><div class="mbody">${fleetBody()}</div>`;
 // The pinned ship, on the quest board

@@ -1,9 +1,9 @@
 // P73: every ship keeps her own record (S.shipStats[tier], written by stat() in state.js). This page ranks all your ships,
 // from all three voyages, and shows what one ship has done. Only this device's saves: there is no server behind it.
-import {SHIPS, NAMED} from './config.js?v=1917ac5';
-import {G, SLOTS, readSlot} from './state.js?v=1917ac5';
-import {IC, card, shipImg, tabs} from './menus.js?v=1917ac5';
-import {hasOnline, me, state as net, load as netLoad, setShips, push as netPush} from './online.js?v=1917ac5';
+import {SHIPS, NAMED} from './config.js?v=733c6b7';
+import {G, SLOTS, readSlot} from './state.js?v=733c6b7';
+import {IC, card, shipImg, tabs} from './menus.js?v=733c6b7';
+import {hasOnline, me, state as net, load as netLoad, setShips, push as netPush} from './online.js?v=733c6b7';
 
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const n = v => Math.floor(v || 0).toLocaleString();
@@ -54,8 +54,13 @@ const sendKey = k => k === 'deeds' ? 'deedN' : k;
 setShips(() => allShips().filter(e => (e.rec.time || 0) > 30).map(e => { const {deeds, ...nums} = e.rec; return {slot:e.slot, t:e.t, name:e.name, paint:e.look.paint, sail:e.look.sail, rec:{...nums, deeds:deeds || [], deedN:deedCount(e.rec)}}; }));
 const netShip = r => { const sh = SHIPS[r.t] || SHIPS[0]; return {online:true, id:`${r.who}-${r.slot}-${r.t}`, slot:r.slot, t:r.t, sh, name:r.name, rec:r.rec, on:r.who === me().who, look:{...(r.paint ? {paint:r.paint} : {}), ...(r.sail ? {sail:r.sail} : {})}}; };
 const netRows = () => (net.rows || []).map(netShip);
-const whereBox = cur => hasOnline() ? `<label class="rkby"><span>Board</span><select id="rankWhere" aria-label="Which board"><option value="mine" ${cur === 'mine' ? 'selected' : ''}>My ships</option><option value="online" ${cur === 'online' ? 'selected' : ''}>Everyone online</option></select></label>` : '';
-const rankBox = k => `<label class="rkby"><span>Rank by</span><select id="rankBy" aria-label="Rank ships by">${RANKS.map(([v, l]) => `<option value="${v}" ${v === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+// P82 (Nicholas): no dropdowns here. Like the high score tables of older games: two tabs (the world, or just you), the board's
+// name big between two arrows that flip to the next board, dots for how many boards there are, and a table of names and scores.
+const RK_IC = {sunk:() => IC.swords, pirates:() => IC.flame, navy:() => IC.crew, merchants:() => IC.hold, forts:() => IC.catapult, camps:() => IC.jobs, deeds:() => IC.star, earned:() => IC.coin, fish:() => IC.fish(), treasure:() => IC.map, dist:() => IC.world, time:() => IC.ship};
+const whereBox = cur => hasOnline() ? `<div class="rkseg" role="tablist">${[['online', 'Everyone'], ['mine', 'My ships']].map(([v, l]) => `<button role="tab" aria-selected="${v === cur}" class="${v === cur ? 'on' : ''}" data-act="rkwhere" data-v="${v}">${l}</button>`).join('')}</div>` : '';
+const rankBox = k => { const i = RANKS.findIndex(r => r[0] === k);
+  return `<div class="rkcat"><button class="rkarrow" data-act="rkcat" data-d="-1" aria-label="Previous board">‹</button><div class="rktitle">${(RK_IC[k] || RK_IC.sunk)()}<b>${RANKS[i][1]}</b></div><button class="rkarrow" data-act="rkcat" data-d="1" aria-label="Next board">›</button></div>
+    <div class="rkdots" aria-hidden="true">${RANKS.map((r, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</div><div class="rkcols"><span>Rank</span><span>Ship</span><span>Score</span></div>`; };
 function onlineHTML(k){ const key = sendKey(k), m = me();
   if (net.by !== key && !net.loading) setTimeout(() => netLoad(key)); 
   const row = (e, i, v) => `<button class="rkrow ${e.on ? 'on' : ''}" data-act="record" data-o="${esc(e.id)}"><span class="rkpos ${i < 3 ? 'p' + (i + 1) : ''}">${i + 1}</span>${picOf(e)}<span class="rkname"><b>${esc(e.name)}</b><small>${e.sh.name}${e.on ? ' · You' : ''}</small></span><b class="rkval">${show(v, k)}</b></button>`;

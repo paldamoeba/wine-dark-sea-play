@@ -1,7 +1,7 @@
 // Your fleet: every ship you build stays yours, moored at Kallisto with its own upgrades, hull and paint.
 // Switch ships at the Kallisto shipwright. Your crew comes with you (sailors beyond the seats wait on the pier).
-import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=1917ac5';
-import {G, ship, used, capOf, LOADS} from './state.js?v=1917ac5';
+import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=733c6b7';
+import {G, ship, used, capOf, LOADS} from './state.js?v=733c6b7';
 
 export const owned = () => G.S.owned || (G.S.owned = Array.from({length:G.S.tier + 1}, (_, i) => i));
 export const has = t => owned().includes(t);
@@ -24,10 +24,20 @@ export function tripPay(t){
   return Math.round(SHIPS[t].hold*CAPTAIN.perHold*(1 + CAPTAIN.perLevel*ups));
 }
 // Every captain you hire costs more than the last, so a big fleet is a late-game reward, not a free income.
-export const captainCost = () => Math.round(CAPTAIN.cost*CAPTAIN.grow**Object.keys(G.S.captains || {}).length/10)*10;
+export const captainCount = () => Object.keys(G.S.captains || {}).length + (G.S.idleCaps || []).length;
+export const captainCost = () => Math.round(CAPTAIN.cost*CAPTAIN.grow**captainCount()/10)*10;
+// P82 (Nicholas): you choose which ship each captain works. A captain moved off a ship waits at Kallisto until you give her another one.
+export function allCaptains(){ const S = G.S; return [...Object.entries(S.captains || {}).map(([t, c]) => ({n:c.n, t:+t})), ...(S.idleCaps || []).map(n => ({n, t:-1}))]; }
+export function assignCaptain(n, t){
+  const S = G.S, from = Object.keys(S.captains || {}).find(k => S.captains[k].n === n);
+  if (t >= 0 && (t === S.tier || !owned().includes(t) || (captainOf(t) && captainOf(t).n !== n))) return false;
+  if (from !== undefined){ if (+from === t) return false; const c = {...S.captains}; delete c[from]; S.captains = c; } else S.idleCaps = (S.idleCaps || []).filter(x => x !== n);
+  if (t < 0) S.idleCaps = [...(S.idleCaps || []), n]; else S.captains = {...(S.captains || {}), [t]:{n, out:true, t:CAPTAIN.tripSeconds}};
+  return true;
+}
 export function hireCaptain(t){
   const S = G.S, cost = captainCost(); if (t === S.tier || captainOf(t) || S.gold < cost) return false;
-  const used = new Set(Object.values(S.captains || {}).map(c => c.n)), n = CAPTAIN.names.find(x => !used.has(x)) || 'Captain Nikon';
+  const used = new Set(allCaptains().map(c => c.n)), n = CAPTAIN.names.find(x => !used.has(x)) || 'Captain Nikon';
   S.gold -= cost; S.captains = {...(S.captains || {}), [t]:{n, out:true, t:CAPTAIN.tripSeconds}}; return n;
 }
 // P65: captains keep working after you close the game, for up to 2 hours. Returns what they brought back meanwhile (it waits in the purse).

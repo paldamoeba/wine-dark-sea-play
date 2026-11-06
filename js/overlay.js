@@ -1,17 +1,17 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {omen} from './omens.js?v=1917ac5';
-import {OMENS} from './config.js?v=1917ac5';
-import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=1917ac5';
-import {G, isExplored} from './state.js?v=1917ac5';
-import {fogLayer, islandPath} from './map.js?v=1917ac5';
-import {view, project, screenToSea} from './scene.js?v=1917ac5';
-import {JOY_RADIUS} from './input.js?v=1917ac5';
-import {enemies, combatState, capture, aimLeads, planSources} from './combat.js?v=1917ac5';
-import {drawFish} from './fishing.js?v=1917ac5';
-import {whale} from './wildlife.js?v=1917ac5';
-import {W as WIND} from './weather.js?v=1917ac5';
-import {bottle} from './quests.js?v=1917ac5';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=1917ac5';
+import {omen} from './omens.js?v=733c6b7';
+import {OMENS} from './config.js?v=733c6b7';
+import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=733c6b7';
+import {G, isExplored} from './state.js?v=733c6b7';
+import {fogLayer, islandPath} from './map.js?v=733c6b7';
+import {view, project, screenToSea} from './scene.js?v=733c6b7';
+import {JOY_RADIUS} from './input.js?v=733c6b7';
+import {enemies, combatState, capture, aimLeads, planSources, towerPos, towersUp} from './combat.js?v=733c6b7';
+import {drawFish} from './fishing.js?v=733c6b7';
+import {whale} from './wildlife.js?v=733c6b7';
+import {W as WIND} from './weather.js?v=733c6b7';
+import {bottle} from './quests.js?v=733c6b7';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=733c6b7';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -148,6 +148,9 @@ export function drawOverlay(fps){
   // health bars, colored by side: pirates red, navy blue, merchants ochre
   for (const e of enemies){
     if (e.dead || Math.hypot(e.x - S.x, e.y - S.y) > 900) continue;
+    // P82: a fortress with towers standing shows a bar over each tower instead; the walls can't be hurt until they fall
+    if (e.towers && towersUp(e) && !e.camp){ e.towers.forEach((tw, i) => { if (tw.hp <= 0) return; const p = towerPos(e, i), [tx, ty, tz] = project(p.x, 80*(e.site ? e.site.s : 1) + (e.baseY || 0), p.y); if (tz > 1) return;
+      const w = 34; c.fillStyle = 'rgba(34,40,58,.6)'; c.fillRect(tx - w/2 - 2, ty - 2, w + 4, 8); c.fillStyle = tw.hitT ? '#f7eed6' : shipColor(e); c.fillRect(tx - w/2, ty, w*tw.hp/tw.max, 4); }); continue; }
     const [ex, ey, ez] = project(e.x, e.spec.len*.55*(e.site ? e.site.s : 1) + (e.baseY || 0), e.y); if (ez > 1) continue;
     const w = e.spec.len > 100 ? 64 : 46, pct = Math.max(0, e.hull/e.spec.hull);
     c.fillStyle = 'rgba(34,40,58,.6)'; c.fillRect(ex - w/2 - 2, ey - 2, w + 4, 9);
