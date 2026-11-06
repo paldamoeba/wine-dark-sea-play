@@ -1239,3 +1239,18 @@ body.arenaon #mission{display:none!important}
 .revive .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}.revive .btn svg{width:24px;height:24px}.revive .btn small{opacity:.75;font-size:12px}
 body.reviving .toolbar,body.reviving .abilities,body.reviving .mapbtn{visibility:hidden}
 .mtowers{display:flex;gap:3px;flex:1}.mtowers svg{width:13px;height:15px}
+/* P83: the chart's filters fold away behind one Filter button */
+.filterpanel{pointer-events:auto;display:grid;gap:8px;justify-items:center;background:#fff8e6;border:2px solid #8a6a48;border-radius:14px;padding:10px 12px;box-shadow:0 3px 0 rgba(60,40,20,.5),0 8px 18px rgba(45,28,12,.25);max-width:min(440px,calc(100vw - 32px));box-sizing:border-box}
+.filterpanel[hidden]{display:none}
+.filterpanel .mapfilter{margin:0;box-shadow:none}
+.filterpanel .legend{pointer-events:auto!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;width:100%}
+.filterpanel .legend label{display:flex;align-items:center;gap:6px;cursor:pointer;min-height:32px;font-size:13px}
+.filterpanel .legend input{width:18px;height:18px;accent-color:#2f6f8f;flex:none}
+.filterbtn{position:relative}.filterbtn.on{filter:brightness(1.15)}
+.filterbtn .dot{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#e2725b;border:2px solid #fff8e6}
+.filterbtn .dot[hidden]{display:none}
+/* P83: Rename and Her record are real buttons now */
+.fbtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.sheet.menu .btn.small.on{background:linear-gradient(#f6bd55,#d9902b);color:#3a240c;box-shadow:0 2px 0 #8f5a17}
+#mapFilters .legend{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;gap:2px 12px!important}
+#mapFilters .legend li{padding:0!important;margin:0!important;min-height:0!important}

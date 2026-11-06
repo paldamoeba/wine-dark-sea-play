@@ -1,16 +1,16 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=733c6b7';
-import {G, ship, lvl, shipName, capOf} from './state.js?v=733c6b7';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct} from './menus.js?v=733c6b7';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=733c6b7';
-import {men} from './crew.js?v=733c6b7';
-import {SPECS, crewLayout} from './ships.js?v=733c6b7';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=733c6b7';
-import {HARBORS} from './world.js?v=733c6b7';
-import {planSources} from './combat.js?v=733c6b7';
-import {ranksBody} from './records.js?v=733c6b7';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=733c6b7';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=19e7728';
+import {G, ship, lvl, shipName, capOf} from './state.js?v=19e7728';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=19e7728';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=19e7728';
+import {men} from './crew.js?v=19e7728';
+import {SPECS, crewLayout} from './ships.js?v=19e7728';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=19e7728';
+import {HARBORS} from './world.js?v=19e7728';
+import {planSources} from './combat.js?v=19e7728';
+import {ranksBody} from './records.js?v=19e7728';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=19e7728';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
@@ -24,6 +24,9 @@ const row = (label, v, max, txt, cmp) => `<div class="fstat"><span>${label}</spa
 function statRows(n, vs){ const d = (k, dp = 0) => vs ? +((n[k] - vs[k]).toFixed(dp)) : 0;
   return row('Hull', n.hull, TOP.hull, n.hull, d('hull')) + row('Speed', n.speed, TOP.speed, n.speed, d('speed')) + row('Turning', n.turn, TOP.turn, n.turn.toFixed(2), d('turn', 2))
     + row('Fish hold', n.hold, TOP.hold, n.hold, d('hold')) + row('Trade goods', n.goods, TOP.goods, n.goods, d('goods')) + row('Crew', n.men, TOP.men, `${n.men} of ${n.most}`, 0) + row('Archers', n.archers, 12, n.archers, d('archers')); }
+// P83: Rename opens a choice under the ship: pay or watch a video.
+function renameRow(t){ if (tabs.renamePick !== t) return ''; const ok = G.S.gold >= RENAME_COST;
+  return `<div class="btnrow flagbuy"><b>A new name for ${shipName(t)}</b><button class="btn ${ok ? 'gold' : ''}" data-act="renamebuy" data-t="${t}" ${ok ? '' : 'disabled'}>Pay ${chip(IC.coin, RENAME_COST, ok)}</button><button class="btn ghostdark" data-act="renamevideo" data-t="${t}">${IC.play} Watch a video</button></div>`; }
 const lvChip = (n, st) => `<span class="lvchip ${st || ''}">Level ${n}</span>`;
 
 function mineCard(t){
@@ -37,7 +40,7 @@ function mineCard(t){
     : home ? `<button class="btn ghostdark" data-act="captain" data-t="${t}" ${S.gold >= captainCost() ? '' : 'disabled'}>Hire a captain ${chip(IC.coin, captainCost())}</button><small>A captain fishes with her and earns about ${perHour} drachmae an hour, even while the game is closed (up to 2 hours). Each one costs more than the last.</small>`
     : `<small>Back at Kallisto you can hire a captain to earn with her: about ${perHour} drachmae an hour.</small>`;
   const sw = on ? '' : home ? `<button class="btn" data-act="switch" data-t="${t}" ${cantSwitch(t) ? 'disabled' : ''}>${c && c.out ? 'She is at sea' : 'Sail her'}</button>${cantSwitch(t) && !(c && c.out) ? `<small>${cantSwitch(t)}</small>` : ''}` : '<small>You can change ships at Kallisto.</small>';
-  return `<section class="card fcard ${on ? 'on' : ''}"><div class="fhead">${shipImg(sh.model, look)}<div class="fname"><h3>${shipName(t)}</h3><small>${sh.name}</small>${where}${lvChip(shipLevel(t))}<button class="linkbtn" data-act="rename" data-t="${t}">${IC.play} Rename</button><button class="linkbtn" data-act="record" data-n="${G.slot}" data-t="${t}">Her record</button></div></div>
+  return `<section class="card fcard ${on ? 'on' : ''}"><div class="fhead">${shipImg(sh.model, look)}<div class="fname"><h3>${shipName(t)}</h3><small>${sh.name}</small>${where}${lvChip(shipLevel(t))}<div class="fbtns"><button class="btn small ${tabs.renamePick === t ? 'on' : ''}" data-act="renamepick" data-t="${t}">Rename</button><button class="btn small" data-act="record" data-n="${G.slot}" data-t="${t}">Her record</button></div></div></div>${renameRow(t)}
     <p class="note">${sh.desc || 'Your first boat: slow, small and yours.'}</p>
     <div class="line"><div><b>Hull ${hullNow} of ${n.hull}</b>${bar(hullNow/n.hull, hullNow/n.hull < .35 ? 'low' : '')}</div></div>
     ${statRows(n)}

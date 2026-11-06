@@ -1,26 +1,26 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=733c6b7';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=733c6b7';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=733c6b7';
-import {scene, screenToSea, setLair} from './scene.js?v=733c6b7';
-import {wreckModel} from './models.js?v=733c6b7';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=733c6b7';
-import {mergeStatic, freeModel} from './merge.js?v=733c6b7';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=733c6b7';
-import {award} from './trophies.js?v=733c6b7';
-import {makeFire, updateFire, burn} from './fire.js?v=733c6b7';
-import {blessing, fighters, hasSail} from './crew.js?v=733c6b7';
-import {progress, goal} from './quests.js?v=733c6b7';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=733c6b7';
-import {rollColor, unlockColor, colorName} from './colors.js?v=733c6b7';
-import {toast} from './ui.js?v=733c6b7';
-import {sink, rowNow, ROW} from './player.js?v=733c6b7';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=733c6b7';
-import {TOD} from './daynight.js?v=733c6b7';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=733c6b7';
-import {sfx} from './audio.js?v=733c6b7';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=19e7728';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=19e7728';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=19e7728';
+import {scene, screenToSea, setLair} from './scene.js?v=19e7728';
+import {wreckModel} from './models.js?v=19e7728';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=19e7728';
+import {mergeStatic, freeModel} from './merge.js?v=19e7728';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=19e7728';
+import {award} from './trophies.js?v=19e7728';
+import {makeFire, updateFire, burn} from './fire.js?v=19e7728';
+import {blessing, fighters, hasSail} from './crew.js?v=19e7728';
+import {progress, goal} from './quests.js?v=19e7728';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=19e7728';
+import {rollColor, unlockColor, colorName} from './colors.js?v=19e7728';
+import {toast} from './ui.js?v=19e7728';
+import {sink, rowNow, ROW} from './player.js?v=19e7728';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=19e7728';
+import {TOD} from './daynight.js?v=19e7728';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=19e7728';
+import {sfx} from './audio.js?v=19e7728';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -741,10 +741,13 @@ function collide(){
     S.x -= nx*over*kP; S.y -= ny*over*kP; e.x += nx*over*(1 - kP); e.y += ny*over*(1 - kP); pushOut(S, sh.beam*.6); pushOut(e, e.spec.beam*.6);
     const into = Math.cos(S.a)*nx + Math.sin(S.a)*ny, fast = G.v/sh.speed;
     const mass = Math.max(.6, Math.min(1.8, Math.sqrt(mP/mE)));
-    if (hit.i >= 3 && into > .6 && fast > RAM.minSpeed && !e.ramT){ e.ramT = RAM.cooldown; shove(e, nx, ny, G.v*.9*mass); ramHit(e, Math.min(G.rowT > 0 ? 1.7 : 1, fast)*into*mass); G.v *= .45 + .35*(1 - kP); e.v *= .25; }
+    if (hit.i >= 3 && into > .6 && fast > RAM.minSpeed && !e.ramT){ e.ramT = RAM.cooldown; shove(e, nx, ny, G.v*.9*mass); ramHit(e, ramSpeedK(fast)*into*mass); G.v *= .45 + .35*(1 - kP); e.v *= .25; }
     else if (!e.bumpT && G.v > 20){ e.bumpT = .8; sfx('bump', e); shove(e, nx, ny, G.v*.4*mass); G.kick = Math.min(.25, (G.kick || 0) + .06); G.shake = Math.min(1, (G.shake || 0) + .25); G.v *= .6; e.v *= .6; }
   }
 }
+// P83: the ram hurts by how fast you hit. Damage grows with the square of your speed (half speed is a quarter of the damage),
+// and going faster than her top speed (with the wind behind you, or rowing hard) hits harder still, up to 2x.
+export function ramSpeedK(fast){ return Math.min(2, Math.max(0, fast)**2); }
 // A hit pushes the other ship sideways and swings it round a little; the push fades over a second or two (see steer()).
 function shove(e, nx, ny, v){ e.shx = (e.shx || 0) + nx*v; e.shy = (e.shy || 0) + ny*v; e.spin = (Math.random() < .5 ? -1 : 1)*Math.min(.9, v/150); e.heel = Math.max(-.3, Math.min(.3, (e.heel || 0) + (Math.random() - .5)*.4)); }
 // A head-on hit. With a ram it hurts them a lot and you a little; without one, both ships take the same small knock.
@@ -754,7 +757,7 @@ function ramHit(e, k){
   S.hull -= self; G.hurt = 1; G.kick = Math.min(.25, (G.kick || 0) + .15); G.shake = 1;
   G.pops = [...(G.pops || []), {t:G.t, txt:`-${dmg}`, x:e.x, y:e.y, c:'#f2a093'}];
   if (side(e) !== 'pirate') crime(e); else startFight(e);
-  if (!S.ramTip){ S.ramTip = true; toast(r ? 'Rammed!' : 'Bump! Buy a ram at Kallisto', 2.5); }
+  if (!S.ramTip){ S.ramTip = true; toast(r ? 'Rammed! The faster you hit, the harder' : 'Bump! Buy a ram at Kallisto', 2.8); }
   if (e.hull <= 0) sinkEnemy(e, true);
   if (S.hull <= 0){ sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; }
 }

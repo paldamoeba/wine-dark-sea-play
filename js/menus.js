@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=733c6b7';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=733c6b7';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=733c6b7';
-import {fleetBody, pinCard} from './fleetpage.js?v=733c6b7';
-import {myLevel} from './levels.js?v=733c6b7';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=733c6b7';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=733c6b7';
-import {planClues} from './combat.js?v=733c6b7';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=733c6b7';
-import {board, active, canDeliver, goal} from './quests.js?v=733c6b7';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=733c6b7';
-import {colorHeld, colorInfo} from './colors.js?v=733c6b7';
-import {shipPortrait} from './portrait.js?v=733c6b7';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=733c6b7';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=19e7728';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=19e7728';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=19e7728';
+import {fleetBody, pinCard} from './fleetpage.js?v=19e7728';
+import {myLevel} from './levels.js?v=19e7728';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=19e7728';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=19e7728';
+import {planClues} from './combat.js?v=19e7728';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=19e7728';
+import {board, active, canDeliver, goal} from './quests.js?v=19e7728';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=19e7728';
+import {colorHeld, colorInfo} from './colors.js?v=19e7728';
+import {shipPortrait} from './portrait.js?v=19e7728';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=19e7728';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -414,6 +414,7 @@ const flagSw = g => g.bg ? `<svg viewBox="0 0 40 30"><path d="M5 3 V28" stroke="
   : `<svg viewBox="0 0 40 30"><path d="M5 3 V28" stroke="#8a5a30" stroke-width="2.2" stroke-linecap="round"/><path d="M10 9 L22 21 M22 9 L10 21" stroke="#c9b48e" stroke-width="2.4" stroke-linecap="round"/></svg>`;
 // P82 (Nicholas): you fly the god you chose when you founded your crew for free; every other god's flag is bought or unlocked with a video
 export const FLAG_COST = 600;
+export const RENAME_COST = 1000; // P83: a new name for a ship: pay this or watch a video
 export function flagHeld(v){ const S = G.S; if (S.crewName && !S.crewGod) S.crewGod = S.look.flag; return v === 'none' || v === S.crewGod || (S.flags || []).includes(v); }
 function flagBuy(){ const v = tabs.flagPick; if (!v || flagHeld(v) || !GODS[v]) return ''; const ok = G.S.gold >= FLAG_COST;
   return `<div class="btnrow flagbuy"><b>Flag of ${GODS[v].name}</b><button class="btn ${ok ? 'gold' : ''}" data-act="flagbuy" data-v="${v}" ${ok ? '' : 'disabled'}>Buy ${chip(IC.coin, FLAG_COST, ok)}</button><button class="btn ghostdark" data-act="flagvideo" data-v="${v}">${IC.play} Video</button></div>`; }

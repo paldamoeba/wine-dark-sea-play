@@ -148,7 +148,7 @@ export const UPGRADES = {
   seats:  {label:'Crew',            ship:true, cost:{gold:9}, desc:'Hire hands for this ship. More rowers make it faster, more archers hit harder, more hands bring in more fish'}, // (kept as "seats" so old crew quarters levels carry over)
   arrows: {label:'Arrowheads',      each:.08, unit:'arrow damage', cost:{bronze:2, gold:18}, desc:'Bronze arrowheads for every archer'},
   shower: {label:'Arrow rain',      power:true, cost:{bronze:2, gold:24}, desc:'Drill your archers. More damage, a shorter wait, and the arrows land closer together, so they hit what you aim at'},
-  ram:    {label:'Ram',             cost:{wood:20, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it'},
+  ram:    {label:'Ram',             cost:{wood:20, gold:14}, desc:'A beak on the bow. Hit a ship head-on to damage it. The faster you hit, the harder it hurts'},
   fire:   {label:'Fire arrows',     power:true, minTier:2, cost:{linen:4, gold:40}, desc:'Rags soaked in oil. Tap Fire in a fight and for a few seconds every arrow sets ships alight'},
   catapult:{label:'Catapult',      power:true, minTier:2, cost:{iron:5, bronze:3, gold:70}, desc:'A catapult on deck that throws a ball of fire high into the air. Drag the Catapult button to where the enemy will be'},
   chain:  {label:'Chain shot',      power:true, minTier:1, cost:{iron:3, gold:30}, desc:'Iron balls joined by a chain. Tap Chains in a fight to tear down a ship\'s sail: it can barely move for a while'},
@@ -165,7 +165,7 @@ export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail 
 export const SHIP_K = [.6, 1, 2, 3, 4.5];
 // The ram: wood levels 1-10, then bronze 1-10, then gold 1-10 (30 in all). The bronze levels are paid in bronze (pay), the gold ones in more drachmae. Damage when your bow hits a ship head-on at speed.
 export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Bronze', color:'#b07f3c', k:2.2, cost:2.5, pay:'bronze'}, {name:'Gold', color:'#e3b341', k:4, cost:6, pay:'gold'}],
-  base:8, per:4, lv:5, minSpeed:.45, cooldown:1.2, bump:3}; // P64: 5 levels each of wood, bronze and gold (15 in all), like the sails
+  base:8, per:4, lv:5, minSpeed:.3, cooldown:1.2, bump:3}; // P64: 5 levels each of wood, bronze and gold (15 in all), like the sails
 
 // Captains: hire one for a ship you're not sailing and it goes out fishing on its own, bringing back gold.
 // One trip: tripSeconds at sea, then restSeconds moored at Kallisto. Pay per trip = hold × perHold, plus 4% per upgrade level on that ship.

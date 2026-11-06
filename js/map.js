@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=733c6b7';
-import {OMENS} from './config.js?v=733c6b7';
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=733c6b7';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=733c6b7';
-import {GOODS} from './config.js?v=733c6b7';
-import {sfx} from './audio.js?v=733c6b7';
-import {playVideo, toast} from './ui.js?v=733c6b7';
-import {ARENA} from './arena.js?v=733c6b7';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=733c6b7';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=733c6b7';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=733c6b7';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=733c6b7';
+import {omen} from './omens.js?v=19e7728';
+import {OMENS} from './config.js?v=19e7728';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=19e7728';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=19e7728';
+import {GOODS} from './config.js?v=19e7728';
+import {sfx} from './audio.js?v=19e7728';
+import {playVideo, toast} from './ui.js?v=19e7728';
+import {ARENA} from './arena.js?v=19e7728';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=19e7728';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=19e7728';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=19e7728';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=19e7728';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
@@ -261,7 +261,7 @@ function draw(){
 // ---- open / close ----
 export function openMap(){
   if (G.sheetOpen) return;
-  G.mapOpen = true; G.joy = null; el.hidden = false; size(); G.mapFilter = 'all'; $('mapFilter').value = 'all'; document.querySelector('.legend').hidden = false;
+  G.mapOpen = true; G.joy = null; el.hidden = false; size(); G.mapFilter = 'all'; $('mapFilter').value = 'all'; document.querySelector('.legend').hidden = false; filterPanel(false);
   view.cx = G.S.x; view.cy = G.S.y; view.z = Math.min(W, H)/6500;
   // P65: a new treasure map: open on it, far enough out to see it and your ship
   // P71: with a ship pinned, the chart opens wide enough to show where its plans are
@@ -347,8 +347,12 @@ const LAYERS = [['harbors', IC.dock, 'Harbors'], ['camps', CAMP_SVG, 'Camps'], [
   ['fish', IC.fish('#4f8fc0'), 'Fish'], ['wrecks', IC.wreck, 'Wrecks'], ['iron', IC.iron, 'Iron'], ['treasure', X_SVG, 'Treasure'], ['goals', '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Goals']];
 // P72: each picture gets its own color names: the chart is hidden most of the time, and a picture borrowing colors from a hidden one loses them
 $('mapView').querySelector('.legend').innerHTML = LAYERS.map(([k, ic, n]) => `<li><label><input type="checkbox" data-layer="${k}" ${(G.settings.mapShow || {})[k] === false ? '' : 'checked'}>${ic.replace(/id="(\w+)"/g, 'id="lg$1"').replace(/url\(#(\w+)\)/g, 'url(#lg$1)')}<span>${n}</span></label></li>`).join('');
-$('mapView').querySelector('.legend').addEventListener('change', e => { const k = e.target.dataset.layer; if (!k) return; G.settings.mapShow = {...(G.settings.mapShow || {}), [k]:e.target.checked}; saveSettings(); draw(); });
+$('mapView').querySelector('.legend').addEventListener('change', e => { const k = e.target.dataset.layer; if (!k) return; G.settings.mapShow = {...(G.settings.mapShow || {}), [k]:e.target.checked}; saveSettings(); filterDot(); draw(); });
 $('mapFilter').innerHTML = FILTER_GROUPS.map(([g, list]) => { const o = list.map(([v, n]) => `<option value="${v}">${n}</option>`).join(''); return g ? `<optgroup label="${g}">${o}</optgroup>` : o; }).join('');
+// P83 (Nicholas): the filters stay folded away behind one Filter button. A dot on it means something is hidden.
+function filterDot(){ const show = G.settings.mapShow || {}; $('filterDot').hidden = !((G.mapFilter || 'all') !== 'all' || Object.values(show).some(v => v === false)); }
+function filterPanel(open){ $('mapFilters').hidden = !open; $('mapFilterBtn').setAttribute('aria-expanded', open); $('mapFilterBtn').classList.toggle('on', open); filterDot(); }
+$('mapFilterBtn').addEventListener('click', () => filterPanel($('mapFilters').hidden));
 // frame what the filter found, with your ship, so you never have to hunt for it
 function frame(pts){ if (!pts.length) return; const all = [...pts, {x:G.S.x, y:G.S.y}], xs = all.map(p => p.x), ys = all.map(p => p.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   view.cx = (x0 + x1)/2; view.cy = (y0 + y1)/2 + 700; view.z = Math.min(W*.72/Math.max(x1 - x0, 1500), H*.5/Math.max(y1 - y0, 1500)); clampView(); }
@@ -357,7 +361,7 @@ $('mapFilter').addEventListener('change', e => { const F = G.mapFilter = e.targe
   if (F.includes(':')) frame(known.filter(h => filterPrice(h, F) != null).map(h => h.dock));
   else if (F === 'harbors') frame(known.map(h => h.dock));
   else if (F === 'forts' || F === 'ships') frame(enemies.filter(o => !o.dead && (F === 'ships' ? o.named : o.fort || o.named) && isExplored((o.home || o).x, (o.home || o).y)).map(o => o.named ? o.home : o));
-  draw(); });
+  filterDot(); draw(); });
 $('mapClear').addEventListener('click', () => { G.dest = null; draw(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape' && G.mapOpen){ if (!$('homePop').hidden) $('homePop').hidden = true; else closeMap(); }

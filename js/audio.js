@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=733c6b7';
+import {MUSIC_REST} from './config.js?v=19e7728';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -182,14 +182,14 @@ export const SOUNDS = {
   torch:{name:'Torches at night', sea:true, gap:2, play:(t, d) => torchSample(t, d, 10)},
   oar:{name:'Oar stroke', gap:.15, sea:true, play:(t, d) => { noise(t, .4, d, {type:'lowpass', f:900, f2:400, peak:.09, a:.08}); noise(t + .22, .5, d, {f:1800, f2:900, q:.8, peak:.035, a:.12}); }}, // a soft swish of water, no click
   drum:{name:'Rowing drum', gap:.2, play:(t, d) => { osc('sine', 82, t, .22, d, .5, .004, 55); noise(t, .06, d, {type:'lowpass', f:500, peak:.2}); }},
-  // P65: the sail catching the wind: air rushing through cloth, the cloth flapping faster and faster, then it stretches out taut with a deep thump and the ropes creak
+  // P83: the sail catching the wind: one soft gust that dies away, two loose flaps of cloth, then it fills with a deep whump and the wood creaks.
+  // (The P65 sound swept a filter upward under a run of faster and faster flaps, which sounded like an engine starting.)
   sailfill:{name:'Sail catches the wind', gap:2, sea:true, vol:1.5, play:(t, d) => {
-    noise(t, 1.05, d, {f:320, f2:1500, q:.7, peak:.55, buf:pinkBuf});
-    noise(t + .12, .85, d, {type:'highpass', f:2200, peak:.07});
-    const flaps = [0, .17, .31, .43, .53, .61, .68, .74]; flaps.forEach((o, i) => noise(t + .08 + o, .1, d, {f:520 + i*70, f2:300 + i*40, q:1.1, peak:.26 + i*.035, buf:pinkBuf}));
-    osc('sine', 70, t + .84, .3, d, .42, .006, 44); noise(t + .84, .2, d, {f:360, f2:150, q:.8, peak:.45, buf:pinkBuf});
-    creakAt(t + 1, d, .22); }}, // P82: the ropes taking the strain creak like wood now (two rising sawtooth tones sounded like an engine)
-  sail:{name:'Sail flaps', gap:.6, sea:true, play:(t, d) => { for (let i=0;i<3;i++) noise(t + i*.09, .12, d, {f:500, f2:300, q:.8, peak:.5 - i*.12, buf:pinkBuf}); }},
+    noise(t, .9, d, {f:900, f2:450, q:.6, peak:.3, a:.25, buf:pinkBuf});
+    noise(t + .05, .14, d, {f:520, f2:330, q:1, peak:.3, buf:pinkBuf}); noise(t + .34, .14, d, {f:480, f2:300, q:1, peak:.26, buf:pinkBuf});
+    noise(t + .62, .3, d, {f:300, f2:120, q:.7, peak:.55, buf:pinkBuf}); osc('sine', 62, t + .62, .3, d, .3, .006, 42);
+    creakAt(t + .95, d, .2); }},
+  sail:{name:'Sail flaps', gap:.6, sea:true, play:(t, d) => { noise(t, .13, d, {f:500, f2:300, q:.8, peak:.45, buf:pinkBuf}); noise(t + .22 + Math.random()*.12, .12, d, {f:460, f2:290, q:.8, peak:.28, buf:pinkBuf}); }}, // P83: two loose flaps, not a quick run (a run sounded like a motor)
   bottle:{name:'Bottle opened', play:(t, d) => { osc('sine', 2400, t, .3, d, .2); osc('sine', 3900, t + .05, .2, d, .1); osc('sine', 700, t + .4, .06, d, .22, .001, 300); noise(t + .4, .05, d, {type:'highpass', f:2000, peak:.3}); }},
   treasure:{name:'Treasure found', play:(t, d) => { creakAt(t, d, .4); SOUNDS.coins.play(t + .3, d); SOUNDS.chime.play(t + .5, d); }},
   crowd:{name:'The arena crowd cheers', gap:1, play:(t, d) => { const w = wet(d, .6); [700, 1100, 1600, 2400].forEach((f, i) => noise(t + i*.03, 2, w, {f, q:1.5, peak:.35, a:.4, buf:pinkBuf})); for (let i=0;i<10;i++) osc('triangle', 500 + Math.random()*500, t + .2 + Math.random()*1.2, .25, w, .06, .05); }},
