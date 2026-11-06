@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=2a982a2';
+import {hash} from './world.js?v=1917ac5';
 
-import {smokeColumn} from './smoke.js?v=2a982a2';
+import {smokeColumn} from './smoke.js?v=1917ac5';
 const T = window.THREE;
-import {mat} from './ships.js?v=2a982a2';
+import {mat} from './ships.js?v=1917ac5';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.

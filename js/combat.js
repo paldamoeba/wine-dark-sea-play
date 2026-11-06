@@ -1,25 +1,25 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=2a982a2';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=2a982a2';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=2a982a2';
-import {scene, screenToSea, setLair} from './scene.js?v=2a982a2';
-import {wreckModel} from './models.js?v=2a982a2';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=2a982a2';
-import {mergeStatic, freeModel} from './merge.js?v=2a982a2';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=2a982a2';
-import {award} from './trophies.js?v=2a982a2';
-import {makeFire, updateFire, burn} from './fire.js?v=2a982a2';
-import {blessing, fighters, hasSail} from './crew.js?v=2a982a2';
-import {progress, goal} from './quests.js?v=2a982a2';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=2a982a2';
-import {rollColor, unlockColor, colorName} from './colors.js?v=2a982a2';
-import {toast} from './ui.js?v=2a982a2';
-import {sink, rowNow, ROW} from './player.js?v=2a982a2';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=2a982a2';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=2a982a2';
-import {sfx} from './audio.js?v=2a982a2';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED} from './config.js?v=1917ac5';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=1917ac5';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=1917ac5';
+import {scene, screenToSea, setLair} from './scene.js?v=1917ac5';
+import {wreckModel} from './models.js?v=1917ac5';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=1917ac5';
+import {mergeStatic, freeModel} from './merge.js?v=1917ac5';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=1917ac5';
+import {award} from './trophies.js?v=1917ac5';
+import {makeFire, updateFire, burn} from './fire.js?v=1917ac5';
+import {blessing, fighters, hasSail} from './crew.js?v=1917ac5';
+import {progress, goal} from './quests.js?v=1917ac5';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=1917ac5';
+import {rollColor, unlockColor, colorName} from './colors.js?v=1917ac5';
+import {toast} from './ui.js?v=1917ac5';
+import {sink, rowNow, ROW} from './player.js?v=1917ac5';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=1917ac5';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=1917ac5';
+import {sfx} from './audio.js?v=1917ac5';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -182,13 +182,14 @@ function respawn(e){
   Object.assign(e, {x:e.home.x, y:e.home.y, hull:e.spec.hull, dead:false, sinkY:0, sinkT:0, kick:0, mode:'patrol', v:0, leg:1, wait:0, angry:false, attacked:false, foe:null, prey:null, scare:null}); e.obj.visible = true; }
 
 // Arena champions (arena.js): pirates who fight to the end inside the walls. They never respawn.
+// P81: lane, spd, orbit, ring and tacT were missing here, so arena ships broke (NaN) as soon as they chased you
 export function spawnArena(kind, x, y, home, mods = {}){
   const base = ENEMIES[kind], spec = {...base, leash:4000, sight:1400, hull:Math.round((mods.hull || base.hull)*(mods.k || 1)), dmg:(mods.dmg || base.dmg)*(mods.kd || 1), ...(mods.fighters ? {fighters:mods.fighters} : {}), ...(mods.name ? {name:mods.name} : {}), ...(mods.gold ? {gold:mods.gold} : {})};
   const e = {kind, city:null, spec, x, y, home, a:Math.atan2(home.y - y, home.x - x), v:0, hull:spec.hull, cool:1, mode:'patrol', pa:0, dead:false, sinkY:0, respawn:1e9, obj:null, leg:1, wait:0,
-    angry:false, attacked:false, foe:null, lost:0, calm:0, arena:true, ...(mods.look ? {look:mods.look} : {}), ...(mods.model ? {model:mods.model} : {})};
+    angry:false, attacked:false, foe:null, lost:0, calm:0, lane:0, spd:1, orbit:Math.random() < .5 ? 1 : -1, ring:200 + Math.random()*120, tacT:0, arena:true, ...(mods.look ? {look:mods.look} : {}), ...(mods.model ? {model:mods.model} : {}), ...(mods.charger ? {charger:mods.charger} : {})};
   buildEnemy(e); enemies.push(e); startFight(e); return e;
 }
-export function clearArena(){ for (let i=enemies.length-1;i>=0;i--) if (enemies[i].arena){ scene.remove(enemies[i].obj); enemies.splice(i, 1); } }
+export function clearArena(){ for (let i=enemies.length-1;i>=0;i--) if (enemies[i].arena){ const e = enemies[i]; scene.remove(e.obj); if (e.rushLine) scene.remove(e.rushLine); enemies.splice(i, 1); } }
 
 // Builder tool: drop a skiff right next to you.
 export function spawnNear(kind = 'skiff'){
@@ -248,34 +249,51 @@ export function spawnBoss(){
   for (let i=0;i<BOSS.escorts;i++) bossShip('skiff', {x:at.x + Math.cos(i*3.1 + 1)*260, y:at.y + Math.sin(i*3.1 + 1)*260});
 }
 function bossDown(e){
-  rushLine.visible = false; givePiece(11, 'king'); /* P71: his flagship's plans */ boss.e = null; progress('boss'); G.S.chapter = Math.max(G.S.chapter || 0, 1); award('king'); save(); G.shake = 1;
+  if (e.rushLine) e.rushLine.visible = false; givePiece(11, 'king'); /* P71: his flagship's plans */ boss.e = null; progress('boss'); G.S.chapter = Math.max(G.S.chapter || 0, 1); award('king'); save(); G.shake = 1;
   toast('Polycrates\' flagship breaks apart! The pirate king is beaten.', 5); sfx('fanfare');
   setTimeout(() => document.dispatchEvent(new Event('chapterdone')), 4500);
 }
 // P77: the fight has three stages (the bar shows them). First flaming volleys. Below 60% he also throws fire pots at where you're going: a red ring shows where each lands.
 // Below half two skiffs join him. Below 25% he turns and charges: a red path on the water shows where. Get out of it.
-const rushLine = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({color:'#ff3d22', transparent:true, opacity:0, depthWrite:false})); rushLine.rotation.x = -Math.PI/2; rushLine.rotation.order = 'YXZ'; rushLine.visible = false; rushLine.renderOrder = 2; scene.add(rushLine);
+const makeRushLine = () => { const l = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({color:'#ff3d22', transparent:true, opacity:0, depthWrite:false})); l.rotation.x = -Math.PI/2; l.rotation.order = 'YXZ'; l.visible = false; l.renderOrder = 2; scene.add(l); return l; };
 function throwPot(e){ const S = G.S, lead = G.v*FORTS.stoneFlight*.8, st = STONES[stoneI++ % STONES.length], sp = 30 + Math.random()*90, ang = Math.random()*6.28;
   Object.assign(st, {live:true, t:0, pot:true, x0:e.x, y0:e.y, tx:S.x + Math.cos(S.a)*lead + Math.cos(ang)*sp, ty:S.y + Math.sin(S.a)*lead + Math.sin(ang)*sp}); st.m.visible = st.r.visible = true; }
 function bossThink(e, dt){
   const S = G.S, d = dist(e, S), K = e.hull/e.spec.hull;
   for (const r of LAIR_ROCKS){ const dx = e.x - r.x, dy = e.y - r.y, h = Math.hypot(dx, dy) || 1, m = r.r + e.spec.beam*.5; if (h < m){ e.x = r.x + dx/h*m; e.y = r.y + dy/h*m; } } // he goes around the rocks too
   const fighting = e.mode === 'chase' || e.rushW > 0 || e.rushT > 0;
+  if (fighting && !e.seen){ e.seen = true; say(e, G.S.bossHull > 0 ? 'Back for more, little fisherman?' : 'Another fool for my fires.'); }
+  if (K < BOSS.potAt && !e.potTip){ e.potTip = true; say(e, 'Burn them!'); }
+  if (e.stunT > 0){ charge(e, dt, BOSS, fighting, d, K); return; }
   if (e.mode === 'chase' && d < COMBAT.range*1.1 && (e.fireT -= dt) <= 0){ e.fireT = BOSS.fireEvery; salvo(e, null, BOSS.fireArrows, BOSS.dmg, 60, true); sfx('horn', e); }
   if (K < BOSS.potAt && fighting && d < 1100 && (e.potT = (e.potT ?? 2) - dt) <= 0){ e.potT = BOSS.potEvery; for (let i = 0; i < BOSS.pots; i++) throwPot(e); sfx('catapult', e); }
-  if (!e.called && K < .5){ e.called = true; for (let i=0;i<2;i++) startFight(bossShip('skiff', {x:e.x + Math.cos(e.a + 1.6 + i*3.1)*320, y:e.y + Math.sin(e.a + 1.6 + i*3.1)*320})); sfx('horn', e); }
-  // the charge: a warning, then straight ahead
-  if (K < BOSS.rushAt && fighting && !(e.rushW > 0) && !(e.rushT > 0) && d < 1000 && (e.rushCd = (e.rushCd ?? 1) - dt) <= 0){ e.rushW = BOSS.rushWarn; e.rushHit = false; sfx('horn', e); sfx('drum', e); }
-  if (e.rushW > 0){ e.rushW -= dt; e.v *= Math.exp(-dt*2); if (e.rushW > .7) e.a += angDiff(Math.atan2(S.y - e.y, S.x - e.x), e.a)*Math.min(1, dt*2.2);
-    const L = BOSS.speed*BOSS.rushK*BOSS.rushTime; rushLine.visible = true; rushLine.position.set(e.x + Math.cos(e.a)*L/2, waveAt(e.x, e.y, G.t) + 2, e.y + Math.sin(e.a)*L/2); rushLine.rotation.y = -e.a; rushLine.scale.set(L, e.spec.beam*1.05, 1); rushLine.material.opacity = .2 + .22*Math.abs(Math.sin(G.t*9));
-    if (e.rushW <= 0){ e.rushT = BOSS.rushTime; G.shake = Math.min(1, (G.shake || 0) + .4); } }
-  else if (e.rushT > 0){ e.rushT -= dt; e.v = BOSS.speed*BOSS.rushK; e.x += Math.cos(e.a)*e.v*dt; e.y += Math.sin(e.a)*e.v*dt; rushLine.material.opacity = .22;
-    const dx = S.x - e.x, dy = S.y - e.y, along = dx*Math.cos(e.a) + dy*Math.sin(e.a), side = Math.abs(-dx*Math.sin(e.a) + dy*Math.cos(e.a));
-    if (!e.rushHit && !G.sinking && Math.abs(along) < e.spec.len*.55 && side < e.spec.beam*.55 + ship().beam*.5){ e.rushHit = true; S.hull -= BOSS.rushDmg; G.hurt = 1; G.shake = 1; G.kick = .25; sfx('ram', e); G.pops = [...(G.pops || []), {t:G.t, txt:`-${BOSS.rushDmg}`, x:S.x, y:S.y, c:'#ff8a6a'}];
-      if (S.hull <= 0){ sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; } }
-    if (e.rushT <= 0 || landDist(e.x, e.y) < e.spec.beam){ e.rushT = 0; e.rushCd = BOSS.rushEvery; e.mode = 'chase'; rushLine.visible = false; } }
-  else rushLine.visible = false;
+  if (!e.called && K < .5){ e.called = true; say(e, 'To me, my wolves!'); for (let i=0;i<2;i++) startFight(bossShip('skiff', {x:e.x + Math.cos(e.a + 1.6 + i*3.1)*320, y:e.y + Math.sin(e.a + 1.6 + i*3.1)*320})); sfx('horn', e); }
+  if (K < BOSS.rushAt && !e.chargeTip && (e.rushW > 0)){ e.chargeTip = true; say(e, 'Enough! I will break you myself!'); setTimeout(() => toast('Get out of the red path. Lure him into the rocks!', 4), 2200); }
+  charge(e, dt, BOSS, fighting, d, K);
+  // P81: his fortress on the great rock joins in below half: stones at you while you fight near it
+  const rock = LAIR_ROCKS[0]; if (K < .5 && fighting && Math.hypot(S.x - rock.x, S.y - rock.y) < 1350 && (e.rockT = (e.rockT ?? 3) - dt) <= 0){ e.rockT = 7; lobStone(rock.x, rock.y, false); }
 }
+// P77/P81: the charge, for the pirate king and the arena's champion. C: {rushAt, rushEvery, rushWarn, rushTime, rushK, rushDmg, speed}.
+// A warning (a red path on the water), then straight ahead. A charger that runs into rock (the lair's stacks) is stunned and hurt.
+function charge(e, dt, C, fighting, d, K){
+  const S = G.S, line = e.rushLine || (e.rushLine = makeRushLine());
+  if (e.stunT > 0){ e.stunT -= dt; e.v *= Math.exp(-dt*3); line.visible = false; return; }
+  if (K < C.rushAt && fighting && !(e.rushW > 0) && !(e.rushT > 0) && d < 1000 && (e.rushCd = (e.rushCd ?? 1) - dt) <= 0){ e.rushW = C.rushWarn; e.rushHit = false; sfx('horn', e); sfx('drum', e); }
+  if (e.rushW > 0){ e.rushW -= dt; e.v *= Math.exp(-dt*2); if (e.rushW > .7) e.a += angDiff(Math.atan2(S.y - e.y, S.x - e.x), e.a)*Math.min(1, dt*2.2);
+    const L = C.speed*C.rushK*C.rushTime; line.visible = true; line.position.set(e.x + Math.cos(e.a)*L/2, waveAt(e.x, e.y, G.t) + 2, e.y + Math.sin(e.a)*L/2); line.rotation.y = -e.a; line.scale.set(L, e.spec.beam*1.05, 1); line.material.opacity = .2 + .22*Math.abs(Math.sin(G.t*9));
+    if (e.rushW <= 0){ e.rushT = C.rushTime; G.shake = Math.min(1, (G.shake || 0) + .4); } }
+  else if (e.rushT > 0){ e.rushT -= dt; e.v = C.speed*C.rushK; e.x += Math.cos(e.a)*e.v*dt; e.y += Math.sin(e.a)*e.v*dt; line.material.opacity = .22;
+    const dx = S.x - e.x, dy = S.y - e.y, along = dx*Math.cos(e.a) + dy*Math.sin(e.a), side = Math.abs(-dx*Math.sin(e.a) + dy*Math.cos(e.a));
+    if (!e.rushHit && !G.sinking && Math.abs(along) < e.spec.len*.55 && side < e.spec.beam*.55 + ship().beam*.5){ e.rushHit = true; S.hull -= C.rushDmg; G.hurt = 1; G.shake = 1; G.kick = .25; sfx('ram', e); G.pops = [...(G.pops || []), {t:G.t, txt:`-${C.rushDmg}`, x:S.x, y:S.y, c:'#ff8a6a'}];
+      if (S.hull <= 0){ sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; } }
+    const nx = e.x + Math.cos(e.a)*e.spec.len*.5, ny = e.y + Math.sin(e.a)*e.spec.len*.5, rock = e.boss && LAIR_ROCKS.find(r => Math.hypot(nx - r.x, ny - r.y) < r.r + 10);
+    if (rock || (e.arena && e.wallHit && e.rushT < C.rushTime - .3)){ // into the rocks: stunned, and it costs him
+      const hurt = Math.round(e.spec.hull*.06); e.hull -= hurt; e.hitT = .4; e.kick = .3; e.stunT = 4; e.rushT = 0; e.rushCd = C.rushEvery; e.mode = 'chase'; line.visible = false; G.shake = 1; sfx('ram', e); sfx('crowd');
+      G.pops = [...(G.pops || []), {t:G.t, txt:`-${hurt}`, x:e.x, y:e.y, c:'#ffd27a'}]; if (!e.stunTip){ e.stunTip = true; toast('He crashed! Hit him now', 3); } if (e.hull <= 0) sinkEnemy(e, true); return; }
+    if (e.rushT <= 0 || landDist(e.x, e.y) < e.spec.beam){ e.rushT = 0; e.rushCd = C.rushEvery; e.mode = 'chase'; line.visible = false; } }
+  else line.visible = false;
+}
+const say = (e, line) => { toast(`${e.spec.name.split(',')[0]}: "${line}"`, 3.2); sfx('horn', e); };
 
 const angDiff = (want, a) => { const d = want - a; return d - Math.PI*2*Math.floor((d + Math.PI)/(Math.PI*2)); }; // P70: the short way round, however far the angle has wound up
 // Look ahead for land and turn to the side with open water. The side sticks until the way is clear, so ships don't wobble.
@@ -447,6 +465,9 @@ const STONES = Array.from({length:12}, () => {
   const sp = new T.Mesh(splashGeo, new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:0, depthWrite:false, side:T.DoubleSide})); sp.visible = false; scene.add(sp);
   return {m, r, sp, live:false, splash:0}; });
 let stoneI = 0;
+// P81: a stone (or a fire pot) thrown from x0, y0 at where you're heading
+export function lobStone(x0, y0, pot = false){ const S = G.S, lead = G.v*FORTS.stoneFlight*.8, st = STONES[stoneI++ % STONES.length], sp = 40 + Math.random()*40, ang = Math.random()*6.28;
+  Object.assign(st, {live:true, t:0, pot, x0, y0, tx:S.x + Math.cos(S.a)*lead + Math.cos(ang)*sp, ty:S.y + Math.sin(S.a)*lead + Math.sin(ang)*sp}); st.m.visible = st.r.visible = true; sfx('catapult', {x:x0, y:y0}); }
 function throwStone(f, i){
   const [lx, lz] = FORT_GUNS[i], ca = Math.cos(f.a), sa = Math.sin(f.a), S = G.S, lead = G.v*FORTS.stoneFlight*.8;
   const st = STONES[stoneI++ % STONES.length], sp = 40 + Math.random()*30, ang = Math.random()*6.28;
@@ -471,7 +492,7 @@ function updateStones(dt){
   }
 }
 function think(e, dt){
-  if (e.boss && (e.rushW > 0 || e.rushT > 0)) return; // he is charging: bossThink steers
+  if ((e.boss || e.charger) && (e.rushW > 0 || e.rushT > 0 || e.stunT > 0)) return; // charging or stunned: charge() steers
   const s = side(e); if (s === 'own') return;
   if (s === 'ally') return ally(e, dt);
   if (s === 'fort') fortThink(e, dt); else if (s === 'merchant') merchant(e, dt); else if (s === 'navy') navy(e, dt); else pirate(e, dt);
@@ -930,6 +951,7 @@ export function updateCombat(dt){
   if (G.burnT > 0 && !G.sinking){ G.burnT -= dt; G.S.hull -= BOSS.burnDps*dt; G.hurt = Math.max(G.hurt || 0, .4); if (G.S.hull <= 0){ G.burnT = 0; sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; } }
   const gl = goal(); if (gl && gl.t === 'boss' && !boss.e) spawnBoss();
   if (boss.e && !boss.e.dead){ bossThink(boss.e, dt); G.S.bossHull = Math.ceil(boss.e.hull); }
+  for (const e of enemies) if (e.charger && !e.dead) charge(e, dt, e.charger, e.mode === 'chase' || e.rushW > 0 || e.rushT > 0, dist(e, G.S), e.hull/e.spec.hull);
   G.boss = boss.e && !boss.e.dead ? {x:boss.e.x, y:boss.e.y} : null;
   // where the current chapter goal is, for the chart and the little map: the pirate fortresses, then the pirate king
   G.goalMarks = gl && gl.t === 'camp' ? enemies.filter(o => o.camp && o.isle.name === gl.kind && !o.dead).map(o => ({x:o.x, y:o.y, label:`${o.isle.name} bandit camp`})) : gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];

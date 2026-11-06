@@ -1,17 +1,19 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=2a982a2';
-import {makePost} from './glow.js?v=2a982a2';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=2a982a2';
-import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=2a982a2';
-import {makeFire, updateFire} from './fire.js?v=2a982a2';
-import {updateSmoke} from './smoke.js?v=2a982a2';
-import {addGrass, updateGrass} from './grass.js?v=2a982a2';
-import {makeWind} from './seafx.js?v=2a982a2';
-import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=2a982a2';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=2a982a2';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=2a982a2';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=2a982a2';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=1917ac5';
+import {makePost} from './glow.js?v=1917ac5';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=1917ac5';
+import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=1917ac5';
+import {buildArena} from './arenabuild.js?v=1917ac5';
+import {IDEAS} from './shipideas.js?v=1917ac5';
+import {makeFire, updateFire} from './fire.js?v=1917ac5';
+import {updateSmoke} from './smoke.js?v=1917ac5';
+import {addGrass, updateGrass} from './grass.js?v=1917ac5';
+import {makeWind} from './seafx.js?v=1917ac5';
+import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=1917ac5';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=1917ac5';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=1917ac5';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=1917ac5';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -255,11 +257,11 @@ const SITE_ITEMS = ISLANDS.filter(is => is.site).sort((a, b) => !!CAMPS.find(c =
 const GROUPS = {
   ships:{name:'Ships', items:[
     {name:'The pirate king\'s flagship', desc:'Polycrates\' floating fortress, waiting in the wine-dark water of the far north-east: a towering hull with statues along its sides, a flat deck with six towers and a hall, three masts, a great golden curl at the stern. A ghost ship: you never see a single person aboard.', make:() => buildShip('flagship', {paint:'king', sail:'plain'})},
-    ...Object.keys(SPECS).map(k => ({name:k[0].toUpperCase() + k.slice(1), desc:SHIP_INFO[k] || '', make:() => buildShip(k, {}, true)})),
+    ...Object.keys(SPECS).filter(k => !k.startsWith('idea_')).map(k => ({name:k[0].toUpperCase() + k.slice(1), desc:SHIP_INFO[k] || '', make:() => buildShip(k, {}, true)})),
     {name:'Burning ship', desc:'A badly damaged ship catches fire: flames on deck, sparks, and a thick column of smoke that sways as it rises, dark at the bottom and grey at the top.', make:() => {
       const sh = buildShip('raider'), f = makeFire(SPECS.raider.L, SPECS.raider.B, SPECS.raider.H*.9); sh.add(f); sh.userData.fire = f; sh.userData.anim = 'fire'; return sh; }},
     {name:'The whole fleet', desc:'Every ship side by side, smallest to largest.', make:() => { const g = new T.Group(); let z = 0;
-      Object.keys(SPECS).filter(k => !/(XL|W)$/.test(k)).sort((a, b) => SPECS[a].L*SPECS[a].B - SPECS[b].L*SPECS[b].B).forEach(k => { /* P64: every ship, smallest to largest */ const s = buildShip(k); z += SPECS[k].B*1.4 + 30; s.position.set(-SPECS[k].L/2 + 100, 0, z); g.add(s); z += SPECS[k].B*1.4; });
+      Object.keys(SPECS).filter(k => !/(XL|W)$/.test(k) && !k.startsWith('idea_')).sort((a, b) => SPECS[a].L*SPECS[a].B - SPECS[b].L*SPECS[b].B).forEach(k => { /* P64: every ship, smallest to largest */ const s = buildShip(k); z += SPECS[k].B*1.4 + 30; s.position.set(-SPECS[k].L/2 + 100, 0, z); g.add(s); z += SPECS[k].B*1.4; });
       g.position.z = -z/2; const w = new T.Group(); w.add(g); return w; }},
     {name:'Torches at night', desc:'At night every ship lights torches at the bow and stern, and big ships a pair at the rails. Turn Glow on and off to compare.', light:'night', glow:true,
       make:() => { const g = new T.Group(); [['bireme', 0], ['merchant', 140], ['raider', 280]].forEach(([k, z]) => { const sh = buildShip(k); sh.position.z = z - 140; g.add(sh); }); return g; }},
@@ -270,8 +272,10 @@ const GROUPS = {
       make:() => { const g = new T.Group(); [['small', 'Fishing boat', -170], ['medium', 'Merchant', 0], ['large', 'Warship', 220]].forEach(([k, n, x]) => { const w = wreckModel(k); w.position.x = x; labeled(w, n, -22, 60); g.add(w); }); return g; }},
   ]},
   fortresses:{name:'Fortresses on their islands', items:SITE_ITEMS},
+  ideas:{name:'Ship ideas', items:Object.entries(IDEAS).map(([k, v]) => ({name:v.name, desc:v.desc, make:() => buildShip('idea_' + k, {}, true)}))},
   monuments:{name:'Monuments', items:[
-    {name:'Colossus of Rhodes', desc:'The sun god in white marble astride the harbor mouth of Rhodes town, a fire bowl held over his head (made in Blender).', make:() => { const c = marbleColossus(150); c.rotation.y = Math.PI; return c; }},
+    {name:'Arena of Rhodes', desc:'The games\' basin off Rhodes: straight breakwaters of boulders with red walkways, the crowd, banners and torches, the round fort with its lighthouse, old ruins, Spartacus in the middle, and the Colossus at the gate. In the game its back wall is the coast of Rhodes.', make:() => { const g = buildArena({x:0, y:0, gate:-Math.PI/2}).g; g.userData.view = {yaw:-2.4, pitch:.62, far:1.3}; return g; }},
+    {name:'Colossus of Rhodes', desc:'The sun god in white marble astride the gate of the Arena of Rhodes, a fire bowl held over his head (made in Blender). You sail in between his legs.', make:() => { const c = marbleColossus(150); c.rotation.y = Math.PI; return c; }},
     {name:'Bronze Colossus (old)', desc:'The first Colossus, built in code: a torch held high, a bow, a quiver and a crown of sun rays.', make:() => { const c = buildColossus(300, 150); c.rotation.y = Math.PI/2; return c; }},
     {name:'Athenian fortress', desc:'Every city island has one. Archers on the walls, catapults on the bastions, a keep with a columned porch.', make:() => buildFortress('athens', '#2f5f8a')},
     {name:'Spartan fortress', desc:'The same plan in warmer stone, with red banners.', make:() => buildFortress('sparta', '#9e2a22')},

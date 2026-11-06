@@ -1,18 +1,18 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=2a982a2';
-import {SPECS} from './ships.js?v=2a982a2';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=2a982a2';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=2a982a2';
-import {W} from './weather.js?v=2a982a2';
-import {steering} from './input.js?v=2a982a2';
-import {toast, showZone} from './ui.js?v=2a982a2';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=2a982a2';
-import {LAIR_ROCKS} from './lair.js?v=2a982a2';
-import {startFish, stopFish} from './fishing.js?v=2a982a2';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=2a982a2';
-import {progress} from './quests.js?v=2a982a2';
-import {startSink} from './sinking.js?v=2a982a2';
-import {sfx} from './audio.js?v=2a982a2';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=1917ac5';
+import {SPECS} from './ships.js?v=1917ac5';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=1917ac5';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=1917ac5';
+import {W} from './weather.js?v=1917ac5';
+import {steering} from './input.js?v=1917ac5';
+import {toast, showZone} from './ui.js?v=1917ac5';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=1917ac5';
+import {LAIR_ROCKS} from './lair.js?v=1917ac5';
+import {startFish, stopFish} from './fishing.js?v=1917ac5';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=1917ac5';
+import {progress} from './quests.js?v=1917ac5';
+import {startSink} from './sinking.js?v=1917ac5';
+import {sfx} from './audio.js?v=1917ac5';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
