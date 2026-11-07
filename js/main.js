@@ -1,8 +1,8 @@
 // Starts the game and runs the frame loop.
-import {AUTO_QUALITY} from './config.js?v=e5e6be6';
-import {zoneAt} from './world.js?v=e5e6be6';
-import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=e5e6be6';
-import {REVEAL} from './config.js?v=e5e6be6';
+import {AUTO_QUALITY} from './config.js?v=f5c07ef';
+import {zoneAt} from './world.js?v=f5c07ef';
+import {G, load, loadSettings, saveSettings, startAutosave, reveal} from './state.js?v=f5c07ef';
+import {REVEAL} from './config.js?v=f5c07ef';
 import './picker.js'; // P84: in-game pages instead of the phone's dropdown lists
 
 // P65: the main menu comes first, unless it just sent us here to start a voyage
@@ -13,42 +13,43 @@ load();
 loadSettings();
 
 // P73: while the rest loads, the player's own ship sails on the loading screen
-const {startBootShip} = await import('./bootship.js?v=e5e6be6');
+const {startBootShip} = await import('./bootship.js?v=f5c07ef');
 const boot = startBootShip();
 await boot.breathe();
 
 // These modules build the scene and wire up the UI as they load, so they come after the save is in.
-const {updateClouds} = await import('./clouds.js?v=e5e6be6'); await boot.breathe();
-const {updateWakes} = await import('./wakes.js?v=e5e6be6'); await boot.breathe();
-const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame, setGust, saverOn} = await import('./scene.js?v=e5e6be6'); await boot.breathe();
-const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=e5e6be6'); await boot.breathe();
-const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=e5e6be6'); await boot.breathe();
-const {updatePlayer} = await import('./player.js?v=e5e6be6'); await boot.breathe();
-const {updateCombat, combatState} = await import('./combat.js?v=e5e6be6'); await boot.breathe();
-const {updateFish} = await import('./fishing.js?v=e5e6be6'); await boot.breathe();
-const {updateTowns} = await import('./town.js?v=e5e6be6'); await boot.breathe();
-const {updateWildlife} = await import('./wildlife.js?v=e5e6be6'); await boot.breathe();
-const {updateQuests} = await import('./quests.js?v=e5e6be6'); await boot.breathe();
-const {updateFleet} = await import('./fleet.js?v=e5e6be6'); await boot.breathe();
-const {updateArena} = await import('./arena.js?v=e5e6be6'); await boot.breathe();
-const {trophyTick} = await import('./trophies.js?v=e5e6be6'), {sfx: playSfx} = await import('./audio.js?v=e5e6be6');
-const {updateWeather: weatherTick, W} = await import('./weather.js?v=e5e6be6'); await boot.breathe();
-const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=e5e6be6'); await boot.breathe();
-const {mapTick} = await import('./map.js?v=e5e6be6'); await boot.breathe();
-const {updateSounds} = await import('./sounds.js?v=e5e6be6'); await boot.breathe();
-const {initNight} = await import('./daynight.js?v=e5e6be6'); await boot.breathe();
-const {updateSmoke} = await import('./smoke.js?v=e5e6be6'); await boot.breathe();
-const {updateGrass} = await import('./grass.js?v=e5e6be6'); await boot.breathe();
-const {addBubbles, updateBubbles, makeWind} = await import('./seafx.js?v=e5e6be6'); await boot.breathe();
-const {updateOmens} = await import('./omens.js?v=e5e6be6'); await boot.breathe();
-await import('./native.js?v=e5e6be6');
-const {updateGuide} = await import('./guide.js?v=e5e6be6'); await boot.breathe();
+const {updateClouds} = await import('./clouds.js?v=f5c07ef'); await boot.breathe();
+const {updateWakes} = await import('./wakes.js?v=f5c07ef'); await boot.breathe();
+const {renderer, scene, camera, applyQuality, applyZoom, resize, updateWater, updateCamera, updateWeather, renderFrame, setGust, saverOn} = await import('./scene.js?v=f5c07ef'); await boot.breathe();
+const {swapBoat, refreshAllTrees, animateEntities, showFleet} = await import('./entities.js?v=f5c07ef'); await boot.breathe();
+const {updateUI, showZone, toast, openTutorial} = await import('./ui.js?v=f5c07ef'); await boot.breathe();
+const {updatePlayer} = await import('./player.js?v=f5c07ef'); await boot.breathe();
+const {updateCombat, combatState} = await import('./combat.js?v=f5c07ef'); await boot.breathe();
+const {updateFish} = await import('./fishing.js?v=f5c07ef'); await boot.breathe();
+const {updateTowns} = await import('./town.js?v=f5c07ef'); await boot.breathe();
+const {updateWildlife} = await import('./wildlife.js?v=f5c07ef'); await boot.breathe();
+const {updateQuests} = await import('./quests.js?v=f5c07ef'); await boot.breathe();
+const {updateFleet} = await import('./fleet.js?v=f5c07ef'); await boot.breathe();
+const {updateArena} = await import('./arena.js?v=f5c07ef'); await boot.breathe();
+const {trophyTick} = await import('./trophies.js?v=f5c07ef'), {sfx: playSfx} = await import('./audio.js?v=f5c07ef');
+const {updateWeather: weatherTick, W} = await import('./weather.js?v=f5c07ef'); await boot.breathe();
+const {drawOverlay, resizeOverlay} = await import('./overlay.js?v=f5c07ef'); await boot.breathe();
+const {mapTick} = await import('./map.js?v=f5c07ef'); await boot.breathe();
+const {updateSounds} = await import('./sounds.js?v=f5c07ef'); await boot.breathe();
+const {initNight} = await import('./daynight.js?v=f5c07ef'); await boot.breathe();
+const {updateSmoke} = await import('./smoke.js?v=f5c07ef'); await boot.breathe();
+const {updateGrass} = await import('./grass.js?v=f5c07ef'); await boot.breathe();
+const {addBubbles, updateBubbles, makeWind} = await import('./seafx.js?v=f5c07ef'); await boot.breathe();
+const {updateOmens} = await import('./omens.js?v=f5c07ef'); await boot.breathe();
+await import('./native.js?v=f5c07ef');
+import('./ads.js?v=f5c07ef').then(m => setTimeout(m.initAds, 1500)); // P87: the consent form (Europe, UK, some US states) and the first video, once the game is up
+const {updateGuide} = await import('./guide.js?v=f5c07ef'); await boot.breathe();
 addBubbles(scene); const WIND3D = makeWind(scene);
 const seaFx = dt => { updateGuide(dt); updateBubbles(); WIND3D.update(dt, W.windA, W.windK, G.cam.x, G.cam.y, G.night); setGust(W.windA, W.windK); };
-const {updateFortWatch} = await import('./fortwatch.js?v=e5e6be6'); await boot.breathe();
-const {openMenu} = await import('./mainmenu.js?v=e5e6be6'); await boot.breathe();
-const {offlineEarnings} = await import('./fleet.js?v=e5e6be6'); await boot.breathe();
-const {askName, checkNames} = await import('./naming.js?v=e5e6be6'); await boot.breathe();
+const {updateFortWatch} = await import('./fortwatch.js?v=f5c07ef'); await boot.breathe();
+const {openMenu} = await import('./mainmenu.js?v=f5c07ef'); await boot.breathe();
+const {offlineEarnings} = await import('./fleet.js?v=f5c07ef'); await boot.breathe();
+const {askName, checkNames} = await import('./naming.js?v=f5c07ef'); await boot.breathe();
 
 // P74: the game got much lighter, so a phone that was moved down to lower graphics earlier gets to try again, once
 if (G.settings.perfV !== 74){ G.settings.perfV = 74; if (G.settings.quality === 'auto') G.settings.detected = null; saveSettings(); }
@@ -129,7 +130,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 await boot.hold(1800); // long enough to see her, even on a quick load
-const {realizeAllNear} = await import('./combat.js?v=e5e6be6'), {mergeNearIslands} = await import('./entities.js?v=e5e6be6');
+const {realizeAllNear} = await import('./combat.js?v=f5c07ef'), {mergeNearIslands} = await import('./entities.js?v=f5c07ef');
 realizeAllNear(2000); mergeNearIslands(2600, true); // what you can see straight away is ready before the first frame
 await boot.breathe();
 if (skipMenu) startVoyage(); else openMenu(startVoyage);

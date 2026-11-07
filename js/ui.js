@@ -1,34 +1,35 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=e5e6be6';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=e5e6be6';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=e5e6be6';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=e5e6be6';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=e5e6be6';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=e5e6be6';
-import {CYCLE} from './daynight.js?v=e5e6be6';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=e5e6be6';
-import {swapBoat, refreshAllTrees} from './entities.js?v=e5e6be6';
-import {setZoom} from './input.js?v=e5e6be6';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=e5e6be6';
-import {tutHTML} from './tutorial.js?v=e5e6be6';
-import {founded, blessing} from './crew.js?v=e5e6be6';
-import {WHALE} from './wildlife.js?v=e5e6be6';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=e5e6be6';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=e5e6be6';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=e5e6be6';
-import {effectText, buy} from './upgrades.js?v=e5e6be6';
-import {fleetHTML} from './fleetpage.js?v=e5e6be6';
-import {myLevel} from './levels.js?v=e5e6be6';
-import {askName} from './naming.js?v=e5e6be6';
-import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=e5e6be6';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=e5e6be6';
-import {GOODS, WAR} from './config.js?v=e5e6be6';
-import {fly} from './fly.js?v=e5e6be6';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=e5e6be6';
-import {RANKS} from './records.js?v=e5e6be6';
-import {W, KINDS} from './weather.js?v=e5e6be6';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=e5e6be6';
-import {setTimeOfDay} from './daynight.js?v=e5e6be6';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=f5c07ef';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=f5c07ef';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=f5c07ef';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=f5c07ef';
+import {showRewarded, ads, adPrivacy} from './ads.js?v=f5c07ef';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=f5c07ef';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=f5c07ef';
+import {CYCLE} from './daynight.js?v=f5c07ef';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=f5c07ef';
+import {swapBoat, refreshAllTrees} from './entities.js?v=f5c07ef';
+import {setZoom} from './input.js?v=f5c07ef';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=f5c07ef';
+import {tutHTML} from './tutorial.js?v=f5c07ef';
+import {founded, blessing} from './crew.js?v=f5c07ef';
+import {WHALE} from './wildlife.js?v=f5c07ef';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=f5c07ef';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=f5c07ef';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=f5c07ef';
+import {effectText, buy} from './upgrades.js?v=f5c07ef';
+import {fleetHTML} from './fleetpage.js?v=f5c07ef';
+import {myLevel} from './levels.js?v=f5c07ef';
+import {askName} from './naming.js?v=f5c07ef';
+import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=f5c07ef';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=f5c07ef';
+import {GOODS, WAR} from './config.js?v=f5c07ef';
+import {fly} from './fly.js?v=f5c07ef';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=f5c07ef';
+import {RANKS} from './records.js?v=f5c07ef';
+import {W, KINDS} from './weather.js?v=f5c07ef';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=f5c07ef';
+import {setTimeOfDay} from './daynight.js?v=f5c07ef';
 
 const $ = id => document.getElementById(id);
 
@@ -96,7 +97,10 @@ function drawLoads(){
 
 // A video reward (studying or building faster, a color, sailing home). For now a 5-second placeholder; real ads come in when we choose an ad company.
 const coinsFor = g => Math.max(3, Math.min(12, 2 + Math.round(Math.sqrt(g)))); // more money, more coins in the air
-export function playVideo(done, what = 'This one takes 10 minutes off.', after = '10 minutes faster!'){
+// P87: in the phone app a real video ad plays (ads.js; test builds get Google's test ads). Closed early: no reward.
+// No video to show (offline, or none available): a message, and nothing is lost. orFree: give it anyway then (getting back afloat).
+export function playVideo(done, what = 'This one takes 10 minutes off.', after = '10 minutes faster!', orFree = false, onFail = null){
+  if (APP){ showRewarded(() => { done(); if (after) toast(after, 2); }, why => { if (why === 'none' && orFree){ done(); return; } if (onFail) onFail(); toast(why === 'closed' ? 'The video was closed early, so no reward' : 'No video right now. Try again in a minute', 3); }); return; }
   if (RELEASE){ done(); toast(after, 2); return; } // P78: no ads in the store build: no fake video either
   const v = document.createElement('div'); v.className = 'videobox'; v.innerHTML = `<div><b>A short video would play here</b><small>Ads come later. ${what}</small><em>5</em></div>`; document.body.appendChild(v);
   let n = 5; const iv = setInterval(() => { n--; v.querySelector('em').textContent = n; if (n <= 0){ clearInterval(iv); v.remove(); done(); if (after) toast(after, 2); } }, 1000);
@@ -170,8 +174,7 @@ function mapHTML(){
   const isl = n => ISLANDS.find(i => i.name === n), fmt = s => s < 90 ? s + ' s' : (s/60).toFixed(1) + ' min';
   const trips = ['Naxos', 'Milos', 'Crete', 'Rhodes', 'Lesbos', 'Elaia', 'Skotia'].map(isl).filter(Boolean).slice(0, 4)
     .map(i => `${i.name} ${fmt(secs(home, i))}`).join(' · ');
-  return `<div class="row"><div>Map<small>Changing the map or its scale starts you again at the Kallisto pier. Drachmae and ship stay.</small></div></div>
-    <div class="looks one"><label><span>Map</span><select id="mapSel">${Object.entries(MAP_NAMES).map(([k, v]) => `<option value="${k}" ${k === MAP.id ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
+  return `<div class="row"><div>Map size<small>Changing the map's scale starts you again at the Kallisto pier. Drachmae and ship stay.</small></div></div>
     <div class="row"><div>Distance between islands<small>Bigger = more open sea and longer trips.</small></div><b id="spreadVal">${(+d.spread).toFixed(1)}×</b></div>
     <input type="range" id="spreadRange" min="0.5" max="1.5" step="0.1" value="${d.spread}" aria-label="Distance between islands">
     <div class="row"><div>Island size<small>Kallisto keeps its size so the town fits.</small></div><b id="isleVal">${(+d.isle).toFixed(1)}×</b></div>
@@ -217,7 +220,7 @@ function settingsHTML(){
     + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 86'}</p>`;
+    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 87'}</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -226,7 +229,8 @@ function settingsHTML(){
       ${row('Button look (test)', 'Bronze: cast metal with weight. Vase: flat, painted like Greek pottery. Pick the one you like and this choice goes away.', `<select class="jobsel" data-set="uilook" aria-label="Button look">${UI_LOOKS.map(([v, n]) => `<option value="${v}" ${uiLook() === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Battery saver', 'Keeps the phone cooler: 30 frames a second while you sail and fewer pixels, 60 frames again in a fight. On by default on phones.', tog('saver', saverOn(), 'Battery saver'))}
       ${row('Tiny world look', 'Soft blur at the top and bottom of the screen and warmer colors, so the sea looks like a little model. Turn off if the game feels slow.', tog('tiny', s.tiny !== false, 'Tiny world look'))}
-      ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}`);
+      ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}
+      ${ads.privacy ? row('Ad privacy choices', 'Change what you agreed to about ads.', '<button class="btn small" data-act="adprivacy">Open</button>') : ''}`);
   const dev = card('Builder tools · removed before release', `${row('Builder tools', s.builder ? 'Off plays the game the way a player would.' : 'Off: normal speed, no teleport, no hidden marks, raiders on. Your builder settings come back when you turn them on.', tog('builder', s.builder, 'Builder tools'))}
       ${s.builder ? `${mapHTML()}
       ${row('Camera zoom', 'Also pinch with two fingers, or scroll the mouse wheel.', `<b id="zoomVal">${s.dev.zoom.toFixed(1)}×</b>`)}
@@ -329,6 +333,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'revealall'){ revealAll(); toast('Whole chart revealed'); }
   if (a === 'tryking' || a === 'tryarena'){ S.hull = ship().hull; document.dispatchEvent(new Event(a === 'tryking' ? 'toking' : 'toarena')); closeSheet(); return; }
   if (a === 'chart1' || a === 'chartall'){ document.dispatchEvent(new CustomEvent('chartpiece', {detail:a === 'chartall' ? 'all' : 'one'})); render(); return; }
+  if (a === 'adprivacy'){ adPrivacy(); return; }
   if (a === 'omen'){ document.dispatchEvent(new Event('omen')); closeSheet(); return; }
   if (a === 'bottle'){ document.dispatchEvent(new Event('bottle')); closeSheet(); return; }
   if (a === 'selup'){ if (UPGRADES[b.dataset.k].power) sel.pw = b.dataset.k; else sel.up = b.dataset.k; render(); return; }
@@ -343,7 +348,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'whale'){ document.dispatchEvent(new Event('whale')); closeSheet(); return; }
   if (a === 'givestuff'){ S.gold += 100; addMat('wood', 200); addMat('bronze', 20); addMat('iron', 20); addMat('linen', 20); toast('+100 drachmae, +200 wood, +20 bronze, +20 iron, +20 linen'); }
   if (a === 'applymap'){
-    const d = G.settings.dev; d.map = $('mapSel').value; d.spread = +$('spreadRange').value; d.isle = +$('isleRange').value;
+    const d = G.settings.dev; d.spread = +$('spreadRange').value; d.isle = +$('isleRange').value;
     saveSettings(); save(); location.reload(); return;
   }
   if (a === 'builder'){ G.settings.builder = !G.settings.builder; saveSettings(); swapBoat(); document.dispatchEvent(new Event('fleet')); }
@@ -397,7 +402,7 @@ $('blessChip').addEventListener('click', () => toast(G.S.bless ? "Poseidon's ble
 // P82: sinking? A video puts you back afloat with half your hull (up to 3 times each trip out to sea)
 document.addEventListener('askrevive', e => { const left = e.detail; $('reviveGo').innerHTML = `${IC.play} Back afloat <small>${left} left</small>`; $('revive').hidden = false; document.body.classList.add('reviving'); });
 const reviveDone = () => { $('revive').hidden = true; document.body.classList.remove('reviving'); };
-$('reviveGo').addEventListener('click', () => { reviveDone(); playVideo(() => document.dispatchEvent(new Event('revive')), 'This one puts you back afloat.', ''); });
+$('reviveGo').addEventListener('click', () => { reviveDone(); playVideo(() => document.dispatchEvent(new Event('revive')), 'This one puts you back afloat.', '', true, () => document.dispatchEvent(new Event('giveup'))); });
 $('reviveNo').addEventListener('click', () => { reviveDone(); document.dispatchEvent(new Event('giveup')); });
 // P82: "Sail her now" after naming a new ship
 document.addEventListener('sailship', e => { const t = e.detail; if (switchTo(t)){ swapBoat(); sfx('dock'); toast(`Aboard ${shipName(t)}`, 2.4); save(); if (sheet) render(); } });

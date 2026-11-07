@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=e5e6be6';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=e5e6be6';
-import {sfx} from './audio.js?v=e5e6be6';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=f5c07ef';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=f5c07ef';
+import {sfx} from './audio.js?v=f5c07ef';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -181,7 +181,10 @@ export function resetSave(){
 
 export const APP = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()); // the phone app
 export const RELEASE = !!window.__RELEASE; // the store build: no builder tools at all
-export const PUBLIC = (APP && RELEASE) || /github\.io$/.test(location.hostname); // the public play link or the store app. The test app keeps the Builder tab.
+// P87 (Nicholas: the app goes to friends, no builder tools there): every app and the public play link are the normal game.
+// Only Nicholas's Live app (it loads the play link and adds WDS-Live to its browser name, see tools/build-app.sh live) keeps the Builder tab.
+export const LIVE = /WDS-Live/.test(navigator.userAgent);
+export const PUBLIC = !LIVE && (APP || RELEASE || /github\.io$/.test(location.hostname));
 export function loadSettings(){
   const saved = read(SETTINGS_KEY) || {};
   const {dev, ...rest} = saved;

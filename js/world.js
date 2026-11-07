@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=e5e6be6';
-import {MAPDATA} from './mapdata.js?v=e5e6be6';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=f5c07ef';
+import {MAPDATA} from './mapdata.js?v=f5c07ef';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -13,13 +13,13 @@ export const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x-a)/(b-a
 // Saves from before map D became the default move to D once.
 const DEV = (() => { try { const s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
   if (s && !s.mapD){ s.mapD = true; if (s.dev && s.dev.map === 'B') s.dev.map = 'D'; localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
-  return s.builder && !/github\.io$/.test(location.hostname) ? s.dev || {} : {}; } catch(e){ return {}; } })(); // the public play link never uses builder maps
-const id = DEV.map === 'old' || MAPDATA[DEV.map] ? DEV.map : 'D';
+  const pub = !/WDS-Live/.test(navigator.userAgent) && (/github\.io$/.test(location.hostname) || !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()));
+  return s.builder && !pub ? s.dev || {} : {}; } catch(e){ return {}; } })(); // the public play link and the apps never use builder map sizes (P87: only the Live app does)
+const id = 'D'; // P87 (Nicholas): only map D; maps B and the old prototype map are gone
 // The distance slider is relative to SPREAD_BASE: 1× on the slider = islands twice as far apart as the map data.
 const SPREAD_BASE = 3.4; // P52: a bigger map, islands a quarter further apart again (P44 was 2.7)
-export const MAP = {id, spread: id === 'old' ? 1 : SPREAD_BASE*(DEV.spread || 1), isle: id === 'old' ? 1 : DEV.isle || 1};
+export const MAP = {id, spread:SPREAD_BASE*(DEV.spread || 1), isle:DEV.isle || 1};
 MAP.key = `${MAP.id}:${MAP.spread}:${MAP.isle}`;
-export const MAP_NAMES = {B:'B · Open Aegean', D:'D · Island Aegean', old:'Prototype map (old)'};
 export const UNIT = 1500; // world units per map degree (about 111 km) at 1× distance
 
 export const ZONES = [
@@ -30,20 +30,7 @@ export const ZONES = [
 
 // Each island: x, y = center; r = farthest shore point; tiers = outlines [beach, grass, hilltop] around the center as [[x, y], ...].
 let WORLD_, HOME_, ZC, ZR, WOB, islands, pier;
-if (MAP.id === 'old'){
-  // The hand-made map from prototypes 1 to 8: round islands.
-  const SPREAD = 1.6, H = {x:1500, y:2900}, OH = {x:900, y:1800}, P = (x, y) => ({x: H.x + (x-OH.x)*SPREAD, y: H.y + (y-OH.y)*SPREAD});
-  const circle = (r, s, n = 18) => Array.from({length:n}, (_, k) => { const a = k/n*Math.PI*2, w = 1 + (hash(s, k) - .5)*.16; return [Math.cos(a)*r*w, Math.sin(a)*r*w]; });
-  islands = [
-    {o:[900,1800], r:150, port:true, name:'Kallisto'},
-    {o:[1320,1460], r:85, trees:3, name:'Elaia'},   {o:[1240,2230], r:105, trees:4, name:'Myrtia'}, {o:[560,1330], r:70, trees:2, name:'Thymari'},
-    {o:[480,2380], r:90, trees:3, name:'Agrios'},   {o:[1950,1720], r:130, trees:5, name:'Kypari'}, {o:[1720,2520], r:80, trees:3, name:'Petra'},
-    {o:[1980,1180], r:100, trees:4, name:'Lykos'},  {o:[2850,1850], r:170, name:'Thyella'}, {o:[2650,700], r:120, name:'Nyx'}, {o:[2500,2900], r:140, name:'Skotia'},
-  ].map((i, n) => { const r = i.r*1.2; return {...P(...i.o), name:i.name, port:!!i.port, trees:i.trees || 0,
-    tiers: i.port ? [circle(r, n), circle(r*.8, n)] : [circle(r, n), circle(r*.72, n), circle(r*.34, n, 10)]}; });
-  WORLD_ = 5800; HOME_ = H; ZC = H; ZR = [1120, 2400]; WOB = SPREAD;
-  pier = {x: islands[0].x + islands[0].tiers[0][0][0]*.96, y: islands[0].y, dx:1, dy:0};
-} else {
+{ // map D
   const M = MAPDATA[MAP.id], kp = UNIT*MAP.spread, GROW = {Syros:2.4, Milos:1.6}; // P69: bigger than their real size, for room around the camp and the fortress
   islands = M.feats.map(f => {
     const ks = (f.frame ? kp : f.home ? UNIT : UNIT*MAP.isle)*(GROW[f.n] || 1);
@@ -63,7 +50,7 @@ const area = pts => { let a = 0; for (let i=0;i<pts.length;i++){ const [x0, y0] 
 for (const is of islands){
   is.r = Math.max(...is.tiers[0].map(([x, y]) => Math.hypot(x, y)));
   is.area = area(is.tiers[0]);
-  if (MAP.id !== 'old' && !is.frame && !is.port) is.trees = Math.max(is.wild ? 4 : 2, Math.min(6, Math.round(Math.sqrt(is.area)/110)));
+  if (!is.frame && !is.port) is.trees = Math.max(is.wild ? 4 : 2, Math.min(6, Math.round(Math.sqrt(is.area)/110)));
   is.stock = is.trees; is.regen = 0;
 }
 // Kallisto first, so the save's tree counts line up the same way on every map.
@@ -144,13 +131,7 @@ function scatter(seed, n, minGap, ok){
 }
 const S = MAP.spread/2, farFromDock = (x, y) => Math.hypot(x - DOCK.x, y - DOCK.y) > 420;
 let spots, wrecks, raiders;
-if (MAP.id === 'old'){
-  const SPREAD = 1.6, P = (x, y) => ({x: HOME.x + (x-900)*SPREAD, y: HOME.y + (y-1800)*SPREAD});
-  spots = [[1150,1650],[700,1600],[1050,2050],[700,2100],[1250,1900],[600,1850],[1600,1500],[1650,2000],[1500,2400],[2150,1500],[1800,1300],[900,2600],[1100,1050],[400,1700]].map(p => P(...p));
-  wrecks = [[1150,1350],[650,2150],[1550,1850],[1400,2550],[1750,1100],[300,1600]].map(p => P(...p));
-  raiders = [['skiff', .4, 1700], ['skiff', 1.6, 1750], ['skiff', 2.3, 1650], ['skiff', -.5, 1800], ['skiff', -1.7, 1700], ['galley', 0, 2950], ['galley', .9, 2900], ['galley', -.9, 2900]]
-    .map(([kind, a, d]) => { const p = {x: HOME.x + Math.cos(a)*d, y: HOME.y + Math.sin(a)*d}; pushOut(p, 160); return {kind, home:p}; });
-} else {
+{ // map D
   // fishing spots far apart (about 1.2 km of sea between them), mostly near home
   spots = scatter(11, 40, 700*S, (x, y) => landDist(x, y) > 110 && zoneAt(x, y) < 2 && farFromDock(x, y));
   wrecks = scatter(23, 16, 1100*S, (x, y) => landDist(x, y) > 140 && zoneAt(x, y) === 1);
@@ -167,7 +148,7 @@ const wreckSize = i => { let r = hash(i, 13); for (const [k, w] of Object.entrie
 export const WRECKS = wrecks.map((p, i) => { const size = wreckSize(i); return {...p, size, stock:WRECK_SIZES[size].stock, regen:0, rot:hash(i,9)*6.28}; });
 export const RAIDERS = raiders;
 // Sardine schools along the shores (see SHORE_FISH): on for part of each cycle, off for the rest.
-export const SHOALS = scatter(61, MAP.id === 'old' ? 30 : 160, 420, (x, y) => { const d = landDist(x, y); return d > 45 && d < 150 && Math.hypot(x - DOCK.x, y - DOCK.y) > 260; })
+export const SHOALS = scatter(61, 160, 420, (x, y) => { const d = landDist(x, y); return d > 45 && d < 150 && Math.hypot(x - DOCK.x, y - DOCK.y) > 260; })
   .map((p, i) => ({...p, ph:hash(i, 3), per:1}));
 export const shoalOn = (s, t, per, on) => ((t/(per*(.8 + s.ph*.5)) + s.ph) % 1) < on;
 
@@ -185,7 +166,6 @@ const PIRATE_ISLES = ['Thasos', 'Kos'];
 for (const is of ISLANDS) if (PIRATE_ISLES.includes(is.name)) is.pirate = true;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.wild && !i.pirate); // wild islets near Kallisto belong to nobody
 for (const is of named){ is.city = is.port ? null : SPARTAN.includes(is.name) ? 'sparta' : 'athens'; is.capital = CAPITALS.includes(is.name); is.home0 = is.city; }
-if (MAP.id === 'old') named.forEach((is, i) => { if (!is.port) is.city = is.home0 = i % 3 ? 'athens' : 'sparta'; });
 // The islands near Kallisto belong to nobody (P49): no fortresses or navies there, so the war stays out of the beginner waters.
 for (const is of named) if (!is.capital && Math.hypot(is.x - HOME.x, is.y - HOME.y) < NEUTRAL_R){ is.city = is.home0 = null; is.neutral = true; }
 // Which city rules the sea at (x, y): the owner of the nearest island.
@@ -207,7 +187,7 @@ function makePier(is){
 }
 const dockOf = p => ({x:p.x + p.dx*(PIER_LEN + 30), y:p.y + p.dy*(PIER_LEN + 30)});
 export const HARBORS = [{is:home, pier:PIER, dock:DOCK, prices:{}}];
-for (const is of (MAP.id === 'old' ? named.filter(i => !i.port).slice(0, 2) : named.filter(i => HARBOR_AT[i.name]))){
+for (const is of named.filter(i => HARBOR_AT[i.name])){
   const pier = makePier(is); if (!pier) continue;
   const h = {is, pier, dock:dockOf(pier), prices:HARBOR_AT[is.name] || {}}; is.harbor = h; HARBORS.push(h);
 }
@@ -283,7 +263,7 @@ export const patrolRoute = is => { const r = is.r + 480, a0 = hash(is.x, is.y)*6
 const R2 = rng(53), traffic = [];
 {
   // P84 (Nicholas): fewer merchants (12 to 9, and 4 small traders in the Shallows instead of 5): raiding them should be a sometimes thing
-  const nMerch = MAP.id === 'old' ? 3 : 9, perCity = MAP.id === 'old' ? 1 : 6, pairs = new Set();
+  const nMerch = 9, perCity = 6, pairs = new Set();
   for (let k=0; k<200 && traffic.length<nMerch; k++){
     const ports = HARBORS.map(h => h.is), a = k < 10 && k % 2 === 0 ? ports[(k/2) % ports.length] : named[Math.floor(R2()*named.length)]; // half the routes start at a harbor
     const near = named.filter(b => b !== a).sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y));
@@ -294,7 +274,7 @@ const R2 = rng(53), traffic = [];
     traffic.push({kind:'merchant', route, isle:a.port ? b : a});
   }
   // P65: small traders in the Shallows, for a rowboat to raid: they never shoot back
-  if (MAP.id !== 'old'){ const inS = named.filter(i => zoneAt(i.x, i.y) === 0), kal = ISLANDS.find(i => i.port);
+  { const inS = named.filter(i => zoneAt(i.x, i.y) === 0), kal = ISLANDS.find(i => i.port);
     const near = (a, n) => inS.filter(b => b !== a).sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y)).slice(0, n);
     const pairs2 = [...near(kal, 2).map(b => [kal, b]), ...inS.filter(a => a !== kal).slice(0, 2).map(a => [a, near(a, 1)[0]])];
     for (const [a, b] of pairs2) if (a && b) traffic.push({kind:'trader', route:[offshore(a, b, 150), offshore(b, a, 150)], isle:a.port ? b : a}); }

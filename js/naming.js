@@ -1,12 +1,12 @@
 // P70: you name your ships. The rowboat when a voyage begins, and every ship you build, as soon as things are quiet.
 // A box of its own over everything (not a menu page), so nothing redraws it while you type. There is no way around it: a ship needs a name.
-import {SHIPS} from './config.js?v=e5e6be6';
-import {G, save, shipName} from './state.js?v=e5e6be6';
-import {IC, shipImg} from './menus.js?v=e5e6be6';
-import {owned} from './fleet.js?v=e5e6be6';
-import {combatState} from './combat.js?v=e5e6be6';
-import {sfx} from './audio.js?v=e5e6be6';
-import {HARBORS} from './world.js?v=e5e6be6';
+import {SHIPS} from './config.js?v=f5c07ef';
+import {G, save, shipName} from './state.js?v=f5c07ef';
+import {IC, shipImg} from './menus.js?v=f5c07ef';
+import {owned} from './fleet.js?v=f5c07ef';
+import {combatState} from './combat.js?v=f5c07ef';
+import {sfx} from './audio.js?v=f5c07ef';
+import {HARBORS} from './world.js?v=f5c07ef';
 
 const SUGGEST = ['Kalypso', 'Thetis', 'Galene', 'Halkyon', 'Selene', 'Eos', 'Melite', 'Ariadne', 'Zephyros', 'Nerine', 'Psyche', 'Iris', 'Amphitrite', 'Leukothea', 'Phaia', 'Kymo', 'Doris', 'Paralos', 'Thalassa', 'Aura'];
 const clean = v => v.normalize('NFC').replace(/[^\p{L}\p{N} '.-]/gu, '').replace(/\s+/g, ' ').slice(0, 18); // only letters, numbers and a little punctuation, so a name can go anywhere on screen

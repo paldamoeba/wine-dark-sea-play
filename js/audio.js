@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=e5e6be6';
+import {MUSIC_REST} from './config.js?v=f5c07ef';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -47,6 +47,7 @@ export function applyVolumes(){
 export function meter(){ if (!ctx) return null; const a = ctx.createAnalyser(); a.fftSize = 2048; out.connect(a); return a; }
 export function setListener(x, y, far = 1400){ lis.x = x; lis.y = y; lis.far = far; }
 document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else if (SND.on) ctx.resume(); });
+export function hush(on){ if (!ctx) return; if (on) ctx.suspend(); else if (SND.on && !document.hidden) ctx.resume(); } // P87: quiet while a video ad plays
 
 function makeNoise(kind){
   const n = ctx.sampleRate*4, b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
