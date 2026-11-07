@@ -1,19 +1,19 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=19e7728';
-import {makePost} from './glow.js?v=19e7728';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=19e7728';
-import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=19e7728';
-import {buildArena} from './arenabuild.js?v=19e7728';
-import {IDEAS} from './shipideas.js?v=19e7728';
-import {makeFire, updateFire} from './fire.js?v=19e7728';
-import {updateSmoke} from './smoke.js?v=19e7728';
-import {addGrass, updateGrass} from './grass.js?v=19e7728';
-import {makeWind} from './seafx.js?v=19e7728';
-import {seaUniforms, waterMaterial, bedMaterial, setSeaKind, swellAt, SEA_LOOKS} from './water.js?v=19e7728';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=19e7728';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=19e7728';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=19e7728';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=3cc5145';
+import {makePost} from './glow.js?v=3cc5145';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=3cc5145';
+import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=3cc5145';
+import {buildArena} from './arenabuild.js?v=3cc5145';
+import {IDEAS} from './shipideas.js?v=3cc5145';
+import {makeFire, updateFire} from './fire.js?v=3cc5145';
+import {updateSmoke} from './smoke.js?v=3cc5145';
+import {addGrass, updateGrass} from './grass.js?v=3cc5145';
+import {makeWind} from './seafx.js?v=3cc5145';
+import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=3cc5145';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=3cc5145';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=3cc5145';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=3cc5145';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -28,7 +28,7 @@ const sunDir = new T.Vector3(-400, 700, 400);
 const fill = new T.DirectionalLight(0xcfe3ff, .28); fill.position.set(300, 200, -300); scene.add(fill);
 const seaMat = new T.MeshLambertMaterial({color:'#2b7f93'});
 const sea = new T.Mesh(new T.CircleGeometry(6000, 64), seaMat); sea.rotation.x = -Math.PI/2; sea.receiveShadow = true; scene.add(sea);
-// P69: Full graphics is the game's own sea (water.js): the same shader, the same colors, Realistic or Cartoon. Only the shape of the water differs: it is worked out
+// P69: Full graphics is the game's own sea (water.js): the same shader, the same colors. Only the shape of the water differs: it is worked out
 // around what is on show, calm around an island's real shore and open everywhere else.
 const wind3d = makeWind(scene);
 const WN = 220, WSIZE = 6000, foamU = seaUniforms(), waterMat = waterMaterial(foamU), bedMat = bedMaterial(foamU);
@@ -80,7 +80,7 @@ function setLight(k){
   setWaves();
 }
 // waves: gentle in fair weather, big in a storm (full graphics only; the simple look keeps a flat sea)
-function setWaves(){ waves.visible = bed.visible = full; sea.visible = !full; seaAmp = lightKey === 'storm' ? 11 : 3.2; setSeaKind(waterMat, seaKind); const G = full && GAME_LIGHT[lightKey];
+function setWaves(){ waves.visible = bed.visible = full; sea.visible = !full; seaAmp = lightKey === 'storm' ? 11 : 3.2; const G = full && GAME_LIGHT[lightKey];
   if (G){ hemi.color.set(G.hemi[0]); hemi.groundColor.set(G.hemi[1]); hemi.intensity = G.hemi[2]; sun.color.set(G.sun[0]); sun.intensity = G.sun[1]; sunDir.set(...G.sun[2]); sun.position.copy(focus).add(sunDir); fill.intensity = 0; scene.background.set(G.sky); scene.fog.color.set(G.sky); }
   const g = G || {sky:LIGHTS[lightKey].sky, water:'#ffffff', glint:1, night:0}; waterMat.color.set(g.water); foamU.uSky.value.set(g.sky); foamU.uGlint.value = g.glint; foamU.uNight.value = g.night; foamU.uStorm.value = g.storm || 0; paintSea(); }
 // Torches burn at night and in storms. With a few torches each one also lights the deck around it.
@@ -376,7 +376,7 @@ function show(){
 let riders = [];
 function ridersOf(){ riders = []; obj.traverse(o => { if (o.userData.body && o.userData.spec) riders.push({o, y:o.position.y}); }); }
 function setGlow(on){ glowOn = on; $('glow').setAttribute('aria-pressed', on); }
-function setFull(v){ full = v === 'full' || v === 'toon'; seaKind = v === 'toon' ? 'toon' : 'real'; $('gfx').value = full ? v : 'simple'; if (!q0) setLight(lightKey); else setWaves(); } // (soft shadows the same way in both looks: PCF with a radius)
+function setFull(v){ full = v === 'full'; $('gfx').value = full ? v : 'simple'; if (!q0) setLight(lightKey); else setWaves(); } // (soft shadows the same way in both looks: PCF with a radius)
 function fillPick(){ $('pick').innerHTML = GROUPS[group].items.map((it, i) => `<option value="${i}">${it.name}</option>`).join(''); $('pick').value = idx; }
 $('group').innerHTML = Object.entries(GROUPS).map(([k, g]) => `<option value="${k}">${g.name}</option>`).join('');
 $('light').innerHTML = Object.entries(LIGHTS).map(([k, l]) => `<option value="${k}">${l.name}</option>`).join('');

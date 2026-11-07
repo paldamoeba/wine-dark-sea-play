@@ -1,14 +1,16 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=19e7728';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=19e7728';
-import {G} from './state.js?v=19e7728';
-import {TOD, updateDayNight} from './daynight.js?v=19e7728';
-import {showGrass} from './grass.js?v=19e7728';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial, setSeaKind} from './water.js?v=19e7728';
+import {QUALITY, SHIPS} from './config.js?v=3cc5145';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=3cc5145';
+import {G} from './state.js?v=3cc5145';
+import {TOD, updateDayNight} from './daynight.js?v=3cc5145';
+import {showGrass} from './grass.js?v=3cc5145';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=3cc5145';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
-export const renderer = new T.WebGLRenderer({canvas, antialias:true});
+// P84: with the tiny world look on (the default), the sea is drawn into its own smoothed picture first, so the screen itself
+// doesn't need smoothing too: that was a second full-size smoothed buffer filled every frame, for nothing.
+export const renderer = new T.WebGLRenderer({canvas, antialias:G.settings.tiny === false});
 renderer.shadowMap.type = T.PCFShadowMap; // PCF with a radius: soft edges (PCFSoft ignores the radius in this three.js)
 export const scene = new T.Scene();
 const SKY = new T.Color('#a9c9cf'), STORMSKY = new T.Color('#46525c'), MIST = new T.Color('#f1ede2');
@@ -25,8 +27,11 @@ sun.shadow.bias = -.0006; sun.shadow.normalBias = 2.2; sun.shadow.radius = 3; sc
 export const view = {W:innerWidth, H:innerHeight, DPR:1};
 let quality = QUALITY.high;
 
+// P84 (Nicholas: the phone gets hot after 10 to 20 minutes): Battery saver, on by default on phones. Fewer pixels (main.js also caps the frame rate).
+const COARSE = matchMedia('(pointer: coarse)').matches;
+export const saverOn = () => G.settings.saver ?? COARSE;
 export function resize(){
-  view.W = innerWidth; view.H = innerHeight; view.DPR = Math.min(quality.dpr, devicePixelRatio || 1, Math.sqrt(quality.pix/(view.W*view.H))); // P67: sharp, up to a limit of pixels
+  view.W = innerWidth; view.H = innerHeight; view.DPR = Math.min(quality.dpr, devicePixelRatio || 1, Math.sqrt(quality.pix/(view.W*view.H)))*(saverOn() ? .8 : 1); // P67: sharp, up to a limit of pixels
   renderer.setPixelRatio(view.DPR); renderer.setSize(view.W, view.H, false);
   camera.aspect = view.W/view.H; camera.updateProjectionMatrix();
 }
@@ -67,9 +72,8 @@ const foamU = seaUniforms(), waterMat = waterMaterial(foamU), bedMat = bedMateri
 // P56: where the wine-dark water is (the pirate king's lair); r = 0 turns it off
 export function setGust(a, k){ foamU.uGust.value.set(Math.cos(a), Math.sin(a), k); } // P70: the wind on the water
 export function setLair(x, y, r){ foamU.uLair.value.set(x, y, r); }
-export function setSeaLook(kind = 'real'){ const toon = kind === 'toon', L = LOOKS[toon ? 'toon' : 'real']; CSH.set(L[0]); CSEA.set(L[1]); CST.set(L[2]); CLAG.set(L[3]); SKY.set(toon ? '#b8def0' : '#b3d5e6');
-  setSeaKind(waterMat, kind); }
-setSeaLook((G.settings && G.settings.sea) || 'real');
+function setSeaLook(){ const L = LOOKS.real; CSH.set(L[0]); CSEA.set(L[1]); CST.set(L[2]); CLAG.set(L[3]); SKY.set('#b3d5e6'); }
+setSeaLook();
 // Colors and wave sizes only depend on where a point is, so they're worked out again only when the water tile moves
 // (or the look changes), and the tile only moves in steps of about 100. The waves themselves move on the graphics card.
 let wKey = '';
@@ -123,15 +127,16 @@ export const CAM_ANGLES = {high:{up:2.3, d:1.04, label:'High'}, mid:{up:1.6, d:1
 const V = new T.Vector3();
 let camK = 1; // 1 at sea, closer while tied up at the pier
 export function updateCamera(){
-  camK += ((G.dock && G.dock.mode !== 'out' ? .5 : 1) - camK) * .04;
+  const f60 = (G.dt || 1/60)*60; // P84: eases the same at any frame rate
+  camK += ((G.dock && G.dock.mode !== 'out' ? .5 : 1) - camK) * (1 - (1 - .04)**f60);
   const dk = Math.min(1.85, (DEPTH_ZOOM[Math.max(0, G.curZone)] || 1)*(SHIP_ZOOM[SHIPS[G.S.tier].rank] || 1));
-  if (Math.abs(dk - depthK) > .002){ depthK += (dk - depthK)*.012; if (zoomBucket(viewZoom()) !== zoomBucket(lastZoom)) applyZoom(); }
+  if (Math.abs(dk - depthK) > .002){ depthK += (dk - depthK)*(1 - (1 - .012)**f60); if (zoomBucket(viewZoom()) !== zoomBucket(lastZoom)) applyZoom(); }
   const dist = (view.H > view.W ? 740 : 600) * viewZoom() * camK;
   // camera angle (a setting): high looks down more, low sees further toward the horizon
   const ang = CAM_ANGLES[G.settings.angle] || CAM_ANGLES.low;
   V.set(0, ang.up, Math.SQRT2).normalize() /* north is up: the camera sits to the south, looking north */.multiplyScalar(dist*ang.d);
   // a short jolt when you're hit or fire a volley
-  G.shake = Math.max(0, (G.shake || 0) - 1/60*2.2); const j = G.shake*G.shake*dist*.012, jx = Math.sin(G.t*71)*j, jz = Math.cos(G.t*57)*j;
+  G.shake = Math.max(0, (G.shake || 0) - (G.dt || 1/60)*2.2); const j = G.shake*G.shake*dist*.012, jx = Math.sin(G.t*71)*j, jz = Math.cos(G.t*57)*j;
   camera.position.set(G.cam.x + V.x + jx, V.y, G.cam.y + V.z + jz); camera.lookAt(G.cam.x + jx, 0, G.cam.y + jz);
   sun.position.set(G.cam.x + TOD.dir.x, TOD.dir.y, G.cam.y + TOD.dir.z); sun.target.position.set(G.cam.x, 0, G.cam.y);
 }
@@ -211,7 +216,7 @@ function drawFrame(on){
   if (!on){ renderer.render(scene, camera); return; }
   const w = Math.round(view.W*view.DPR), h = Math.round(view.H*view.DPR);
   if (!rt || rt.width !== w || rt.height !== h){ if (rt) rt.dispose();
-    rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); }
+    rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); if (rt.samples) rt.samples = saverOn() ? 2 : 4; } // P84: Battery saver smooths edges with 2 samples, not 4
   renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
   post.uniforms.far.value = Math.max(0, Math.min(1, (viewZoom() - 1)/1.2)); post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = TOD.night*.85; // P74: only at night, around flames and windows (the old faint daytime glow couldn't be seen and cost a lot)
   renderer.render(postScene, postCam);

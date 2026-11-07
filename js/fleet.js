@@ -1,7 +1,7 @@
 // Your fleet: every ship you build stays yours, moored at Kallisto with its own upgrades, hull and paint.
 // Switch ships at the Kallisto shipwright. Your crew comes with you (sailors beyond the seats wait on the pier).
-import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=19e7728';
-import {G, ship, used, capOf, LOADS} from './state.js?v=19e7728';
+import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=3cc5145';
+import {G, ship, used, capOf, LOADS} from './state.js?v=3cc5145';
 
 export const owned = () => G.S.owned || (G.S.owned = Array.from({length:G.S.tier + 1}, (_, i) => i));
 export const has = t => owned().includes(t);
@@ -25,7 +25,7 @@ export function tripPay(t){
 }
 // Every captain you hire costs more than the last, so a big fleet is a late-game reward, not a free income.
 export const captainCount = () => Object.keys(G.S.captains || {}).length + (G.S.idleCaps || []).length;
-export const captainCost = () => Math.round(CAPTAIN.cost*CAPTAIN.grow**captainCount()/10)*10;
+export const captainCost = () => CAPTAIN.cost + CAPTAIN.step*captainCount();
 // P82 (Nicholas): you choose which ship each captain works. A captain moved off a ship waits at Kallisto until you give her another one.
 export function allCaptains(){ const S = G.S; return [...Object.entries(S.captains || {}).map(([t, c]) => ({n:c.n, t:+t})), ...(S.idleCaps || []).map(n => ({n, t:-1}))]; }
 export function assignCaptain(n, t){

@@ -1,34 +1,34 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=19e7728';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=19e7728';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=19e7728';
-import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=19e7728';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=19e7728';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=19e7728';
-import {CYCLE} from './daynight.js?v=19e7728';
-import {applyQuality, setSeaLook, project, view, CAM_ANGLES} from './scene.js?v=19e7728';
-import {swapBoat, refreshAllTrees} from './entities.js?v=19e7728';
-import {setZoom} from './input.js?v=19e7728';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=19e7728';
-import {tutHTML} from './tutorial.js?v=19e7728';
-import {founded, blessing} from './crew.js?v=19e7728';
-import {WHALE} from './wildlife.js?v=19e7728';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=19e7728';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=19e7728';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=19e7728';
-import {effectText, buy} from './upgrades.js?v=19e7728';
-import {fleetHTML} from './fleetpage.js?v=19e7728';
-import {myLevel} from './levels.js?v=19e7728';
-import {askName} from './naming.js?v=19e7728';
-import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=19e7728';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=19e7728';
-import {GOODS, WAR} from './config.js?v=19e7728';
-import {fly} from './fly.js?v=19e7728';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=19e7728';
-import {RANKS} from './records.js?v=19e7728';
-import {W, KINDS} from './weather.js?v=19e7728';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=19e7728';
-import {setTimeOfDay} from './daynight.js?v=19e7728';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=3cc5145';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=3cc5145';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=3cc5145';
+import {ZONES, MAP, MAP_NAMES, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=3cc5145';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=3cc5145';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=3cc5145';
+import {CYCLE} from './daynight.js?v=3cc5145';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=3cc5145';
+import {swapBoat, refreshAllTrees} from './entities.js?v=3cc5145';
+import {setZoom} from './input.js?v=3cc5145';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=3cc5145';
+import {tutHTML} from './tutorial.js?v=3cc5145';
+import {founded, blessing} from './crew.js?v=3cc5145';
+import {WHALE} from './wildlife.js?v=3cc5145';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=3cc5145';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=3cc5145';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=3cc5145';
+import {effectText, buy} from './upgrades.js?v=3cc5145';
+import {fleetHTML} from './fleetpage.js?v=3cc5145';
+import {myLevel} from './levels.js?v=3cc5145';
+import {askName} from './naming.js?v=3cc5145';
+import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=3cc5145';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=3cc5145';
+import {GOODS, WAR} from './config.js?v=3cc5145';
+import {fly} from './fly.js?v=3cc5145';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=3cc5145';
+import {RANKS} from './records.js?v=3cc5145';
+import {W, KINDS} from './weather.js?v=3cc5145';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=3cc5145';
+import {setTimeOfDay} from './daynight.js?v=3cc5145';
 
 const $ = id => document.getElementById(id);
 
@@ -45,6 +45,8 @@ export function hideHint(){ if (G.S.hint){ G.S.hint = false; $('hint').hidden = 
 
 // ---- top bar ----
 let lastHud = '', nearHarbor = null;
+// P84: write to the page only when something changed. Setting the same text again still makes the phone redo the layout, every frame.
+const put = (el, k, v) => { if (el[k] !== v) el[k] = v; };
 export function updateUI(dt, nearDock){
   const sh = ship(), key = [G.S.gold, G.S.tier, ...LOADS.map(k => used(k)), Math.ceil(G.S.hull)].join('|');
   if (key !== lastHud){
@@ -54,29 +56,29 @@ export function updateUI(dt, nearDock){
   }
   const moored = !!G.dock && G.dock.mode === 'moored', h = nearDock, banned = h && h.is.city && (G.hunted || {})[h.is.city];
   nearHarbor = h;
-  $('dockBtn').hidden = G.sheetOpen || (moored ? false : !h || !!G.dock);
-  $('dockBtn').disabled = !moored && !!banned;
-  $('dockBtn').textContent = moored ? 'Set sail' : banned ? `${CITIES[h.is.city].name} won't let you dock` : h ? `Enter ${h.is.name} harbor` : '';
-  $('harborBtn').hidden = G.sheetOpen || !moored;
-  $('hint').hidden = !G.S.hint || G.sheetOpen;
+  put($('dockBtn'), 'hidden', !!(G.sheetOpen || (moored ? false : !h || !!G.dock)));
+  put($('dockBtn'), 'disabled', !moored && !!banned);
+  put($('dockBtn'), 'textContent', moored ? 'Set sail' : banned ? `${CITIES[h.is.city].name} won't let you dock` : h ? `Enter ${h.is.name} harbor` : '');
+  put($('harborBtn'), 'hidden', !!(G.sheetOpen || !moored));
+  put($('hint'), 'hidden', !!(!G.S.hint || G.sheetOpen));
   document.body.classList.toggle('sheeton', !!G.sheetOpen); // menus cover the whole screen: the HUD and little map step aside
   G.doneT = Math.max(0, (G.doneT || 0) - dt); $('goalPill').classList.toggle('done', G.doneT > 0); { const L = myLevel(), m = $('rank'); if (m.textContent !== String(L)){ const up = +m.textContent < L && G.medalSeen; m.textContent = L; G.medalSeen = true; if (up){ const el = $('medal'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } } } /* P72: the level medal, with a little pop when it rises */ // a check mark for a moment after a goal or job is done
   // P65: the red bubble only means something: a quest is done and you haven't looked at it yet; on the chart, a treasure map you haven't looked at
-  const pill = pillText(); $('goalDot').hidden = !G.S.questNew || G.sheetOpen || G.doneT > 0;
-  $('chartDot').hidden = $('mapDot').hidden = !G.S.mapNew || G.sheetOpen;
+  const pill = pillText(); put($('goalDot'), 'hidden', !!(!G.S.questNew || G.sheetOpen || G.doneT > 0));
+  { const v = !!(!G.S.mapNew || G.sheetOpen); put($('chartDot'), 'hidden', v); put($('mapDot'), 'hidden', v); }
   { const d = G.S.gold - (G.goldSeen ?? G.S.gold); if (d > 0) stat('earned', d); G.goldSeen = G.S.gold; }
   if (pill && $('goalText').textContent !== pill){ $('goalText').textContent = pill; $('goalLbl').textContent = goal() ? 'Goal' : 'Job'; $('goalPill').title = $('goalLbl').textContent + ': ' + pill; }
   // at night a clear sky shows the moon instead of the sun
   const wk = KINDS[W.kind], moon = (G.night || 0) > .5 && (W.kind === 'fair' || W.kind === 'calm'), wkey = W.kind + (moon ? '-n' : '');
   if ($('wxChip').dataset.k !== wkey){ $('wxChip').dataset.k = wkey; $('wxName').textContent = moon ? (W.kind === 'calm' ? 'Calm night' : 'Clear night') : wk.label; $('wxIcon').innerHTML = (moon ? WX_IC.night : WX_IC[W.kind]) || wk.icon; $('wxChip').className = 'hi wx ' + W.kind; }
   { const o = G.S.omen, c = $('omenChip'); c.hidden = !o; if (o){ const god = OMENS[o.g]; $('omenDot').style.background = god.color; $('omenT').textContent = `${Math.floor(o.t/60)}:${String(Math.floor(o.t % 60)).padStart(2, '0')}`; } }
-  const bl = G.S.bless || 0, wh = WHALE.up && !bl; $('blessChip').hidden = !bl && !wh; $('blessChip').classList.toggle('call', wh);
-  if (wh) $('blessT').textContent = '';
-  if (bl) $('blessT').textContent = `${Math.floor(bl/60)}:${String(Math.floor(bl % 60)).padStart(2, '0')}`;
+  const bl = G.S.bless || 0, wh = WHALE.up && !bl; put($('blessChip'), 'hidden', !bl && !wh); $('blessChip').classList.toggle('call', wh);
+  if (wh) put($('blessT'), 'textContent', '');
+  if (bl) put($('blessT'), 'textContent', `${Math.floor(bl/60)}:${String(Math.floor(bl % 60)).padStart(2, '0')}`);
   if (toastT > 0){ toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
   placeNearBoat();
   // the shipyard's clocks: live countdowns in the menu, and news when a study or a build is done
-  for (const el of document.querySelectorAll('[data-until]')) el.textContent = mmss(Math.max(0, +el.dataset.until - Date.now()/1000));
+  for (const el of document.querySelectorAll('[data-until]')) put(el, 'textContent', mmss(Math.max(0, +el.dataset.until - Date.now()/1000)));
   for (const d of checkYard()){ const n = SHIPS[d.t]; sfx('fanfare');
     if (d.what === 'study') toast('Plans studied!', 4.5);
     else { progress('build', n.model); document.dispatchEvent(new Event('fleetmoved')); toast(`${n.name} built!`, 5); }
@@ -215,19 +217,18 @@ function settingsHTML(){
     + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
     + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 83'}</p>`;
+    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 84'}</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
       <div class="segs">${Object.entries(CAM_ANGLES).map(([k, v]) => `<button class="seg ${(s.angle || 'low') === k ? 'on' : ''}" data-act="angle" data-v="${k}" aria-pressed="${(s.angle || 'low') === k}">${v.label}</button>`).join('')}</div>
       ${tuner ? row('Day and night', 'A 10 minute day with a short moonlit night, when torches and windows light up.', `<select class="jobsel" data-set="daynight" aria-label="Day and night">${[['cycle', 'Day and night'], ['day', 'Always day'], ['night', 'Always night']].map(([v, n]) => `<option value="${v}" ${(s.daynight || 'cycle') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`) : ''}
       ${row('Button look (test)', 'Bronze: cast metal with weight. Vase: flat, painted like Greek pottery. Pick the one you like and this choice goes away.', `<select class="jobsel" data-set="uilook" aria-label="Button look">${UI_LOOKS.map(([v, n]) => `<option value="${v}" ${uiLook() === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
-      ${row('Sea', 'Realistic: reflections of the sky and sun. Cartoon: flat colors and white wave lines that change with the weather.', `<select class="jobsel" data-set="sea" aria-label="Sea">${[['real', 'Realistic'], ['toon', 'Cartoon']].map(([v, n]) => `<option value="${v}" ${(s.sea || 'real') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
+      ${row('Battery saver', 'Keeps the phone cooler: 30 frames a second while you sail and fewer pixels, 60 frames again in a fight. On by default on phones.', tog('saver', saverOn(), 'Battery saver'))}
       ${row('Tiny world look', 'Soft blur at the top and bottom of the screen and warmer colors, so the sea looks like a little model. Turn off if the game feels slow.', tog('tiny', s.tiny !== false, 'Tiny world look'))}
       ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}`);
   const dev = card('Builder tools · removed before release', `${row('Builder tools', s.builder ? 'Off plays the game the way a player would.' : 'Off: normal speed, no teleport, no hidden marks, raiders on. Your builder settings come back when you turn them on.', tog('builder', s.builder, 'Builder tools'))}
       ${s.builder ? `${mapHTML()}
-      ${row('Ship tilt in turns', 'How far a ship under sail leans in a hard turn at full speed. 100% would be 40 degrees.', `<select class="jobsel" data-set="tilt" aria-label="Ship tilt">${[[0, 'Old (4°)'], [20, '20% (8°)'], [30, '30% (12°)'], [50, '50% (20°)'], [70, '70% (28°)']].map(([v, n]) => `<option value="${v}" ${(s.tilt ?? 30) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Camera zoom', 'Also pinch with two fingers, or scroll the mouse wheel.', `<b id="zoomVal">${s.dev.zoom.toFixed(1)}×</b>`)}
       <input type="range" id="zoomRange" min="0.4" max="3.5" step="0.1" value="${s.dev.zoom}" aria-label="Camera zoom">
       ${row('Try a ship', 'Sail any ship to test a fight. This changes this voyage, so test in Voyage 3.', `<select class="jobsel" data-set="tryship" aria-label="Ship to try">${SHIPS.map((sh, i) => `<option value="${i}" ${i === G.S.tier ? 'selected' : ''}>${sh.name}</option>`).join('')}</select>`)}
@@ -345,6 +346,7 @@ sheetEl.addEventListener('click', e => {
   }
   if (a === 'builder'){ G.settings.builder = !G.settings.builder; saveSettings(); swapBoat(); document.dispatchEvent(new Event('fleet')); }
   if (a === 'tiny'){ G.settings.tiny = G.settings.tiny === false; saveSettings(); }
+  if (a === 'saver'){ G.settings.saver = !saverOn(); saveSettings(); dispatchEvent(new Event('resize')); }
   if (a === 'full'){ toggleFull(); return; }
   if (a === 'sound'){ SND.on = !SND.on; saveSound(); if (SND.on) sfx('chime'); }
   if (a === 'fps'){ G.settings.showFps = !G.settings.showFps; saveSettings(); }
@@ -365,8 +367,6 @@ sheetEl.addEventListener('change', e => {
   if (e.target.id === 'rankBy'){ tabs.rankBy = e.target.value; render(); return; }
   if (e.target.id === 'rankWhere'){ tabs.rankWhere = e.target.value; netState.by = null; render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'uilook'){ G.settings.uilook = e.target.value; saveSettings(); applyUiLook(); return; }
-  if (e.target.dataset && e.target.dataset.set === 'sea'){ G.settings.sea = e.target.value; saveSettings(); setSeaLook(e.target.value); return; }
-  if (e.target.dataset && e.target.dataset.set === 'tilt'){ G.settings.tilt = +e.target.value; saveSettings(); return; }
   if (e.target.dataset && e.target.dataset.set === 'mrest'){ SND.rest = e.target.value; saveSound(); return; }
   if (e.target.dataset && e.target.dataset.set === 'bstyle'){ SND.battle = e.target.value; saveSound(); render(); return; }
   if (e.target.dataset && e.target.dataset.set === 'mstyle'){ SND.style = e.target.value; saveSound(); playNow(); render(); return; }

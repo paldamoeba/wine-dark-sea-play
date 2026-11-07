@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=19e7728';
+import {MUSIC_REST} from './config.js?v=3cc5145';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.6, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -143,10 +143,11 @@ export const SOUNDS = {
   bigsplash:{name:'Stone lands in the sea', gap:.15, play:(t, d) => { noise(t, .9, d, {type:'lowpass', f:3500, f2:250, peak:.7, a:.01}); osc('sine', 110, t, .25, d, .4, .004, 50); }},
   ram:{name:'Ram hit', play:(t, d) => { osc('sine', 75, t, .35, d, .9, .002, 35); noise(t, .35, d, {type:'lowpass', f:1800, f2:300, peak:.8}); for (let i=0;i<4;i++) noise(t + .05 + i*.06, .05, d, {type:'highpass', f:2500, peak:.35}); }},
   bump:{name:'Ships bump', gap:.3, play:(t, d) => { osc('sine', 110, t, .18, d, .5, .003, 70); noise(t, .1, d, {type:'lowpass', f:800, peak:.35}); }},
-  crash:{name:'A ship breaks apart', gap:.4, play:(t, d) => { noise(t, 1.6, d, {type:'lowpass', f:600, f2:120, peak:.8, buf:brownBuf, a:.02});
-    for (let i=0;i<7;i++){ const o = Math.random()*.9; noise(t + o, .06, d, {type:'highpass', f:1800 + Math.random()*2000, peak:.4}); osc('triangle', 120 + Math.random()*80, t + o, .1, d, .2, .002, 60); }
-    bubbles(t + .8, d, 10); }},
-  sink:{name:'Your ship sinks', play:(t, d) => { const w = wet(d, .4); noise(t, 2, w, {type:'lowpass', f:500, f2:90, peak:.8, buf:brownBuf}); creakAt(t, w, .6); creakAt(t + .7, w, .5); bubbles(t + 1, w, 16); [62, 61, 57, 50].forEach((m, i) => jingle(m, t + 1.2 + i*.35, w, .4, .25)); }},
+  // P84 (Nicholas: redo the sinking sound): told as a story, all wood and water. Timbers crack, the sea rushes in, the hull groans,
+  // big slow bubbles glug up as she goes under, then the water closes over her. (The old one had low buzzing tones under it.)
+  crash:{name:'A ship breaks apart', gap:.4, play:(t, d) => { timberCrack(t, d, .9); rushIn(t + .15, d, 1.1, .5); creakAt(t + .5, d, .35); glugs(t + .7, d, 5, .8); }},
+  sink:{name:'Your ship sinks', play:(t, d) => { const w = wet(d, .35); timberCrack(t, w, 1); rushIn(t + .2, w, 2.2, .7); creakAt(t + .6, w, .55); creakAt(t + 1.5, w, .45);
+    glugs(t + 1.2, w, 9, 1); noise(t + 3.2, 1.4, w, {type:'lowpass', f:900, f2:250, q:.5, peak:.22, a:.3, buf:pinkBuf}); [62, 57].forEach((m, i) => jingle(m, t + 3.4 + i*.5, w, .25, .2)); }},
   bubbles:{name:'Bubbles', play:(t, d) => bubbles(t, d, 12)},
   bell:{name:'Harbor bell', gap:.5, play:(t, d) => { const w = wet(d, .9); bell(t, w, 523, .4); bell(t + .9, w, 523, .3); }},
   // P82: a conch shell, soft and breathy. The old horn was two buzzing sawtooth tones and could sound like an engine.
@@ -217,6 +218,13 @@ function thunderAt(t, d, near){
     roll.gain.linearRampToValueAtTime(peak, at + up); roll.gain.linearRampToValueAtTime(peak*(.35 + R()*.3), at + up + back); at += up + back; level *= .84 + R()*.08; }
   roll.gain.exponentialRampToValueAtTime(.0001, start + dur);
 }
+// P84: wood splitting: a few sharp dry snaps close together, with a dull knock of the hull under them
+function timberCrack(t, d, k){ for (let i = 0; i < 4; i++){ const o = i*.05 + Math.random()*.04; noise(t + o, .05 + Math.random()*.04, d, {f:900 + Math.random()*1400, q:2.5, peak:.45*k, a:.001}); }
+  noise(t, .25, d, {type:'lowpass', f:420, f2:160, q:.7, peak:.5*k, a:.004, buf:brownBuf}); }
+// the sea pouring in: a wide wash of water that swells and dies away
+function rushIn(t, d, dur, k){ noise(t, dur, d, {type:'lowpass', f:700, f2:1500, q:.4, peak:.35*k, a:dur*.35, buf:pinkBuf}); noise(t + .1, dur*.8, d, {f:2400, f2:1200, q:.6, peak:.1*k, a:dur*.3}); }
+// big air bubbles escaping the hull: round low "glug"s, each a quick upward chirp, further and further apart
+function glugs(t, d, n, k){ let o = 0; for (let i = 0; i < n; i++){ const f = 110 + Math.random()*90; osc('sine', f, t + o, .12, d, .22*k*(1 - i/(n + 2)), .01, f*2.4); noise(t + o, .1, d, {type:'lowpass', f:600, f2:300, peak:.08*k}); o += .16 + i*.05 + Math.random()*.08; } }
 function bubbles(t, d, n){ for (let i=0;i<n;i++){ const o = i*.07 + Math.random()*.05, f = 300 + Math.random()*500; osc('sine', f, t + o, .06, d, .12, .004, f*2.2); } }
 function bell(t, d, f, vol){ [[1, 1], [2.02, .5], [2.76, .35], [4.07, .2], [5.4, .1]].forEach(([r, v]) => osc('sine', f*r, t, 2.4/r + .4, d, vol*v, .002)); }
 // P82 (Nicholas: something sounded like an engine running): the creak was a buzzing sawtooth whose pitch rose, like a motor revving.

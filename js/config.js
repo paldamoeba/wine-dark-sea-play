@@ -170,7 +170,7 @@ export const RAM = {mats:[{name:'Wood', color:'#8a5a30', k:1, cost:1}, {name:'Br
 // Captains: hire one for a ship you're not sailing and it goes out fishing on its own, bringing back gold.
 // One trip: tripSeconds at sea, then restSeconds moored at Kallisto. Pay per trip = hold × perHold, plus 4% per upgrade level on that ship.
 // P65: much less money (about a quarter per hour), and they keep working for 2 hours after you close the game (offline).
-export const CAPTAIN = {cost:1000, grow:1.5, // P82 (Nicholas: far too cheap): 1000, 1500, 2250, 3380...
+export const CAPTAIN = {cost:500, step:250, // P84 (Nicholas): 500, 750, 1000, then 250 more for each one after
   tripSeconds:300, restSeconds:60, perHold:1, perLevel:.04, offline:7200,
   names:['Captain Dion', 'Captain Hero', 'Captain Lysias', 'Captain Ione', 'Captain Polybos', 'Captain Thaleia']};
 
@@ -179,11 +179,17 @@ export const CAPTAIN = {cost:1000, grow:1.5, // P82 (Nicholas: far too cheap): 1
 // Bandit camps on the wild islands near Kallisto: a palisade with archers and one mothership guarding it. Easier than a
 // fortress, no catapults. Burn one and it stays burnt; some give ship blueprints (plans = SHIPS index).
 export const CAMPS = [
-  {isle:'Ikaria',  lv:1, hull:70,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:30,  motherDmg:1,  gold:[20, 30],   wood:30,  bronze:2,  plans:1},
+  // P84 (Nicholas: too hard, too little loot): walls and boats at half the health, three times the gold
+  {isle:'Ikaria',  lv:1, hull:35,  fighters:1, dmg:.8,  sight:420, mother:'dinghy', motherHull:15,  motherDmg:1,  gold:[60, 90],   wood:30,  bronze:2,  plans:1},
   // P67: ships = how many guard the camp (the mothership and smaller boats around it)
-  {isle:'Tinos',   lv:2, ships:2, hull:220, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:110, motherDmg:1.4, gold:[50, 70], wood:70,  bronze:8,  plans:2},
-  {isle:'Syros',   lv:2, ships:2, plans:2, hull:300, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:150, gold:[80, 110], wood:110, bronze:14},
-  {isle:'Ios',     lv:3, ships:2, plans:3, hull:340, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:260, gold:[110, 150], wood:120, bronze:20},
+  {isle:'Tinos',   lv:2, ships:2, hull:110, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:55, motherDmg:1.4, gold:[150, 210], wood:70,  bronze:8,  plans:2},
+  {isle:'Syros',   lv:2, ships:2, plans:2, hull:150, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:75, gold:[240, 330], wood:110, bronze:14},
+  {isle:'Ios',     lv:3, ships:2, plans:3, hull:170, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:130, gold:[330, 450], wood:120, bronze:20},
+  // P84 (Nicholas: more camps near home, so raiding merchants isn't the only way to earn). No plans; the bandits come back
+  // `back` seconds after you burn one, so these are a steady source of gold and supplies.
+  {isle:'Donousa', lv:1, back:420, hull:60,  fighters:2, dmg:1,   sight:440, mother:'dinghy', motherHull:25, gold:[90, 130], wood:40, bronze:4},
+  {isle:'Amorgos', lv:2, back:480, ships:2, hull:120, fighters:2, dmg:1.4, sight:480, mother:'skiff', motherHull:60, gold:[180, 250], wood:80, bronze:10, iron:4},
+  {isle:'Sikinos', lv:3, back:540, ships:2, hull:180, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:130, gold:[300, 420], wood:120, bronze:18, iron:8},
 ];
 export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme's plans (so does any city fortress you knock down)
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
@@ -204,7 +210,7 @@ export const VIDEO_SKIP = 600; // each video takes 10 minutes off studying or bu
 // Athens and Sparta keep their fortresses and navies this far from Kallisto: the start is neutral (P49).
 export const NEUTRAL_R = 8000; // P52: the fortresses stand far out
 export const FORTS = {pirates:['Thasos', 'Kos'], // every city island except the capitals has a fortress too
-  hull:{city:900, pirate:700}, fighters:7, dmg:2.5, range:560, every:3.4, gold:[320, 520], wood:150, bronze:25, rebuild:600, guards:2,
+  hull:{city:450, pirate:350}, fighters:7, dmg:2.5, range:560, every:3.4, gold:[320, 520], wood:150, bronze:25, rebuild:600, guards:2,
   stoneEvery:5.2, stoneRange:950, stoneFlight:2.6, stoneDmg:14, stoneHit:58, heal:2.5, healAfter:120};
 
 // Trade goods: each harbor makes one cheaply and wants another. Buy low, sail, sell high.
@@ -319,7 +325,10 @@ export const ENEMIES = {
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 // P64: three levels of fortress (by how far out they stand) and of bandit camp. Level 3 fortresses are guarded by quinqueremes.
 // P67: guards = ships around it (a level 3 fortress has 5, the farthest and Thasos 7; only the first two are quinqueremes). Richer prizes the higher the level.
-export const FORT_LV = [null, {hull:650, fighters:5, dmg:2, guards:1, gold:[150, 230], wood:80, bronze:10, iron:6}, {hull:900, fighters:7, dmg:2.5, guards:3, gold:[400, 600], wood:170, bronze:30, iron:14}, {hull:1300, fighters:9, dmg:3.2, guards:5, most:7, gold:[900, 1400], wood:320, bronze:70, iron:35, big:true}];
+// P84 (Nicholas: too hard to get past them, too little loot): half the health, twice the gold, and the treasury nearly fills your hold (see FILL)
+export const FORT_LV = [null, {hull:325, fighters:5, dmg:2, guards:1, gold:[300, 460], wood:80, bronze:10, iron:6, linen:6}, {hull:450, fighters:7, dmg:2.5, guards:3, gold:[800, 1200], wood:170, bronze:30, iron:14, linen:12}, {hull:650, fighters:9, dmg:3.2, guards:5, most:7, gold:[1800, 2800], wood:320, bronze:70, iron:35, linen:24, big:true}];
+// P84: a fallen fortress or burnt camp fills this share of the free room aboard with each supply (or gives its own amount, if that's more)
+export const FILL = {fort:{wood:.9, bronze:.8, iron:.8, linen:.8}, camp:{wood:.7, bronze:.5, iron:.5, linen:.5}};
 // enemy ship levels: 0 near Kallisto, 1 further, 2 far out. Bigger sails, bigger rams, fuller crews, tougher hulls.
 export const SHIP_LV = {near:9000, far:16000, hull:[1, 1.3, 1.7], dmg:[1, 1.15, 1.35], gold:[1, 1.4, 2], sail:[3, 8, 14], ram:[2, 7, 12], crew:[.45, .7, 1]};
 export const WITNESS = {
