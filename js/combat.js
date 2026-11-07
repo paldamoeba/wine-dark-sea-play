@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_CHART} from './config.js?v=af98ded';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=af98ded';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=af98ded';
-import {scene, screenToSea, setLair} from './scene.js?v=af98ded';
-import {wreckModel} from './models.js?v=af98ded';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=af98ded';
-import {mergeStatic, freeModel} from './merge.js?v=af98ded';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=af98ded';
-import {award} from './trophies.js?v=af98ded';
-import {makeFire, updateFire, burn} from './fire.js?v=af98ded';
-import {blessing, fighters, hasSail} from './crew.js?v=af98ded';
-import {progress, goal} from './quests.js?v=af98ded';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=af98ded';
-import {rollColor, unlockColor, colorName} from './colors.js?v=af98ded';
-import {toast} from './ui.js?v=af98ded';
-import {sink, rowNow, ROW} from './player.js?v=af98ded';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=af98ded';
-import {TOD} from './daynight.js?v=af98ded';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=af98ded';
-import {sfx} from './audio.js?v=af98ded';
-import {myLevel} from './levels.js?v=af98ded';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=e5e6be6';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=e5e6be6';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=e5e6be6';
+import {scene, screenToSea, setLair} from './scene.js?v=e5e6be6';
+import {wreckModel} from './models.js?v=e5e6be6';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=e5e6be6';
+import {mergeStatic, freeModel} from './merge.js?v=e5e6be6';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=e5e6be6';
+import {award} from './trophies.js?v=e5e6be6';
+import {makeFire, updateFire, burn} from './fire.js?v=e5e6be6';
+import {blessing, fighters, hasSail} from './crew.js?v=e5e6be6';
+import {progress, goal} from './quests.js?v=e5e6be6';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=e5e6be6';
+import {rollColor, unlockColor, colorName} from './colors.js?v=e5e6be6';
+import {toast} from './ui.js?v=e5e6be6';
+import {sink, rowNow, ROW} from './player.js?v=e5e6be6';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=e5e6be6';
+import {TOD} from './daynight.js?v=e5e6be6';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=e5e6be6';
+import {sfx} from './audio.js?v=e5e6be6';
+import {myLevel} from './levels.js?v=e5e6be6';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -273,12 +273,13 @@ function bossShip(kind, at, extra = {}){
     obj:null, leg:1, wait:0, angry:false, attacked:false, foe:null, lost:0, calm:0, lane:0, spd:1, orbit:Math.random() < .5 ? 1 : -1, ring:200 + Math.random()*120, tacT:0, temp:true, ...extra, spec};
   pushOut(e, 160); buildEnemy(e); enemies.push(e); return e;
 }
-// P85: the chart to his lair, one piece in each of the LAIR_CHART fortresses. Once it is whole he appears, and the chart shows where.
-export const chartGot = () => LAIR_CHART.filter(n => (G.S.lairChart || []).includes(n));
-export const chartDone = () => chartGot().length >= LAIR_CHART.length;
+// P85: the chart to his lair. P86: one piece in every fortress; with LAIR_NEED of them he appears, and the chart shows where.
+const chartForts = () => enemies.filter(e => e.fort && !e.camp && e.isle);
+export const chartGot = () => chartForts().map(f => f.isle.name).filter(n => (G.S.lairChart || []).includes(n));
+export const chartDone = () => chartGot().length >= LAIR_NEED;
 export function chartPiece(name){ const S = G.S; if ((S.lairChart || []).includes(name)) return; S.lairChart = [...(S.lairChart || []), name]; save();
-  const n = chartGot().length; sfx('chime'); toast(n >= LAIR_CHART.length ? 'The chart is whole! The pirate king\'s lair is on your chart' : `A piece of the pirate king's chart: ${n} of ${LAIR_CHART.length}`, 5); }
-document.addEventListener('chartpiece', ev => { const all = ev.detail === 'all', left = LAIR_CHART.filter(n => !chartGot().includes(n)); (all ? left : left.slice(0, 1)).forEach(chartPiece); });
+  const n = chartGot().length; sfx('chime'); if (n <= LAIR_NEED) toast(n >= LAIR_NEED ? 'The chart is whole! The pirate king\'s lair is on your chart' : `A piece of the pirate king's chart: ${n} of ${LAIR_NEED}`, 5); }
+document.addEventListener('chartpiece', ev => { const all = ev.detail === 'all', left = chartForts().map(f => f.isle.name).filter(n => !chartGot().includes(n)); (all ? left : left.slice(0, 1)).forEach(chartPiece); });
 export function spawnBoss(){
   const at = {x:LAIR.x, y:LAIR.y}; // in the middle of the wine-dark water
   const e = bossShip('galley', at, {boss:true, look:{paint:'king', sail:'purple'}, fireT:BOSS.fireEvery, called:false,
@@ -692,7 +693,7 @@ function sinkEnemy(e, byPlayer){
   const color = byPlayer && !e.fort ? rollColor() : null;
   if (byPlayer && e.fort && e.owner === 'pirate') progress('fort');
   if (byPlayer && e.fort && !e.camp && fortPlan(e)) givePiece(fortPlan(e), 'fort:' + e.isle.name);
-  if (byPlayer && e.fort && !e.camp && LAIR_CHART.includes(e.isle.name)) setTimeout(() => chartPiece(e.isle.name), 2500);
+  if (byPlayer && e.fort && !e.camp && e.isle) setTimeout(() => chartPiece(e.isle.name), 2500);
   if (byPlayer && e.named){ givePiece(e.named.plans, 'ship:' + e.named.name); shipDeed(e.named.name); }
   if (e.camp){ const S = G.S; if (!e.camp.back) S.camps = [...new Set([...(S.camps || []), e.isle.name])]; if (byPlayer) progress('camp', e.isle.name); if (e.camp.plans) givePiece(e.camp.plans, 'camp:' + e.isle.name); }
   if (e.boss){ shipDeed('Polycrates'); bossDown(e); }
@@ -1031,7 +1032,7 @@ export function updateCombat(dt){
   for (const e of enemies) if (e.charger && !e.dead) charge(e, dt, e.charger, e.mode === 'chase' || e.rushW > 0 || e.rushT > 0, dist(e, G.S), e.hull/e.spec.hull);
   G.boss = boss.e && !boss.e.dead ? {x:boss.e.x, y:boss.e.y} : null;
   // where the current chapter goal is, for the chart and the little map: the pirate fortresses, then the pirate king
-  G.goalMarks = gl && gl.t === 'camp' ? enemies.filter(o => o.camp && o.isle.name === gl.kind && !o.dead).map(o => ({x:o.x, y:o.y, label:`${o.isle.name} bandit camp`})) : gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : gl && gl.t === 'boss' && !chartDone() ? enemies.filter(o => o.fort && !o.camp && LAIR_CHART.includes(o.isle.name) && !chartGot().includes(o.isle.name)).map(o => ({x:o.x, y:o.y, label:'Chart piece'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
+  G.goalMarks = gl && gl.t === 'camp' ? enemies.filter(o => o.camp && o.isle.name === gl.kind && !o.dead).map(o => ({x:o.x, y:o.y, label:`${o.isle.name} bandit camp`})) : gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : gl && gl.t === 'boss' && !chartDone() ? chartForts().filter(o => !chartGot().includes(o.isle.name)).map(o => ({x:o.x, y:o.y, label:'Chart piece'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
   const bb = $('bossBar'), showB = !!G.boss && dist(boss.e, G.S) < 1600 && !G.sheetOpen; bb.hidden = !showB; if (showB) $('bossHull').style.width = Math.max(0, boss.e.hull/boss.e.spec.hull*100) + '%';
   playerCrew(dt);
   collide();

@@ -101,10 +101,11 @@ export const GOALS = [
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
   {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp, the pirate fortress of Kos, and Nikandros the Scourge, who sails off Skyros', chapter:true},
   {t:'build', kind:'trireme', n:1, gold:200, text:'Study the plans and build the trireme, the greatest warship of the Aegean', chapter:true},
-  {t:'boss', n:1, gold:1500, text:'Find the pirate king: win the 4 pieces of the chart to his lair from the fortresses of Thasos, Chalkidiki, Kythera and Crete, then defeat Polycrates', chapter:true},
+  {t:'boss', n:1, gold:1500, text:'Find the pirate king: every fortress keeps a piece of the chart to his lair. Win 12 of them, then defeat Polycrates', chapter:true},
 ];
-// P85 (Nicholas): the pirate king hides until you hold the whole chart to his lair. Each of these far fortresses keeps one piece.
-export const LAIR_CHART = ['Thasos', 'Chalkidiki', 'Kythera', 'Crete'];
+// P85 (Nicholas): the pirate king hides until you hold the chart to his lair. P86 (Nicholas: fighting him should need about 90% of the game
+// cleared): every fortress keeps one piece (14 of them), and you need 12, so two hard ones can be left.
+export const LAIR_NEED = 12;
 export const STARTER_GOALS = 8; // the first eight goals teach the basics; past the rowboat they are skipped
 // Polycrates, the pirate king: a huge black galley with a golden boar's head ram, waiting off his fortress with two skiffs.
 // fireEvery: seconds between his flaming volleys (they set your ship alight for burnSeconds). At half hull he calls two more skiffs.

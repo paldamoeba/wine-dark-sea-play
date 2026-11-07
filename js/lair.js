@@ -1,13 +1,13 @@
 // P77: the pirate king's lair, alone in the empty far north-east of the Aegean. Wine-dark water, a ring of black sea stacks with fires on them,
 // a dark fortress on a great rock, the burning wrecks of his victims, drifting embers and a red haze. It all clears once he is beaten.
-import {G} from './state.js?v=af98ded';
-import {scene, setLair} from './scene.js?v=af98ded';
-import {WORLD, waveAt, rng} from './world.js?v=af98ded';
-import {mesh, mat} from './ships.js?v=af98ded';
-import {wreckModel} from './models.js?v=af98ded';
-import {buildFortress} from './monuments.js?v=af98ded';
-import {makeFire, updateFire} from './fire.js?v=af98ded';
-import {mergeStatic} from './merge.js?v=af98ded';
+import {G} from './state.js?v=e5e6be6';
+import {scene, setLair} from './scene.js?v=e5e6be6';
+import {WORLD, waveAt, rng} from './world.js?v=e5e6be6';
+import {mesh, mat} from './ships.js?v=e5e6be6';
+import {wreckModel} from './models.js?v=e5e6be6';
+import {buildFortress} from './monuments.js?v=e5e6be6';
+import {makeFire, updateFire} from './fire.js?v=e5e6be6';
+import {mergeStatic} from './merge.js?v=e5e6be6';
 
 const T = window.THREE;
 export const LAIR = {x:Math.round(WORLD*.83), y:Math.round(WORLD*.15), r:1700};
