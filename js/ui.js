@@ -1,35 +1,35 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=7040588';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=7040588';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=7040588';
-import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=7040588';
-import {showRewarded, ads, adPrivacy} from './ads.js?v=7040588';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=7040588';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=7040588';
-import {CYCLE} from './daynight.js?v=7040588';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=7040588';
-import {swapBoat, refreshAllTrees} from './entities.js?v=7040588';
-import {setZoom} from './input.js?v=7040588';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=7040588';
-import {tutHTML} from './tutorial.js?v=7040588';
-import {founded, blessing} from './crew.js?v=7040588';
-import {WHALE} from './wildlife.js?v=7040588';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=7040588';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=7040588';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=7040588';
-import {effectText, buy} from './upgrades.js?v=7040588';
-import {fleetHTML} from './fleetpage.js?v=7040588';
-import {myLevel} from './levels.js?v=7040588';
-import {askName} from './naming.js?v=7040588';
-import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=7040588';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=7040588';
-import {GOODS, WAR} from './config.js?v=7040588';
-import {fly} from './fly.js?v=7040588';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=7040588';
-import {RANKS} from './records.js?v=7040588';
-import {W, KINDS} from './weather.js?v=7040588';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=7040588';
-import {setTimeOfDay} from './daynight.js?v=7040588';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=5b0520c';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=5b0520c';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=5b0520c';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=5b0520c';
+import {showRewarded, ads, adPrivacy} from './ads.js?v=5b0520c';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=5b0520c';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=5b0520c';
+import {CYCLE} from './daynight.js?v=5b0520c';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=5b0520c';
+import {swapBoat, refreshAllTrees} from './entities.js?v=5b0520c';
+import {setZoom} from './input.js?v=5b0520c';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=5b0520c';
+import {tutHTML} from './tutorial.js?v=5b0520c';
+import {founded, blessing} from './crew.js?v=5b0520c';
+import {WHALE} from './wildlife.js?v=5b0520c';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=5b0520c';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=5b0520c';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=5b0520c';
+import {effectText, buy} from './upgrades.js?v=5b0520c';
+import {fleetHTML} from './fleetpage.js?v=5b0520c';
+import {myLevel} from './levels.js?v=5b0520c';
+import {askName} from './naming.js?v=5b0520c';
+import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=5b0520c';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=5b0520c';
+import {GOODS, WAR} from './config.js?v=5b0520c';
+import {fly} from './fly.js?v=5b0520c';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=5b0520c';
+import {RANKS} from './records.js?v=5b0520c';
+import {W, KINDS} from './weather.js?v=5b0520c';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=5b0520c';
+import {setTimeOfDay} from './daynight.js?v=5b0520c';
 
 const $ = id => document.getElementById(id);
 
@@ -211,7 +211,7 @@ function settingsHTML(){
     + (APP ? '' : card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`)))
     + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
-    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 88'}</p>`;
+    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 89'}</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -227,6 +227,7 @@ function settingsHTML(){
       ${row('Try a ship', 'Sail any ship to test a fight. This changes this voyage, so test in Voyage 3.', `<select class="jobsel" data-set="tryship" aria-label="Ship to try">${SHIPS.map((sh, i) => `<option value="${i}" ${i === G.S.tier ? 'selected' : ''}>${sh.name}</option>`).join('')}</select>`)}
       ${row('Its upgrades', 'Hull, speed, crew, arrows, ram and every power.', `<select class="jobsel" data-set="tryups" aria-label="Upgrades to try"><option value="-1">Choose</option><option value="0">None</option><option value=".5">Half</option><option value="1">Full</option></select>`)}
       ${row('Go and fight', 'Takes you there with a full hull.', '<div class="btns"><button class="btn small" data-act="tryking">Pirate king</button><button class="btn small" data-act="tryarena">Arena</button></div>')}
+      ${APP ? row('Ad log', ads.log.length ? ads.log.slice(-8).join(' · ') : 'Nothing yet. Watch a video, then come back here.', '') : ''}
       ${row('Pirate king\'s chart', `${(G.S.lairChart || []).length} of 12 pieces. Every fortress keeps one. With 12 he appears in his lair and on the chart.`, '<div class="btns"><button class="btn small" data-act="chart1">One piece</button><button class="btn small" data-act="chartall">All</button></div>')}
       ${row('Ship speed', '', '')}
       <div class="segs four">${[1,2,4,8].map(v => `<button class="seg ${s.dev.speed === v ? 'on' : ''}" data-act="speed" data-v="${v}" aria-pressed="${s.dev.speed === v}">${v}×</button>`).join('')}</div>

@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=7040588';
-import {MAPDATA} from './mapdata.js?v=7040588';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=5b0520c';
+import {MAPDATA} from './mapdata.js?v=5b0520c';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -298,6 +298,23 @@ export function seaInfo(x, z){
 // The waves are bent by a slow, uneven warp so they never line up in a neat repeating grid (keep in step with swell() in scene.js).
 const warpX = (x, z) => x + 70*Math.sin(z*.0021 + 1.3) + 30*Math.sin(z*.0057 + x*.0013), warpZ = (x, z) => z + 70*Math.sin(x*.0017 - .7) + 30*Math.sin(x*.0049 - z*.0011);
 export function waveH(x0, z0, amp, t){ const x = warpX(x0, z0), z = warpZ(x0, z0); return amp * (Math.sin(x*.011 + t*1.3) + Math.sin(z*.013 - t*1.1)*.8 + Math.sin((x+z)*.021 + t*2)*.4) / 2.2; }
+// P89 (Nicholas: the pirate king's flagship bobbed like a toy in rough water): weight on the waves. How a ship sits on the sea:
+// height, pitch and roll from the water under it, softened for big ships (weight 0 for a rowboat, 1 for the flagship) and eased
+// over time so a heavy hull swings slowly instead of snapping to every wave. mem keeps the last pose between frames.
+export const shipWeight = len => Math.min(1, Math.max(0, (len - 50)/220));
+export function seaPose(x, y, a, len, t, mem){
+  const w = shipWeight(len), fx = Math.cos(a)*len*.4, fz = Math.sin(a)*len*.4;
+  const hb = waveAt(x + fx, y + fz, t), hs = waveAt(x - fx, y - fz, t), hc = waveAt(x, y, t);
+  const pitch = Math.atan((hb - hs)/(len*.8))*(1 - .7*w);
+  const roll = Math.atan((waveAt(x - fz*.5, y + fx*.5, t) - waveAt(x + fz*.5, y - fx*.5, t))/(len*.4))*.8*(1 - .7*w);
+  const h = (hc*.5 + (hb + hs)*.25)*(1 - .55*w); // a long hull rides the average of bow, middle and stern
+  if (!mem) return {h, pitch, roll};
+  const dt = Math.min(.1, Math.max(0, t - (mem.t ?? t))); mem.t = t;
+  const k = mem.h === undefined ? 1 : 1 - Math.exp(-dt*(10 - 7.5*w)); // heavy ships follow the sea more slowly
+  mem.h = mem.h === undefined ? h : mem.h + (h - mem.h)*k; mem.pitch = (mem.pitch ?? pitch) + (pitch - (mem.pitch ?? pitch))*k; mem.roll = (mem.roll ?? roll) + (roll - (mem.roll ?? roll))*k;
+  return mem;
+}
+
 export function waveAt(x, z, t){ return waveH(x, z, seaInfo(x, z).amp, t); }
 // The height of the water surface as drawn: the big swells plus the small chop on top (the same as swell() in scene.js).
 // Things lying on the water (wake foam) use this so they never sink under a little wave.

@@ -1172,3 +1172,6 @@ select{pointer-events:none}
 .pickopt i{font-style:normal;font-weight:900}
 .pickopt:disabled{opacity:.45}
 .pickopt:focus-visible,.pickx:focus-visible{outline:3px solid #2f6f8f;outline-offset:2px}
+
+/* P89: the pirate king's bar is small and sits under the little map (combat.js places it), clear of the power buttons */
+.bossbar{bottom:auto!important;transform:translateX(-50%)!important;width:150px!important;padding:4px 8px 6px!important}.bossbar b{font-size:12px!important;margin-bottom:3px!important}.bossbar .bar{height:7px!important}

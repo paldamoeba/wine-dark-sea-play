@@ -1,20 +1,20 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=7040588';
-import {SHIPS, IRON} from './config.js?v=7040588';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, inPoly, landDist, islandHeights, siteClear} from './world.js?v=7040588';
-import {G, ship, lvl} from './state.js?v=7040588';
-import {men} from './crew.js?v=7040588';
-import {scene} from './scene.js?v=7040588';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=7040588';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=7040588';
-import {addTown, figure} from './town.js?v=7040588';
-import {makeFire, updateFire, burn} from './fire.js?v=7040588';
-import {addGrass} from './grass.js?v=7040588';
-import {sinkPose} from './sinking.js?v=7040588';
-import {moored} from './fleet.js?v=7040588';
-import {sailCount} from './upgrades.js?v=7040588';
-import {hasSail} from './crew.js?v=7040588';
-import {placeOnWaves} from './combat.js?v=7040588';
+import {mergeStatic} from './merge.js?v=5b0520c';
+import {SHIPS, IRON} from './config.js?v=5b0520c';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=5b0520c';
+import {G, ship, lvl} from './state.js?v=5b0520c';
+import {men} from './crew.js?v=5b0520c';
+import {scene} from './scene.js?v=5b0520c';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=5b0520c';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=5b0520c';
+import {addTown, figure} from './town.js?v=5b0520c';
+import {makeFire, updateFire, burn} from './fire.js?v=5b0520c';
+import {addGrass} from './grass.js?v=5b0520c';
+import {sinkPose} from './sinking.js?v=5b0520c';
+import {moored} from './fleet.js?v=5b0520c';
+import {sailCount} from './upgrades.js?v=5b0520c';
+import {hasSail} from './crew.js?v=5b0520c';
+import {placeOnWaves} from './combat.js?v=5b0520c';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -306,10 +306,7 @@ export function animateEntities(dt){
   updatePops(dt);
   for (const b of ICEBERGS){ if (Math.abs(b.x - G.cam.x) > 1800 || Math.abs(b.y - G.cam.y) > 1800) continue; b.g.position.y = Math.sin(G.t*.6 + b.ph)*1.5; b.g.rotation.y = Math.sin(G.t*.1 + b.ph)*.2; }
   const S = G.S, t = G.t, sh = SHIPS[S.tier];
-  const wh = waveAt(S.x, S.y, t);
-  const fx = Math.cos(S.a)*sh.len*.4, fz = Math.sin(S.a)*sh.len*.4;
-  const pitch = (waveAt(S.x+fx, S.y+fz, t) - waveAt(S.x-fx, S.y-fz, t)) / (sh.len*.8);
-  const roll = (waveAt(S.x-fz*.5, S.y+fx*.5, t) - waveAt(S.x+fz*.5, S.y-fx*.5, t)) / (sh.len*.4);
+  const sea = seaPose(S.x, S.y, S.a, sh.len, t, boat.userData.sea || (boat.userData.sea = {})), wh = sea.h; // P89: big ships carry their weight on the waves
   // hits and volleys rock the boat; sinking lists it over and pulls it under
   G.kick = Math.max(0, (G.kick || 0) - dt*.5);
   // leaning out of a fast turn, like a real boat heeling over: more turn and more speed, more lean
@@ -321,7 +318,7 @@ export function animateEntities(dt){
   const sp = G.sinking ? sinkPose(G.sinking.t, G.sinking.side, sh.len) : {depth:0, roll:0, pitch:0, done:false};
   boat.visible = !sp.done;
   boat.position.set(S.x, wh + sh.len*.05 - sp.depth, S.y);
-  boat.rotation.order = 'YXZ'; boat.rotation.y = -S.a; boat.rotation.z = Math.atan(pitch) + sp.pitch; boat.rotation.x = Math.atan(roll)*.8 + sp.roll + Math.sin(G.kick*50)*G.kick + G.heel;
+  boat.rotation.order = 'YXZ'; boat.rotation.y = -S.a; boat.rotation.z = sea.pitch + sp.pitch; boat.rotation.x = sea.roll + sp.roll + Math.sin(G.kick*50)*G.kick + G.heel;
   boat.userData.firing = !!G.firing;
   boat.userData.windFill = G.windFill || 0; boat.userData.stow = !G.rowing && !G.dock; boat.userData.burst = G.rowT > 0; animateShip(boat, t, G.v);
   updateFire(boat.userData.fire, Math.max(burn(S.hull, ship().hull), G.burnT > 0 ? .6 : 0), t); // also while burning from a flaming volley

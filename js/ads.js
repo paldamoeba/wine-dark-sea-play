@@ -2,8 +2,8 @@
 // Only rewarded videos: the player chooses to watch one for a reward (a shorter wait, a color, a repair, sailing home). No banners.
 // Test builds always ask Google for its sample test ads; only the store build (RELEASE) uses the real ad unit.
 // Europe and the UK (and US states with privacy laws) get Google's consent form first, from the message set up in AdMob, Privacy & messaging.
-import {APP, RELEASE} from './state.js?v=7040588';
-import {hush} from './audio.js?v=7040588';
+import {APP, RELEASE} from './state.js?v=5b0520c';
+import {hush} from './audio.js?v=5b0520c';
 
 export const ADMOB = {
   real:'ca-app-pub-4758417555480046/2855047321',  // "Shorten wait", Wine-Dark Sea (app ID ca-app-pub-4758417555480046~2858916755 is in the Android manifest)
@@ -11,7 +11,7 @@ export const ADMOB = {
 };
 const P = APP && window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.AdMob;
 const unit = RELEASE ? ADMOB.real : ADMOB.test;
-export const ads = {on:false, ready:false, loading:false, privacy:false, err:''};
+export const ads = {on:false, ready:false, loading:false, privacy:false, err:'', log:[]};
 
 async function prepare(){
   if (!P || !ads.on || ads.ready || ads.loading) return; ads.loading = true;
@@ -31,14 +31,21 @@ export async function initAds(){
 }
 export function adPrivacy(){ if (P) P.showPrivacyOptionsForm().catch(() => {}); }
 
-// Show a video. done() only if it was watched to the end; fail(reason) otherwise ('none' = no video to show, 'closed' = closed early).
+// Show a video. done() once the player has earned the reward; fail(reason) otherwise ('none' = no video to show, 'closed' = closed early).
+// P89 (Nicholas: the video played but no reward came): the reward can reach the game after the video is closed, or only through the
+// show call, so wait a moment after it closes and give the reward whichever way it arrives (only once). ads.log keeps what happened
+// (Builder tab, "Ad log") so a phone problem can be seen.
 export function showRewarded(done, fail){
   if (!P || !ads.ready){ prepare(); fail('none'); return; }
-  ads.ready = false; let earned = false, over = false; const subs = [];
-  const finish = () => { if (over) return; over = true; subs.forEach(s => s.then(h => h.remove())); hush(false); earned ? done() : fail('closed'); setTimeout(prepare, 500); };
-  subs.push(P.addListener('onRewardedVideoAdReward', () => { earned = true; }));
-  subs.push(P.addListener('onRewardedVideoAdDismissed', finish));
-  subs.push(P.addListener('onRewardedVideoAdFailedToShow', () => { earned = false; finish(); }));
-  hush(true);
-  P.showRewardVideoAd().then(() => { earned = true; }).catch(() => finish());
+  ads.ready = false; let paid = false, over = false, timer = 0; const subs = [];
+  const log = m => { ads.log.push(new Date().toLocaleTimeString() + ' ' + m); if (ads.log.length > 30) ads.log.shift(); };
+  const pay = how => { log('reward (' + how + ')'); if (paid) return; paid = true; if (over){ done(); return; } if (!timer) timer = setTimeout(end, 4000); }; // closed never heard: pay anyway
+  const end = () => { if (over) return; over = true; clearTimeout(timer); subs.forEach(s => s.then(h => h.remove()).catch(() => {})); hush(false);
+    if (paid) done(); else { log('no reward'); fail('closed'); } setTimeout(prepare, 500); };
+  const closed = what => { log(what); clearTimeout(timer); timer = setTimeout(end, 1500); };
+  subs.push(P.addListener('onRewardedVideoAdReward', () => pay('event')));
+  subs.push(P.addListener('onRewardedVideoAdDismissed', () => closed('closed')));
+  subs.push(P.addListener('onRewardedVideoAdFailedToShow', e => { log('failed to show ' + JSON.stringify(e)); end(); }));
+  hush(true); log('show');
+  P.showRewardVideoAd().then(() => pay('call')).catch(e => { log('show error ' + (e && e.message || e)); closed('error'); });
 }

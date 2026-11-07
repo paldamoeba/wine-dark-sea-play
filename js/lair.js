@@ -1,22 +1,24 @@
 // P77: the pirate king's lair, alone in the empty far north-east of the Aegean. Wine-dark water, a ring of black sea stacks with fires on them,
 // a dark fortress on a great rock, the burning wrecks of his victims, drifting embers and a red haze. It all clears once he is beaten.
-import {G} from './state.js?v=7040588';
-import {scene, setLair} from './scene.js?v=7040588';
-import {WORLD, waveAt, rng} from './world.js?v=7040588';
-import {mesh, mat} from './ships.js?v=7040588';
-import {wreckModel} from './models.js?v=7040588';
-import {buildFortress} from './monuments.js?v=7040588';
-import {makeFire, updateFire} from './fire.js?v=7040588';
-import {mergeStatic} from './merge.js?v=7040588';
+import {G} from './state.js?v=5b0520c';
+import {scene, setLair} from './scene.js?v=5b0520c';
+import {WORLD, waveAt, rng} from './world.js?v=5b0520c';
+import {mesh, mat} from './ships.js?v=5b0520c';
+import {wreckModel} from './models.js?v=5b0520c';
+import {buildFortress} from './monuments.js?v=5b0520c';
+import {makeFire, updateFire} from './fire.js?v=5b0520c';
+import {mergeStatic} from './merge.js?v=5b0520c';
 
 const T = window.THREE;
-export const LAIR = {x:Math.round(WORLD*.83), y:Math.round(WORLD*.15), r:1700};
+// P89 (Nicholas): larger and more spaced out: everything sits LK times further from the middle than before
+const LK = 1.5;
+export const LAIR = {x:Math.round(WORLD*.83), y:Math.round(WORLD*.15), r:Math.round(1700*LK)};
 setLair(LAIR.x, LAIR.y, LAIR.r);
 // the great rock with his fortress stands to the north-east, the stacks form a broken ring, and the gate faces the way you come from
 const AWAY = Math.atan2(WORLD*.5 - LAIR.y, WORLD*.5 - LAIR.x), R0 = rng(777);
-export const LAIR_ROCKS = [{x:LAIR.x - Math.cos(AWAY)*620, y:LAIR.y - Math.sin(AWAY)*620, r:210, big:true}];
-for (const sg of [-1, 1]){ const a = AWAY + sg*.16; LAIR_ROCKS.push({x:LAIR.x + Math.cos(a)*1250, y:LAIR.y + Math.sin(a)*1250, r:64, h:230, gate:true, fire:true}); }
-for (let i = 0; i < 16; i++){ const a = AWAY + .42 + i/16*(Math.PI*2 - .84), d = 980 + R0()*520, s = 30 + R0()*42; LAIR_ROCKS.push({x:LAIR.x + Math.cos(a)*d, y:LAIR.y + Math.sin(a)*d, r:s, h:70 + s*2.6 + R0()*60, fire:i % 3 === 0}); }
+export const LAIR_ROCKS = [{x:LAIR.x - Math.cos(AWAY)*620*LK, y:LAIR.y - Math.sin(AWAY)*620*LK, r:210, big:true}];
+for (const sg of [-1, 1]){ const a = AWAY + sg*.16; LAIR_ROCKS.push({x:LAIR.x + Math.cos(a)*1250*LK, y:LAIR.y + Math.sin(a)*1250*LK, r:64, h:230, gate:true, fire:true}); }
+for (let i = 0; i < 16; i++){ const a = AWAY + .42 + i/16*(Math.PI*2 - .84), d = (980 + R0()*520)*LK, s = 30 + R0()*42; LAIR_ROCKS.push({x:LAIR.x + Math.cos(a)*d, y:LAIR.y + Math.sin(a)*d, r:s, h:70 + s*2.6 + R0()*60, fire:i % 3 === 0}); }
 
 function stack(r, h, R){ const seg = 7, geo = new T.CylinderGeometry(r*.32, r, h + 24, seg, 4), p = geo.attributes.position;
   for (let i = 0; i < p.count; i++){ const y = p.getY(i), k = 1 + (R() - .5)*.42, top = y > h*.45; p.setXYZ(i, p.getX(i)*k, y + (top ? R()*h*.14 : 0), p.getZ(i)*k); }
@@ -32,10 +34,10 @@ function build(){ built = true; const R = rng(2024), g = new T.Group(); scene.ad
     else { n.add(stack(k.r, k.h, R)); if (k.gate){ const b = banner(70, 34); b.position.y = k.h - 4; n.add(b); } else if (k.h > 170){ const b = banner(46, 20); b.position.y = k.h - 4; b.rotation.y = R()*6; n.add(b); }
       if (k.fire){ const f = makeFire(44, 22, 8); f.position.y = k.h; g.add(f); f.position.x = k.x; f.position.z = k.y; f.userData.noMergeFire = true; fires.push({f, ph:R()*6}); } } }
   // the mast of a broken ship stands out of the water here and there, hung with black
-  for (let i = 0; i < 8; i++){ const a = i*.8 + 1, d = 450 + R()*700, m = banner(52 + R()*24, 16), n = new T.Group(); m.rotation.z = (R() - .5)*.5; n.add(m); n.position.set(LAIR.x + Math.cos(a)*d, -6, LAIR.y + Math.sin(a)*d); g.add(n); }
+  for (let i = 0; i < 8; i++){ const a = i*.8 + 1, d = (450 + R()*700)*LK, m = banner(52 + R()*24, 16), n = new T.Group(); m.rotation.z = (R() - .5)*.5; n.add(m); n.position.set(LAIR.x + Math.cos(a)*d, -6, LAIR.y + Math.sin(a)*d); g.add(n); }
   for (const k of fires) k.f.userData.keep = true;
   mergeStatic(g);
-  for (let i = 0; i < 11; i++){ const a = i*2.4 + .3, d = 280 + (i*173 % 760), w = wreckModel(['small', 'medium', 'large'][i % 3]); w.rotation.y = a*1.7; const fire = makeFire(70, 30, 10); w.add(fire); scene.add(w); wrecks.push({x:LAIR.x + Math.cos(a)*d, y:LAIR.y + Math.sin(a)*d, w, fire, ph:i}); }
+  for (let i = 0; i < 11; i++){ const a = i*2.4 + .3, d = (280 + (i*173 % 760))*LK, w = wreckModel(['small', 'medium', 'large'][i % 3]); w.rotation.y = a*1.7; const fire = makeFire(70, 30, 10); w.add(fire); scene.add(w); wrecks.push({x:LAIR.x + Math.cos(a)*d, y:LAIR.y + Math.sin(a)*d, w, fire, ph:i}); }
   // embers on the wind
   const N = 140, geo = new T.BufferGeometry(); emberP = new Float32Array(N*3); for (let i = 0; i < N*3; i++) emberP[i] = (Math.random() - .5)*1200; geo.setAttribute('position', new T.BufferAttribute(emberP, 3));
   embers = new T.Points(geo, new T.PointsMaterial({color:'#ff8a3c', size:5, transparent:true, opacity:.85, blending:T.AdditiveBlending, depthWrite:false})); embers.frustumCulled = false; scene.add(embers); }

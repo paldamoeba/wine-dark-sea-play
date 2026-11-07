@@ -1,38 +1,36 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=7040588';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=7040588';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=7040588';
-import {scene, screenToSea, setLair} from './scene.js?v=7040588';
-import {wreckModel} from './models.js?v=7040588';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=7040588';
-import {mergeStatic, freeModel} from './merge.js?v=7040588';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=7040588';
-import {award} from './trophies.js?v=7040588';
-import {makeFire, updateFire, burn} from './fire.js?v=7040588';
-import {blessing, fighters, hasSail} from './crew.js?v=7040588';
-import {progress, goal} from './quests.js?v=7040588';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=7040588';
-import {rollColor, unlockColor, colorName} from './colors.js?v=7040588';
-import {toast} from './ui.js?v=7040588';
-import {sink, rowNow, ROW} from './player.js?v=7040588';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=7040588';
-import {TOD} from './daynight.js?v=7040588';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=7040588';
-import {sfx} from './audio.js?v=7040588';
-import {myLevel} from './levels.js?v=7040588';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=5b0520c';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=5b0520c';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=5b0520c';
+import {scene, screenToSea, setLair} from './scene.js?v=5b0520c';
+import {wreckModel} from './models.js?v=5b0520c';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=5b0520c';
+import {mergeStatic, freeModel} from './merge.js?v=5b0520c';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=5b0520c';
+import {award} from './trophies.js?v=5b0520c';
+import {makeFire, updateFire, burn} from './fire.js?v=5b0520c';
+import {blessing, fighters, hasSail} from './crew.js?v=5b0520c';
+import {progress, goal} from './quests.js?v=5b0520c';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=5b0520c';
+import {rollColor, unlockColor, colorName} from './colors.js?v=5b0520c';
+import {toast} from './ui.js?v=5b0520c';
+import {sink, rowNow, ROW} from './player.js?v=5b0520c';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=5b0520c';
+import {TOD} from './daynight.js?v=5b0520c';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=5b0520c';
+import {sfx} from './audio.js?v=5b0520c';
+import {myLevel} from './levels.js?v=5b0520c';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
 
 // Sit a ship on the waves: height, pitch and roll from the water under it.
 export function placeOnWaves(obj, x, y, a, len, t, sinkY = 0, roll0 = 0, pitch0 = 0){
-  const fx = Math.cos(a)*len*.4, fz = Math.sin(a)*len*.4;
-  const pitch = (waveAt(x+fx, y+fz, t) - waveAt(x-fx, y-fz, t)) / (len*.8);
-  const roll = (waveAt(x-fz*.5, y+fx*.5, t) - waveAt(x+fz*.5, y-fx*.5, t)) / (len*.4);
-  obj.position.set(x, waveAt(x, y, t) + len*.05 - sinkY, y);
-  obj.rotation.order = 'YXZ'; obj.rotation.y = -a; obj.rotation.z = Math.atan(pitch) + pitch0; obj.rotation.x = Math.atan(roll)*.8 + roll0;
+  const p = seaPose(x, y, a, len, t, obj.userData.sea || (obj.userData.sea = {})); // P89: big ships carry their weight on the waves
+  obj.position.set(x, p.h + len*.05 - sinkY, y);
+  obj.rotation.order = 'YXZ'; obj.rotation.y = -a; obj.rotation.z = p.pitch + pitch0; obj.rotation.x = p.roll + roll0;
 }
 
 // ---- ships ----
@@ -1033,7 +1031,9 @@ export function updateCombat(dt){
   G.boss = boss.e && !boss.e.dead ? {x:boss.e.x, y:boss.e.y} : null;
   // where the current chapter goal is, for the chart and the little map: the pirate fortresses, then the pirate king
   G.goalMarks = gl && gl.t === 'camp' ? enemies.filter(o => o.camp && o.isle.name === gl.kind && !o.dead).map(o => ({x:o.x, y:o.y, label:`${o.isle.name} bandit camp`})) : gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : gl && gl.t === 'boss' && !chartDone() ? chartForts().filter(o => !chartGot().includes(o.isle.name)).map(o => ({x:o.x, y:o.y, label:'Chart piece'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
-  const bb = $('bossBar'), showB = !!G.boss && dist(boss.e, G.S) < 1600 && !G.sheetOpen; bb.hidden = !showB; if (showB) $('bossHull').style.width = Math.max(0, boss.e.hull/boss.e.spec.hull*100) + '%';
+  const bb = $('bossBar'), showB = !!G.boss && dist(boss.e, G.S) < 1600 && !G.sheetOpen; bb.hidden = !showB; if (showB){ $('bossHull').style.width = Math.max(0, boss.e.hull/boss.e.spec.hull*100) + '%';
+    // P89 (Nicholas: it sat on the power buttons): small, just under the little map, like the fortress line
+    const m = document.getElementById('miniEl'), z = G.uik || 1; if (m && m.offsetWidth){ bb.style.left = Math.min(m.offsetLeft + m.offsetWidth/2, innerWidth - 8 - bb.offsetWidth*z/2)/z + 'px'; bb.style.top = (m.offsetTop + m.offsetHeight + 6)/z + 'px'; } }
   playerCrew(dt);
   collide();
   witnesses(dt);
