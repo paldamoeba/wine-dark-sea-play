@@ -2,9 +2,9 @@
 // (bright enough to sail), then dawn again. At dusk every ship lights its torches, statues light their fire bowls
 // and town windows glow. The time of day is kept in the save (G.S.clock), so it carries on where you left it.
 // Settings can keep it always day or always night.
-import {G, stat} from './state.js?v=f5c07ef';
-import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=f5c07ef';
-import {WIN_MAT} from './models.js?v=f5c07ef';
+import {G, stat} from './state.js?v=7040588';
+import {TORCH_ROOTS, setTorches, flicker} from './ships.js?v=7040588';
+import {WIN_MAT} from './models.js?v=7040588';
 
 const T = window.THREE;
 export const CYCLE = 600; // seconds for a whole day
@@ -89,7 +89,7 @@ export function initNight(sc, high){
 
 // Every frame: move the clock on and work out the light.
 export function updateDayNight(dt, daySky){
-  const mode = G.settings.daynight || 'cycle';
+  const mode = 'cycle'; // P88 (Nicholas): always the day and night cycle; the setting is gone
   if (G.S.clock === undefined) G.S.clock = PRESETS.morning*CYCLE*.6; // a new game starts in the early morning
   if (mode === 'cycle' && !G.sheetOpen){ if (G.S.clock + dt >= CYCLE) stat('days'); G.S.clock = (G.S.clock + dt) % CYCLE; }
   const p = mode === 'day' ? PRESETS.noon : mode === 'night' ? PRESETS.night : G.S.clock/CYCLE;

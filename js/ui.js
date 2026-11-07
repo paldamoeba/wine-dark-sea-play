@@ -1,35 +1,35 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=f5c07ef';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=f5c07ef';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=f5c07ef';
-import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=f5c07ef';
-import {showRewarded, ads, adPrivacy} from './ads.js?v=f5c07ef';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=f5c07ef';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=f5c07ef';
-import {CYCLE} from './daynight.js?v=f5c07ef';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=f5c07ef';
-import {swapBoat, refreshAllTrees} from './entities.js?v=f5c07ef';
-import {setZoom} from './input.js?v=f5c07ef';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=f5c07ef';
-import {tutHTML} from './tutorial.js?v=f5c07ef';
-import {founded, blessing} from './crew.js?v=f5c07ef';
-import {WHALE} from './wildlife.js?v=f5c07ef';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=f5c07ef';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=f5c07ef';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=f5c07ef';
-import {effectText, buy} from './upgrades.js?v=f5c07ef';
-import {fleetHTML} from './fleetpage.js?v=f5c07ef';
-import {myLevel} from './levels.js?v=f5c07ef';
-import {askName} from './naming.js?v=f5c07ef';
-import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=f5c07ef';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=f5c07ef';
-import {GOODS, WAR} from './config.js?v=f5c07ef';
-import {fly} from './fly.js?v=f5c07ef';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=f5c07ef';
-import {RANKS} from './records.js?v=f5c07ef';
-import {W, KINDS} from './weather.js?v=f5c07ef';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=f5c07ef';
-import {setTimeOfDay} from './daynight.js?v=f5c07ef';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=7040588';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=7040588';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=7040588';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=7040588';
+import {showRewarded, ads, adPrivacy} from './ads.js?v=7040588';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=7040588';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=7040588';
+import {CYCLE} from './daynight.js?v=7040588';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=7040588';
+import {swapBoat, refreshAllTrees} from './entities.js?v=7040588';
+import {setZoom} from './input.js?v=7040588';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=7040588';
+import {tutHTML} from './tutorial.js?v=7040588';
+import {founded, blessing} from './crew.js?v=7040588';
+import {WHALE} from './wildlife.js?v=7040588';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=7040588';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=7040588';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=7040588';
+import {effectText, buy} from './upgrades.js?v=7040588';
+import {fleetHTML} from './fleetpage.js?v=7040588';
+import {myLevel} from './levels.js?v=7040588';
+import {askName} from './naming.js?v=7040588';
+import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=7040588';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=7040588';
+import {GOODS, WAR} from './config.js?v=7040588';
+import {fly} from './fly.js?v=7040588';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=7040588';
+import {RANKS} from './records.js?v=7040588';
+import {W, KINDS} from './weather.js?v=7040588';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=7040588';
+import {setTimeOfDay} from './daynight.js?v=7040588';
 
 const $ = id => document.getElementById(id);
 
@@ -113,12 +113,8 @@ export function sizeUI(){
   G.uik = big ? 1.5 : 1; document.body.classList.toggle('big', big);
 }
 sizeUI(); addEventListener('resize', sizeUI);
-// P68: four button looks to compare. Bronze and Vase are the second versions: Bronze (3D) is cast metal, Vase (flat) is black-figure pottery. Gloss and Soft are the P66 first versions.
-// Saves that chose 3D or Flat move to the new version of the same kind.
-const UI_LOOKS = [['bronze', 'Bronze (new 3D)'], ['vase', 'Vase (new flat)'], ['gloss', 'Glossy (old 3D)'], ['soft', 'Soft (old flat)']];
-const uiLook = () => { const l = G.settings.uilook; return l === '2d' ? 'vase' : UI_LOOKS.some(([v]) => v === l) ? l : 'bronze'; };
-export function applyUiLook(){ const l = uiLook(), c = document.body.classList; c.toggle('uibronze', l === 'bronze'); c.toggle('uivase', l === 'vase'); c.toggle('ui3d', l === 'gloss'); c.toggle('ui2d', l === 'soft'); }
-applyUiLook(); document.addEventListener('uilook', applyUiLook);
+// P88 (Nicholas): the buttons are Bronze (cast metal, 3D) for good; the other looks and their choice are gone.
+document.body.classList.add('uibronze');
 
 // The harbor, raid, council and arena buttons sit just below it.
 function placeNearBoat(){
@@ -205,28 +201,21 @@ function settingsHTML(){
   const auto = s.detected ? ` (using ${QUALITY[s.detected].label})` : '';
   const mins = Math.floor((G.S.playSeconds || 0)/60);
   // the Builder tab only shows for the builder: tap the version line five times to bring it up on a new device
-  const tuner = !PUBLIC && s.builder; // P66: music style, rests, battle music and day and night are for the builder, not for players
+  // P88 (Nicholas): no music style, rests, battle music, day and night or Start over here (erase a voyage on the main menu)
   const list = [['game', 'Game', IC.ship], ['gfx', 'Graphics', IC.star], ...(s.builder || s.showBuilder ? [['dev', 'Builder', IC.gear]] : [])];
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
-  const game = card('Your voyage', `<div class="stats big">${IC.ship} ${shipName()} · ${mins} min at sea</div>${row('Voyage log', 'Ships sunk, days at sea and other fun numbers.', '<button class="btn" data-act="log">Open</button>')}${row('Leaderboard', 'Your ships ranked, and what each one has done.', '<button class="btn" data-act="openfleet" data-to="ranks">Open</button>')}${row('How to play', 'The pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}${row('Main menu', 'Your three voyages. This one is saved first.', '<button class="btn" data-act="mainmenu">Go</button>')}`)
+  const game = card('Your voyage', `<div class="stats big">${IC.ship} ${shipName()} · ${mins} min at sea</div>${row('Voyage log', 'Ships sunk, days at sea and other fun numbers.', '<button class="btn" data-act="log">Open</button>')}${row('Leaderboard', 'Your ships ranked, and what each one has done.', '<button class="btn" data-act="openfleet" data-to="ranks">Open</button>')}${row('How to play', 'The pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}${row('Main menu', 'Your three voyages. This one is saved first. Erase a voyage there to start over.', '<button class="btn" data-act="mainmenu">Go</button>')}`)
     + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and soft music.', tog('sound', SND.on, 'Sound'))
       + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
-      + (tuner ? `<div class="looks"><label><span>Music style</span><select data-set="mstyle" ${SND.on ? '' : 'disabled'}>${Object.entries({mix:MIX, ...STYLES}).map(([k, v]) => `<option value="${k}" ${SND.style === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
-      <label><span>Quiet between songs</span><select data-set="mrest" ${SND.on ? '' : 'disabled'}>${[['short', 'About a minute'], ['medium', '2 to 4 minutes'], ['long', '5 to 9 minutes']].map(([k, v]) => `<option value="${k}" ${(SND.rest || 'medium') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
-      <p class="note">${(SND.style === 'mix' ? MIX : STYLES[SND.style]).desc} Every song is in the Showroom too.</p>
-      <div class="looks"><label><span>Battle music</span><select data-set="bstyle" ${SND.on ? '' : 'disabled'}>${Object.entries(BATTLE).map(([k, v]) => `<option value="${k}" ${SND.battle === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
-      <p class="note">${BATTLE[SND.battle].desc}</p>` : ''))
+      )
     + (APP ? '' : card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`)))
     + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
-    + (G.menuOpen ? '' : card('Save', row(`Voyage ${G.slot} saves on this device by itself.`, 'Starting over erases this voyage: its drachmae, ship and cargo.', `<button class="btn danger" data-act="reset">${resetArmed ? 'Tap again to erase' : 'Start over'}</button>`)))
-    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 87'}</p>`;
+    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 88'}</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
       <div class="segs">${Object.entries(CAM_ANGLES).map(([k, v]) => `<button class="seg ${(s.angle || 'low') === k ? 'on' : ''}" data-act="angle" data-v="${k}" aria-pressed="${(s.angle || 'low') === k}">${v.label}</button>`).join('')}</div>
-      ${tuner ? row('Day and night', 'A 10 minute day with a short moonlit night, when torches and windows light up.', `<select class="jobsel" data-set="daynight" aria-label="Day and night">${[['cycle', 'Day and night'], ['day', 'Always day'], ['night', 'Always night']].map(([v, n]) => `<option value="${v}" ${(s.daynight || 'cycle') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`) : ''}
-      ${row('Button look (test)', 'Bronze: cast metal with weight. Vase: flat, painted like Greek pottery. Pick the one you like and this choice goes away.', `<select class="jobsel" data-set="uilook" aria-label="Button look">${UI_LOOKS.map(([v, n]) => `<option value="${v}" ${uiLook() === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}
       ${row('Battery saver', 'Keeps the phone cooler: 30 frames a second while you sail and fewer pixels, 60 frames again in a fight. On by default on phones.', tog('saver', saverOn(), 'Battery saver'))}
       ${row('Tiny world look', 'Soft blur at the top and bottom of the screen and warmer colors, so the sea looks like a little model. Turn off if the game feels slow.', tog('tiny', s.tiny !== false, 'Tiny world look'))}
       ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}
@@ -373,11 +362,6 @@ sheetEl.addEventListener('change', e => {
   if (e.target.dataset && e.target.dataset.set === 'captain'){ const n = e.target.dataset.n, t = +e.target.value; if (assignCaptain(n, t)){ sfx('dock'); toast(t < 0 ? `${n} rests at Kallisto` : `${n} sets out`, 2.6); save(); document.dispatchEvent(new Event('fleetmoved')); } render(); return; }
   if (e.target.id === 'rankBy'){ tabs.rankBy = e.target.value; render(); return; }
   if (e.target.id === 'rankWhere'){ tabs.rankWhere = e.target.value; netState.by = null; render(); return; }
-  if (e.target.dataset && e.target.dataset.set === 'uilook'){ G.settings.uilook = e.target.value; saveSettings(); applyUiLook(); return; }
-  if (e.target.dataset && e.target.dataset.set === 'mrest'){ SND.rest = e.target.value; saveSound(); return; }
-  if (e.target.dataset && e.target.dataset.set === 'bstyle'){ SND.battle = e.target.value; saveSound(); render(); return; }
-  if (e.target.dataset && e.target.dataset.set === 'mstyle'){ SND.style = e.target.value; saveSound(); playNow(); render(); return; }
-  if (e.target.dataset && e.target.dataset.set === 'daynight'){ G.settings.daynight = e.target.value; saveSettings(); return; }
   const sk = e.target.dataset && e.target.dataset.snd; if (sk){ SND[sk] = +e.target.value; saveSound(); sfx(sk === 'sea' ? 'gull' : 'coin'); return; }
   const k = e.target.dataset && e.target.dataset.look; if (!k) return;
   G.S.look = {...G.S.look, [k]:e.target.value}; swapBoat(); save();

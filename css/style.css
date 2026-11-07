@@ -911,87 +911,35 @@ body.big .mainmenu .mcard{zoom:1.3}
 .homeno{justify-self:center;border:0;background:none;padding:6px 12px;font:700 13px/1 var(--body);color:var(--cz-muted);cursor:pointer}
 
 /* FLAT: the power buttons as soft flat circles, the same kind of button as the toolbar: a pale tint, no shine, no lip */
-body.ui2d .ab{width:62px;height:62px;
-  background:conic-gradient(rgba(60,45,30,.5) var(--cd,0deg),transparent 0),color-mix(in srgb,var(--c) 30%,#fffbf3)!important;
-  box-shadow:var(--cz-shadow)!important}
-body.ui2d .ab::before{display:none}
-body.ui2d .ab svg{width:32px!important;height:32px!important;margin-top:-9px;filter:none}
-body.ui2d .ab span{bottom:6px;font:800 10px/1 var(--body);color:var(--cz-ink);text-shadow:none}
-body.ui2d .ab:active:not(:disabled){transform:scale(.94);box-shadow:var(--cz-shadow)!important}
-body.ui2d .ab:disabled{filter:saturate(.75)}
-body.ui2d .ab.on{box-shadow:0 0 0 3px #e8ad3c,var(--cz-shadow)!important}
 
 /* 3D: everything built the way the power buttons are: a color lit from above, a dark outline, a thick lip below and a shadow.
    Change --c (the color) and --c2 (its dark side) to recolor a button. */
-body.ui3d{--edge:rgba(35,22,12,.8)}
-body.ui3d .btn,body.ui3d .dock,body.ui3d .raid,body.ui3d .tool,body.ui3d .xbtn,body.ui3d .seg,body.ui3d .mtile,body.ui3d .mplay,body.ui3d .volley,body.ui3d .slot,body.ui3d #goldChip{
-  --c:var(--cz-teal);--c2:#17606c;position:relative;--lip:color-mix(in srgb,var(--c2) 75%,#000);
-  --dome:linear-gradient(color-mix(in srgb,var(--c) 55%,#fff) 0%,var(--c) 42%,var(--c2) 100%);
-  --raised:inset 0 2px 1.5px rgba(255,255,255,.7),inset 0 -4px 6px rgba(0,0,0,.2),0 0 0 2px var(--edge),0 4px 0 2px var(--lip),0 8px 10px rgba(20,14,8,.34);
-  --pressed:inset 0 2px 1.5px rgba(255,255,255,.5),inset 0 -3px 5px rgba(0,0,0,.2),0 0 0 2px var(--edge),0 1px 0 2px var(--lip),0 2px 4px rgba(20,14,8,.3)}
-body.ui3d .btn.gold,body.ui3d .raid.capture,body.ui3d .mapbtns .btn.gold,body.ui3d #homeNow{--c:#f2b843;--c2:#b67a1c}
-body.ui3d .btn.danger,body.ui3d .raid,body.ui3d .volley,body.ui3d .xbtn{--c:#e2725b;--c2:#a03c27}
-body.ui3d .dock.alt,body.ui3d .raid.council,body.ui3d .btn.ghostdark,body.ui3d .seg,body.ui3d .mtile,body.ui3d .slot{--c:#fbf3e1;--c2:#d9c6a1}
-body.ui3d .dock,body.ui3d .raid,body.ui3d .volley,body.ui3d .sheet.menu .btn,body.ui3d .maphead .btn,body.ui3d .mapbtns .btn,body.ui3d .homecard .btn,body.ui3d .seg,body.ui3d .mplay{
-  background:var(--dome)!important;box-shadow:var(--raised)!important;border:0!important}
+
 /* the shine across the top of each pill */
-body.ui3d .btn:not(:disabled)::before,body.ui3d .dock::before,body.ui3d .raid::before,body.ui3d .mplay::before{content:'';position:absolute;left:10%;right:10%;top:3px;height:38%;border-radius:999px;background:linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,0));pointer-events:none}
-body.ui3d .dock,body.ui3d .raid.capture,body.ui3d .sheet.menu .btn{text-shadow:0 1px 1px rgba(0,0,0,.28)!important}
-body.ui3d .sheet.menu .btn.gold,body.ui3d #homeNow,body.ui3d .raid.capture{color:#3d2a0c!important;text-shadow:0 1px 0 rgba(255,255,255,.45)!important}
-body.ui3d .dock.alt,body.ui3d .raid.council,body.ui3d .sheet.menu .btn.ghostdark,body.ui3d .seg{color:var(--cz-ink)!important;text-shadow:0 1px 0 #fff!important}
-body.ui3d .dock:active,body.ui3d .raid:active,body.ui3d .sheet.menu .btn:active:not(:disabled),body.ui3d .maphead .btn:active,body.ui3d .mapbtns .btn:active,body.ui3d .homecard .btn:active:not(:disabled),body.ui3d .seg:active,body.ui3d .mplay:active{transform:translateY(3px);box-shadow:var(--pressed)!important}
+
 .raid.near:active,.dockbar.near .dock:active{transform:none}
-body.ui3d .sheet.menu .btn:disabled,body.ui3d .homecard .btn:disabled{opacity:.5;box-shadow:inset 0 2px 1px rgba(255,255,255,.5),0 0 0 2px rgba(35,22,12,.35),0 2px 0 2px rgba(35,22,12,.3)!important}
-body.ui3d .sheet.menu .btn{margin-bottom:4px}
 /* a bought or chosen thing sits pushed in */
-body.ui3d .sheet.menu .seg.on{--c:var(--cz-teal);--c2:#17606c;background:var(--dome)!important;color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.3)!important;box-shadow:var(--pressed)!important;transform:translateY(3px)}
+
 /* the toolbar: four round domes, each with its own color, like the power buttons */
-body.ui3d #bagBtn{--c:#5aa873;--c2:#2d6e45}body.ui3d #goalPill{--c:#f2c04d;--c2:#b67a1c}body.ui3d #chartBtn{--c:#3f9cc2;--c2:#1f6a88}body.ui3d #gearBtn,body.ui3d #fleetBtn{--c:#9184c4;--c2:#574a8c}
-body.ui3d #bagBtn,body.ui3d #goalPill,body.ui3d #chartBtn,body.ui3d #gearBtn,body.ui3d #fleetBtn{width:58px!important;height:58px!important;overflow:visible;
-  background:radial-gradient(circle at 36% 24%,color-mix(in srgb,var(--c) 45%,#fff) 0%,var(--c) 46%,var(--c2) 100%)!important;
-  box-shadow:inset 0 2px 2px rgba(255,255,255,.75),inset 0 -6px 9px rgba(0,0,0,.28),0 0 0 2px var(--edge),0 6px 0 2px var(--lip),0 11px 14px rgba(20,14,8,.42)!important}
-body.ui3d .tool::before{content:'';position:absolute;left:14%;right:14%;top:5%;height:40%;border-radius:50%;background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,0));pointer-events:none}
-body.ui3d .tool .ic{position:relative}body.ui3d .tool .ic svg{width:36px!important;height:36px!important;filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.45))}
-body.ui3d #bagBtn:active,body.ui3d #goalPill:active,body.ui3d #chartBtn:active,body.ui3d #gearBtn:active,body.ui3d #fleetBtn:active{transform:translateY(5px)!important;box-shadow:inset 0 2px 2px rgba(255,255,255,.6),inset 0 -5px 8px rgba(0,0,0,.3),0 0 0 2px var(--edge),0 1px 0 2px var(--lip),0 3px 6px rgba(20,14,8,.4)!important}
-body.ui3d .toolbar{gap:18px!important}
+
 /* the close button: a red dome with a white cross */
-body.ui3d .sheet.menu .xbtn{background:radial-gradient(circle at 36% 24%,color-mix(in srgb,var(--c) 45%,#fff) 0%,var(--c) 46%,var(--c2) 100%)!important;color:#fff!important;box-shadow:var(--raised)!important}
-body.ui3d .sheet.menu .xbtn svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))!important}
-body.ui3d .sheet.menu .xbtn:active{transform:translateY(3px);box-shadow:var(--pressed)!important}
+
 /* menu tabs: raised tiles; the open one is pushed in with a teal ring */
-body.ui3d .sheet.menu .tab svg{opacity:1;box-shadow:inset 0 2px 1px rgba(255,255,255,.7),inset 0 -3px 4px rgba(0,0,0,.14),0 0 0 2px rgba(35,22,12,.65),0 4px 0 2px rgba(90,62,30,.8),0 7px 8px rgba(20,14,8,.25)!important;border:0!important}
-body.ui3d .sheet.menu .tab.on svg{transform:translateY(3px);box-shadow:inset 0 2px 3px rgba(0,0,0,.14),0 0 0 3px var(--cz-teal),0 1px 0 3px #17606c,0 3px 5px rgba(20,14,8,.25)!important}
-body.ui3d .sheet.menu .tab span{margin-top:6px}
-body.ui3d .slots{gap:10px!important}
+
 /* panels: a thick soft board with an edge */
-body.ui3d .sheet.menu .card{box-shadow:inset 0 2px 0 #fff,0 0 0 1.5px rgba(95,68,36,.5),0 4px 0 1.5px rgba(150,115,72,.65),0 8px 12px rgba(50,32,12,.14)!important;margin-bottom:6px}
-body.ui3d .slot,body.ui3d .mtile{background:var(--dome)!important;box-shadow:inset 0 2px 1px rgba(255,255,255,.9),inset 0 -3px 4px rgba(120,85,40,.14),0 0 0 1.5px rgba(95,68,36,.6),0 3px 0 1.5px rgba(135,100,60,.85),0 6px 8px rgba(50,32,12,.16)!important}
-body.ui3d .slot.on{box-shadow:inset 0 2px 1px #fff,0 0 0 3px var(--cz-teal),0 3px 0 3px #17606c,0 6px 8px rgba(50,32,12,.2)!important}
-body.ui3d .slot:active,body.ui3d .mtile:active:not(:disabled){transform:translateY(2px)}
-body.ui3d .good,body.ui3d .job,body.ui3d .stat,body.ui3d .fship{box-shadow:inset 0 2px 0 rgba(255,255,255,.75),inset 0 -2px 3px rgba(120,85,40,.1),0 0 0 1px rgba(95,68,36,.3),0 2px 0 1px rgba(135,100,60,.45)}
+
 /* dropdowns and switches */
-body.ui3d .sheet.menu select{background-color:#fffdf7!important;border:0!important;box-shadow:inset 0 2px 1px #fff,inset 0 -3px 4px rgba(120,85,40,.12),0 0 0 1.5px rgba(95,68,36,.6),0 3px 0 1.5px rgba(135,100,60,.85)!important;margin-bottom:3px}
-body.ui3d .tog{border:0!important;background:linear-gradient(#b9a98e,#d9cdb4)!important;box-shadow:inset 0 2px 4px rgba(50,32,12,.45),0 0 0 2px var(--edge),0 1px 0 2px rgba(255,255,255,.4)}
-body.ui3d .tog.on{background:linear-gradient(#4a8a3b,#7dbf58)!important}
-body.ui3d .tog i{background:radial-gradient(circle at 38% 26%,#fff 0%,#f4ead6 55%,#c9b38a 100%)!important;box-shadow:0 0 0 1.5px var(--edge),0 2px 2px rgba(0,0,0,.4)!important}
+
 /* bars: a groove cut into the surface, filled with something shiny */
-body.ui3d .lifebar .bar,body.ui3d .ld .bar,body.ui3d .mbar{background:linear-gradient(rgba(30,20,12,.72),rgba(70,52,34,.62))!important;box-shadow:inset 0 2px 2px rgba(0,0,0,.55),0 0 0 1.5px var(--edge),0 1.5px 0 1.5px rgba(255,255,255,.28)!important;border:0!important}
-body.ui3d .lifebar .bar{height:11px!important}body.ui3d .ld .bar{height:7px!important}
-body.ui3d .lifebar .bar i,body.ui3d .ld .bar i,body.ui3d .mbar i{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.65),inset 0 -2px 2px rgba(0,0,0,.25)}
+
 /* money: a gold chip */
-body.ui3d #goldChip{--c:#f2b843;--c2:#b67a1c;background:var(--dome)!important;box-shadow:var(--raised)!important;padding:3px 11px 3px 5px!important;border-radius:999px!important;color:#3d2a0c!important;text-shadow:0 1px 0 rgba(255,255,255,.5)!important;margin:2px 0 5px}
-body.ui3d .rbv{box-shadow:inset 0 2px 1px rgba(255,255,255,.45),inset 0 -2px 3px rgba(0,0,0,.25),0 0 0 1.5px var(--edge),0 2.5px 0 1.5px rgba(23,96,108,.95)!important}
-body.ui3d .rb.gold .rbv{box-shadow:inset 0 2px 1px rgba(255,255,255,.6),inset 0 -2px 3px rgba(0,0,0,.2),0 0 0 1.5px var(--edge),0 2.5px 0 1.5px #8a5a12!important}
+
 /* floating panels */
-body.ui3d .toast,body.ui3d .mission,body.ui3d .caution,body.ui3d .bossbar,body.ui3d .legend,body.ui3d .homecard,body.ui3d .videobox div{box-shadow:inset 0 2px 0 #fff,0 0 0 2px var(--edge),0 5px 0 2px #8a6a42,0 10px 16px rgba(20,14,8,.4)!important}
+
 /* main menu */
-body.ui3d .mcard{box-shadow:inset 0 2px 0 #fff,0 0 0 2px var(--edge),0 6px 0 2px #8a6a42,0 14px 26px rgba(20,14,8,.45)}
-body.ui3d .mtile.vslot.on{box-shadow:inset 0 2px 1px #fff,0 0 0 3px #e0a93a,0 3px 0 3px #a97420,0 6px 12px rgba(50,32,12,.2)!important}
-body.ui3d .mplay{--c:#37ab9f;--c2:#176a60;margin-bottom:5px;overflow:visible}
-body.ui3d .mplus{box-shadow:inset 0 2px 2px rgba(255,255,255,.7),inset 0 -4px 6px rgba(0,0,0,.25),0 0 0 2px var(--edge),0 3px 0 2px #176a60}
+
 /* the power buttons sit bottom right, clear of the toolbar, and fold into a second row on a narrow phone instead of running off the screen */
 .abilities{left:auto!important;right:calc(10px + env(safe-area-inset-right,0px))!important;transform:none!important;max-width:calc(100vw - 86px);flex-wrap:wrap-reverse;justify-content:flex-end;gap:12px 10px!important}
-body.ui3d .sheet.menu .card{margin-bottom:10px}
 
 /* ---- P67 ---- */
 /* finished quests: green card with dark text (this used to share a class with the top bar, which turned its text white) */
@@ -1014,7 +962,7 @@ body.ui3d .sheet.menu .card{margin-bottom:10px}
 .mission .mships{flex-wrap:wrap;gap:2px}.mission .mships svg{width:17px;height:11px}
 
 /* ---- P68: the second versions of the two looks ---- */
-body.uibronze .raid,body.uivase .raid,body.uibronze .dock,body.uivase .dock{white-space:nowrap;font-size:15.5px!important}
+body.uibronze .raid,body.uibronze .dock{white-space:nowrap;font-size:15.5px!important}
 /* BRONZE (3D): cast metal. One dark bronze for everything, a thin bright rim where the light catches, a low weight below it. No shine stripes, no rainbow.
    Change these five to recolor the whole look. */
 body.uibronze{--bz:#46362a;--bz2:#2a2019;--rim:#b8925a;--ivory:#f3e7cb;--stone:#ece2cd;--bz-ink:#2e231a;--oxb:#7c2b2b;--oxb2:#4f1717;--ver:#3b7a72;--ver2:#1f4d48;--pol:#d6ab62;--pol2:#94692a}
@@ -1078,60 +1026,14 @@ body.uibronze .toast,body.uibronze .mission,body.uibronze .caution,body.uibronze
 body.uibronze .mcard{border-radius:14px;box-shadow:inset 0 1px 0 #fff,0 0 0 1px #5d4a30,0 4px 0 1px #5d4a30,0 12px 22px rgba(15,10,5,.45)}
 
 /* VASE (flat): black-figure pottery. Only solid color and line: black glaze, fired terracotta, cream slip and a wine red, with a Greek key band. No gradients and no shadows at all. */
-body.uivase{--gl:#1f1814;--tc:#c9652f;--tc2:#e08a4e;--cr:#f2e6cc;--cr2:#e7d6b4;--wn:#7a2230;--key:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M0 11H24M5 11V2H17V8H10V5H13' fill='none' stroke='%231f1814' stroke-width='1.7'/%3E%3C/svg%3E")}
-body.uivase .btn,body.uivase .sheet.menu .btn,body.uivase .maphead .btn,body.uivase .mapbtns .btn,body.uivase .dock,body.uivase .raid,body.uivase .volley,body.uivase .mplay,body.uivase .seg{background:var(--gl)!important;color:var(--cr)!important;border:0!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important;text-shadow:none!important;font-family:var(--display)!important;font-weight:400!important;letter-spacing:.03em;border-radius:6px!important}
-body.uivase .sheet.menu .btn:active:not(:disabled),body.uivase .btn:active:not(:disabled),body.uivase .dock:active,body.uivase .raid:active,body.uivase .volley:active,body.uivase .mplay:active,body.uivase .seg:active{transform:none;background:var(--tc)!important;color:var(--gl)!important;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3px var(--gl)!important}
-body.uivase .sheet.menu .btn.gold,body.uivase .mapbtns .btn.gold,body.uivase .btn.gold,body.uivase .raid.capture,body.uivase #homeNow,body.uivase .mplay{background:var(--tc)!important;color:var(--gl)!important;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3px var(--gl)!important}
-body.uivase .sheet.menu .btn.danger,body.uivase .btn.danger,body.uivase .raid,body.uivase .volley{background:var(--wn)!important;box-shadow:inset 0 0 0 2px var(--wn),inset 0 0 0 3px var(--cr2)!important}
-body.uivase .raid.capture{background:var(--tc)!important;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3px var(--gl)!important}
-body.uivase .dock.alt,body.uivase .raid.council,body.uivase .sheet.menu .btn.ghostdark,body.uivase .btn.ghostdark,body.uivase .seg{background:var(--cr)!important;color:var(--gl)!important;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
-body.uivase .sheet.menu .seg.on{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important}
-body.uivase .sheet.menu .btn:disabled,body.uivase .homecard .btn:disabled{opacity:.42}
+
 /* round things: a black disc with a thin painted ring and terracotta figures, exactly like a painted plate */
-body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase #fleetBtn,body.uivase .tool,body.uivase .ab{box-shadow:inset 0 0 0 3px var(--gl),inset 0 0 0 4.5px var(--tc),0 0 0 1.5px var(--cr)!important}
-body.uivase #bagBtn,body.uivase #goalPill,body.uivase #chartBtn,body.uivase #gearBtn,body.uivase #fleetBtn,body.uivase .tool{background:var(--gl)!important;width:52px!important;height:52px!important}
-body.uivase .tool .ic{background:none!important}
-body.uivase .tool .ic svg{filter:grayscale(1) sepia(1) saturate(3.4) hue-rotate(-16deg) brightness(1.02) contrast(1.15)}
-body.uivase #bagBtn:active,body.uivase #goalPill:active,body.uivase #chartBtn:active,body.uivase #gearBtn:active,body.uivase #fleetBtn:active,body.uivase .tool:active{transform:none!important;background:var(--tc)!important}
-body.uivase .ab{width:60px;height:60px;background:conic-gradient(rgba(242,230,204,.42) var(--cd,0deg),transparent 0),var(--gl)!important}
-body.uivase .ab::before{display:none}
-body.uivase .ab svg{width:28px!important;height:28px!important;margin-top:-9px;filter:sepia(1) saturate(2.6) hue-rotate(-14deg) brightness(.92)}
-body.uivase .ab span{bottom:8px;font:400 10px/1 var(--display);color:var(--cr);text-shadow:none}
-body.uivase .ab:active:not(:disabled){transform:none;box-shadow:inset 0 0 0 3px var(--gl),inset 0 0 0 6px var(--tc),0 0 0 1.5px var(--cr)!important}
-body.uivase .ab:disabled{filter:none;opacity:.8}
-body.uivase .ab.on{background:var(--tc)!important;box-shadow:inset 0 0 0 3px var(--tc),inset 0 0 0 4.5px var(--gl),0 0 0 2px var(--cr)!important}
-body.uivase .ab.on svg{filter:brightness(0)}body.uivase .ab.on span{color:var(--gl)}
-body.uivase .abilities{gap:12px 10px!important}
-body.uivase .sheet.menu .xbtn{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 1.5px var(--gl),inset 0 0 0 2.5px var(--tc)!important}
+
 /* ship's health and supplies float on the sea, with no panel behind them, in every look */
-body.uivase .ld,body.uivase .hi,body.uivase #goldChip,body.uivase #wxChip{color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.65)}body.uivase #wxChip b{color:#fff}
-body.uivase .ld.full b{color:#f0957f!important}
-body.uivase .lifebar .bar,body.uivase .ld .bar{background:rgba(31,24,20,.55)!important;box-shadow:none!important;border-radius:2px!important}
-body.uivase .lifebar .bar i,body.uivase .ld .bar i{background:var(--tc2)!important;border-radius:2px!important}
-body.uivase .lifebar .bar i.low,body.uivase .ld.full .bar i{background:#d9492f!important}
+
 /* menus: cream slip, thin black lines, a Greek key under each heading */
-body.uivase .sheet.menu,body.uivase .sheet.menu .mtop{background:var(--cr)!important}
-body.uivase .sheet.menu .mtop{box-shadow:none!important;background:var(--cr) var(--key) repeat-x left bottom/24px 12px!important;padding-bottom:15px!important}
-body.uivase .sheet.menu .card{background:#faf2e0!important;border-radius:6px;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
-body.uivase .sheet.menu .card h3{color:var(--gl)!important;font-family:var(--display);font-weight:400;letter-spacing:.06em;text-transform:none}
-body.uivase .sheet.menu .mhead h1,body.uivase .sheet.menu .mhead h1 small{color:var(--gl)!important}
-body.uivase .sheet.menu .tile,body.uivase .sheet.menu .job,body.uivase .sheet.menu .sailor,body.uivase .sheet.menu .fship,body.uivase .sheet.menu .upc,body.uivase .sheet.menu .updetail,body.uivase .sheet.menu .tut,body.uivase .good,body.uivase .stat{background:var(--cr2)!important;border-radius:4px;box-shadow:none}
-body.uivase .slot,body.uivase .mtile{background:#faf2e0!important;border-radius:6px!important;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
-body.uivase .slot.on{background:var(--cr2)!important;box-shadow:inset 0 0 0 3px var(--tc)!important}
-body.uivase .slot .badge{background:var(--tc)!important}
-body.uivase .sheet.menu .tab svg{border-radius:6px;border:0!important;background:#faf2e0;opacity:1;box-shadow:inset 0 0 0 1.5px var(--gl)!important}
-body.uivase .sheet.menu .tab.on svg{background:var(--tc2);box-shadow:inset 0 0 0 2px var(--gl)!important}
-body.uivase .sheet.menu .tab.on span{color:var(--wn)!important}
-body.uivase .sheet.menu select,body.uivase .sheet.menu input{background-color:#faf2e0!important;border:1.5px solid var(--gl)!important;border-radius:4px}
-body.uivase .tog{border:1.5px solid var(--gl)!important;background:var(--cr2)!important;box-shadow:none}
-body.uivase .tog.on{background:var(--tc)!important}
-body.uivase .tog i{background:var(--gl)!important;box-shadow:none!important}
-body.uivase .rbv{background:var(--gl)!important;box-shadow:none!important;border-radius:4px!important}
-body.uivase .rb.gold .rbv{background:var(--tc)!important}body.uivase .rb.gold .rbv b{color:var(--gl)}
-body.uivase .toast,body.uivase .mission,body.uivase .caution,body.uivase .bossbar,body.uivase .legend,body.uivase .homecard{background:var(--cr)!important;color:var(--gl)!important;border-radius:6px!important;box-shadow:inset 0 0 0 1.5px var(--gl),0 0 0 2px var(--cr)!important}
-body.uivase .mcard{border-radius:8px;box-shadow:inset 0 0 0 1.5px var(--gl),0 0 0 3px var(--cr)}
+
 body.uibronze .mplus{background:linear-gradient(var(--pol),var(--pol2))!important;color:#2a1c08!important;box-shadow:0 0 0 1px #4a3210,0 2px 0 1px #4a3210!important}
-body.uivase .mplus{background:var(--gl)!important;color:var(--cr)!important;box-shadow:inset 0 0 0 2px var(--gl),inset 0 0 0 3px var(--tc)!important}
 
 /* P70: the Fleet page, level chips and the naming box */
 .lvchip{display:inline-block;background:#6a7a8c;color:#fff;font:800 11.5px/1 var(--body,Nunito,sans-serif);padding:4px 8px;border-radius:99px;white-space:nowrap;align-self:flex-start}

@@ -2,8 +2,8 @@
 // Only rewarded videos: the player chooses to watch one for a reward (a shorter wait, a color, a repair, sailing home). No banners.
 // Test builds always ask Google for its sample test ads; only the store build (RELEASE) uses the real ad unit.
 // Europe and the UK (and US states with privacy laws) get Google's consent form first, from the message set up in AdMob, Privacy & messaging.
-import {APP, RELEASE} from './state.js?v=f5c07ef';
-import {hush} from './audio.js?v=f5c07ef';
+import {APP, RELEASE} from './state.js?v=7040588';
+import {hush} from './audio.js?v=7040588';
 
 export const ADMOB = {
   real:'ca-app-pub-4758417555480046/2855047321',  // "Shorten wait", Wine-Dark Sea (app ID ca-app-pub-4758417555480046~2858916755 is in the Android manifest)

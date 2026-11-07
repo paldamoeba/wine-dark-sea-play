@@ -1,14 +1,14 @@
 // Tells the sound engine what is going on around the ship each frame: speed, weather, land, wrecks, fights, harbors.
-import {G, ship, lvl, PUBLIC} from './state.js?v=f5c07ef';
-import {SHIPS} from './config.js?v=f5c07ef';
-import {landDist, WRECKS} from './world.js?v=f5c07ef';
-import {W, KINDS} from './weather.js?v=f5c07ef';
-import {combatState} from './combat.js?v=f5c07ef';
-import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=f5c07ef';
+import {G, ship, lvl, PUBLIC} from './state.js?v=7040588';
+import {SHIPS} from './config.js?v=7040588';
+import {landDist, WRECKS} from './world.js?v=7040588';
+import {W, KINDS} from './weather.js?v=7040588';
+import {combatState} from './combat.js?v=7040588';
+import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=7040588';
 
 Object.assign(SND, G.settings.sound || {});
 if (!G.settings.musicP65){ G.settings.musicP65 = true; SND.style = 'mix'; SND.rest = 'medium'; } // P65: everyone gets the changing songs once
-if (PUBLIC){ SND.style = 'mix'; SND.rest = 'medium'; SND.battle = 'war'; } // P66: players don't pick these; only the builder's page does
+{ SND.style = 'mix'; SND.rest = 'medium'; SND.battle = 'war'; } // P88: everyone gets A bit of everything; the choices are gone // P66: players don't pick these; only the builder's page does
 applyVolumes();
 
 const ROWED = {rowboat:true, bireme:true, trireme:true}; // ships pulled by oars (the others sail)

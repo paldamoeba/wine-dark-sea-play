@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=f5c07ef';
-import {OMENS} from './config.js?v=f5c07ef';
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=f5c07ef';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=f5c07ef';
-import {GOODS} from './config.js?v=f5c07ef';
-import {sfx} from './audio.js?v=f5c07ef';
-import {playVideo, toast} from './ui.js?v=f5c07ef';
-import {ARENA} from './arena.js?v=f5c07ef';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=f5c07ef';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=f5c07ef';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=f5c07ef';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=f5c07ef';
+import {omen} from './omens.js?v=7040588';
+import {OMENS} from './config.js?v=7040588';
+import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=7040588';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=7040588';
+import {GOODS} from './config.js?v=7040588';
+import {sfx} from './audio.js?v=7040588';
+import {playVideo, toast} from './ui.js?v=7040588';
+import {ARENA} from './arena.js?v=7040588';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=7040588';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=7040588';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=7040588';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=7040588';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
