@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=d5d8ab5';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=d5d8ab5';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=d5d8ab5';
-import {scene, screenToSea, setLair} from './scene.js?v=d5d8ab5';
-import {wreckModel} from './models.js?v=d5d8ab5';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=d5d8ab5';
-import {mergeStatic, freeModel} from './merge.js?v=d5d8ab5';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=d5d8ab5';
-import {award} from './trophies.js?v=d5d8ab5';
-import {makeFire, updateFire, burn} from './fire.js?v=d5d8ab5';
-import {blessing, fighters, hasSail} from './crew.js?v=d5d8ab5';
-import {progress, goal} from './quests.js?v=d5d8ab5';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=d5d8ab5';
-import {rollColor, unlockColor, colorName} from './colors.js?v=d5d8ab5';
-import {toast} from './ui.js?v=d5d8ab5';
-import {sink, rowNow, ROW} from './player.js?v=d5d8ab5';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=d5d8ab5';
-import {TOD} from './daynight.js?v=d5d8ab5';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=d5d8ab5';
-import {sfx} from './audio.js?v=d5d8ab5';
-import {myLevel} from './levels.js?v=d5d8ab5';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=4dc6694';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=4dc6694';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=4dc6694';
+import {scene, screenToSea, setLair} from './scene.js?v=4dc6694';
+import {wreckModel} from './models.js?v=4dc6694';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=4dc6694';
+import {mergeStatic, freeModel} from './merge.js?v=4dc6694';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=4dc6694';
+import {award} from './trophies.js?v=4dc6694';
+import {makeFire, updateFire, burn} from './fire.js?v=4dc6694';
+import {blessing, fighters, hasSail} from './crew.js?v=4dc6694';
+import {progress, goal} from './quests.js?v=4dc6694';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=4dc6694';
+import {rollColor, unlockColor, colorName} from './colors.js?v=4dc6694';
+import {toast} from './ui.js?v=4dc6694';
+import {sink, rowNow, ROW} from './player.js?v=4dc6694';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=4dc6694';
+import {TOD} from './daynight.js?v=4dc6694';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=4dc6694';
+import {sfx} from './audio.js?v=4dc6694';
+import {myLevel} from './levels.js?v=4dc6694';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -280,7 +280,7 @@ export function chartPiece(name){ const S = G.S; if ((S.lairChart || []).include
 document.addEventListener('chartpiece', ev => { const all = ev.detail === 'all', left = chartForts().map(f => f.isle.name).filter(n => !chartGot().includes(n)); (all ? left : left.slice(0, 1)).forEach(chartPiece); });
 export function spawnBoss(){
   const at = {x:LAIR.x, y:LAIR.y}; // in the middle of the wine-dark water
-  const e = bossShip('galley', at, {boss:true, look:{paint:'king', sail:'purple'}, fireT:BOSS.fireEvery, called:false,
+  const e = bossShip('galley', at, {boss:true, look:{paint:'drowned', sail:'rot'}, fireT:BOSS.fireEvery, called:false,
     spec:{name:BOSS.name, model:BOSS.model, hull:BOSS.hull, speed:BOSS.speed, turn:BOSS.turn, fighters:BOSS.fighters, dmg:BOSS.dmg, gold:BOSS.gold, wood:BOSS.wood, bronze:BOSS.bronze, len:BOSS.len, beam:BOSS.beam}});
   e.obj.scale.setScalar(BOSS.scale); boss.e = e; if (G.S.bossHull > 0) e.hull = Math.min(e.hull, G.S.bossHull); // he keeps his wounds if you leave and come back
   for (let i=0;i<BOSS.escorts;i++) bossShip('skiff', {x:at.x + Math.cos(i*3.1 + 1)*260, y:at.y + Math.sin(i*3.1 + 1)*260});

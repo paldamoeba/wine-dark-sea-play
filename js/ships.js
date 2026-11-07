@@ -69,7 +69,7 @@ export const SPECS = {
   // P62: the quinquereme, the biggest warship: two rows of oars, a raised fighting deck with a railing over the rowers,
   // a mainsail and a foresail, a big ram. Archers fight from the top deck.
   quinquereme:{L:215, B:62, H:30, rise:36, oarRows:2, oarCount:18, mast:true, sailW:84, sailH:70, sailMax:20, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, twoDeck:true, crew:[['stand', 1], ['archer', 10]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
-  flagship:   {L:280, B:96, H:44, rise:30, oarRows:2, oarCount:20, mast:true, sailW:70, sailH:58, sailMax:15, flagship:true, ghost:true, eyes:true, raider:true, crew:[], look:{paint:'king', sail:'plain', flag:'none'}},
+  flagship:   {L:280, B:96, H:44, rise:30, oarRows:2, oarCount:20, mast:true, sailW:70, sailH:58, sailMax:15, flagship:true, ghost:true, eyes:true, raider:true, crew:[], look:{paint:'drowned', sail:'rot', flag:'none'}},
 };
 
 // ---------- materials ----------
