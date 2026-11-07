@@ -16,6 +16,11 @@ export const PAINTS = {
   green:  {name:'Olive green',  top:'#71873f', panel:'#e0c162', bottom:'#3f4b27', deck:'#ddc48d', inner:'#5f7334', wale:'#e0c162'},
   oak:    {name:'Bare oak',     top:'#a3754a', panel:'#7a5230', bottom:'#5e3c22', deck:'#d2a873', inner:'#8c6337', wale:'#4f3119'},
   raider: {name:'Raider dark',  top:'#5e3628', panel:'#271b1b', bottom:'#3c2626', deck:'#8a5d3e', inner:'#4a2c22', wale:'#271b1b'},
+  // P90 (Nicholas: darker, a ghost ship, lots of blood where he is): four looks to choose from for Polycrates' flagship
+  ghost:  {name:'Ghost',        top:'#3d4a47', panel:'#9fd8c0', bottom:'#1a2321', deck:'#5f6b63', inner:'#2c3633', wale:'#7fbfa6', hidden:true, fs:{gold:'#8fd6b8', stone:'#55625e', red:'#2d3a37', hall:'#3b4a46', statue:'#9aa8a2', plank:'#4a4f48', ram:'#6d7f76'}},
+  blood:  {name:'Blood',        top:'#2a0d10', panel:'#8a1a1c', bottom:'#170708', deck:'#4a2420', inner:'#32110f', wale:'#a8281f', hidden:true, fs:{gold:'#a8281f', stone:'#3a1a1a', red:'#5a0b0e', hall:'#2a0d10', statue:'#7a5a52', plank:'#3a1e1a', ram:'#5a1a14'}},
+  bone:   {name:'Bone',         top:'#cfc6b0', panel:'#6b1418', bottom:'#2b2422', deck:'#8d8170', inner:'#a49a85', wale:'#1d1716', hidden:true, fs:{gold:'#7a1416', stone:'#d6ccb4', red:'#3a0c0e', hall:'#2b2422', statue:'#e8dfca', plank:'#6e6250', ram:'#8a7f68'}},
+  drowned:{name:'Drowned',      top:'#1f2b2a', panel:'#5b7a3c', bottom:'#0e1414', deck:'#3c4436', inner:'#243130', wale:'#7a2426', hidden:true, fs:{gold:'#7a8c4a', stone:'#2f3a36', red:'#7a2426', hall:'#1f2b2a', statue:'#5f6e5a', plank:'#33382f', ram:'#4d5a3c'}},
   king:   {name:'Pirate king',  top:'#1f1c24', panel:'#e3ad48', bottom:'#141217', deck:'#8a5d3e', inner:'#2a2630', wale:'#e3ad48', hidden:true}, // Polycrates' flagship: black and gold
 };
 export const SAILS = {
@@ -25,6 +30,10 @@ export const SAILS = {
   purple: {name:'Royal purple',     stripes:['#5c3470','#e0c162','#5c3470']},
   sea:    {name:'Sea green',        stripes:['#348a84','#f1ece0','#348a84','#f1ece0','#348a84']},
   blood:  {name:'Blood red',        stripes:['#7a2426','#2c1f1f','#7a2426','#2c1f1f','#7a2426']},
+  ghost:  {name:'Ghostly rags',     stripes:['#c9e4d8','#a7c9bb','#c9e4d8'], hidden:true},
+  gore:   {name:'Bloodied',         stripes:['#3a0c0e','#7a1416','#3a0c0e'], border:'#120405', hidden:true},
+  bonered:{name:'Torn red',         stripes:['#e3dccb','#8a1a1c','#e3dccb'], hidden:true},
+  rot:    {name:'Rotten',           stripes:['#4f5a3e','#2c2a22','#4f5a3e'], border:'#7a2426', hidden:true},
   // city sails, only for Athenian and Spartan ships
   athens: {name:'Athens', stripes:['#f1ece0'], border:'#b8322a', city:true},
   sparta: {name:'Sparta', stripes:['#9e2a22'], border:'#e6c27a', city:true},
@@ -432,16 +441,17 @@ export function crewLayout(s, m){
 // four corner towers and two middle towers with crenellations and pointed red roofs, a long hall with green walls, two extra masts
 // (fore and aft) with square sails, a great golden curl at the stern and a bronze ram.
 function flagshipDeck(s, info, pc, sailKey){
-  const g = new T.Group(), y = info.deckLevel + s.H*.42, W = s.B*.92, L = s.L*.8, gold = '#e3ad48', stone = '#d9cdb4', red = '#b8402f', wood = '#5a3d2a';
+  // P90: a paint can carry its own colors for all of this (fs), for the pirate king's darker looks
+  const F = pc.fs || {}, g = new T.Group(), y = info.deckLevel + s.H*.42, W = s.B*.92, L = s.L*.8, gold = F.gold || '#e3ad48', stone = F.stone || '#d9cdb4', red = F.red || '#b8402f', wood = '#5a3d2a', statue = F.statue || '#eee6d6';
   const box = (w, h, d, c, x, yy, z) => { const m = mesh(new T.BoxGeometry(w, h, d), c); m.position.set(x, yy, z); g.add(m); return m; };
   // the high flat deck and its thick edge
-  box(L, 4, W, '#8a6a48', 0, y, 0); box(L + 3, 6, W + 3, wood, 0, y - 4, 0);
+  box(L, 4, W, F.plank || '#8a6a48', 0, y, 0); box(L + 3, 6, W + 3, wood, 0, y - 4, 0);
   // statues all along both sides, under the rail (white figures with arms up, holding the deck)
   const n = 13; for (let k=0;k<n;k++){ const x = -L/2 + 12 + k*(L - 24)/(n - 1);
     for (const sg of [1, -1]){ const z = sg*(info.W(Math.abs(x)/(s.L/2))*.98 + 1.2), f = new T.Group(); f.position.set(x, y - 18, z); g.add(f);
-      const body = mesh(new T.CylinderGeometry(2.2, 2.8, 11, 8), '#eee6d6', {flatShading:false}); body.position.y = 5.5; f.add(body);
-      const head = mesh(new T.SphereGeometry(2.2, 10, 8), '#eee6d6', {flatShading:false}); head.position.y = 12.5; f.add(head);
-      for (const ax of [-1, 1]){ const arm = mesh(new T.CylinderGeometry(.7, .8, 7, 6), '#eee6d6'); arm.position.set(0, 14.5, ax*2); arm.rotation.x = ax*.35; f.add(arm); } } }
+      const body = mesh(new T.CylinderGeometry(2.2, 2.8, 11, 8), statue, {flatShading:false}); body.position.y = 5.5; f.add(body);
+      const head = mesh(new T.SphereGeometry(2.2, 10, 8), statue, {flatShading:false}); head.position.y = 12.5; f.add(head);
+      for (const ax of [-1, 1]){ const arm = mesh(new T.CylinderGeometry(.7, .8, 7, 6), statue); arm.position.set(0, 14.5, ax*2); arm.rotation.x = ax*.35; f.add(arm); } } }
   // crenellated rail on the deck edge
   for (const sg of [1, -1]) for (let k=0;k<22;k++) box(6, 4, 2, stone, -L/2 + 6 + k*(L - 12)/21, y + 4, sg*(W/2 - 1));
   // towers: four corners and two in the middle of the sides
@@ -451,7 +461,7 @@ function flagshipDeck(s, info, pc, sailKey){
     const tip = mesh(new T.ConeGeometry(1.2, 9, 6), gold); tip.position.set(x, y + 2 + h + 20, z); g.add(tip); };
   for (const [fx, fz, h] of [[.42, .38, 34], [.42, -.38, 34], [-.38, .38, 30], [-.38, -.38, 30], [.02, .4, 24], [.02, -.4, 24]]) tower(fx*L, fz*W, h);
   // a long hall in the middle with green walls and a red roof
-  box(L*.32, 13, W*.34, '#5f8f7a', -L*.06, y + 8.5, 0);
+  box(L*.32, 13, W*.34, F.hall || '#5f8f7a', -L*.06, y + 8.5, 0);
   for (const sg of [1, -1]){ const r = box(L*.34, 1.6, W*.21, red, -L*.06, y + 18, sg*W*.08); r.rotation.x = sg*.42; }
   // fore and aft masts with square sails (the main mast comes from the ship builder)
   for (const [x, k] of [[L*.3, .8], [-L*.32, .85]]){ const mh = 90*k; const m = mesh(new T.CylinderGeometry(1.6, 2.4, mh, 7), 'mast'); m.position.set(x, y + mh/2, 0); g.add(m);
@@ -460,7 +470,7 @@ function flagshipDeck(s, info, pc, sailKey){
   // the great curl at the stern and the ram
   const curl = []; for (let k=0;k<=24;k++){ const u = k/24, a = u*Math.PI*1.7; curl.push([-s.L*.5 - 4 + Math.sin(a)*34*u, info.deckY(1) - 6 + (1 - Math.cos(a))*32 + u*12, 0]); }
   g.add(tube(curl, 7, gold, 10));
-  const ram = mesh(new T.ConeGeometry(6, 44, 10), '#b07f3c'); ram.rotation.z = -Math.PI/2; ram.position.set(s.L*.5 + 18, s.H*.05, 0); g.add(ram);
+  const ram = mesh(new T.ConeGeometry(6, 44, 10), F.ram || '#b07f3c'); ram.rotation.z = -Math.PI/2; ram.position.set(s.L*.5 + 18, s.H*.05, 0); g.add(ram);
   return g;
 }
 

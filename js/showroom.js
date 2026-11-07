@@ -1,19 +1,19 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=5b0520c';
-import {makePost} from './glow.js?v=5b0520c';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=5b0520c';
-import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=5b0520c';
-import {buildArena} from './arenabuild.js?v=5b0520c';
-import {IDEAS} from './shipideas.js?v=5b0520c';
-import {makeFire, updateFire} from './fire.js?v=5b0520c';
-import {updateSmoke} from './smoke.js?v=5b0520c';
-import {addGrass, updateGrass} from './grass.js?v=5b0520c';
-import {makeWind} from './seafx.js?v=5b0520c';
-import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=5b0520c';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=5b0520c';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=5b0520c';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=5b0520c';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=d5d8ab5';
+import {makePost} from './glow.js?v=d5d8ab5';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=d5d8ab5';
+import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=d5d8ab5';
+import {buildArena} from './arenabuild.js?v=d5d8ab5';
+import {IDEAS} from './shipideas.js?v=d5d8ab5';
+import {makeFire, updateFire} from './fire.js?v=d5d8ab5';
+import {updateSmoke} from './smoke.js?v=d5d8ab5';
+import {addGrass, updateGrass} from './grass.js?v=d5d8ab5';
+import {makeWind} from './seafx.js?v=d5d8ab5';
+import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=d5d8ab5';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=d5d8ab5';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=d5d8ab5';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=d5d8ab5';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -256,7 +256,7 @@ const SITE_ITEMS = ISLANDS.filter(is => is.site).sort((a, b) => !!CAMPS.find(c =
   return {name:`${is.name}: ${who}`, desc:camp ? `Where the bandits of ${is.name} really camp, with your bireme in the water for size.` : `Exactly where it stands in the game, ${t.onHill ? 'up on the hilltop' : 'on the green land above the shore'}, with its stair and jetty, and your bireme for size.${t.s < 1 ? ' Built a little smaller to fit the island.' : ''}`, make:() => isleScene(is)}; });
 const GROUPS = {
   ships:{name:'Ships', items:[
-    {name:'The pirate king\'s flagship', desc:'Polycrates\' floating fortress, waiting in the wine-dark water of the far north-east: a towering hull with statues along its sides, a flat deck with six towers and a hall, three masts, a great golden curl at the stern. A ghost ship: you never see a single person aboard.', make:() => buildShip('flagship', {paint:'king', sail:'plain'})},
+    {name:'The pirate king\'s flagship', desc:'Polycrates\' floating fortress, waiting in the wine-dark water of the far north-east: a towering hull with statues along its sides, a flat deck with six towers and a hall, three masts, a great golden curl at the stern. A ghost ship: you never see a single person aboard.', make:() => buildShip('flagship', {paint:new URLSearchParams(location.search).get('paint') || 'king', sail:new URLSearchParams(location.search).get('sail') || 'plain'})},
     ...Object.keys(SPECS).filter(k => !k.startsWith('idea_')).map(k => ({name:k[0].toUpperCase() + k.slice(1), desc:SHIP_INFO[k] || '', make:() => buildShip(k, {}, true)})),
     {name:'Burning ship', desc:'A badly damaged ship catches fire: flames on deck, sparks, and a thick column of smoke that sways as it rises, dark at the bottom and grey at the top.', make:() => {
       const sh = buildShip('raider'), f = makeFire(SPECS.raider.L, SPECS.raider.B, SPECS.raider.H*.9); sh.add(f); sh.userData.fire = f; sh.userData.anim = 'fire'; return sh; }},

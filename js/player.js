@@ -1,19 +1,19 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=5b0520c';
-import {SPECS} from './ships.js?v=5b0520c';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=5b0520c';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=5b0520c';
-import {W} from './weather.js?v=5b0520c';
-import {steering} from './input.js?v=5b0520c';
-import {toast, showZone} from './ui.js?v=5b0520c';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=5b0520c';
-import {LAIR_ROCKS} from './lair.js?v=5b0520c';
-import {startFish, stopFish} from './fishing.js?v=5b0520c';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=5b0520c';
-import {progress} from './quests.js?v=5b0520c';
-import {startSink} from './sinking.js?v=5b0520c';
-import {sfx} from './audio.js?v=5b0520c';
-import {ARENA} from './arena.js?v=5b0520c';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=d5d8ab5';
+import {SPECS} from './ships.js?v=d5d8ab5';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=d5d8ab5';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=d5d8ab5';
+import {W} from './weather.js?v=d5d8ab5';
+import {steering} from './input.js?v=d5d8ab5';
+import {toast, showZone} from './ui.js?v=d5d8ab5';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=d5d8ab5';
+import {LAIR_ROCKS} from './lair.js?v=d5d8ab5';
+import {startFish, stopFish} from './fishing.js?v=d5d8ab5';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=d5d8ab5';
+import {progress} from './quests.js?v=d5d8ab5';
+import {startSink} from './sinking.js?v=d5d8ab5';
+import {sfx} from './audio.js?v=d5d8ab5';
+import {ARENA} from './arena.js?v=d5d8ab5';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -82,7 +82,7 @@ function move(dt, sh){
   if (zoneAt(S.x, S.y) === 2){ px += Math.sin(G.t*1.7)*TUNING.stormDrift*dt; py += Math.cos(G.t*1.3)*TUNING.stormDrift*dt; }
   S.x += px; S.y += py; if (!G.dock) G.distAcc = (G.distAcc || 0) + Math.hypot(px, py);
   if (G.distAcc > 100){ stat('dist', Math.floor(G.distAcc/100)); G.distAcc %= 100; }
-  if (pushOut(S, sh.beam*.9)) G.v *= .6;
+  if (hullAground(S, sh)) G.v *= .6;
   if (!G.dock && pierPush(S, sh.beam*.55)) G.v *= .6;
   for (const b of LAIR_ROCKS){ const dx = S.x - b.x, dy = S.y - b.y, d = Math.hypot(dx, dy) || 1, m = b.r + sh.beam*.6; if (d < m){ S.x = b.x + dx/d*m; S.y = b.y + dy/d*m; G.v *= .6; } } // the rocks of the lair
   for (const b of ICEBERGS){ const dx = S.x - b.x, dy = S.y - b.y, d = Math.hypot(dx, dy) || 1, m = b.r + sh.beam*.6; if (d < m){ S.x = b.x + dx/d*m; S.y = b.y + dy/d*m; G.v *= .6; } } // icebergs are solid
@@ -179,6 +179,16 @@ function berth(sh, P){
   const side = (S.x - px)*nx + (S.y - py)*ny >= 0 ? 1 : -1, off = 13 + sh.beam/2 + (SPECS[sh.model].oarCount > 1 ? 40 : 0); // oars stay clear of the pier
   const pa = Math.atan2(P.dy, P.dx), a0 = Math.cos(S.a - pa) >= 0 ? pa : pa + Math.PI, a = S.a + wrap(a0 - S.a); // line up with the pier the short way
   return {x:px + nx*side*off, y:py + ny*side*off, a, side, along};
+}
+// P90 (a tester: an invisible wall on some shores, and other times the ship went into the land): the hull is long and thin, so test
+// five points along it (bow to stern) instead of one wide circle at the middle. Each keeps half the beam from the beach line
+// (a little less at the pointed ends); the ship slides along the shore by however much the worst point went in.
+const HULL_PTS = [[.46, .3], [.25, .5], [0, .5], [-.25, .5], [-.46, .35]];
+function hullAground(S, sh){ let hit = false;
+  for (let pass = 0; pass < 2; pass++){ const ca = Math.cos(S.a), sa = Math.sin(S.a);
+    for (const [k, w] of HULL_PTS){ const p = {x:S.x + ca*sh.len*k, y:S.y + sa*sh.len*k}, x0 = p.x, y0 = p.y;
+      if (pushOut(p, sh.beam*w + 4)){ S.x += p.x - x0; S.y += p.y - y0; hit = true; } } }
+  return hit;
 }
 // Piers are solid: the ship slides along them instead of sailing through.
 function pierPush(S, rad){ let hit = false;
