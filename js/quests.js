@@ -1,12 +1,12 @@
 // Things to do: the first-voyage goals, the request board in every harbor, and messages in bottles (coins, notes, treasure maps).
 // Other modules report what happens with progress(type, kind, n): 'catch', 'sell', 'wood', 'salvage', 'sink', 'build', 'board', 'camp', 'fort'.
-import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS, PLANS, REVEAL} from './config.js?v=3cc5145';
-import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=3cc5145';
-import {G, save, ship, lvl, rank, gain, putAboard, reveal, stat} from './state.js?v=3cc5145';
-import {scene} from './scene.js?v=3cc5145';
-import {mesh} from './models.js?v=3cc5145';
-import {toast} from './ui.js?v=3cc5145';
-import {sfx} from './audio.js?v=3cc5145';
+import {FISH, GOALS, REQUESTS, BOTTLES, SHIPS, STARTER_GOALS, CAMPS, PLANS, REVEAL, LAIR_CHART} from './config.js?v=af98ded';
+import {WORLD, ISLANDS, HARBORS, landDist, rng, hash, waveAt, zoneAt} from './world.js?v=af98ded';
+import {G, save, ship, lvl, rank, gain, putAboard, reveal, stat} from './state.js?v=af98ded';
+import {scene} from './scene.js?v=af98ded';
+import {mesh} from './models.js?v=af98ded';
+import {toast} from './ui.js?v=af98ded';
+import {sfx} from './audio.js?v=af98ded';
 
 const T = window.THREE;
 const named = ISLANDS.filter(i => i.name && !i.frame && !i.port);
@@ -73,7 +73,9 @@ export function progress(type, kind, n = 1){
 }
 // The line under the top bar: the current goal, or the first job you have taken.
 export function pillText(){
-  const g = goal(); if (g) return `${g.text}${g.n > 1 ? ` (${G.S.goalN || 0}/${g.n})` : ''}`;
+  const g = goal(), ch = LAIR_CHART.filter(n => (G.S.lairChart || []).includes(n)).length;
+  if (g && g.t === 'boss' && ch < LAIR_CHART.length) return `${g.text} (${ch}/${LAIR_CHART.length} pieces)`;
+  if (g) return `${g.text}${g.n > 1 ? ` (${G.S.goalN || 0}/${g.n})` : ''}`;
   const r = active()[0]; if (!r) return 'No job yet. Harbors have request boards.';
   return r.t === 'deliver' ? `${r.text} (${Math.min(r.n, G.S.cargo[r.kind] || 0)}/${r.n} aboard)` : `${r.text}${r.n > 1 ? ` (${r.got}/${r.n})` : ''}`;
 }

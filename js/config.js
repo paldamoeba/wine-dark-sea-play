@@ -101,8 +101,10 @@ export const GOALS = [
   {t:'upgrade', kind:'fire', n:1, gold:60, text:'Buy fire arrows at the Kallisto shipyard', chapter:true},
   {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp, the pirate fortress of Kos, and Nikandros the Scourge, who sails off Skyros', chapter:true},
   {t:'build', kind:'trireme', n:1, gold:200, text:'Study the plans and build the trireme, the greatest warship of the Aegean', chapter:true},
-  {t:'boss', n:1, gold:1500, text:'Defeat Polycrates, the pirate king, in his lair in the far north-east', chapter:true},
+  {t:'boss', n:1, gold:1500, text:'Find the pirate king: win the 4 pieces of the chart to his lair from the fortresses of Thasos, Chalkidiki, Kythera and Crete, then defeat Polycrates', chapter:true},
 ];
+// P85 (Nicholas): the pirate king hides until you hold the whole chart to his lair. Each of these far fortresses keeps one piece.
+export const LAIR_CHART = ['Thasos', 'Chalkidiki', 'Kythera', 'Crete'];
 export const STARTER_GOALS = 8; // the first eight goals teach the basics; past the rowboat they are skipped
 // Polycrates, the pirate king: a huge black galley with a golden boar's head ram, waiting off his fortress with two skiffs.
 // fireEvery: seconds between his flaming volleys (they set your ship alight for burnSeconds). At half hull he calls two more skiffs.
@@ -184,12 +186,12 @@ export const CAMPS = [
   // P67: ships = how many guard the camp (the mothership and smaller boats around it)
   {isle:'Tinos',   lv:2, ships:2, hull:110, fighters:2, dmg:1.3, sight:480, mother:'skiff',  motherHull:55, motherDmg:1.4, gold:[150, 210], wood:70,  bronze:8,  plans:2},
   {isle:'Syros',   lv:2, ships:2, plans:2, hull:150, fighters:3, dmg:2,   sight:520, mother:'skiff',  motherHull:75, gold:[240, 330], wood:110, bronze:14},
-  {isle:'Ios',     lv:3, ships:2, plans:3, hull:170, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:130, gold:[330, 450], wood:120, bronze:20},
+  {isle:'Ios',     lv:3, ships:3, plans:3, hull:170, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:130, gold:[330, 450], wood:120, bronze:20},
   // P84 (Nicholas: more camps near home, so raiding merchants isn't the only way to earn). No plans; the bandits come back
   // `back` seconds after you burn one, so these are a steady source of gold and supplies.
   {isle:'Donousa', lv:1, back:420, hull:60,  fighters:2, dmg:1,   sight:440, mother:'dinghy', motherHull:25, gold:[90, 130], wood:40, bronze:4},
   {isle:'Amorgos', lv:2, back:480, ships:2, hull:120, fighters:2, dmg:1.4, sight:480, mother:'skiff', motherHull:60, gold:[180, 250], wood:80, bronze:10, iron:4},
-  {isle:'Sikinos', lv:3, back:540, ships:2, hull:180, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:130, gold:[300, 420], wood:120, bronze:18, iron:8},
+  {isle:'Sikinos', lv:3, back:540, ships:3, hull:180, fighters:3, dmg:2, sight:520, mother:'galley', motherHull:130, gold:[300, 420], wood:120, bronze:18, iron:8},
 ];
 export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme's plans (so does any city fortress you knock down)
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
@@ -292,6 +294,8 @@ export const COMBAT = {
   patchTo: .6,          // salvaged timber mends the hull up to 60%; the rest needs a dry dock
   washUpHull: .35,      // after sinking you're towed home with the hull at 35%
   range: 300,           // how far arrows fly
+  rangePerLen: .8,      // P85 (Nicholas): bigger ships shoot further: every unit of length past a rowboat's 40 adds this much (a trireme 400, a quinquereme 440)
+  siegeRange: 180,      // P85: and further still at fortresses and bandit camps (a big target on land): a trireme just outranges a fortress's archers, never its catapults
   shotEvery: 3,         // seconds between shots for one of your fighters
   enemyShotEvery: 4.2,  // the same for one raider fighter
   firstShot: 2.5,       // seconds a raider waits after spotting you before it shoots
@@ -325,8 +329,9 @@ export const ENEMIES = {
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 // P64: three levels of fortress (by how far out they stand) and of bandit camp. Level 3 fortresses are guarded by quinqueremes.
 // P67: guards = ships around it (a level 3 fortress has 5, the farthest and Thasos 7; only the first two are quinqueremes). Richer prizes the higher the level.
+// P85 (Nicholas: a level 8 fortress had one small ship guarding it): more guards, 3 / 4 / 6 (the farthest and Thasos 8)
 // P84 (Nicholas: too hard to get past them, too little loot): half the health, twice the gold, and the treasury nearly fills your hold (see FILL)
-export const FORT_LV = [null, {hull:325, fighters:5, dmg:2, guards:1, gold:[300, 460], wood:80, bronze:10, iron:6, linen:6}, {hull:450, fighters:7, dmg:2.5, guards:3, gold:[800, 1200], wood:170, bronze:30, iron:14, linen:12}, {hull:650, fighters:9, dmg:3.2, guards:5, most:7, gold:[1800, 2800], wood:320, bronze:70, iron:35, linen:24, big:true}];
+export const FORT_LV = [null, {hull:325, fighters:5, dmg:2, guards:3, gold:[300, 460], wood:80, bronze:10, iron:6, linen:6}, {hull:450, fighters:7, dmg:2.5, guards:4, gold:[800, 1200], wood:170, bronze:30, iron:14, linen:12}, {hull:650, fighters:9, dmg:3.2, guards:6, most:8, gold:[1800, 2800], wood:320, bronze:70, iron:35, linen:24, big:true}];
 // P84: a fallen fortress or burnt camp fills this share of the free room aboard with each supply (or gives its own amount, if that's more)
 export const FILL = {fort:{wood:.9, bronze:.8, iron:.8, linen:.8}, camp:{wood:.7, bronze:.5, iron:.5, linen:.5}};
 // enemy ship levels: 0 near Kallisto, 1 further, 2 far out. Bigger sails, bigger rams, fuller crews, tougher hulls.

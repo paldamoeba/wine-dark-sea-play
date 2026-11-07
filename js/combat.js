@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL} from './config.js?v=3cc5145';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=3cc5145';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=3cc5145';
-import {scene, screenToSea, setLair} from './scene.js?v=3cc5145';
-import {wreckModel} from './models.js?v=3cc5145';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=3cc5145';
-import {mergeStatic, freeModel} from './merge.js?v=3cc5145';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=3cc5145';
-import {award} from './trophies.js?v=3cc5145';
-import {makeFire, updateFire, burn} from './fire.js?v=3cc5145';
-import {blessing, fighters, hasSail} from './crew.js?v=3cc5145';
-import {progress, goal} from './quests.js?v=3cc5145';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=3cc5145';
-import {rollColor, unlockColor, colorName} from './colors.js?v=3cc5145';
-import {toast} from './ui.js?v=3cc5145';
-import {sink, rowNow, ROW} from './player.js?v=3cc5145';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=3cc5145';
-import {TOD} from './daynight.js?v=3cc5145';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=3cc5145';
-import {sfx} from './audio.js?v=3cc5145';
-import {myLevel} from './levels.js?v=3cc5145';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_CHART} from './config.js?v=af98ded';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, pushOut, landDist, siteFor} from './world.js?v=af98ded';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=af98ded';
+import {scene, screenToSea, setLair} from './scene.js?v=af98ded';
+import {wreckModel} from './models.js?v=af98ded';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=af98ded';
+import {mergeStatic, freeModel} from './merge.js?v=af98ded';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=af98ded';
+import {award} from './trophies.js?v=af98ded';
+import {makeFire, updateFire, burn} from './fire.js?v=af98ded';
+import {blessing, fighters, hasSail} from './crew.js?v=af98ded';
+import {progress, goal} from './quests.js?v=af98ded';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=af98ded';
+import {rollColor, unlockColor, colorName} from './colors.js?v=af98ded';
+import {toast} from './ui.js?v=af98ded';
+import {sink, rowNow, ROW} from './player.js?v=af98ded';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=af98ded';
+import {TOD} from './daynight.js?v=af98ded';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=af98ded';
+import {sfx} from './audio.js?v=af98ded';
+import {myLevel} from './levels.js?v=af98ded';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -91,7 +91,7 @@ for (const is of ISLANDS){
   const far = lv === 3 && (is.name === 'Thasos' || FORT_ISLES.indexOf(is) >= FORT_ISLES.length - 2), n = far ? FORT_LV[lv].most : FORT_LV[lv].guards;
   for (let g=0; g<n; g++){ const a0 = site.a - 1.3 + g/n*Math.PI*2, rr = 230 + (g % 3)*120, p = {x:site.sea.x + Math.cos(a0)*rr, y:site.sea.y + Math.sin(a0)*rr}; pushOut(p, 180);
     const dir = g % 2 ? -1 : 1, route = [0, 1, 2, 3, 4].map(k => { const a = a0 + dir*k*Math.PI*2/5, q = {x:site.sea.x + Math.cos(a)*rr, y:site.sea.y + Math.sin(a)*rr}; pushOut(q, 180); return q; });
-    const kind = owner === 'pirate' ? (lv === 3 ? (g < 2 ? 'pirateQ' : g < 5 ? 'galley' : 'skiff') : lv === 2 && g === 0 ? 'galley' : 'skiff') : owner + (lv === 3 && g < 2 ? 'Q' : ''); // only the first two are quinqueremes
+    const kind = owner === 'pirate' ? (lv === 3 ? (g < 2 ? 'pirateQ' : g < 5 ? 'galley' : 'skiff') : g < lv ? 'galley' : 'skiff') : owner + (lv === 3 && g < 2 ? 'Q' : ''); // only the first two are quinqueremes
     const e = makeEnemy({kind, home:p, guard:true, isle:is, route}); enemies.push(e); f.guards.push(e); }
 }
 // ---- bandit camps (P49): a palisade on the wild islands near Kallisto, with a few archers and one mothership guarding it ----
@@ -273,6 +273,12 @@ function bossShip(kind, at, extra = {}){
     obj:null, leg:1, wait:0, angry:false, attacked:false, foe:null, lost:0, calm:0, lane:0, spd:1, orbit:Math.random() < .5 ? 1 : -1, ring:200 + Math.random()*120, tacT:0, temp:true, ...extra, spec};
   pushOut(e, 160); buildEnemy(e); enemies.push(e); return e;
 }
+// P85: the chart to his lair, one piece in each of the LAIR_CHART fortresses. Once it is whole he appears, and the chart shows where.
+export const chartGot = () => LAIR_CHART.filter(n => (G.S.lairChart || []).includes(n));
+export const chartDone = () => chartGot().length >= LAIR_CHART.length;
+export function chartPiece(name){ const S = G.S; if ((S.lairChart || []).includes(name)) return; S.lairChart = [...(S.lairChart || []), name]; save();
+  const n = chartGot().length; sfx('chime'); toast(n >= LAIR_CHART.length ? 'The chart is whole! The pirate king\'s lair is on your chart' : `A piece of the pirate king's chart: ${n} of ${LAIR_CHART.length}`, 5); }
+document.addEventListener('chartpiece', ev => { const all = ev.detail === 'all', left = LAIR_CHART.filter(n => !chartGot().includes(n)); (all ? left : left.slice(0, 1)).forEach(chartPiece); });
 export function spawnBoss(){
   const at = {x:LAIR.x, y:LAIR.y}; // in the middle of the wine-dark water
   const e = bossShip('galley', at, {boss:true, look:{paint:'king', sail:'purple'}, fireT:BOSS.fireEvery, called:false,
@@ -297,7 +303,7 @@ function bossThink(e, dt){
   if (fighting && !e.seen){ e.seen = true; say(e, G.S.bossHull > 0 ? 'Back for more, little fisherman?' : 'Another fool for my fires.'); }
   if (K < BOSS.potAt && !e.potTip){ e.potTip = true; say(e, 'Burn them!'); }
   if (e.stunT > 0){ charge(e, dt, BOSS, fighting, d, K); return; }
-  if (e.mode === 'chase' && d < COMBAT.range*1.1 && (e.fireT -= dt) <= 0){ e.fireT = BOSS.fireEvery; salvo(e, null, BOSS.fireArrows, BOSS.dmg, 60, true); sfx('horn', e); }
+  if (e.mode === 'chase' && d < rangeOf(e.spec)*1.1 && (e.fireT -= dt) <= 0){ e.fireT = BOSS.fireEvery; salvo(e, null, BOSS.fireArrows, BOSS.dmg, 60, true); sfx('horn', e); }
   if (K < BOSS.potAt && fighting && d < 1100 && (e.potT = (e.potT ?? 2) - dt) <= 0){ e.potT = BOSS.potEvery; for (let i = 0; i < BOSS.pots; i++) throwPot(e); sfx('catapult', e); }
   if (!e.called && K < .5){ e.called = true; say(e, 'To me, my wolves!'); for (let i=0;i<2;i++) startFight(bossShip('skiff', {x:e.x + Math.cos(e.a + 1.6 + i*3.1)*320, y:e.y + Math.sin(e.a + 1.6 + i*3.1)*320})); sfx('horn', e); }
   if (K < BOSS.rushAt && !e.chargeTip && (e.rushW > 0)){ e.chargeTip = true; say(e, 'Enough! I will break you myself!'); setTimeout(() => toast('Get out of the red path. Lure him into the rocks!', 4), 2200); }
@@ -388,7 +394,7 @@ function fight(e, tgt, dt){
   else { const R = e.tac === 'wide' ? e.ring + 160 : e.ring, s = Math.atan2(e.y - o.y, e.x - o.x) + e.orbit*.75;
     steer(e, o.x + Math.cos(s)*R, o.y + Math.sin(s)*R, sp*.9, dt); }
   e.cool -= dt;
-  if (d < COMBAT.range && e.cool <= 0 && broadside(e, o)){ e.cool = COMBAT.enemyShotEvery*(.75 + Math.random()*.5); salvo(e, tgt, e.spec.fighters, e.spec.dmg, 140); }
+  if (d < rangeOf(e.spec) && e.cool <= 0 && broadside(e, o)){ e.cool = COMBAT.enemyShotEvery*(.75 + Math.random()*.5); salvo(e, tgt, e.spec.fighters, e.spec.dmg, 140); }
 }
 function startFight(e){ if (e.mode !== 'chase'){ e.mode = 'chase'; e.cool = COMBAT.firstShot; e.spotT = 0; } }
 // Follow a route of points; wait a moment at each end (merchants unloading).
@@ -686,6 +692,7 @@ function sinkEnemy(e, byPlayer){
   const color = byPlayer && !e.fort ? rollColor() : null;
   if (byPlayer && e.fort && e.owner === 'pirate') progress('fort');
   if (byPlayer && e.fort && !e.camp && fortPlan(e)) givePiece(fortPlan(e), 'fort:' + e.isle.name);
+  if (byPlayer && e.fort && !e.camp && LAIR_CHART.includes(e.isle.name)) setTimeout(() => chartPiece(e.isle.name), 2500);
   if (byPlayer && e.named){ givePiece(e.named.plans, 'ship:' + e.named.name); shipDeed(e.named.name); }
   if (e.camp){ const S = G.S; if (!e.camp.back) S.camps = [...new Set([...(S.camps || []), e.isle.name])]; if (byPlayer) progress('camp', e.isle.name); if (e.camp.plans) givePiece(e.camp.plans, 'camp:' + e.isle.name); }
   if (e.boss){ shipDeed('Polycrates'); bossDown(e); }
@@ -840,12 +847,18 @@ function updateIslands(dt){
 let pCool = 0, volleyT = 0;
 export const combatState = {target:null, threat:false};
 // Your crew only shoots at ships that are hostile. Peaceful ships need the Raid button first.
-function nearestShip(range, ok){ let best = null, bd = range;
-  for (const e of enemies){ if (e.dead || !ok(e)) continue; const d = dist(e, G.S) - (e.reach || 0); if (d < bd){ bd = d; best = e; } } return best; }
+// P85: range can be a number or a function of the target (your arrows reach further at a fortress or camp)
+function nearestShip(range, ok){ let best = null, bd = Infinity;
+  for (const e of enemies){ if (e.dead || !ok(e)) continue; const d = dist(e, G.S) - (e.reach || 0), lim = typeof range === 'function' ? range(e) : range; if (d < lim && d < bd){ bd = d; best = e; } } return best; }
+// P85: how far a ship's arrows fly, by its length; yours reach further at fortresses and camps
+export const rangeOf = spec => COMBAT.range + COMBAT.rangePerLen*Math.max(0, (spec.len || 40) - 40);
+const myRange = e => rangeOf(ship()) + (e && e.fort ? COMBAT.siegeRange : 0);
+export const rangeK = () => rangeOf(ship())/COMBAT.range; // the aimed powers reach further on a bigger ship too
+export const aimRange = k => ABILITIES[k].range*rangeK();
 function playerCrew(dt){
-  const sh = ship(), tgt = G.dock ? null : nearestShip(COMBAT.range, hostile);
+  const sh = ship(), tgt = G.dock ? null : nearestShip(myRange, hostile);
   combatState.target = tgt; G.firing = !!tgt;
-  combatState.prey = tgt || G.dock || G.sheetOpen ? null : nearestShip(COMBAT.range*.9, e => !hostile(e) && side(e) !== 'own' && side(e) !== 'ally');
+  combatState.prey = tgt || G.dock || G.sheetOpen ? null : nearestShip(e => myRange(e)*.9, e => !hostile(e) && side(e) !== 'own' && side(e) !== 'ally');
   pCool -= dt; volleyT = Math.max(0, volleyT - dt);
   combatState.side = !tgt || broadside(null, tgt);
   if (tgt && !G.sheetOpen && !G.sinking && pCool <= 0 && combatState.side){ pCool = COMBAT.shotEvery*(.85 + Math.random()*.3); salvo(null, tgt, fighters(), COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK(), 120);
@@ -883,14 +896,14 @@ export const abilityInfo = k => ABILITIES[k];
 // P65: where a ship will be when a shot fired now lands
 const leadOf = (e, flight) => ({x:e.x + Math.cos(e.a)*(e.v || 0)*flight + (e.shx || 0)*.3, y:e.y + Math.sin(e.a)*(e.v || 0)*flight + (e.shy || 0)*.3});
 // P65: for the aiming ring: the ships in reach and where each will be when the shot lands (overlay.js draws a little marker there)
-export const aimLeads = k => { const f = powerFlight(k), A = ABILITIES[k]; return enemies.filter(e => !e.dead && !e.fort && hostile(e) && dist(e, G.S) < A.range + 260).map(e => ({from:e, ...leadOf(e, f)})); };
+export const aimLeads = k => { const f = powerFlight(k), A = ABILITIES[k]; return enemies.filter(e => !e.dead && !e.fort && hostile(e) && dist(e, G.S) < aimRange(k) + 260).map(e => ({from:e, ...leadOf(e, f)})); };
 // P65: accuracy: a shot that would just miss a ship bends onto it. The better the power's level, the further it bends.
 function seekShot(p, k){ const f = powerFlight(k), reach = powerSeek(k); let best = null, bd = Infinity;
   for (const e of enemies){ if (e.dead || !hostile(e) || e.fort) continue; const q = leadOf(e, f), d = Math.hypot(q.x - p.x, q.y - p.y) - e.spec.len*.3; if (d < bd){ bd = d; best = q; } }
   if (!best || bd > reach*4) return p; const dx = best.x - p.x, dy = best.y - p.y, d = Math.hypot(dx, dy) || 1, m = Math.min(d, reach); return {x:p.x + dx/d*m, y:p.y + dy/d*m}; }
 // Arrow shower: every archer shoots high; the arrows rain down over the circle.
 function shower(at){
-  if (volleyT > 0 || G.sinking || !at) return false; const A = ABILITIES.shower, p = seekShot(clampAim(at, A.range), 'shower'), fl = powerFlight('shower'), rr = powerR('shower');
+  if (volleyT > 0 || G.sinking || !at) return false; const A = ABILITIES.shower, p = seekShot(clampAim(at, aimRange('shower')), 'shower'), fl = powerFlight('shower'), rr = powerR('shower');
   volleyT = powerCd('shower')*(blessing().volley || 1);
   const n = fighters()*COMBAT.volleyArrows, dmg = COMBAT.arrowDmg*(blessing().dmg || 1)*arrowK()*showerK(), fire = fireT > 0;
   for (let i=0;i<n;i++){ const a = Math.random()*6.28, r = Math.sqrt(Math.random())*rr;
@@ -902,7 +915,7 @@ function shower(at){
 function volley(){ shower(tapAim(powerFlight('shower'))); } // a tap with a second finger or the old shortcut: at the target as it is now
 // Chain shot: two iron balls on a chain; a ship where they land loses its sail.
 function chainAt(at){
-  if (!lvl('chain') || chainCd > 0 || G.sinking || !at) return false; const A = ABILITIES.chain, p = seekShot(clampAim(at, A.range), 'chain');
+  if (!lvl('chain') || chainCd > 0 || G.sinking || !at) return false; const A = ABILITIES.chain, p = seekShot(clampAim(at, aimRange('chain')), 'chain');
   chainCd = powerCd('chain'); sfx('volley');
   for (const o of [-1, 1]) lob('ball', p.x + o*10, p.y, powerFlight('chain'), 45, // P82 (Nicholas): a low, flat shot, not a high lob
     (x, y) => { const hit = struck(x, y, powerR('chain')).filter(e => !e.fort); if (!hit.length){ splash(x, y); sfx('plop', {x, y}); } hit.forEach(dismast); });
@@ -910,7 +923,7 @@ function chainAt(at){
 }
 // Catapult (bireme and bigger): a ball of fire thrown very high; big damage where it lands, and it sets ships alight.
 function catapultAt(at){
-  if (!lvl('catapult') || cataCd > 0 || G.sinking || !at) return false; const A = ABILITIES.catapult, p = seekShot(clampAim(at, A.range), 'catapult');
+  if (!lvl('catapult') || cataCd > 0 || G.sinking || !at) return false; const A = ABILITIES.catapult, p = seekShot(clampAim(at, aimRange('catapult')), 'catapult');
   cataCd = powerCd('catapult'); sfx('horn'); G.shake = Math.min(1, (G.shake || 0) + .5);
   lob('fire', p.x, p.y, powerFlight('catapult'), 420, (x, y) => { const hit = struck(x, y, powerR('catapult')); puff(x, y, false, 8); sfx('crash', {x, y});
     for (const e of hit){ if (!soak(e, A.dmg(lvl('catapult')), x, y)) e.hull -= A.dmg(lvl('catapult')); e.burnT = FIRE_ARROWS.burnSeconds*1.5; e.hitT = .3; e.kick = .2; if (side(e) !== 'pirate' && !e.bandit) crime(e); else startFight(e); if (e.hull <= 0) sinkEnemy(e, true); } });
@@ -926,7 +939,7 @@ document.querySelectorAll('.ab[data-ab]').forEach(btn => {
   btn.addEventListener('pointermove', e => { const d = G.aimDrag; if (!d || d.id !== e.pointerId) return;
     if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 18) d.moved = true;
     const A = ABILITIES[d.k]; if (!d.moved || !A.range) return;
-    const p = screenToSea(e.clientX, e.clientY); if (p) G.aim = {k:d.k, ...clampAim(p, A.range), r:powerR(d.k), range:A.range}; });
+    const p = screenToSea(e.clientX, e.clientY); if (p) G.aim = {k:d.k, ...clampAim(p, aimRange(d.k)), r:powerR(d.k), range:aimRange(d.k)}; });
   const end = e => { const d = G.aimDrag; if (!d || d.id !== e.pointerId) return; const at = G.aim; G.aimDrag = null; G.aim = null;
     if (e.type !== 'pointercancel') useAbility(d.k, d.moved ? at : null); };
   btn.addEventListener('pointerup', end); btn.addEventListener('pointercancel', end);
@@ -1011,12 +1024,14 @@ export function updateCombat(dt){
   // ships hit by fire arrows burn for a few seconds; so does your ship after a flaming volley
   for (const e of enemies){ if (!(e.burnT > 0) || e.dead) continue; e.burnT -= dt; if (!soak(e, FIRE_ARROWS.dps(lvl('fire'))*dt)) e.hull -= FIRE_ARROWS.dps(lvl('fire'))*dt; if (e.hull <= 0) sinkEnemy(e, true); }
   if (G.burnT > 0 && !G.sinking){ G.burnT -= dt; G.S.hull -= BOSS.burnDps*dt; G.hurt = Math.max(G.hurt || 0, .4); if (G.S.hull <= 0){ G.burnT = 0; sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; } }
-  const gl = goal(); if (gl && gl.t === 'boss' && !boss.e) spawnBoss();
+  // P85: he appears once the chart is whole (and until he is beaten), whatever the story goal
+  const gl = goal(); if (!boss.e && chartDone() && !G.S.chapter) spawnBoss();
+  if (gl && gl.t === 'boss' && G.S.chapter && !boss.e) progress('boss'); // beaten before the story got there
   if (boss.e && !boss.e.dead){ bossThink(boss.e, dt); G.S.bossHull = Math.ceil(boss.e.hull); }
   for (const e of enemies) if (e.charger && !e.dead) charge(e, dt, e.charger, e.mode === 'chase' || e.rushW > 0 || e.rushT > 0, dist(e, G.S), e.hull/e.spec.hull);
   G.boss = boss.e && !boss.e.dead ? {x:boss.e.x, y:boss.e.y} : null;
   // where the current chapter goal is, for the chart and the little map: the pirate fortresses, then the pirate king
-  G.goalMarks = gl && gl.t === 'camp' ? enemies.filter(o => o.camp && o.isle.name === gl.kind && !o.dead).map(o => ({x:o.x, y:o.y, label:`${o.isle.name} bandit camp`})) : gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
+  G.goalMarks = gl && gl.t === 'camp' ? enemies.filter(o => o.camp && o.isle.name === gl.kind && !o.dead).map(o => ({x:o.x, y:o.y, label:`${o.isle.name} bandit camp`})) : gl && gl.t === 'fort' ? enemies.filter(o => o.fort && o.owner === 'pirate' && !o.dead).map(o => ({x:o.x, y:o.y, label:'Pirate fortress'})) : gl && gl.t === 'boss' && !chartDone() ? enemies.filter(o => o.fort && !o.camp && LAIR_CHART.includes(o.isle.name) && !chartGot().includes(o.isle.name)).map(o => ({x:o.x, y:o.y, label:'Chart piece'})) : G.boss ? [{...G.boss, label:'The pirate king'}] : [];
   const bb = $('bossBar'), showB = !!G.boss && dist(boss.e, G.S) < 1600 && !G.sheetOpen; bb.hidden = !showB; if (showB) $('bossHull').style.width = Math.max(0, boss.e.hull/boss.e.spec.hull*100) + '%';
   playerCrew(dt);
   collide();
