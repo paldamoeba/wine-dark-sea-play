@@ -1,19 +1,19 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=656f944';
-import {SPECS} from './ships.js?v=656f944';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=656f944';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=656f944';
-import {W} from './weather.js?v=656f944';
-import {steering} from './input.js?v=656f944';
-import {toast, showZone} from './ui.js?v=656f944';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=656f944';
-import {LAIR_ROCKS} from './lair.js?v=656f944';
-import {startFish, stopFish} from './fishing.js?v=656f944';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=656f944';
-import {progress} from './quests.js?v=656f944';
-import {startSink} from './sinking.js?v=656f944';
-import {sfx} from './audio.js?v=656f944';
-import {ARENA} from './arena.js?v=656f944';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=03252f6';
+import {SPECS} from './ships.js?v=03252f6';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=03252f6';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=03252f6';
+import {W} from './weather.js?v=03252f6';
+import {steering} from './input.js?v=03252f6';
+import {toast, showZone} from './ui.js?v=03252f6';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=03252f6';
+import {LAIR_ROCKS} from './lair.js?v=03252f6';
+import {startFish, stopFish} from './fishing.js?v=03252f6';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=03252f6';
+import {progress} from './quests.js?v=03252f6';
+import {startSink} from './sinking.js?v=03252f6';
+import {sfx} from './audio.js?v=03252f6';
+import {ARENA} from './arena.js?v=03252f6';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -184,13 +184,7 @@ function berth(sh, P){
 // P90 (a tester: an invisible wall on some shores, and other times the ship went into the land): the hull is long and thin, so test
 // five points along it (bow to stern) instead of one wide circle at the middle. Each keeps half the beam from the beach line
 // (a little less at the pointed ends); the ship slides along the shore by however much the worst point went in.
-const HULL_PTS = [[.46, .3], [.25, .5], [0, .5], [-.25, .5], [-.46, .35]];
-function hullAground(S, sh){ let hit = false;
-  for (let pass = 0; pass < 2; pass++){ const ca = Math.cos(S.a), sa = Math.sin(S.a);
-    for (const [k, w] of HULL_PTS){ const p = {x:S.x + ca*sh.len*k, y:S.y + sa*sh.len*k}, x0 = p.x, y0 = p.y;
-      if (pushOut(p, sh.beam*w + 4)){ S.x += p.x - x0; S.y += p.y - y0; hit = true; } } }
-  return hit;
-}
+const hullAground = (S, sh) => hullAgroundW(S, sh.len, sh.beam); // (world.js; the enemies use it too since P99)
 // Piers are solid: the ship slides along them instead of sailing through.
 function pierPush(S, rad){ let hit = false;
   for (const P of [...HARBORS.map(h => h.pier), ...TOWN_PIERS]){ const nx = -P.dy, ny = P.dx, rx = S.x - P.x, ry = S.y - P.y, t = rx*P.dx + ry*P.dy, s = rx*nx + ry*ny, w = 9 + rad;

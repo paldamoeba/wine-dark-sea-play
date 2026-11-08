@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=656f944';
-import {MAPDATA} from './mapdata.js?v=656f944';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=03252f6';
+import {MAPDATA} from './mapdata.js?v=03252f6';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -109,6 +109,15 @@ export function pushOut(p, min){
   const d = landDist(p.x, p.y); if (d >= min) return false;
   const e = CELL*.5, gx = landDist(p.x + e, p.y) - landDist(p.x - e, p.y), gy = landDist(p.x, p.y + e) - landDist(p.x, p.y - e), L = Math.hypot(gx, gy) || 1;
   p.x += gx/L*(min - d); p.y += gy/L*(min - d); return true;
+}
+// P90/P99: a ship's hull against the land: five points along it (bow to stern), each keeping its share of the beam from the beach
+// line (less at the pointed ends); the ship slides along the shore by however much the worst point went in. o has x, y, a.
+const HULL_PTS = [[.46, .3], [.25, .5], [0, .5], [-.25, .5], [-.46, .35]];
+export function hullAground(o, len, beam, passes = 2){ let hit = false;
+  for (let pass = 0; pass < passes; pass++){ const ca = Math.cos(o.a), sa = Math.sin(o.a);
+    for (const [k, w] of HULL_PTS){ const p = {x:o.x + ca*len*k, y:o.y + sa*len*k}, x0 = p.x, y0 = p.y;
+      if (pushOut(p, beam*w + 4)){ o.x += p.x - x0; o.y += p.y - y0; hit = true; } } }
+  return hit;
 }
 // Distance from (x, y) to one island's shore, for chopping wood.
 export function shoreDist(is, x, y){

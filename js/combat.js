@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=656f944';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=656f944';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=656f944';
-import {scene, screenToSea, setLair} from './scene.js?v=656f944';
-import {wreckModel} from './models.js?v=656f944';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=656f944';
-import {mergeStatic, freeModel} from './merge.js?v=656f944';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=656f944';
-import {award} from './trophies.js?v=656f944';
-import {makeFire, updateFire, burn} from './fire.js?v=656f944';
-import {blessing, fighters, hasSail} from './crew.js?v=656f944';
-import {progress, goal} from './quests.js?v=656f944';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=656f944';
-import {rollColor, unlockColor, colorName} from './colors.js?v=656f944';
-import {toast, popLater} from './ui.js?v=656f944';
-import {sink, rowNow, ROW} from './player.js?v=656f944';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=656f944';
-import {TOD} from './daynight.js?v=656f944';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=656f944';
-import {sfx} from './audio.js?v=656f944';
-import {myLevel} from './levels.js?v=656f944';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=03252f6';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=03252f6';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=03252f6';
+import {scene, screenToSea, setLair} from './scene.js?v=03252f6';
+import {wreckModel} from './models.js?v=03252f6';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=03252f6';
+import {mergeStatic, freeModel} from './merge.js?v=03252f6';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=03252f6';
+import {award} from './trophies.js?v=03252f6';
+import {makeFire, updateFire, burn} from './fire.js?v=03252f6';
+import {blessing, fighters, hasSail} from './crew.js?v=03252f6';
+import {progress, goal} from './quests.js?v=03252f6';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=03252f6';
+import {rollColor, unlockColor, colorName} from './colors.js?v=03252f6';
+import {toast, popLater} from './ui.js?v=03252f6';
+import {sink, rowNow, ROW} from './player.js?v=03252f6';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=03252f6';
+import {TOD} from './daynight.js?v=03252f6';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=03252f6';
+import {sfx} from './audio.js?v=03252f6';
+import {myLevel} from './levels.js?v=03252f6';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -362,7 +362,7 @@ function steer(e, tx, ty, speed, dt){
     const d = Math.hypot(dx, dy) || 1, min = (e.spec.beam + o.spec.beam)*1.6;
     if (d < min){ e.x += dx/d*(min - d)*.5; e.y += dy/d*(min - d)*.5; }
     else if (d < min*2.6){ const k = (min*2.6 - d)/(min*1.6)*45*dt; e.x += dx/d*k; e.y += dy/d*k; } }
-  if (pushOut(e, e.spec.beam)) e.v *= .6;
+  if (hullAground(e, e.spec.len, e.spec.beam, 1)) e.v *= .6; // P99 (Nicholas): the whole hull, bow to stern, like the player's ship (was one wide circle at the middle)
   e.x = Math.max(60, Math.min(WORLD-60, e.x)); e.y = Math.max(60, Math.min(WORLD-60, e.y));
 }
 
