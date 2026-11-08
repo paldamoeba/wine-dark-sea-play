@@ -1,19 +1,19 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=dcca591';
-import {makePost} from './glow.js?v=dcca591';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=dcca591';
-import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=dcca591';
-import {buildArena} from './arenabuild.js?v=dcca591';
-import {IDEAS} from './shipideas.js?v=dcca591';
-import {makeFire, updateFire} from './fire.js?v=dcca591';
-import {updateSmoke} from './smoke.js?v=dcca591';
-import {addGrass, updateGrass} from './grass.js?v=dcca591';
-import {makeWind} from './seafx.js?v=dcca591';
-import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=dcca591';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=dcca591';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=dcca591';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=dcca591';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=e49f384';
+import {makePost} from './glow.js?v=e49f384';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=e49f384';
+import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=e49f384';
+import {buildArena} from './arenabuild.js?v=e49f384';
+import {IDEAS} from './shipideas.js?v=e49f384';
+import {makeFire, updateFire} from './fire.js?v=e49f384';
+import {updateSmoke} from './smoke.js?v=e49f384';
+import {addGrass, updateGrass} from './grass.js?v=e49f384';
+import {makeWind} from './seafx.js?v=e49f384';
+import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=e49f384';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=e49f384';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=e49f384';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=e49f384';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -275,7 +275,7 @@ const GROUPS = {
   hull:{name:'Hull upgrades', items:['bireme', 'trireme', 'rowboat', 'fishing', 'trader', 'merchant', 'penteconter', 'quinquereme', 'dinghy', 'skiff', 'raider', 'flagship'].map(m => ({
     name:m[0].toUpperCase() + m.slice(1) + ': hull levels', desc:'Levels 0, 1, 3, 5, 7 and 9. Level 1 turns the top rail gold, 3 the second rail, 5 adds a gold line lower on the hull, 7 the red and gold Greek key band, 9 a row of bronze shields with gold rims.',
     make:() => { const g = new T.Group(), sp = SPECS[m], dz = sp.B*2.2 + 40;
-      [0, 1, 3, 5, 7, 9].forEach((lv, i) => { const sh = buildShip(m, {plate:lv, ram:0, men:99}, true); sh.position.set(0, 0, (i - 2.5)*dz); labeled(sh, 'Level ' + lv, -sp.H*.6 - 14, Math.max(60, sp.L*.55)); g.add(sh); }); // side by side, bows the same way
+      [0, 1, 3, 5, 7, 9].forEach((lv, i) => { const sh = buildShip(m, {plate:lv, ram:0}, true); /* the ship's usual crew, not the most it can carry */ sh.position.set(0, 0, (i - 2.5)*dz); labeled(sh, 'Level ' + lv, -sp.H*.6 - 14, Math.max(60, sp.L*.55)); g.add(sh); }); // side by side, bows the same way
       return g; }}))},
   fortresses:{name:'Fortresses on their islands', items:SITE_ITEMS},
   ideas:{name:'Ship ideas', items:Object.entries(IDEAS).map(([k, v]) => ({name:v.name, desc:v.desc, make:() => buildShip('idea_' + k, {}, true)}))},
