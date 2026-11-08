@@ -1,19 +1,19 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=c873622';
-import {makePost} from './glow.js?v=c873622';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=c873622';
-import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=c873622';
-import {buildArena} from './arenabuild.js?v=c873622';
-import {IDEAS} from './shipideas.js?v=c873622';
-import {makeFire, updateFire} from './fire.js?v=c873622';
-import {updateSmoke} from './smoke.js?v=c873622';
-import {addGrass, updateGrass} from './grass.js?v=c873622';
-import {makeWind} from './seafx.js?v=c873622';
-import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=c873622';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=c873622';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=c873622';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=c873622';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=af48879';
+import {makePost} from './glow.js?v=af48879';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=af48879';
+import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=af48879';
+import {buildArena} from './arenabuild.js?v=af48879';
+import {IDEAS} from './shipideas.js?v=af48879';
+import {makeFire, updateFire} from './fire.js?v=af48879';
+import {updateSmoke} from './smoke.js?v=af48879';
+import {addGrass, updateGrass} from './grass.js?v=af48879';
+import {makeWind} from './seafx.js?v=af48879';
+import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=af48879';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=af48879';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=af48879';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=af48879';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});
@@ -271,6 +271,12 @@ const GROUPS = {
     {name:'Shipwrecks', desc:'Three sizes. A fishing boat wreck: 4 pulls of 1 wood. A merchant wreck: 6 pulls of 2 wood, coins, and sometimes an amphora of wine or oil. A warship wreck: 9 pulls of 3 wood and more coins.',
       make:() => { const g = new T.Group(); [['small', 'Fishing boat', -170], ['medium', 'Merchant', 0], ['large', 'Warship', 220]].forEach(([k, n, x]) => { const w = wreckModel(k); w.position.x = x; labeled(w, n, -22, 60); g.add(w); }); return g; }},
   ]},
+  // P96 (Nicholas): every ship's Hull upgrade looks, level by level: one gold rail, two, a third gold line, the Greek key band, shields
+  hull:{name:'Hull upgrades', items:['bireme', 'trireme', 'rowboat', 'fishing', 'trader', 'merchant', 'penteconter', 'quinquereme', 'dinghy', 'skiff', 'raider', 'flagship'].map(m => ({
+    name:m[0].toUpperCase() + m.slice(1) + ': hull levels', desc:'Levels 0, 1, 3, 5, 7 and 9. Level 1 turns the top rail gold, 3 the second rail, 5 adds a gold line lower on the hull, 7 the red and gold Greek key band, 9 a row of bronze shields with gold rims.',
+    make:() => { const g = new T.Group(), sp = SPECS[m], dz = sp.B*2.2 + 40;
+      [0, 1, 3, 5, 7, 9].forEach((lv, i) => { const sh = buildShip(m, {plate:lv, ram:0, men:99}, true); sh.position.set(0, 0, (i - 2.5)*dz); labeled(sh, 'Level ' + lv, -sp.H*.6 - 14, Math.max(60, sp.L*.55)); g.add(sh); }); // side by side, bows the same way
+      return g; }}))},
   fortresses:{name:'Fortresses on their islands', items:SITE_ITEMS},
   ideas:{name:'Ship ideas', items:Object.entries(IDEAS).map(([k, v]) => ({name:v.name, desc:v.desc, make:() => buildShip('idea_' + k, {}, true)}))},
   monuments:{name:'Monuments', items:[

@@ -182,7 +182,7 @@ function buildGeo(tris){
 const keelAt = (s, a) => -s.H*.5 + s.rise*.5*Math.pow(a, 4);
 // P50: the hull is one smooth curved shell (soft shading, no facets): a round belly, sheer rising to bow and stern,
 // a darker bottom below the waterline, a painted stripe under the rail, and faint plank rows. The inside and deck stay simple.
-function hull(s, paint){
+function hull(s, paint, trim = {}){ // trim.rail / trim.wale: P96 the Hull upgrade turns these rails gold
   const {L, B, H, rise} = s, C = PAINTS[paint] || PAINTS.gold, N = 56, K = 18;
   const W = a => B/2 * Math.pow(Math.max(0, 1 - Math.pow(a, 2.4)), .55);
   const deckY = a => H*.5 + rise*Math.pow(a, 3.2);
@@ -217,8 +217,8 @@ function hull(s, paint){
   const m = new T.Mesh(buildGeo(tris), mat('#ffffff', {vertexColors:true, side:T.DoubleSide})); m.castShadow = m.receiveShadow = true; g.add(m);
   const railR = Math.max(.9, B*.045), waleR = Math.max(.7, B*.035);
   const at = (p, sgn, f) => { const th = f*Math.PI; return [p.x, p.dy - (p.dy - p.ky)*Math.sin(th), sgn*p.w*Math.pow(Math.cos(th), .7)*1.04]; }; // a line along the side, f down from the rail
-  g.add(tube(loop(st, (p, sgn) => [p.x, p.dy + railR*.3, sgn*p.w]), railR, C.wale, 8, true));
-  g.add(tube(loop(st, (p, sgn) => at(p, sgn, 2/K)), waleR, C.wale, 8, true));
+  g.add(tube(loop(st, (p, sgn) => [p.x, p.dy + railR*.3, sgn*p.w]), railR, trim.rail ? GOLD_RAIL : C.wale, 8, true));
+  g.add(tube(loop(st, (p, sgn) => at(p, sgn, 2/K)), waleR, trim.wale ? GOLD_RAIL : C.wale, 8, true));
   g.add(tube(st.map(p => [p.x, p.ky - .6, 0]), Math.max(1, B*.04), C.bottom, 8));
   for (let k=-2;k<=2;k++){ const p = mesh(new T.BoxGeometry(L*.6, .35, .5), C.inner); p.position.set(0, deckLevel + .2, k*B*.12); g.add(p); }
   for (let k=0;k<6;k++){ const x = (-.3 + k*.12)*L, w = W(Math.abs(x/(L/2)))*1.7; const bm = mesh(new T.BoxGeometry(1.6, 1.2, w), C.wale); bm.position.set(x, deckLevel + .6, 0); g.add(bm); }
@@ -358,7 +358,7 @@ function oars(s, info, col){
 // gild: a gold rail and gold wale; band: a painted Greek key band under the rail; shields: bronze shields along the rails;
 // stern: the stern and bow fans gilded, with a gold scroll at the bow; pennants: long streamers from the stern and bow posts;
 // stripe: a gold stripe along the waterline.
-const GOLD_TRIM = '#cf9a34';
+const GOLD_TRIM = '#cf9a34', GOLD_RAIL = '#9c6a1e';
 const keyTex = () => canvasTex('meander', 512, 64, (c, w, h) => {
   c.fillStyle = '#7a1f22'; c.fillRect(0, 0, w, h); c.fillStyle = '#f0c45a'; c.fillRect(0, 0, w, 6); c.fillRect(0, h - 6, w, 6);
   c.strokeStyle = '#f0c45a'; c.lineWidth = 5; c.lineCap = 'square'; const u = 32;
@@ -370,43 +370,42 @@ function ribbon(rows, map, color){ // rows: [[top xyz, bottom xyz], ...] along t
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
   if (map){ map.wrapS = T.RepeatWrapping; } const m = new T.Mesh(g, mat(color || '#ffffff', {map, side:T.DoubleSide})); m.castShadow = false; m.receiveShadow = true; return m;
 }
-// P95 (Nicholas): the Hull upgrade levels dress the ship up step by step: a waterline stripe, then a gold rail, then the
-// Greek key band, then shields along the rails; level 9 gilds the stern and bow and level 10 flies pennants (the full look).
-export const HULL_STEPS = [[1, 'stripe'], [3, 'gild'], [5, 'band'], [7, 'shields'], [9, 'stern'], [10, 'pennants']];
+// P96 (Nicholas): the Hull upgrade levels dress the ship up in this order: one gold line, a second, a third, then the red and
+// gold Greek key band, then shields. The lines are paint on the planks: flat, following the hull, tapering to points before
+// the bow and stern. The band takes the place of the paint's own stripe (no extra colour). On a ship with an outrigger (the
+// trireme) the band and the shields go on the outrigger's face, so nothing cuts through it. Shields are all one bronze with gold.
+export const HULL_STEPS = [[1, 'line1'], [3, 'line2'], [5, 'line3'], [7, 'band'], [9, 'shields']];
 export const hullLooks = lv => HULL_STEPS.filter(([n]) => lv >= n).map(([, k]) => k);
+const goldTex = () => canvasTex('goldline2', 64, 16, (c, w, h) => { c.fillStyle = '#3a2412'; c.fillRect(0, 0, w, h); const g = c.createLinearGradient(0, 3, 0, h - 3); g.addColorStop(0, '#fbe08a'); g.addColorStop(.5, '#e6b040'); g.addColorStop(1, '#b8812a'); c.fillStyle = g; c.fillRect(0, 3, w, h - 6); }); // gold with a thin dark edge, so it shows on any paint
 function hullDecor(s, info, lk, pc, dec){
-  const g = new T.Group(), {st, at, railR, waleR, K} = info, mid = st.filter(p => p.a < .86), out = (q, sgn, d) => [q[0], q[1], q[2] + sgn*d];
-  const k = Math.max(.35, Math.min(1.6, s.L/141)), EDGE = '#3a2414'; // sizes follow the ship (141 = the bireme)
-  // a gold line with a thin dark edge under it, so it shows on any paint (even on a gold hull)
-  const goldLine = (pts, r, sgn) => { g.add(tube(pts.map(q => [q[0], q[1] - r*.35, q[2]*.995]), r*1.32, EDGE, 6)); g.add(tube(pts, r, GOLD_TRIM, 8)); };
+  const g = new T.Group(), {st} = info, k = Math.max(.35, Math.min(1.6, s.L/141)), out = s.outrigger ? {x0:-s.L*.33, x1:s.L*.29, z:info.W(.3) + 5, y0:info.deckLevel + s.H*.1, y1:info.deckLevel + s.H*.3} : null;
+  // a point on the hull's skin: h = 0 at the keel to 1 at the rail (the same h the paint uses), pushed out d
+  const skin = (p, sgn, h, d = .25) => { const th = Math.asin(Math.max(0, Math.min(1, 1 - h))); return [p.x, p.ky + (p.dy - p.ky)*h, sgn*(p.w*Math.pow(Math.cos(th), .7) + d)]; };
+  const strip = (h0, h1, aMax, tex, sgn, taper = true) => { const rows = st.filter(p => p.a < aMax).map(p => { const t = taper ? Math.min(1, (aMax - p.a)/.12) : 1, m = (h0 + h1)/2, hw = (h1 - h0)/2*t; return [skin(p, sgn, m + hw), skin(p, sgn, m - hw)]; });
+    return ribbon(rows, tex); };
+  const hidden = h => out && h > .78; // under the outrigger
   for (const sgn of [1, -1]){
-    if (dec.includes('stripe')) goldLine(mid.map(p => out(at(p, sgn, .34), sgn, .25)), Math.max(.45, waleR*.8), sgn);
-    if (dec.includes('gild')){ goldLine(st.map(p => [p.x, p.dy + railR*.4, sgn*p.w*1.012]), railR*.9, sgn); goldLine(st.map(p => out(at(p, sgn, 2/K), sgn, .2)), waleR*.9, sgn); }
-    if (dec.includes('band')) g.add(ribbon(mid.map(p => [out(at(p, sgn, 2/K + .03), sgn, .32), out(at(p, sgn, 2/K + .15), sgn, .32)]), keyTex()));
-    if (dec.includes('shields')){ const R = Math.max(1.7, Math.min(4.8, 3.6*k + .6)), n = Math.max(3, Math.round(s.L*.6/(R*2.6)));
-      for (let i = 0; i < n; i++){ const f = n > 1 ? -.5 + i/(n - 1) : 0, x = f*s.L*.58, a = Math.abs(x/(s.L/2)), w = info.W(a), y = info.deckY(a) - R*.15;
-        const sh = new T.Group(); sh.position.set(x, y, sgn*(w + R*.35)); sh.rotation.x = sgn*(Math.PI/2 - .55); // leaning out a little, like shields hung on the rail
-        sh.add(mesh(new T.CylinderGeometry(R, R*.96, R*.2, 20), i % 2 ? '#a8702e' : '#8e2a2a'));
-        const rim = mesh(new T.TorusGeometry(R, R*.12, 6, 22), GOLD_TRIM); rim.rotation.x = Math.PI/2; sh.add(rim);
-        const boss = mesh(new T.SphereGeometry(R*.28, 10, 8), GOLD_TRIM); boss.position.y = R*.1; boss.scale.y = .6; sh.add(boss); g.add(sh); } }
+    if (out && dec.includes('line2')){ const lip = mesh(new T.BoxGeometry(s.L*.63 + .4, 1.5, 6.4), GOLD_RAIL); lip.position.set(-s.L*.02, info.deckLevel + s.H*.31, sgn*(info.W(.3) + 2.5)); g.add(lip); } // the outrigger's lip turns gold too
+    for (const [key, h] of [['line3', s.oarCount ? .5 : .58]]) if (dec.includes(key)){ // (line1 and line2 are the two rails, turned gold in hull())
+      if (hidden(h)){ const lip = mesh(new T.BoxGeometry(out.x1 - out.x0, .9, .5), '#e0aa3e'); lip.position.set((out.x0 + out.x1)/2, out.y1 - .6, sgn*(out.z + .15)); g.add(lip); }
+      else g.add(strip(h - .035, h + .035, .86, goldTex(), sgn)); }
+    if (dec.includes('band')){
+      if (out){ const face = ribbon([[out.x0 + 1, out.y1 - .5, 0], [out.x1 - 1, out.y1 - .5, 0]].map(([x, y]) => [[x, y, sgn*(out.z + .2)], [x, out.y0 + .5, sgn*(out.z + .2)]]), keyTex()); g.add(face); }
+      g.add(strip(.735, .875, .78, keyTex(), sgn, false)); } // (on the trireme the hull's own stripe shows at the bow and stern too)
+    if (dec.includes('shields')){
+      const oarY = s.oarCount ? info.deckLevel + s.H*.14 : -1e9, mid = st.filter(p => p.a < .5), railAt = x => { const p = mid.reduce((b, q) => Math.abs(q.x - x) < Math.abs(b.x - x) ? q : b); return p; };
+      let R = 3.3*k + .4; const n = Math.max(3, Math.round(s.L*.56/(R*2.5)));
+      for (let i = 0; i < n; i++){ const x = (n > 1 ? -.5 + i/(n - 1) : 0)*s.L*(out ? .5 : .54) + (out ? (out.x0 + out.x1)/2 : 0), p = railAt(x);
+        let y, z, r = R;
+        if (out){ y = out.y1 + r*.3; z = out.z + .5; }
+        else { r = Math.min(R, Math.max(1.6, (p.dy - oarY - .6)/.6)); y = p.dy + r*.38; z = p.w + info.railR*1.15 + .35; } // outside the rail, standing on it
+        const sh = new T.Group(); sh.position.set(x, y, sgn*z); sh.rotation.x = sgn*(Math.PI/2 - .18);
+        sh.add(mesh(new T.CylinderGeometry(r, r*.95, r*.18, 22), '#a9742f'));
+        const rim = mesh(new T.TorusGeometry(r*.97, r*.1, 6, 24), '#e0aa3e'); rim.rotation.x = Math.PI/2; rim.position.y = r*.09; sh.add(rim);
+        const boss = mesh(new T.SphereGeometry(r*.26, 12, 8), '#e9bb54'); boss.position.y = r*.1; boss.scale.y = .55; sh.add(boss); g.add(sh); } }
   }
   if (dec.includes('prow')) for (const sgn of [1, -1]){ // a gold plate over the lower front of the bow (the store icon)
-    const bow = st.filter(p => p.x > 0 && p.a > .77); g.add(ribbon(bow.map(p => [out(at(p, sgn, .16), sgn, 1.1), out(at(p, sgn, .31), sgn, 2.2)]), canvasTex('goldplate', 64, 16, (c, w, h) => { c.fillStyle = '#d9a640'; c.fillRect(0, 0, w, h); c.fillStyle = '#b9832c'; c.fillRect(0, h*.45, w, 2); c.fillStyle = '#f2cf6e'; for (let x = 4; x < w; x += 16) c.fillRect(x, h*.2, 3, 3); })));
-    goldLine(bow.map(p => out(at(p, sgn, .16), sgn, 1.2)), waleR*.8, sgn); goldLine(bow.map(p => out(at(p, sgn, .31), sgn, 2.3)), waleR*.7, sgn); }
-  if (dec.includes('stern')){ // a gold scroll curling up and back over the bow
-    const pts = []; for (let j=0;j<=24;j++){ const u = j/24, a = u*Math.PI*1.6; pts.push([s.L/2 - 3*k + Math.sin(a)*7*k*u, info.deckY(1) - 2*k + (1 - Math.cos(a))*6.5*k*u + u*3*k, 0]); }
-    g.add(tube(pts, Math.max(.5, 1.15*k), GOLD_TRIM, 8)); }
-  if (dec.includes('pennants')) for (const [x, dir] of [[-s.L/2 + 2*k, 1]]){ // a long swallow-tailed streamer on a gold staff at the stern
-    const top = (x < 0 ? info.deckY(1) : info.deckY(Math.abs(x)/(s.L/2))) + 16*k, staff = mesh(new T.CylinderGeometry(.35*k + .15, .45*k + .2, 18*k, 6), GOLD_TRIM);
-    staff.position.set(x, top - 9*k, 0); g.add(staff); const knob = mesh(new T.SphereGeometry(.9*k + .3, 8, 6), GOLD_TRIM); knob.position.set(x, top + .5*k, 0); g.add(knob);
-    for (const [c, off] of [['#c23b2e', 0], ['#f4e9cf', 1]]){ const pos = [], N = 10, Lp = s.L*.2;
-      for (let j=0;j<=N;j++){ const u = j/N, xx = -dir*u*Lp, wv = Math.sin(u*Math.PI*2.2)*1.6*k*u, h = 2.4*k*(1 - u*.55), y0 = top - off*h;
-        pos.push([xx, y0, wv], [xx, y0 - h, wv]); }
-      const tail = pos.length; pos.push([-dir*(Lp + 4*k), top - off*2.4*k - .3*k, Math.sin(Math.PI*2.2)*1.6*k]); // the forked tip
-      const v = [], idx = []; pos.forEach(q => v.push(...q)); for (let j=0;j<N;j++){ const a0 = j*2; idx.push(a0, a0 + 1, a0 + 2, a0 + 1, a0 + 3, a0 + 2); }
-      idx.push(N*2, N*2 + 1, tail);
-      const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(v, 3)); geo.setIndex(idx); geo.computeVertexNormals();
-      const m = new T.Mesh(geo, mat(c, {side:T.DoubleSide})); m.position.x = x; g.add(m); } }
+    const bow = st.filter(p => p.x > 0 && p.a > .77); g.add(ribbon(bow.map(p => [skin(p, sgn, .55, 1.1), skin(p, sgn, .25, 2.2)]), goldTex())); }
   return g;
 }
 function fan(x, y, dir, color){
@@ -434,12 +433,29 @@ function wedge(len, h0, w0, h1, w1, color, lift = 0){
   for (let i=0;i<p.count;i++){ const u = p.getX(i)/len + .5, y = p.getY(i), z = p.getZ(i); p.setXYZ(i, p.getX(i), y*(h0 + (h1 - h0)*u) + lift*u, z*(w0 + (w1 - w0)*u)); }
   geo.computeVertexNormals(); return mesh(geo, color, {flatShading:false});
 }
-function ram(s, color = '#b8843e', k = 1, hullColor = '#7a4b28'){
-  const g = new T.Group(), h = Math.max(4, s.H*(s.bigRam ? .34 : .28))*k, fl = s.L*.15, bl = s.L*(s.bigRam ? .13 : .11)*k;
-  const fair = wedge(fl, s.H*.7, s.B*.34, h*1.05, s.B*.17, hullColor, -s.H*.12); fair.position.x = fl/2; g.add(fair); // the bow timbers flowing down into the ram
-  const beak = wedge(bl, h, s.B*.17, h*.45, s.B*.05, color); beak.position.x = fl + bl/2 - 1; g.add(beak);
-  for (const dy of [-.3, 0, .3]){ const fin = wedge(bl*.55, h*.12, s.B*.2, h*.06, s.B*.34, color); fin.position.set(fl + bl*.75, dy*h, 0); g.add(fin); } // the trident fins flare at the tip
-  const band = wedge(2.4, h*1.15, s.B*.19, h*1.15, s.B*.19, color); band.position.x = fl - .5; g.add(band); // a bronze collar where wood meets bronze
+// P96 (Nicholas: the ram must look really good): a cast bronze ram like the real ones (the Athlit ram): a sheath that tapers
+// forward from the stem, three flat blades across it that run out to a blunt trident tip, an upright cutting blade at the front,
+// a curved cowl on top and raised ribs along the sides. Bow timbers flow down into it.
+export function ram(s, color = '#b8843e', k = 1, hullColor = '#7a4b28'){
+  const g = new T.Group(), h = Math.max(4, s.H*(s.bigRam ? .36 : .3))*k, fl = s.L*.12, bl = s.L*(s.bigRam ? .13 : .11)*k, w0 = s.B*.22, w1 = s.B*.12;
+  const fair = wedge(fl, s.H*.7, s.B*.34, h*1.05, s.B*.2, hullColor, -s.H*.12); fair.position.x = fl/2; g.add(fair); // the bow timbers flowing down into the ram
+  const ext = (pts, depth, c) => { const sh = new T.Shape(); pts.forEach(([x, y], i) => i ? sh.lineTo(x, y) : sh.moveTo(x, y));
+    const ge = new T.ExtrudeGeometry(sh, {depth, bevelEnabled:true, bevelSize:Math.min(.6, depth*.12), bevelThickness:Math.min(.6, depth*.12), bevelSegments:2, steps:1}); ge.translate(0, 0, -depth/2); return mesh(ge, c); };
+  // the sheath: a rounded bronze beak, thick at the stem and narrowing to the tip (a lathe turned to lie along x)
+  const prof = [[0, 0], [h*.2, bl*.02], [h*.42, bl*.12], [h*.5, bl*.35], [h*.44, bl*.65], [h*.32, bl*.88], [h*.18, bl*.98], [0, bl]].map(([r, x]) => new T.Vector2(r, x));
+  const sg = new T.LatheGeometry(prof, 14); sg.rotateZ(-Math.PI/2); const sheath = mesh(sg, color); sheath.scale.set(1, 1, .8); sheath.position.x = fl - .5; g.add(sheath);
+  // three flat blades across it, flaring wider than the beak and running out to a blunt trident tip
+  for (const [dy, wk, len] of [[h*.3, .85, 1.02], [0, 1.1, 1.12], [-h*.3, .85, 1.02]]){
+    const blade = new T.Shape(), L0 = bl*.18, L1 = bl*len, a0 = h*.55*wk, b2 = h*.5*wk;
+    blade.moveTo(L0, -a0*.6); blade.lineTo(L1*.72, -b2); blade.quadraticCurveTo(L1, -b2*.8, L1, 0); blade.quadraticCurveTo(L1, b2*.8, L1*.72, b2); blade.lineTo(L0, a0*.6); blade.closePath();
+    const ge = new T.ExtrudeGeometry(blade, {depth:h*.08, bevelEnabled:true, bevelSize:h*.03, bevelThickness:h*.03, bevelSegments:2}); ge.rotateX(Math.PI/2); ge.translate(0, dy + h*.04, 0);
+    const m = mesh(ge, color); m.position.x = fl - .5; g.add(m); }
+  // an upright blade at the tip, and the cowl: a curved fin on top sweeping back up into the bow
+  const up = new T.Shape(); up.moveTo(bl*.86, -h*.4); up.lineTo(bl*1.13, -h*.32); up.quadraticCurveTo(bl*1.17, 0, bl*1.13, h*.34); up.lineTo(bl*.86, h*.4); up.closePath();
+  const ug = new T.ExtrudeGeometry(up, {depth:h*.12, bevelEnabled:true, bevelSize:h*.03, bevelThickness:h*.03, bevelSegments:1}); ug.translate(0, 0, -h*.06); const upm = mesh(ug, color); upm.position.x = fl - .5; g.add(upm);
+  const cw = new T.Shape(); cw.moveTo(0, h*.35); cw.quadraticCurveTo(bl*.35, h*.42, bl*.6, h*.38); cw.lineTo(bl*.55, h*.48); cw.quadraticCurveTo(bl*.2, h*.62, -bl*.05, h*1.05); cw.closePath();
+  const cg = new T.ExtrudeGeometry(cw, {depth:h*.14, bevelEnabled:true, bevelSize:h*.03, bevelThickness:h*.03, bevelSegments:1}); cg.translate(0, 0, -h*.07); const cwm = mesh(cg, color); cwm.position.x = fl - .5; g.add(cwm);
+  const band = mesh(new T.CylinderGeometry(h*.56, h*.56, h*.22, 16), color); band.rotation.z = Math.PI/2; band.scale.set(1, 1, .82); band.position.x = fl - .3; g.add(band); // a slim collar where wood meets bronze
   g.position.set(s.L*.37, keelAt(s, .74) + h*1.25, 0); return g; // riding at the waterline, half out of the water
 }
 // The pirate ram: a bronze boar's head, like the "samaina" ships of Polycrates, the pirate king of Samos.
@@ -561,9 +577,9 @@ function flagshipDeck(s, info, pc, sailKey){
 // Build a ship. look = {paint, sail, flag, helm (the archers' helmet), sailLv (the player's sail upgrades), men (crew size; all benches full if not given)}; crew = show the crew.
 export function buildShip(key, look = {}, crew = true){
   const s = SPECS[key], lk = {...s.look, ...look}, root = new T.Group(), body = new T.Group(); root.add(body);
-  const h = hull(s, lk.paint), info = h.userData; body.add(h);
+  const decs = lk.decor || hullLooks(lk.plate || 0), h = hull(s, lk.paint, {rail:decs.includes('line1'), wale:decs.includes('line2')}), info = h.userData; body.add(h);
   // twin = two hulls this far apart (the flagship); everything on the sides moves out with them
-  if (s.twin){ h.position.z = -s.twin; const h2 = hull(s, lk.paint); h2.position.z = s.twin; body.add(h2); }
+  if (s.twin){ h.position.z = -s.twin; const h2 = hull(s, lk.paint, {rail:decs.includes('line1'), wale:decs.includes('line2')}); h2.position.z = s.twin; body.add(h2); }
   const pc = PAINTS[lk.paint] || PAINTS.gold;
   root.userData = {oars:[], flags:[], spec:s, body};
   const lay = lk.men != null ? crewLayout(s, lk.men) : null;
@@ -620,11 +636,11 @@ export function buildShip(key, look = {}, crew = true){
   if (s.L >= 100) for (const sg of [1, -1]) torchAt.push([-s.L*.12, info.deckY(.24), sg*info.W(.24)*.95]);
   for (const [x, y, z] of torchAt){ const t = torch(); t.scale.setScalar(.65); t.position.set(x, y, z); t.visible = false; body.add(t); root.userData.torches.push(t); }
   // The player's ship shows its upgrades: the ram it has bought (not the built-in one) and extra planking along the sides.
-  if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/5)), sub = lk.ram - m*5; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.06 + m*.1, pc.bottom)); } }
+  if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/5)), sub = lk.ram - m*5; body.add(ram(s, ['#6e4626', '#94602a', '#c9952e'][m], .8 + sub*.06 + m*.1, pc.bottom)); } }
   else if (s.raider && s.ram) body.add(boarRam(s));
-  else if (s.ram) body.add(ram(s, '#b8843e', 1, pc.bottom));
-  const dec = lk.decor || hullLooks(lk.plate || 0); if (dec.length) body.add(hullDecor(s, info, lk, pc, dec));
-  const ornament = dec.includes('stern') ? GOLD_TRIM : lk.paint === 'raider' ? '#271b1b' : 'fan';
+  else if (s.ram) body.add(ram(s, '#94602a', 1, pc.bottom));
+  const dec = decs; if (dec.length) body.add(hullDecor(s, info, lk, pc, dec));
+  const ornament = lk.paint === 'raider' ? '#271b1b' : 'fan';
   if (s.fans) body.add(fan(-s.L/2 + 1.5, info.deckY(1) - 3, 1, ornament));
   if (s.bowFans) body.add(fan(s.L/2 - 1.5, info.deckY(1) - 3, -1, ornament));
   if (s.eyes) for (const sg of [1, -1]){
