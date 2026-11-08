@@ -183,28 +183,37 @@ const keelAt = (s, a) => -s.H*.5 + s.rise*.5*Math.pow(a, 4);
 // P50: the hull is one smooth curved shell (soft shading, no facets): a round belly, sheer rising to bow and stern,
 // a darker bottom below the waterline, a painted stripe under the rail, and faint plank rows. The inside and deck stay simple.
 function hull(s, paint, trim = {}){ // trim.rail / trim.wale: P96 the Hull upgrade turns these rails gold
-  const {L, B, H, rise} = s, C = PAINTS[paint] || PAINTS.gold, N = 56, K = 18;
+  const {L, B, H, rise} = s, C = PAINTS[paint] || PAINTS.gold, N = 96, K = 18;
   const W = a => B/2 * Math.pow(Math.max(0, 1 - Math.pow(a, 2.4)), .55);
   const deckY = a => H*.5 + rise*Math.pow(a, 3.2);
   const deckLevel = H*.5 - H*.3;
   const st = [];
   for (let i=0;i<=N;i++){
-    const t = -1 + 2*i/N, a = Math.abs(t), x = t*L/2, w = W(a), dy = deckY(a), ky = keelAt(s, a);
+    const u = -1 + 2*i/N, t = Math.sin(u*Math.PI/2), a = Math.abs(t), x = t*L/2, w = W(a), dy = deckY(a), ky = keelAt(s, a); // P97: more cross-sections toward the ends, where the hull narrows fast (no jagged shading there)
     st.push({x, a, w, dy, ky, inL:[x, Math.min(dy, deckLevel), -w*.84], inR:[x, Math.min(dy, deckLevel), w*.84]});
   }
-  // the shell: K+1 points round each cross-section, from the left rail down under the keel and up to the right rail
+  // the shell: points round each cross-section, from the left rail down under the keel and up to the right rail.
+  // P97 (Nicholas: the colours ran into each other in saw teeth at the bow and stern): every colour edge is a height on the
+  // hull (h, 0 at the keel, 1 at the rail), and each edge gets two rings of points in the same place, one in each colour, so
+  // the line between colours is clean and straight instead of zigzagging across the triangles.
+  const HB = .34, HP0 = .74, HP1 = .86, ths = [];
+  for (let k=0;k<=K;k++) ths.push({th:k/K*Math.PI});
+  for (const hEdge of [HB, HP0, HP1]){ const t0 = Math.asin(1 - hEdge); for (const th of [t0, Math.PI - t0]){ ths.push({th, side:-1, hEdge}); ths.push({th, side:1, hEdge}); } }
+  ths.sort((p, q) => p.th - q.th || (p.th < Math.PI/2 ? p.side - q.side : q.side - p.side));
+  const R = ths.length - 1;
   const pos = [], col = [], idx = [], c0 = new T.Color(), cTop = new T.Color(C.top), cBot = new T.Color(C.bottom), cPan = new T.Color(C.panel);
-  st.forEach((p, i) => { for (let k=0;k<=K;k++){
-    const th = k/K*Math.PI, c = Math.cos(th), d = Math.sin(th); // th 0 = left rail, half = keel, PI = right rail
+  st.forEach((p, i) => { for (const r of ths){
+    const th = r.th, c = Math.cos(th), d = Math.sin(th); // th 0 = left rail, half = keel, PI = right rail
     const z = -Math.sign(c)*p.w*Math.pow(Math.abs(c), .7), y = p.dy - (p.dy - p.ky)*d;
     pos.push(p.x, y, z);
-    const h = (y - p.ky)/Math.max(1, p.dy - p.ky), strake = Math.floor(h*9);
-    if (y < -H*.12 + rise*.3*Math.pow(p.a, 3)) c0.copy(cBot);
-    else if (h > .74 && h < .86 && p.a < .78) c0.copy(cPan);
+    // the colour of this point: an edge ring takes the colour of its own side (side -1 = toward the rail, +1 = toward the keel)
+    const h = r.hEdge != null ? r.hEdge + (th < Math.PI/2 ? -r.side : -r.side)*1e-4*(th < Math.PI/2 ? 1 : 1) : 1 - d, strake = Math.floor(Math.min(.999, h)*9);
+    if (h < HB) c0.copy(cBot);
+    else if (h > HP0 && h < HP1 && p.a < .78) c0.copy(cPan);
     else c0.copy(cTop).multiplyScalar(strake % 2 ? .95 : 1.03); // plank rows
     col.push(c0.r, c0.g, c0.b);
   } });
-  for (let i=0;i<N;i++) for (let k=0;k<K;k++){ const a0 = i*(K+1) + k, b0 = a0 + K + 1; idx.push(a0, b0, b0 + 1, a0, b0 + 1, a0 + 1); }
+  for (let i=0;i<N;i++) for (let k=0;k<R;k++){ const a0 = i*(R+1) + k, b0 = a0 + R + 1; idx.push(a0, b0, b0 + 1, a0, b0 + 1, a0 + 1); }
   const sg = new T.BufferGeometry(); sg.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); sg.setAttribute('color', new T.Float32BufferAttribute(col, 3)); sg.setIndex(idx); sg.computeVertexNormals();
   const tris = [];
   for (let i=0;i<N;i++){
@@ -438,7 +447,7 @@ function wedge(len, h0, w0, h1, w1, color, lift = 0){
 // a curved cowl on top and raised ribs along the sides. Bow timbers flow down into it.
 export function ram(s, color = '#b8843e', k = 1, hullColor = '#7a4b28'){
   const g = new T.Group(), h = Math.max(4, s.H*(s.bigRam ? .36 : .3))*k, fl = s.L*.12, bl = s.L*(s.bigRam ? .13 : .11)*k, w0 = s.B*.22, w1 = s.B*.12;
-  const fair = wedge(fl, s.H*.7, s.B*.34, h*1.05, s.B*.2, hullColor, -s.H*.12); fair.position.x = fl/2; g.add(fair); // the bow timbers flowing down into the ram
+  const fair = wedge(fl, h*1.3, s.B*.24, h*1.08, s.B*.2, hullColor, -h*.05); fair.position.x = fl/2; g.add(fair); // a short neck of bow timber into the ram (P97: no longer a big block under the bow)
   const ext = (pts, depth, c) => { const sh = new T.Shape(); pts.forEach(([x, y], i) => i ? sh.lineTo(x, y) : sh.moveTo(x, y));
     const ge = new T.ExtrudeGeometry(sh, {depth, bevelEnabled:true, bevelSize:Math.min(.6, depth*.12), bevelThickness:Math.min(.6, depth*.12), bevelSegments:2, steps:1}); ge.translate(0, 0, -depth/2); return mesh(ge, c); };
   // the sheath: a rounded bronze beak, thick at the stem and narrowing to the tip (a lathe turned to lie along x)
