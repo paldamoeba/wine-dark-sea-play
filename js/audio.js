@@ -2,7 +2,7 @@
 // Three volume knobs: music (the lyre and flute), effects (coins, arrows, bells) and the sea (waves, wind, rain, gulls).
 // Sounds with a place in the world (x, y) get quieter far from the camera and lean left or right on the screen.
 // Browsers keep sound off until the first tap, so everything waits for that.
-import {MUSIC_REST} from './config.js?v=0e2662a';
+import {MUSIC_REST} from './config.js?v=c873622';
 const AC = window.AudioContext || window.webkitAudioContext;
 export const SND = {on:true, music:.3, sfx:.6, sea:.6, style:'mix', rest:'medium', ready:false}; // .6 = Medium in Settings
 let ctx = null, out, musicBus, musicWet, sfxBus, seaBus, verb, noiseBuf, pinkBuf, brownBuf;
@@ -470,6 +470,26 @@ export const SONGBOOK = [
   {name:'Wine-Dark Evening',  style:'cello',  moods:['night', 'day'],  root:45, bpm:40, scale:MINOR, lh:SLOW, prog:DUSK, bars:24, thin:.5, soft:1.05},
   {name:'Old Lyre',           style:'harp',   moods:['day'],           root:50, bpm:50, scale:[0, 2, 3, 7, 9], lh:ROLL, prog:DUSK, bars:24, thin:.6, solo:true},
 ];
+// P95 (Nicholas): six recorded songs on real instruments (made from FluidR3 GM samples, MIT licence; game/music). They replace
+// the made-up songs: one plays to its end, the sea rests, then another that suits the moment (day, night, the harbor), never
+// one of the last few. vol matches them to the old music's loudness (the night ones a little softer, like before).
+export const RECORDED = [
+  {name:'Morning over Kallisto', file:'1-morning-over-kallisto', moods:['day', 'harbor'], vol:.6},
+  {name:'Olive Grove',           file:'2-olive-grove',           moods:['harbor', 'day'], vol:.6},
+  {name:'Moonlit Harbor',        file:'3-moonlit-harbor',        moods:['night', 'harbor'], vol:.5},
+  {name:'Cello at Dusk',         file:'4-cello-at-dusk',         moods:['night', 'day'], vol:.5},
+  {name:'Tide Pools',            file:'5-tide-pools',            moods:['day'], vol:.6},
+  {name:'Sleeping Sea',          file:'6-sleeping-sea',          moods:['night', 'day'], vol:.45},
+];
+const recBufs = {};
+function loadRec(r){ return recBufs[r.file] || (recBufs[r.file] = fetch('music/' + r.file + '.ogg').then(x => x.arrayBuffer()).then(ab => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)))); }
+function stopRec(fade = 1.5){ const p = M.rec; M.rec = null; if (!p || !p.src) return; try { p.g.gain.setTargetAtTime(0, now(), fade/3); p.src.stop(now() + fade + .1); } catch(e){} }
+function playRec(mood){
+  const list = RECORDED.filter(r => r.moods.includes(mood)), fresh = list.filter(r => !M.heardRec.includes(r.file)), pool = fresh.length ? fresh : list, r = pool[Math.floor(Math.random()*pool.length)];
+  if (!r) return; M.heardRec = [...M.heardRec, r.file].slice(-3); const p = M.rec = {r, src:null, g:null};
+  loadRec(r).then(buf => { if (M.rec !== p) return; const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = buf; g.gain.value = r.vol; src.connect(g); g.connect(musicBus); src.start(now() + .05);
+    src.onended = () => { if (M.rec === p){ M.rec = null; restNow(); } }; p.src = src; p.g = g; })
+    .catch(() => { recBufs[r.file] = null; if (M.rec === p){ M.rec = null; restNow(); } }); }
 const songStyle = sg => SND.style === 'mix' || !STYLES[SND.style] || SND.style === 'lyre' ? sg.style : SND.style;
 // the next song: one that suits the moment, not one of the last few heard
 function nextSong(mood){ const list = SONGBOOK.map((s, i) => i).filter(i => SONGBOOK[i].moods.includes(mood) || mood === 'battle'), fresh = list.filter(i => !M.heard.includes(i)), pool = fresh.length ? fresh : list, i = pool[Math.floor(Math.random()*pool.length)];
@@ -483,10 +503,10 @@ function motif(thin){ return pickR(RHYTHMS).map(([s, l], i) => ({s, l, mv:i ? pi
 // a tune for eight bars: motif A, A again a step away, something new (or a breath), then A to finish on the home note
 function newTune(sg){ const A = motif(sg.thin), B = Math.random() < .2 ? [] : motif(sg.thin); return {mot:[A, A, B, A], start:[4, pickR([3, 5]), 6, 4]}; }
 
-const M = {mood:'day', want:'day', next:0, step:0, bar:0, rest:25 + Math.random()*35, playing:0, mel:7, drone:null, test:null, style:null, cur:null, tune:null, idx:4, song:null, heard:[]}; // a new voyage opens on just the sea
+const M = {rec:null, heardRec:[], mood:'day', want:'day', next:0, step:0, bar:0, rest:25 + Math.random()*35, playing:0, mel:7, drone:null, test:null, style:null, cur:null, tune:null, idx:4, song:null, heard:[]}; // a new voyage opens on just the sea
 export function musicMood(m){ M.want = m; }
 function updateMusic(dt, a){
-  if (SND.music <= 0){ if (M.drone) droneStop(); return; }
+  if (SND.music <= 0){ if (M.drone) droneStop(); if (M.rec) stopRec(.3); return; }
   const st = M.style || SND.style || 'mix';
   if (st !== M.cur){ M.cur = st; M.bar = 0; M.step = 0; M.tune = null; M.playing = 0; M.song = null; if (M.drone) droneStop(); M.next = now() + .3; }
   if (st === 'lyre') return lyreMusic(dt);
@@ -497,7 +517,9 @@ function updateMusic(dt, a){
   else if (!M.song) M.mood = M.want; // a song plays to its end, even if day turns to night or you dock
   if (M.rest > 0){ M.rest -= dt; if (M.rest > 0) return; M.bar = 0; M.step = 0; M.next = t + .1; M.tune = null; M.playing = 0; }
   const bst = M.bstyle || SND.battle;
+  if (M.mood === 'battle' && M.rec) stopRec(1.2); // a fight fades the song out; its drums take over
   if (M.mood === 'battle' && bst !== 'calm') return battleMusic(t, bst);
+  if (M.mood !== 'battle' && st === 'mix' && !M.test){ if (!M.rec) playRec(M.mood); return; } // P95: the recorded songs
   if (M.mood !== 'battle' && !M.song) M.song = M.test || (M.noRest && M.style ? SONGS[M.mood] : nextSong(M.mood));
   const sg = M.mood === 'battle' ? SONGS.battle : M.song, S = STYLES[M.mood === 'battle' ? (st === 'mix' ? 'piano' : st) : (M.style || songStyle(sg))] || STYLES.piano, soft = sg.soft || 1, w = musicWet, root = sg.root;
   // the last two bars slow down a little, so a song ends like a song
@@ -655,3 +677,4 @@ export async function renderMusic(mood, secs = 20, style = null, bstyle = null, 
 }
 // A new style picked in Settings starts playing straight away, even in the middle of a rest.
 export function playNow(){ M.rest = 0; M.playing = 0; M.cur = null; }
+export const songNow = () => M.rec ? M.rec.r.name + (M.rec.src ? '' : ' (loading)') : null; // for tests and the Settings page

@@ -370,28 +370,43 @@ function ribbon(rows, map, color){ // rows: [[top xyz, bottom xyz], ...] along t
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
   if (map){ map.wrapS = T.RepeatWrapping; } const m = new T.Mesh(g, mat(color || '#ffffff', {map, side:T.DoubleSide})); m.castShadow = false; m.receiveShadow = true; return m;
 }
+// P95 (Nicholas): the Hull upgrade levels dress the ship up step by step: a waterline stripe, then a gold rail, then the
+// Greek key band, then shields along the rails; level 9 gilds the stern and bow and level 10 flies pennants (the full look).
+export const HULL_STEPS = [[1, 'stripe'], [3, 'gild'], [5, 'band'], [7, 'shields'], [9, 'stern'], [10, 'pennants']];
+export const hullLooks = lv => HULL_STEPS.filter(([n]) => lv >= n).map(([, k]) => k);
 function hullDecor(s, info, lk, pc, dec){
   const g = new T.Group(), {st, at, railR, waleR, K} = info, mid = st.filter(p => p.a < .86), out = (q, sgn, d) => [q[0], q[1], q[2] + sgn*d];
+  const k = Math.max(.35, Math.min(1.6, s.L/141)), EDGE = '#3a2414'; // sizes follow the ship (141 = the bireme)
+  // a gold line with a thin dark edge under it, so it shows on any paint (even on a gold hull)
+  const goldLine = (pts, r, sgn) => { g.add(tube(pts.map(q => [q[0], q[1] - r*.35, q[2]*.995]), r*1.32, EDGE, 6)); g.add(tube(pts, r, GOLD_TRIM, 8)); };
   for (const sgn of [1, -1]){
-    if (dec.includes('gild')){ g.add(tube(st.map(p => [p.x, p.dy + railR*.35, sgn*p.w*1.01]), railR*.95, GOLD_TRIM, 8));
-      g.add(tube(st.map(p => out(at(p, sgn, 2/K), sgn, .15)), waleR*.95, GOLD_TRIM, 8)); }
-    if (dec.includes('band')) g.add(ribbon(mid.map(p => [out(at(p, sgn, 2/K + .025), sgn, .3), out(at(p, sgn, 2/K + .15), sgn, .3)]), keyTex()));
-    if (dec.includes('stripe')){ g.add(tube(mid.map(p => out(at(p, sgn, .36), sgn, .2)), waleR*.9, GOLD_TRIM, 6)); }
-    if (dec.includes('shields')){ const n = Math.max(4, Math.round(s.L/22));
-      for (let i = 0; i < n; i++){ const f = -.5 + i/(n - 1), x = f*s.L*.62, a = Math.abs(x/(s.L/2)), w = info.W(a), y = info.deckY(a) - 1.2;
-        const sh = new T.Group(); sh.position.set(x, y - 2.2, sgn*(w + .9)); sh.rotation.x = sgn*Math.PI/2; sh.rotation.z = 0;
-        const d = mesh(new T.CylinderGeometry(4.6, 4.6, .9, 18), i % 2 ? '#a8702e' : '#8e2a2a'); sh.add(d);
-        const rim = mesh(new T.TorusGeometry(4.6, .55, 6, 20), GOLD_TRIM); rim.rotation.x = Math.PI/2; sh.add(rim);
-        const boss = mesh(new T.SphereGeometry(1.3, 10, 8), GOLD_TRIM); boss.position.y = sgn*0 + .6; sh.add(boss); g.add(sh); } }
-    if (dec.includes('pennants')){ const cols = [pc.panel, '#ffffff', pc.wale];
-      for (const [x, y, dir] of [[-s.L/2 + 2, info.deckY(1) + 12, 1], [s.L/2 - 2, info.deckY(1) + 12, -1]]){ if (sgn < 0) continue;
-        cols.forEach((c, k) => { const L = s.L*.16, geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([0, 0, 0, 0, -3, 0, -dir*L, -1.5 - k*3, (k - 1)*2], 3)); geo.computeVertexNormals();
-          const m = new T.Mesh(geo, mat(c, {side:T.DoubleSide})); m.position.set(x, y + 4 - k*2.5, 0); g.add(m); });
-        const pole = mesh(new T.CylinderGeometry(.5, .5, 14, 5), GOLD_TRIM); pole.position.set(x, y - 2, 0); g.add(pole); } }
+    if (dec.includes('stripe')) goldLine(mid.map(p => out(at(p, sgn, .34), sgn, .25)), Math.max(.45, waleR*.8), sgn);
+    if (dec.includes('gild')){ goldLine(st.map(p => [p.x, p.dy + railR*.4, sgn*p.w*1.012]), railR*.9, sgn); goldLine(st.map(p => out(at(p, sgn, 2/K), sgn, .2)), waleR*.9, sgn); }
+    if (dec.includes('band')) g.add(ribbon(mid.map(p => [out(at(p, sgn, 2/K + .03), sgn, .32), out(at(p, sgn, 2/K + .15), sgn, .32)]), keyTex()));
+    if (dec.includes('shields')){ const R = Math.max(1.7, Math.min(4.8, 3.6*k + .6)), n = Math.max(3, Math.round(s.L*.6/(R*2.6)));
+      for (let i = 0; i < n; i++){ const f = n > 1 ? -.5 + i/(n - 1) : 0, x = f*s.L*.58, a = Math.abs(x/(s.L/2)), w = info.W(a), y = info.deckY(a) - R*.15;
+        const sh = new T.Group(); sh.position.set(x, y, sgn*(w + R*.35)); sh.rotation.x = sgn*(Math.PI/2 - .55); // leaning out a little, like shields hung on the rail
+        sh.add(mesh(new T.CylinderGeometry(R, R*.96, R*.2, 20), i % 2 ? '#a8702e' : '#8e2a2a'));
+        const rim = mesh(new T.TorusGeometry(R, R*.12, 6, 22), GOLD_TRIM); rim.rotation.x = Math.PI/2; sh.add(rim);
+        const boss = mesh(new T.SphereGeometry(R*.28, 10, 8), GOLD_TRIM); boss.position.y = R*.1; boss.scale.y = .6; sh.add(boss); g.add(sh); } }
   }
-  if (dec.includes('stern')){ // a gold scroll curling up at the bow
-    const pts = []; for (let k=0;k<=20;k++){ const u = k/20, a = u*Math.PI*1.5; pts.push([s.L/2 - 3 + Math.sin(a)*8*u, info.deckY(1) - 2 + (1 - Math.cos(a))*7*u + u*4, 0]); }
-    g.add(tube(pts, 1.3, GOLD_TRIM, 6)); }
+  if (dec.includes('prow')) for (const sgn of [1, -1]){ // a gold plate over the lower front of the bow (the store icon)
+    const bow = st.filter(p => p.x > 0 && p.a > .77); g.add(ribbon(bow.map(p => [out(at(p, sgn, .16), sgn, 1.1), out(at(p, sgn, .31), sgn, 2.2)]), canvasTex('goldplate', 64, 16, (c, w, h) => { c.fillStyle = '#d9a640'; c.fillRect(0, 0, w, h); c.fillStyle = '#b9832c'; c.fillRect(0, h*.45, w, 2); c.fillStyle = '#f2cf6e'; for (let x = 4; x < w; x += 16) c.fillRect(x, h*.2, 3, 3); })));
+    goldLine(bow.map(p => out(at(p, sgn, .16), sgn, 1.2)), waleR*.8, sgn); goldLine(bow.map(p => out(at(p, sgn, .31), sgn, 2.3)), waleR*.7, sgn); }
+  if (dec.includes('stern')){ // a gold scroll curling up and back over the bow
+    const pts = []; for (let j=0;j<=24;j++){ const u = j/24, a = u*Math.PI*1.6; pts.push([s.L/2 - 3*k + Math.sin(a)*7*k*u, info.deckY(1) - 2*k + (1 - Math.cos(a))*6.5*k*u + u*3*k, 0]); }
+    g.add(tube(pts, Math.max(.5, 1.15*k), GOLD_TRIM, 8)); }
+  if (dec.includes('pennants')) for (const [x, dir] of [[-s.L/2 + 2*k, 1]]){ // a long swallow-tailed streamer on a gold staff at the stern
+    const top = (x < 0 ? info.deckY(1) : info.deckY(Math.abs(x)/(s.L/2))) + 16*k, staff = mesh(new T.CylinderGeometry(.35*k + .15, .45*k + .2, 18*k, 6), GOLD_TRIM);
+    staff.position.set(x, top - 9*k, 0); g.add(staff); const knob = mesh(new T.SphereGeometry(.9*k + .3, 8, 6), GOLD_TRIM); knob.position.set(x, top + .5*k, 0); g.add(knob);
+    for (const [c, off] of [['#c23b2e', 0], ['#f4e9cf', 1]]){ const pos = [], N = 10, Lp = s.L*.2;
+      for (let j=0;j<=N;j++){ const u = j/N, xx = -dir*u*Lp, wv = Math.sin(u*Math.PI*2.2)*1.6*k*u, h = 2.4*k*(1 - u*.55), y0 = top - off*h;
+        pos.push([xx, y0, wv], [xx, y0 - h, wv]); }
+      const tail = pos.length; pos.push([-dir*(Lp + 4*k), top - off*2.4*k - .3*k, Math.sin(Math.PI*2.2)*1.6*k]); // the forked tip
+      const v = [], idx = []; pos.forEach(q => v.push(...q)); for (let j=0;j<N;j++){ const a0 = j*2; idx.push(a0, a0 + 1, a0 + 2, a0 + 1, a0 + 3, a0 + 2); }
+      idx.push(N*2, N*2 + 1, tail);
+      const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(v, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+      const m = new T.Mesh(geo, mat(c, {side:T.DoubleSide})); m.position.x = x; g.add(m); } }
   return g;
 }
 function fan(x, y, dir, color){
@@ -608,10 +623,7 @@ export function buildShip(key, look = {}, crew = true){
   if (lk.ram !== undefined){ if (lk.ram > 0){ const m = Math.min(2, Math.floor((lk.ram - 1)/5)), sub = lk.ram - m*5; body.add(ram(s, ['#8a5a30', '#b07f3c', '#e3b341'][m], .8 + sub*.06 + m*.1, pc.bottom)); } }
   else if (s.raider && s.ram) body.add(boarRam(s));
   else if (s.ram) body.add(ram(s, '#b8843e', 1, pc.bottom));
-  if (lk.plate > 0){ const c = lk.plate >= 10 ? '#e3b341' : lk.plate >= 5 ? '#b07f3c' : '#7a5230', n = 6;
-    for (let i=0;i<n;i++) for (const sg of [1, -1]){ const f = -.34 + i*.68/(n - 1), x = f*s.L, w = info.W(Math.abs(f*2));
-      const b = mesh(new T.BoxGeometry(s.L*.68/n + 1, s.H*.2, 1.4), c); b.position.set(x, s.H*.28, sg*(w + .5)); b.rotation.y = -sg*f*.35; body.add(b); } }
-  const dec = lk.decor || []; if (dec.length) body.add(hullDecor(s, info, lk, pc, dec));
+  const dec = lk.decor || hullLooks(lk.plate || 0); if (dec.length) body.add(hullDecor(s, info, lk, pc, dec));
   const ornament = dec.includes('stern') ? GOLD_TRIM : lk.paint === 'raider' ? '#271b1b' : 'fan';
   if (s.fans) body.add(fan(-s.L/2 + 1.5, info.deckY(1) - 3, 1, ornament));
   if (s.bowFans) body.add(fan(s.L/2 - 1.5, info.deckY(1) - 3, -1, ornament));

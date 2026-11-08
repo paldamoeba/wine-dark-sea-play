@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=0e2662a';
+import {hash} from './world.js?v=c873622';
 
-import {smokeColumn} from './smoke.js?v=0e2662a';
+import {smokeColumn} from './smoke.js?v=c873622';
 const T = window.THREE;
-import {mat} from './ships.js?v=0e2662a';
+import {mat} from './ships.js?v=c873622';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -208,12 +208,57 @@ function makeGullGeo(){
   geo.computeVertexNormals(); return geo;
 }
 const gullMat = new T.MeshPhongMaterial({color:'#e8e8e8', vertexColors:true, shininess:12, specular:new T.Color('#2a3036'), morphTargets:true, morphNormals:false});
-export function gull(){ const g = new T.Group();
+export let GULL_PICK = 'white'; // P95: which of the five looks the game's gulls use (Nicholas picks)
+export function gull(){ return gullV(GULL_PICK); }
+export function gullOld(){ const g = new T.Group();
   gullGeo = gullGeo || makeGullGeo();
   const m = new T.Mesh(gullGeo, gullMat); m.castShadow = m.receiveShadow = true; m.morphTargetInfluences = [0]; g.add(m);
   const beak = soft(new T.ConeGeometry(.42, 2, 14), '#e0a030'); beak.rotation.z = -Math.PI/2 - .12; beak.position.set(9.4, .7, 0); g.add(beak);
   g.userData.flap = v => { m.morphTargetInfluences[0] = Math.max(-.5, v); };
   g.userData.wings = []; return g; }
+// P95 (Nicholas: birds like his picture): crisp low-poly gulls, faceted like paper, with separate wings that bend at the
+// shoulder and the elbow. Five looks to choose from (GULL_LOOKS); gullV(key) builds one. Faces +x like gull(); flap(v) -1..1.
+export const GULL_LOOKS = {
+  white:    {name:'White glider', body:'#f4f3ef', wing:'#f4f3ef', under:'#d9dde2', tip:'#f4f3ef', beak:'#f0a531', feet:'#f0a531', span:16, chord:6.2, sweep:.55, droop:.18},
+  herring:  {name:'Grey-backed gull', body:'#f6f5f1', wing:'#a7b3bf', under:'#e4e7ea', tip:'#24282d', beak:'#f2c23a', feet:'#e8a39a', span:16, chord:6, sweep:.6, droop:.14, spots:true},
+  albatross:{name:'Albatross', body:'#f6f5f1', wing:'#5b5650', under:'#f0eee8', tip:'#3e3a36', beak:'#f0c7a0', feet:'#c9b7a8', span:22, chord:4.6, sweep:.35, droop:.1},
+  puffy:    {name:'Round little gull', body:'#ffffff', wing:'#ffffff', under:'#dfe7ee', tip:'#9fb3c6', beak:'#ff9a3c', feet:'#ff9a3c', span:12, chord:6.8, sweep:.3, droop:.22, round:1.35, smooth:true},
+  tern:     {name:'Tern', body:'#f7f7f4', wing:'#dfe5ea', under:'#f2f4f5', tip:'#7d8892', beak:'#e2442c', feet:'#e2442c', span:17, chord:4.4, sweep:.75, droop:.08, cap:'#1c1d20', fork:true, slim:.75},
+};
+const flatMats = {};
+const flatMat = (c, smooth) => flatMats[c + smooth] || (flatMats[c + smooth] = new T.MeshLambertMaterial({color:c, flatShading:!smooth, side:T.DoubleSide}));
+const fm = (geo, c, smooth) => { const m = new T.Mesh(geo, flatMat(c, smooth)); m.castShadow = true; return m; };
+// a flat plate from an outline in (x, z), with a little thickness, lying in the bird's wing plane
+function plate(pts, th, c, smooth){ const sh = new T.Shape(); pts.forEach(([x, z], i) => i ? sh.lineTo(x, -z) : sh.moveTo(x, -z));
+  const g = new T.ExtrudeGeometry(sh, {depth:th, bevelEnabled:false}); g.rotateX(-Math.PI/2); g.translate(0, -th/2, 0); return fm(g, c, smooth); }
+export function gullV(key){
+  const L = GULL_LOOKS[key] || GULL_LOOKS.white, g = new T.Group(), sm = !!L.smooth, k = L.round || 1, sl = L.slim || 1;
+  // body: a faceted spindle from tail to head, along x
+  const prof = [[-8.5, 0], [-7, .55], [-3.5, 1.5], [0, 2.1], [3, 2.05], [5, 1.7], [6.6, 1.15], [7.4, 0]].map(([x, r]) => new T.Vector2(r*k*sl, x*(sm ? .9 : 1)));
+  const bg = new T.LatheGeometry(prof, sm ? 16 : 6); bg.rotateZ(-Math.PI/2); const body = fm(bg, L.body, sm); body.scale.set(1, .9, 1); g.add(body);
+  const head = fm(new T.IcosahedronGeometry(1.75*k*sl, sm ? 2 : 0), L.body, sm); head.position.set(6.4*(sm ? .92 : 1), .9, 0); g.add(head);
+  if (L.cap){ const cap = fm(new T.IcosahedronGeometry(1.8*sl, 0), L.cap); cap.scale.set(1.05, .55, 1); cap.position.set(6.2, 1.75, 0); g.add(cap); }
+  const beak = fm(new T.ConeGeometry(.55*k, 2.6, sm ? 10 : 4), L.beak, sm); beak.rotation.z = -Math.PI/2 - .1; beak.position.set(head.position.x + 2.6*k*sl, .7, 0); g.add(beak);
+  // tail: a short fan, or a deep fork for the tern
+  const tail = L.fork ? plate([[-6, 0], [-11.5, 2.4], [-9, .5], [-9, -.5], [-11.5, -2.4]], .35, L.wing) : plate([[-6, -1.1], [-6, 1.1], [-9.6, 2], [-10.2, 0], [-9.6, -2]], .35, L.body, sm);
+  tail.position.y = .2; g.add(tail);
+  for (const sz of [1, -1]){ const ft = fm(new T.ConeGeometry(.35, 2.2, 4), L.feet); ft.rotation.z = Math.PI/2 + .25; ft.position.set(-7.2, -1.2, sz*.6); g.add(ft); }
+  // wings: shoulder pivot -> inner panel (broad, the leading edge straight, the trailing edge tapering), elbow pivot -> the
+  // outer panel sweeping back to a pointed tip (in the tip colour)
+  const S = L.span, C = L.chord, sw = L.sweep, wings = [];
+  for (const sz of [1, -1]){
+    const sh = new T.Group(); sh.position.set(1.6, .9, sz*1.1); g.add(sh);
+    const ie = S*.4, c1 = C*.82, inner = plate([[C*.42, 0], [C*.4, sz*ie], [C*.4 - c1, sz*ie], [C*.42 - C, sz*.2], [C*.42 - C*.95, 0]], .5, L.wing, sm); sh.add(inner);
+    const under = plate([[C*.36, 0], [C*.34, sz*ie], [C*.34 - c1*.9, sz*ie], [C*.36 - C*.9, 0]], .12, L.under, sm); under.position.y = -.34; sh.add(under);
+    const el = new T.Group(); el.position.set(C*.4, 0, sz*ie); sh.add(el);
+    const oe = S*.62, tipAt = oe*.55, back = sw*S*.5, c2 = c1*.72;
+    el.add(plate([[0, 0], [-back*.45, sz*tipAt], [-back*.45 - c2, sz*tipAt], [-c1, 0]], .42, L.wing, sm));
+    el.add(plate([[-back*.45, sz*tipAt], [-back*1.05 - c2*.2, sz*oe], [-back*.75 - c2*.55, sz*oe*.93], [-back*.45 - c2, sz*tipAt]], .38, L.tip, sm));
+    if (L.spots){ const sp = fm(new T.CircleGeometry(.5, 6), '#ffffff'); sp.rotation.x = -Math.PI/2; sp.position.set(-back*.95, .25, sz*oe*.86); el.add(sp); }
+    wings.push({sh, el, sz}); }
+  const pose = v => { for (const w of wings){ w.sh.rotation.x = -w.sz*(v*.55 - .06); w.sh.rotation.y = -w.sz*.12; w.el.rotation.x = -w.sz*(-v*.35 + L.droop); w.el.rotation.y = -w.sz*(.32 + sw*.35 - v*.12); } }; // the hand sweeps back, a little less on the upstroke
+  pose(0); g.userData.flap = v => pose(Math.max(-1, Math.min(1, v))); g.userData.wings = [];
+  g.scale.setScalar(.9); return g; }
 // The whale: one long smooth body, dark blue-grey on top and pale underneath, long soft flippers and wide flukes that grow
 // out of the body without seams.
 // P53: a friendly humpback: a big blunt head, a body that narrows into a slim tail stalk, wide swept-back flukes,
