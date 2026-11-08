@@ -383,7 +383,7 @@ function ribbon(rows, map, color){ // rows: [[top xyz, bottom xyz], ...] along t
 // gold Greek key band, then shields. The lines are paint on the planks: flat, following the hull, tapering to points before
 // the bow and stern. The band takes the place of the paint's own stripe (no extra colour). On a ship with an outrigger (the
 // trireme) the band and the shields go on the outrigger's face, so nothing cuts through it. Shields are all one bronze with gold.
-export const HULL_STEPS = [[1, 'line1'], [3, 'line2'], [5, 'line3'], [7, 'band'], [9, 'shields']];
+export const HULL_STEPS = [[1, 'line1'], [3, 'line2'], [5, 'line3'], [7, 'band'], [9, 'shields'], [10, 'prow']]; // P98 (Nicholas): level 10 adds the gold plate on the bow
 export const hullLooks = lv => HULL_STEPS.filter(([n]) => lv >= n).map(([, k]) => k);
 const goldTex = () => canvasTex('goldline2', 64, 16, (c, w, h) => { c.fillStyle = '#3a2412'; c.fillRect(0, 0, w, h); const g = c.createLinearGradient(0, 3, 0, h - 3); g.addColorStop(0, '#fbe08a'); g.addColorStop(.5, '#e6b040'); g.addColorStop(1, '#b8812a'); c.fillStyle = g; c.fillRect(0, 3, w, h - 6); }); // gold with a thin dark edge, so it shows on any paint
 function hullDecor(s, info, lk, pc, dec){
@@ -414,7 +414,7 @@ function hullDecor(s, info, lk, pc, dec){
         const boss = mesh(new T.SphereGeometry(r*.26, 12, 8), '#e9bb54'); boss.position.y = r*.1; boss.scale.y = .55; sh.add(boss); g.add(sh); } }
   }
   if (dec.includes('prow')) for (const sgn of [1, -1]){ // a gold plate over the lower front of the bow (the store icon)
-    const bow = st.filter(p => p.x > 0 && p.a > .77); g.add(ribbon(bow.map(p => [skin(p, sgn, .55, 1.1), skin(p, sgn, .25, 2.2)]), goldTex())); }
+    const bow = st.filter(p => p.x > 0 && p.a > .77); g.add(ribbon(bow.map(p => [skin(p, sgn, .55, 1.1*k + .15), skin(p, sgn, .25, 2.2*k + .2)]), goldTex())); }
   return g;
 }
 function fan(x, y, dir, color){
