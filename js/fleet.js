@@ -1,7 +1,7 @@
 // Your fleet: every ship you build stays yours, moored at Kallisto with its own upgrades, hull and paint.
 // Switch ships at the Kallisto shipwright. Your crew comes with you (sailors beyond the seats wait on the pier).
-import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=594c3b4';
-import {G, ship, used, capOf, LOADS} from './state.js?v=594c3b4';
+import {SHIPS, CAPTAIN, UPGRADES} from './config.js?v=df93f2f';
+import {G, ship, used, capOf, LOADS} from './state.js?v=df93f2f';
 
 export const owned = () => G.S.owned || (G.S.owned = Array.from({length:G.S.tier + 1}, (_, i) => i));
 export const has = t => owned().includes(t);

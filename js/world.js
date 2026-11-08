@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=594c3b4';
-import {MAPDATA} from './mapdata.js?v=594c3b4';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=df93f2f';
+import {MAPDATA} from './mapdata.js?v=df93f2f';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -79,11 +79,15 @@ export function stormDepth(x, y){ const b = bounds(x,y); return Math.max(0, b.d 
 // ---- land: a distance grid. landDist(x, y) = how far to the nearest shore; negative on land ----
 const CELL = Math.max(20, WORLD/1100), GN = Math.ceil(WORLD/CELL) + 1;
 const SDF = (() => {
-  const cv = document.createElement('canvas'); cv.width = cv.height = GN;
-  const g = cv.getContext('2d'); g.scale(1/CELL, 1/CELL); g.fillStyle = '#000';
-  for (const is of ISLANDS){ g.beginPath(); is.tiers[0].forEach(([x, y], k) => k ? g.lineTo(is.x + x, is.y + y) : g.moveTo(is.x + x, is.y + y)); g.closePath(); g.fill(); }
-  const px = g.getImageData(0, 0, GN, GN).data, N = GN*GN, land = new Uint8Array(N);
-  for (let i=0;i<N;i++) land[i] = px[i*4+3] > 127 ? 1 : 0;
+  // P103 (a friend's iPhone: the boat sailed into Kallisto): fill the islands with plain math instead of drawing them on a
+  // canvas and reading the pixels back, since Safari's anti-tracking protection can scramble or blank that read-back
+  const N = GN*GN, land = new Uint8Array(N);
+  for (const is of ISLANDS){ const P = is.tiers[0].map(([x, y]) => [(is.x + x)/CELL, (is.y + y)/CELL]), n = P.length;
+    let y0 = Infinity, y1 = -Infinity; for (const [, y] of P){ y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    for (let row = Math.max(0, Math.floor(y0)); row <= Math.min(GN - 1, Math.ceil(y1)); row++){ const cy = row + .5, xs = [];
+      for (let i=0;i<n;i++){ const [ax, ay] = P[i], [bx, by] = P[(i+1) % n]; if ((ay <= cy) !== (by <= cy)) xs.push(ax + (cy - ay)/(by - ay)*(bx - ax)); }
+      xs.sort((p, q) => p - q);
+      for (let k=0;k+1<xs.length;k+=2){ const c0 = Math.max(0, Math.ceil(xs[k] - .5)), c1 = Math.min(GN - 1, Math.floor(xs[k+1] - .5)); for (let c=c0;c<=c1;c++) land[row*GN + c] = 1; } } }
   // two-pass chamfer distance, once from land into the water and once from water into the land
   const pass = (src, want) => {
     const d = new Float32Array(N); for (let i=0;i<N;i++) d[i] = src[i] === want ? 0 : 1e9;
