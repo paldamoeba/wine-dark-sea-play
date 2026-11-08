@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=4dc6694';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=4dc6694';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=4dc6694';
-import {scene, screenToSea, setLair} from './scene.js?v=4dc6694';
-import {wreckModel} from './models.js?v=4dc6694';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=4dc6694';
-import {mergeStatic, freeModel} from './merge.js?v=4dc6694';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=4dc6694';
-import {award} from './trophies.js?v=4dc6694';
-import {makeFire, updateFire, burn} from './fire.js?v=4dc6694';
-import {blessing, fighters, hasSail} from './crew.js?v=4dc6694';
-import {progress, goal} from './quests.js?v=4dc6694';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=4dc6694';
-import {rollColor, unlockColor, colorName} from './colors.js?v=4dc6694';
-import {toast} from './ui.js?v=4dc6694';
-import {sink, rowNow, ROW} from './player.js?v=4dc6694';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=4dc6694';
-import {TOD} from './daynight.js?v=4dc6694';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=4dc6694';
-import {sfx} from './audio.js?v=4dc6694';
-import {myLevel} from './levels.js?v=4dc6694';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=f913895';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=f913895';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=f913895';
+import {scene, screenToSea, setLair} from './scene.js?v=f913895';
+import {wreckModel} from './models.js?v=f913895';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=f913895';
+import {mergeStatic, freeModel} from './merge.js?v=f913895';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=f913895';
+import {award} from './trophies.js?v=f913895';
+import {makeFire, updateFire, burn} from './fire.js?v=f913895';
+import {blessing, fighters, hasSail} from './crew.js?v=f913895';
+import {progress, goal} from './quests.js?v=f913895';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=f913895';
+import {rollColor, unlockColor, colorName} from './colors.js?v=f913895';
+import {toast} from './ui.js?v=f913895';
+import {sink, rowNow, ROW} from './player.js?v=f913895';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=f913895';
+import {TOD} from './daynight.js?v=f913895';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=f913895';
+import {sfx} from './audio.js?v=f913895';
+import {myLevel} from './levels.js?v=f913895';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -125,7 +125,7 @@ for (const n of NAMED){ const is = ISLANDS.find(i => i.name === n.near); if (!is
 }
 
 function buildFort(e){
-  if (e.camp){ const g = buildCamp(); g.rotation.y = -e.a; g.scale.setScalar([.85, 1, 1.2][(e.camp.lv || 1) - 1]*e.site.s); /* bigger camps for higher levels, smaller on a tiny island */ return g; }
+  if (e.camp){ const g = buildCamp(); g.rotation.y = -e.a; g.scale.setScalar(e.site.k || e.site.s); /* bigger camps for higher levels, smaller on a tiny island */ return g; }
   const g = buildFortress(e.owner, e.owner === 'pirate' ? '#231d1d' : e.owner === 'you' ? '#d48a2a' : CITIES[e.owner].color, e.site);
   g.rotation.y = -e.a; return g;
 }
@@ -165,7 +165,8 @@ const standIn = () => { const g = new T.Group(); g.userData = {oars:[], flags:[]
 const alwaysReal = e => e.boss || e.temp || e.ally || e.arena;
 const NEAR_BUILD = () => Math.max(2600, scene.fog.far + 800);
 function buildEnemy(e, real = e.real || alwaysReal(e)){ const old = e.obj;
-  if (!e.fire) e.fire = e.fort ? makeFire(140, 120, 90) : makeFire(e.spec.len, e.spec.beam, SPECS[e.spec.model].H*.9);
+  if (!e.fire){ e.fire = e.camp ? makeFire(110, 70, 20) : e.fort ? makeFire(140, 120, 90) : makeFire(e.spec.len, e.spec.beam, SPECS[e.spec.model].H*.9);
+    if (e.camp) e.fire.position.x = -40; } // P92: a camp burns on its cabin roofs, not up in the air where a fortress's walls would be
   if (!real) e.obj = standIn();
   else if (e.fort) e.obj = buildFort(e);
   else e.obj = buildShip(e.model || e.spec.model, {...lookOf(e), ...levelLook(e)}, G.settings.dev.crew);
@@ -929,8 +930,11 @@ function catapultAt(at){
   return true;
 }
 // called by the ability bar (input on the buttons): kind, and the spot on the sea (or null for a tap)
-$('rowBtn').addEventListener('click', () => rowNow());
-$('stopBtn').addEventListener('click', () => { G.cruise = false; G.dest = null; G.rowT = 0; sfx('dock'); }); // lower the sail: the ship glides to a stop
+// P92 (Nicholas): these work on the touch itself, not on 'click', which a phone skips while another finger is down (steering)
+const press = (el, fn) => { let at = 0; el.addEventListener('pointerdown', e => { if (el.disabled) return; e.preventDefault(); at = performance.now(); fn(); });
+  el.addEventListener('click', () => { if (performance.now() - at > 700) fn(); }); }; // (a click still works from the keyboard)
+press($('rowBtn'), () => rowNow());
+press($('stopBtn'), () => { G.cruise = false; G.dest = null; G.rowT = 0; sfx('dock'); }); // lower the sail: the ship glides to a stop
 // The bar's buttons: press, drag onto the sea to aim (a ring shows where it lands), let go to shoot. A tap shoots at the target as it is now.
 document.querySelectorAll('.ab[data-ab]').forEach(btn => {
   btn.addEventListener('pointerdown', e => { if (btn.disabled) return; e.preventDefault(); try { btn.setPointerCapture(e.pointerId); } catch(_){}
@@ -982,7 +986,9 @@ const NIGHT_PACK = () => rank() < 1 ? ['dinghy', 'skiff'] : rank() < 2 ? ['skiff
 function nightRaiders(){
   const n = TOD.night || 0, S = G.S;
   if (!nightOn && n > .6){ nightOn = true;
-    if (!G.dock && !G.sinking && !bossOn() && zoneAt(S.x, S.y) !== 0) NIGHT_PACK().forEach((k, i) => { const a = S.a + Math.PI + (i - 1)*.7 + (Math.random() - .5)*.4, r = 1150 + Math.random()*300, base = ENEMIES[k];
+    // P92: a smaller pack in the Shallows too (not close to Kallisto): one or two little boats
+    const shallows = zoneAt(S.x, S.y) === 0, pack = shallows ? (Math.hypot(S.x - HOME.x, S.y - HOME.y) > 1700 ? (rank() < 1 ? ['dinghy'] : ['dinghy', 'dinghy']) : []) : NIGHT_PACK();
+    if (!G.dock && !G.sinking && !bossOn()) pack.forEach((k, i) => { const a = S.a + Math.PI + (i - 1)*.7 + (Math.random() - .5)*.4, r = 1150 + Math.random()*300, base = ENEMIES[k];
       bossShip(k, {x:S.x + Math.cos(a)*r, y:S.y + Math.sin(a)*r}, {night:true, spec:{leash:2600, sight:1300, hull:Math.round(base.hull*1.3), dmg:base.dmg*1.25}}); }); }
   if (nightOn && n < .3) nightOn = false;
   if (n < .3) for (let i = enemies.length - 1; i >= 0; i--){ const e = enemies[i]; if (!e.night || e.dead || e.mode === 'chase') continue;
@@ -995,7 +1001,10 @@ export function updateCombat(dt){
   updateAbilities(dt); syncAllies(); updateScrolls(); updateLair(dt);
   for (const e of enemies){
     if (e.fort){ // forts don't float: they crumble when they fall and rise again when rebuilt
-      if (e.dead){ e.sinkT += dt; e.respawn -= dt; e.obj.position.y = e.baseY - Math.min(70 + e.baseY, e.sinkT*10); if (e.respawn <= 0){ respawn(e); e.obj.position.y = e.baseY; } }
+      if (e.dead){ e.sinkT += dt; e.respawn -= dt;
+        if (e.camp){ e.obj.position.y = e.baseY - Math.min(32, e.sinkT*5); e.obj.visible = e.sinkT < 7; } // P92: a burnt camp sinks into its island and is gone, never down into the sea beside it
+        else e.obj.position.y = e.baseY - Math.min(70 + e.baseY, e.sinkT*10);
+        if (e.respawn <= 0){ respawn(e); e.obj.position.y = e.baseY; } }
       else { think(e, dt); const d = dist(e, G.S); if (d < 150){ G.S.x = e.x + (G.S.x - e.x)/d*150; G.S.y = e.y + (G.S.y - e.y)/d*150; } } // the walls are solid
       e.hitT = Math.max(0, (e.hitT || 0) - dt);
       if (e.camp && !e.dead && e.obj.userData.archers && dist(e, G.S) < 1400){ const u = e.obj.userData, th = Math.atan2(G.S.y - e.y, G.S.x - e.x);

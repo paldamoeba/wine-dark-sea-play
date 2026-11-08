@@ -1,20 +1,21 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=4dc6694';
-import {OMENS} from './config.js?v=4dc6694';
-import {WORLD, ISLANDS, SPOTS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=4dc6694';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=4dc6694';
-import {GOODS} from './config.js?v=4dc6694';
-import {sfx} from './audio.js?v=4dc6694';
-import {playVideo, toast} from './ui.js?v=4dc6694';
-import {ARENA} from './arena.js?v=4dc6694';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=4dc6694';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=4dc6694';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=4dc6694';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=4dc6694';
+import {omen} from './omens.js?v=f913895';
+import {OMENS} from './config.js?v=f913895';
+import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=f913895';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=f913895';
+import {GOODS} from './config.js?v=f913895';
+import {sfx} from './audio.js?v=f913895';
+import {playVideo, toast} from './ui.js?v=f913895';
+import {ARENA} from './arena.js?v=f913895';
+import {enemies, planReward, planSources, combatState} from './combat.js?v=f913895';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=f913895';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=f913895';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=f913895';
 
 const $ = id => document.getElementById(id);
-const el = $('mapView'), cv = $('mapCv'), c = cv.getContext('2d');
+const el = $('mapView'), cv = $('mapCv'), main = cv.getContext('2d');
+let c = main; // drawing goes here: the screen, or the saved sea-and-islands picture (P92)
 const INK = '#4a3b28', PARCH = '#e9d8b0', FOG = '#e6d5ac', COURSE = '#b8402f', OCHRE = '#d48a2a';
 const R45 = 0; /* the chart is not turned: north is up, like the camera */
 
@@ -67,7 +68,10 @@ function buildPaper(){
     img.data.set([v, v*.97, v*.9, 255], (y*s + x)*4); }
   g.putImageData(img, 0, 0);
   g.strokeStyle = 'rgba(120,90,50,.08)'; g.lineWidth = 1; for (let i=0;i<70;i++){ const x = hash(i, 1)*s, y = hash(i, 2)*s, a = hash(i, 3)*6.28, l = 6 + hash(i, 4)*18; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a)*l, y + Math.sin(a)*l); g.stroke(); }
-  paper = c.createPattern(cnv, 'repeat');
+  paper = cnv;
+  const pp = document.createElement('div'); pp.id = 'mapPaper'; pp.setAttribute('aria-hidden', 'true');
+  pp.style.backgroundImage = `radial-gradient(farthest-corner, rgba(255,255,255,0) 45%, rgba(150,110,60,.35) 100%), url(${cnv.toDataURL()})`;
+  cv.after(pp);
 }
 
 // ---- view ----
@@ -149,8 +153,36 @@ function label(text, x, y, font, color, sub){
   if (sub){ c.font = '800 9px Nunito, system-ui, sans-serif'; c.lineWidth = 3; c.strokeText(sub, x, y + 11); c.fillText(sub, x, y + 11); }
   return true;
 }
-function draw(){
+// P92 (Nicholas: the bigger map made the chart laggy): the sea, islands and fog are drawn once into a saved picture.
+// While you drag or pinch, the chart just moves and scales that picture and draws the marks and names on top; the full
+// picture is drawn again a moment after your fingers stop. Redraws wait for the next frame, so a burst of touch events costs one.
+let stat = null, rafOn = false, want = 0, fullT = 0;
+function requestDraw(fast){ want = Math.max(want, fast ? 1 : 2);
+  if (!rafOn){ rafOn = true; requestAnimationFrame(() => { rafOn = false; const w = want; want = 0; if (G.mapOpen) draw(w === 1); }); }
+  clearTimeout(fullT); if (fast) fullT = setTimeout(() => requestDraw(false), 180); }
+function draw(fast){
   if (!base) buildBase(); if (!paper) buildPaper();
+  // places your jobs, goals and treasure maps send you to show on the chart even before you've sailed there
+  for (const r of G.S.reqs || []){ const is = r.to && ISLANDS.find(i => i.name === r.to); if (is && !isExplored(is.x, is.y)) reveal(is.x, is.y, is.r + 350); }
+  for (const m of G.goalMarks || []) if (!isExplored(m.x, m.y)) reveal(m.x, m.y, 600);
+  if (G.S.treasure && !isExplored(G.S.treasure.x, G.S.treasure.y)) reveal(G.S.treasure.x, G.S.treasure.y, 400);
+  const pinned = G.S.pin ? planSources(G.S.pin) : []; for (const f of pinned) if (!isExplored(f.x, f.y)) reveal(f.x, f.y, f.isle.r + 450); // P70: a pinned ship's plans are on the chart
+  const key = [view.cx, view.cy, view.z, W, H, DPR, G.exploredRev].join();
+  if (!stat || stat.cv.width !== cv.width || stat.cv.height !== cv.height || (!fast && stat.key !== key)) drawStatic(key);
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = PARCH; c.fillRect(0, 0, cv.width, cv.height);
+  const k = view.z/stat.z; // the saved picture, moved and scaled to where the view is now
+  c.setTransform(DPR*k, 0, 0, DPR*k, DPR*(W/2*(1 - k) + view.z*(stat.cx - view.cx)), DPR*(H/2*(1 - k) + view.z*(stat.cy - view.cy)));
+  c.drawImage(stat.cv, 0, 0, W, H);
+  c.setTransform(DPR,0,0,DPR,0,0);
+  drawMarks(pinned);
+}
+function drawStatic(key){
+  if (!stat){ const sc = document.createElement('canvas'); stat = {cv:sc, g:sc.getContext('2d')}; }
+  if (stat.cv.width !== cv.width || stat.cv.height !== cv.height){ stat.cv.width = cv.width; stat.cv.height = cv.height; }
+  Object.assign(stat, {key, cx:view.cx, cy:view.cy, z:view.z}); c = stat.g;
+  try { drawSea(); } finally { c = main; }
+}
+function drawSea(){
   c.setTransform(DPR,0,0,DPR,0,0);
   c.fillStyle = PARCH; c.fillRect(0, 0, W, H);
   c.save();
@@ -177,22 +209,19 @@ function draw(){
     if (is.tiers[2]){ islandPath(c, is, 2); c.fillStyle = '#b4a888'; c.fill(); c.strokeStyle = 'rgba(90,70,40,.45)'; c.stroke(); }
     islandPath(c, is, 0); c.strokeStyle = INK; c.lineWidth = 1.7*px; c.stroke();
   }
-  // places your jobs, goals and treasure maps send you to show on the chart even before you've sailed there
-  for (const r of G.S.reqs || []){ const is = r.to && ISLANDS.find(i => i.name === r.to); if (is && !isExplored(is.x, is.y)) reveal(is.x, is.y, is.r + 350); }
-  for (const m of G.goalMarks || []) if (!isExplored(m.x, m.y)) reveal(m.x, m.y, 600);
-  if (G.S.treasure && !isExplored(G.S.treasure.x, G.S.treasure.y)) reveal(G.S.treasure.x, G.S.treasure.y, 400);
-  const pinned = G.S.pin ? planSources(G.S.pin) : []; for (const f of pinned) if (!isExplored(f.x, f.y)) reveal(f.x, f.y, f.isle.r + 450); // P70: a pinned ship's plans are on the chart
   c.drawImage(fogLayer(FOG), 0, 0, WORLD, WORLD);
   // a double ink frame around the world
   c.strokeStyle = INK; c.lineWidth = 3*px; c.strokeRect(0, 0, WORLD, WORLD); c.lineWidth = 1*px; c.strokeRect(-9*px, -9*px, WORLD + 18*px, WORLD + 18*px);
   c.restore();
+}
+function drawMarks(pinned){
 
   // upright marks and names, only where you have sailed
   placed = [[W - 110, 0, W, 64], [0, H - 130, W, H]]; // keep names off the header and footer
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
   const marks = G.settings.dev.markers, F = G.mapFilter || 'all', priced = F.includes(':'), show = G.settings.mapShow || {}, on = k => !priced && show[k] !== false;
-  const showRes = on('fish'), showWrecks = on('wrecks'), showIron = on('iron') || F === 'buy:iron';
-  for (const s of SPOTS){ if (!showRes || !marks || !s.stock || !isExplored(s.x, s.y)) continue; const [x, y] = toScreen(s.x, s.y); badge(x, y, 12, 'fish'); }
+  const showWrecks = on('wrecks'), showIron = on('iron') || F === 'buy:iron';
+  // P92 (Nicholas): no fish on the chart; there are so many close together that they only cluttered it
   c.strokeStyle = INK; c.lineWidth = 1.8;
   for (const w of WRECKS){ if (!showWrecks || !marks || !w.stock || !isExplored(w.x, w.y)) continue; const [x, y] = toScreen(w.x, w.y); badge(x, y, 15, 'wreck', null, {k:1.5}); }
   // iron mines
@@ -251,10 +280,7 @@ function draw(){
   c.beginPath(); c.moveTo(12, 0); c.lineTo(-8, -8); c.lineTo(-4, 0); c.lineTo(-8, 8); c.closePath(); c.fill(); c.stroke();
   c.restore();
   compass(W - 42, 112, 26);
-  // the paper itself, over everything, and a darker edge like an old sheet
-  c.save(); c.globalCompositeOperation = 'multiply'; c.fillStyle = paper; c.fillRect(0, 0, W, H);
-  const vg = c.createRadialGradient(W/2, H/2, Math.min(W, H)*.35, W/2, H/2, Math.max(W, H)*.75); vg.addColorStop(0, 'rgba(255,255,255,0)'); vg.addColorStop(1, 'rgba(150,110,60,.35)');
-  c.fillStyle = vg; c.fillRect(0, 0, W, H); c.restore();
+  // (the paper and its darker edge lie over the chart as a layer of their own, #mapPaper: P92)
   $('mapClear').hidden = !G.dest;
 }
 
@@ -262,7 +288,7 @@ function draw(){
 export function openMap(){
   if (G.sheetOpen) return;
   G.mapOpen = true; G.joy = null; el.hidden = false; size(); G.mapFilter = 'all'; $('mapFilter').value = 'all'; document.querySelector('.legend').hidden = false; filterPanel(false);
-  view.cx = G.S.x; view.cy = G.S.y; view.z = Math.min(W, H)/6500;
+  view.cx = G.S.x; view.cy = G.S.y; view.z = Math.min(W, H)/(6500*MAP.spread/3.4); // (P92: opens as wide as before in islands, on the bigger map)
   // P65: a new treasure map: open on it, far enough out to see it and your ship
   // P71: with a ship pinned, the chart opens wide enough to show where its plans are
   if (G.S.pin){ const p = planSources(G.S.pin).map(f => f.named ? f.home : f).sort((a, b) => Math.hypot(a.x - G.S.x, a.y - G.S.y) - Math.hypot(b.x - G.S.x, b.y - G.S.y)).slice(0, 3); if (p.length) frame(p); }
@@ -279,7 +305,7 @@ let tickT = 0;
 export function mapTick(dt){
   if (G.sheetOpen || G.sinking){ closeMap(); return; }
   $('mapWarn').hidden = !combatState.threat;
-  if ((tickT -= dt) <= 0){ tickT = .25; draw(); }
+  if ((tickT -= dt) <= 0){ tickT = .25; if (!gesture || gesture.type === 'tap') requestDraw(false); } // (the ship moves on the chart; the sea is reused)
 }
 
 function setCourse(x, y){
@@ -311,9 +337,9 @@ cv.addEventListener('pointermove', e => {
   if (gesture.type === 'tap' && Math.hypot(cur.x - gesture.sx, cur.y - gesture.sy) > 8) gesture.type = 'pan';
   if (gesture.type === 'pan'){
     const dx = cur.x - prev.x, dy = cur.y - prev.y;
-    view.cx -= dx/view.z; view.cy -= dy/view.z; clampView(); draw();
+    view.cx -= dx/view.z; view.cy -= dy/view.z; clampView(); requestDraw(true);
   } else if (gesture.type === 'pinch' && pts.size === 2){
-    const [a, b] = [...pts.values()]; view.z = gesture.z * Math.hypot(a.x-b.x, a.y-b.y) / gesture.d; clampView(); draw();
+    const [a, b] = [...pts.values()]; view.z = gesture.z * Math.hypot(a.x-b.x, a.y-b.y) / gesture.d; clampView(); requestDraw(true);
   }
 });
 function up(e){
@@ -327,7 +353,7 @@ function up(e){
   else if (gesture && gesture.type === 'pinch') gesture = {type:'pan'};
 }
 cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-cv.addEventListener('wheel', e => { e.preventDefault(); view.z *= Math.exp(-e.deltaY*.0015); clampView(); draw(); }, {passive:false});
+cv.addEventListener('wheel', e => { e.preventDefault(); view.z *= Math.exp(-e.deltaY*.0015); clampView(); requestDraw(true); }, {passive:false});
 
 $('mapBtn').addEventListener('click', openMap);
 $('mapClose').addEventListener('click', closeMap);
@@ -344,7 +370,7 @@ $('homeCancel').addEventListener('click', hidePop);
 homePop.addEventListener('click', e => { if (e.target === homePop) hidePop(); });
 // the legend, with the same pictures as the chart
 const LAYERS = [['harbors', IC.dock, 'Harbors'], ['camps', CAMP_SVG, 'Camps'], ['forts', '<svg viewBox="0 0 20 20"><path d="M4 18l1-11H3V2h3v2h2.5V2h3v2H14V2h3v5h-2l1 11z" fill="#6f9bd6" stroke="#4a3b28" stroke-width="1.4" stroke-linejoin="round"/></svg>', 'Fortresses'], ['named', IC.swords, 'Pirates'],
-  ['fish', IC.fish('#4f8fc0'), 'Fish'], ['wrecks', IC.wreck, 'Wrecks'], ['iron', IC.iron, 'Iron'], ['treasure', X_SVG, 'Treasure'], ['goals', '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Goals']];
+  ['wrecks', IC.wreck, 'Wrecks'], ['iron', IC.iron, 'Iron'], ['treasure', X_SVG, 'Treasure'], ['goals', '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#e8b53d" stroke-width="3"/></svg>', 'Goals']];
 // P72: each picture gets its own color names: the chart is hidden most of the time, and a picture borrowing colors from a hidden one loses them
 $('mapView').querySelector('.legend').innerHTML = LAYERS.map(([k, ic, n]) => `<li><label><input type="checkbox" data-layer="${k}" ${(G.settings.mapShow || {})[k] === false ? '' : 'checked'}>${ic.replace(/id="(\w+)"/g, 'id="lg$1"').replace(/url\(#(\w+)\)/g, 'url(#lg$1)')}<span>${n}</span></label></li>`).join('');
 $('mapView').querySelector('.legend').addEventListener('change', e => { const k = e.target.dataset.layer; if (!k) return; G.settings.mapShow = {...(G.settings.mapShow || {}), [k]:e.target.checked}; saveSettings(); filterDot(); draw(); });

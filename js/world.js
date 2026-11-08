@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=4dc6694';
-import {MAPDATA} from './mapdata.js?v=4dc6694';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=f913895';
+import {MAPDATA} from './mapdata.js?v=f913895';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -18,7 +18,9 @@ const DEV = (() => { try { const s = JSON.parse(localStorage.getItem(SETTINGS_KE
 const id = 'D'; // P87 (Nicholas): only map D; maps B and the old prototype map are gone
 // The distance slider is relative to SPREAD_BASE: 1× on the slider = islands twice as far apart as the map data.
 const SPREAD_BASE = 3.4; // P52: a bigger map, islands a quarter further apart again (P44 was 2.7)
-export const MAP = {id, spread:SPREAD_BASE*(DEV.spread || 1), isle:DEV.isle || 1};
+// P92 (Nicholas): islands 1.6x their size and 1.5x further apart for everyone (more room south of Kallisto, room for the camps)
+export const MAP_DEFAULT = {spread:1.5, isle:1.6};
+export const MAP = {id, spread:SPREAD_BASE*(DEV.spread || MAP_DEFAULT.spread), isle:DEV.isle || MAP_DEFAULT.isle};
 MAP.key = `${MAP.id}:${MAP.spread}:${MAP.isle}`;
 export const UNIT = 1500; // world units per map degree (about 111 km) at 1× distance
 
@@ -31,7 +33,7 @@ export const ZONES = [
 // Each island: x, y = center; r = farthest shore point; tiers = outlines [beach, grass, hilltop] around the center as [[x, y], ...].
 let WORLD_, HOME_, ZC, ZR, WOB, islands, pier;
 { // map D
-  const M = MAPDATA[MAP.id], kp = UNIT*MAP.spread, GROW = {Syros:2.4, Milos:1.6}; // P69: bigger than their real size, for room around the camp and the fortress
+  const M = MAPDATA[MAP.id], kp = UNIT*MAP.spread, GROW = {Syros:2.4, Milos:1.6, Ikaria:1.4, Tinos:1.4, Ios:1.3, Donousa:2.6, Amorgos:1.9, Sikinos:1.75}; // P69: bigger than their real size, for room around the camp and the fortress; P92 the camp islands too (Nicholas)
   islands = M.feats.map(f => {
     const ks = (f.frame ? kp : f.home ? UNIT : UNIT*MAP.isle)*(GROW[f.n] || 1);
     const tiers = f.t.map(t => { const out = []; for (let i=0;i<t.length;i+=2) out.push([t[i]*ks, t[i+1]*ks]); return out; });
@@ -136,11 +138,12 @@ let spots, wrecks, raiders;
   spots = scatter(11, 40, 700*S, (x, y) => landDist(x, y) > 110 && zoneAt(x, y) < 2 && farFromDock(x, y));
   wrecks = scatter(23, 16, 1100*S, (x, y) => landDist(x, y) > 140 && zoneAt(x, y) === 1);
   // three sizes of pirate: small boats just past the Shallows, skiffs further out, galleys in the Open Sea
-  raiders = [...scatter(31, 10, 1100*S, (x, y) => landDist(x, y) > 180 && zoneAt(x, y) === 1 && bounds(x, y).d > ZR[0] + 250 && bounds(x, y).d < ZR[0] + 1400).map(p => ({kind:'dinghy', home:p})),
-             ...scatter(37, 12, 1300*S, (x, y) => landDist(x, y) > 220 && zoneAt(x, y) === 1 && bounds(x, y).d > ZR[0] + 1200).map(p => ({kind:'skiff', home:p})),
-             ...scatter(41, 9, 1800*S, (x, y) => landDist(x, y) > 260 && zoneAt(x, y) === 2).map(p => ({kind:'galley', home:p})),
+  // P92 (Nicholas: no change seen in how many pirates there are): about 40% more of each
+  raiders = [...scatter(31, 14, 1000*S, (x, y) => landDist(x, y) > 180 && zoneAt(x, y) === 1 && bounds(x, y).d > ZR[0] + 250 && bounds(x, y).d < ZR[0] + 1400).map(p => ({kind:'dinghy', home:p})),
+             ...scatter(37, 17, 1150*S, (x, y) => landDist(x, y) > 220 && zoneAt(x, y) === 1 && bounds(x, y).d > ZR[0] + 1200).map(p => ({kind:'skiff', home:p})),
+             ...scatter(41, 13, 1550*S, (x, y) => landDist(x, y) > 260 && zoneAt(x, y) === 2).map(p => ({kind:'galley', home:p})),
              // P65: the Shallows aren't a safe place: a few little raider boats sail here too, but none right off the Kallisto pier
-             ...scatter(43, 5, 1000*S, (x, y) => landDist(x, y) > 180 && zoneAt(x, y) === 0 && Math.hypot(x - HOME_.x, y - HOME_.y) > 1700).map(p => ({kind:'dinghy', home:p}))];
+             ...scatter(43, 8, 900*S, (x, y) => landDist(x, y) > 180 && zoneAt(x, y) === 0 && Math.hypot(x - HOME_.x, y - HOME_.y) > 1700).map(p => ({kind:'dinghy', home:p}))];
 }
 export const SPOTS = spots.map(p => ({...p, kind: zoneAt(p.x, p.y) === 0 ? 'tuna' : 'swordfish', stock:TUNING.spotStock, regen:0}));
 // each wreck has a size (small, medium, large), picked from its spot so it stays the same every visit
@@ -210,6 +213,13 @@ for (const is of named){ if (is.harbor || !is.city || is.r < 500) continue; cons
 // looks over the most open sea, well away from the town, with a stone stair down to its own little jetty. Small islands get a smaller one.
 export function islandHeights(is){ const size = Math.sqrt(is.area), top = 4 + (is.port ? 12 : Math.min(26, 9 + size*.02)); return {top, hillTop:top + Math.min(46, 12 + size*.03)}; }
 const FORT_FOOT = 168, CAMP_FOOT = 92;
+// P92: a camp's model reaches 95 back from its middle (the cabins) and 25 toward the sea (the bandits), 72 and 52 to the sides,
+// times its size (bigger camps for higher levels). Its back half must stand on grass, clear of the sand; the bandits on firm ground.
+export const campK = is => [.85, 1, 1.2][((CAMPS.find(c => c.isle === is.name) || {}).lv || 1) - 1];
+function campFits(x, y, a, k, inGrass, loose){ const c = Math.cos(a), n = Math.sin(a);
+  for (let lx = -95; lx <= 25; lx += 12) for (let lz = -72; lz <= 52; lz += 12){ const px = x + (lx*c - lz*n)*k, py = y + (lx*n + lz*c)*k, back = lx < 0;
+    if (landDist(px, py) > (back ? (loose ? -6 : -14) : -2) || (back && !loose && !inGrass(px, py))) return false; }
+  return true; }
 function findSite(is, camp, loose){
   const [, grass, hill] = is.tiers; if (!grass) return null;
   const {top, hillTop} = islandHeights(is), inHill = (x, y) => !!hill && inPoly(hill, x - is.x, y - is.y), inGrass = (x, y) => inPoly(grass, x - is.x, y - is.y);
@@ -232,13 +242,14 @@ function findSite(is, camp, loose){
         if (landDist(x + c*(t + 160), y + n*(t + 160)) < (loose ? 30 : 60) || landDist(x + c*(t + 320), y + n*(t + 320)) < (loose ? 70 : 140)) continue;
         view++; if (!face || t < face.t) face = {t, a, c, n}; }
       if (!face || busy.some(p => Math.hypot(p.x - x - face.c*face.t, p.y - y - face.n*face.t) < (wide ? 420 : 170))) continue;
+      if (camp && !campFits(x, y, face.a, s*campK(is), inGrass, loose)) continue; // P92 (Nicholas): the whole camp stands on the island
       const score = view*4 + (onHill && !camp ? 44 : 0) + Math.cos(face.a - toHome)*10 - face.t*.04;
       if (!best || score > best.score) best = {score, x, y, onHill, face}; }
     if (best){ const {x, y, face:f} = best, ground = best.onHill ? hillTop : top, path = [], shore = {x:x + f.c*f.t, y:y + f.n*f.t};
       // the stair follows the ground down, easing over each drop
       const hs = []; for (let d = R*.62; d < f.t; d += 11) hs.push({d, h:groundAt(x + f.c*d, y + f.n*d)});
       hs.forEach((p, i) => { const nb = hs.slice(Math.max(0, i - 3), i + 4), av = nb.reduce((q, w) => q + w.h, 0)/nb.length; path.push({d:p.d, h:Math.max(p.h, av)}); });
-      return {x, y, a:f.a, s, R, ground, onHill:best.onHill, depth:f.t, path, shore, sea:{x:shore.x + f.c*250, y:shore.y + f.n*250}}; } }
+      return {x, y, a:f.a, s, k:camp ? s*campK(is) : s, R, ground, onHill:best.onHill, depth:f.t, path, shore, sea:{x:shore.x + f.c*250, y:shore.y + f.n*250}}; } }
   return null;
 }
 export function siteFor(is, camp){ if (is.site === undefined) is.site = findSite(is, camp) || findSite(is, camp, true); return is.site; }

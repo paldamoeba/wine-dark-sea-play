@@ -1,12 +1,14 @@
 // Tells the sound engine what is going on around the ship each frame: speed, weather, land, wrecks, fights, harbors.
-import {G, ship, lvl, PUBLIC} from './state.js?v=4dc6694';
-import {SHIPS} from './config.js?v=4dc6694';
-import {landDist, WRECKS} from './world.js?v=4dc6694';
-import {W, KINDS} from './weather.js?v=4dc6694';
-import {combatState} from './combat.js?v=4dc6694';
-import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=4dc6694';
+import {G, ship, lvl, PUBLIC} from './state.js?v=f913895';
+import {SHIPS} from './config.js?v=f913895';
+import {landDist, WRECKS} from './world.js?v=f913895';
+import {W, KINDS} from './weather.js?v=f913895';
+import {combatState} from './combat.js?v=f913895';
+import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=f913895';
 
 Object.assign(SND, G.settings.sound || {});
+// P92: music one step quieter for everyone (old Quiet .3 -> Medium .3 is the new middle; Medium .6 -> .3, Loud 1 -> .6, Quiet .3 -> .15)
+if (!G.settings.musicP92){ G.settings.musicP92 = true; const m = G.settings.sound && G.settings.sound.music; if (m != null){ SND.music = m <= 0 ? 0 : m < .45 ? .15 : m < .8 ? .3 : .6; G.settings.sound.music = SND.music; } }
 if (!G.settings.musicP65){ G.settings.musicP65 = true; SND.style = 'mix'; SND.rest = 'medium'; } // P65: everyone gets the changing songs once
 { SND.style = 'mix'; SND.rest = 'medium'; SND.battle = 'war'; } // P88: everyone gets A bit of everything; the choices are gone // P66: players don't pick these; only the builder's page does
 applyVolumes();

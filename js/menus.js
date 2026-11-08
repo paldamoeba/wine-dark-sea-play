@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=4dc6694';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=4dc6694';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=4dc6694';
-import {fleetBody, pinCard} from './fleetpage.js?v=4dc6694';
-import {myLevel} from './levels.js?v=4dc6694';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=4dc6694';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=4dc6694';
-import {planClues} from './combat.js?v=4dc6694';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=4dc6694';
-import {board, active, canDeliver, goal} from './quests.js?v=4dc6694';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=4dc6694';
-import {colorHeld, colorInfo} from './colors.js?v=4dc6694';
-import {shipPortrait} from './portrait.js?v=4dc6694';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=4dc6694';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=f913895';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=f913895';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=f913895';
+import {fleetBody, pinCard} from './fleetpage.js?v=f913895';
+import {myLevel} from './levels.js?v=f913895';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=f913895';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=f913895';
+import {planClues} from './combat.js?v=f913895';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=f913895';
+import {board, active, canDeliver, goal, claims} from './quests.js?v=f913895';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=f913895';
+import {colorHeld, colorInfo} from './colors.js?v=f913895';
+import {shipPortrait} from './portrait.js?v=f913895';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=f913895';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -314,7 +314,7 @@ function jobsTab(h){
   const ready = mine.map((r, i) => canDeliver(r, h) ? `<div class="job ready"><span class="jic">${JOB_IC[r.t]()}</span><div><b>${r.text}</b><small>${r.who}</small></div><button class="btn gold" data-act="deliver" data-i="${i}">Hand over ${chip(IC.coin, '+' + r.gold)}</button></div>` : '').join('');
   const offers = board().map((r, i) => `<div class="job"><span class="jic">${JOB_IC[r.t]()}</span><div><b>${r.text}</b><small>${r.who}</small><span class="reward">${chip(IC.coin, '+' + r.gold)}</span></div>
       <div class="btnrow tight"><button class="btn ghostdark" data-act="decline" data-i="${i}" aria-label="Turn it down">✕</button><button class="btn gold" data-act="accept" data-i="${i}" ${full ? 'disabled' : ''}>Take</button></div></div>`).join('');
-  return (ready ? card('Ready to hand over', ready, 'donecard') : '') + pinCard()
+  return claimCard() + (ready ? card('Ready to hand over', ready, 'donecard') : '') + pinCard()
     + card(`Request board · ${mine.length} of ${REQUESTS.max} taken`, `${offers}${full ? '<p class="note">You have two jobs. Finish or drop one to take another.</p>' : ''}`)
     + card('Your jobs', myJobs())
     ; // P71: pin a ship in Fleet to see where its plans are
@@ -491,10 +491,13 @@ function shipTab(){
 // Ship plans still to find, with a clue for each piece
 function plansCard(){ const list = planClues(); if (!list.length) return '';
   return card('Ship plans', list.map(p => `<div class="job"><span class="jic">${IC.map}</span><div><b>${SHIPS[p.t].name}: ${p.have} of ${p.need}</b>${p.clues.map(c => `<small>${c}</small>`).join('')}</div></div>`).join('')); }
+// P92: finished goals and jobs wait here until you collect their reward
+const TICK = '<svg viewBox="0 0 24 24"><path d="M5 13 L10 18 L19 7" fill="none" stroke="#3f9a4b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function claimCard(){ const list = claims(); if (!list.length) return '';
+  return card('Rewards to collect', list.map((c, i) => `<div class="job ready"><span class="jic">${TICK}</span><div><b>${c.text}</b><small>Done</small></div><button class="btn gold" data-act="claim" data-i="${i}">Collect ${chip(IC.coin, '+' + c.gold)}</button></div>`).join(''), 'donecard'); }
 function bagJobs(){
   const S = G.S, g = goal(), tr = S.treasure;
-  return pinCard() + (g ? card(g.chapter ? `The voyage · goal ${(S.goal || 0) + 1 - STARTER_GOALS} of ${GOALS.length - STARTER_GOALS}` : `First voyage · goal ${(S.goal || 0) + 1} of ${STARTER_GOALS}`, `<div class="job"><span class="jic">${IC.star}</span><div><b>${g.text}</b>${g.n > 1 ? bar((S.goalN || 0)/g.n) : ''}<small>${g.n > 1 ? `${S.goalN || 0} of ${g.n} · ` : ''}reward</small></div><span class="reward">${chip(IC.coin, '+' + g.gold)}</span></div>`) : '')
-    + (S.lastDone && Date.now() - S.lastDone.t < 600000 ? card('Just done', `<div class="job ready"><span class="jic"><svg viewBox="0 0 24 24"><path d="M5 13 L10 18 L19 7" fill="none" stroke="#3f9a4b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>${S.lastDone.text}</b></div><span class="reward">${chip(IC.coin, '+' + S.lastDone.gold)}</span></div>`, 'donecard') : '')
+  return claimCard() + pinCard() + (g ? card(g.chapter ? `The voyage · goal ${(S.goal || 0) + 1 - STARTER_GOALS} of ${GOALS.length - STARTER_GOALS}` : `First voyage · goal ${(S.goal || 0) + 1} of ${STARTER_GOALS}`, `<div class="job"><span class="jic">${IC.star}</span><div><b>${g.text}</b>${g.n > 1 ? bar((S.goalN || 0)/g.n) : ''}<small>${g.n > 1 ? `${S.goalN || 0} of ${g.n} · ` : ''}reward</small></div><span class="reward">${chip(IC.coin, '+' + g.gold)}</span></div>`) : '')
     + card(`Your jobs · ${active().length} of ${REQUESTS.max}`, myJobs() + (active().some(r => r.to) ? '<p class="note">The islands they send you to have a dashed red ring on the chart.</p>' : ''))
     + (S.war ? card('War contract', `<div class="job"><span class="jic">${cityFlag(S.war.city)}</span><div><b>${warText(S.war)}</b><small>For ${CITIES[S.war.city].name} · ${Math.min(S.war.got, S.war.n)} of ${S.war.n}</small>${bar(S.war.got/S.war.n)}</div><span class="reward">${chip(IC.coin, '+' + S.war.gold)}</span></div>`) : '')
     + (tr ? card('Treasure map', `<div class="line">${IC.map}<div><b>${tr.land ? `Buried on a beach${tr.name ? ` of ${tr.name}` : ''}` : 'Floating out at sea'}</b><small>The red X on your chart. ${tr.land ? 'Sail up close to the beach to dig it out.' : 'Sail over it.'}</small></div></div>`) : '');

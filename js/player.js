@@ -1,19 +1,19 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=4dc6694';
-import {SPECS} from './ships.js?v=4dc6694';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=4dc6694';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=4dc6694';
-import {W} from './weather.js?v=4dc6694';
-import {steering} from './input.js?v=4dc6694';
-import {toast, showZone} from './ui.js?v=4dc6694';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=4dc6694';
-import {LAIR_ROCKS} from './lair.js?v=4dc6694';
-import {startFish, stopFish} from './fishing.js?v=4dc6694';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=4dc6694';
-import {progress} from './quests.js?v=4dc6694';
-import {startSink} from './sinking.js?v=4dc6694';
-import {sfx} from './audio.js?v=4dc6694';
-import {ARENA} from './arena.js?v=4dc6694';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=f913895';
+import {SPECS} from './ships.js?v=f913895';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist} from './world.js?v=f913895';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=f913895';
+import {W} from './weather.js?v=f913895';
+import {steering} from './input.js?v=f913895';
+import {toast, showZone} from './ui.js?v=f913895';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=f913895';
+import {LAIR_ROCKS} from './lair.js?v=f913895';
+import {startFish, stopFish} from './fishing.js?v=f913895';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=f913895';
+import {progress} from './quests.js?v=f913895';
+import {startSink} from './sinking.js?v=f913895';
+import {sfx} from './audio.js?v=f913895';
+import {ARENA} from './arena.js?v=f913895';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -172,12 +172,13 @@ const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
 // the short way round, even when angles have wound up past a full turn (JS % keeps the sign, so wrap it properly)
 const wrap = d => d - Math.PI*2*Math.floor((d + Math.PI)/(Math.PI*2));
 const turnTo = (a, b, k) => a + wrap(b - a)*k;
-// Either side of the pier: the side the ship is on. The ship keeps facing the way it came (bow out or bow in).
+// Either side of the pier: the side the ship is on.
 function berth(sh, P){
   const S = G.S, nx = -P.dy, ny = P.dx, along = Math.max(sh.len/2 - 10, Math.min(PIER_LEN*.55, PIER_LEN + 40 - sh.len/2));
   const px = P.x + P.dx*along, py = P.y + P.dy*along;
   const side = (S.x - px)*nx + (S.y - py)*ny >= 0 ? 1 : -1, off = 13 + sh.beam/2 + (SPECS[sh.model].oarCount > 1 ? 40 : 0); // oars stay clear of the pier
-  const pa = Math.atan2(P.dy, P.dx), a0 = Math.cos(S.a - pa) >= 0 ? pa : pa + Math.PI, a = S.a + wrap(a0 - S.a); // line up with the pier the short way
+  // P92 (Nicholas: sometimes she didn't turn round): the dockhands always bring her in bow out to sea, turning her as they pull
+  const pa = Math.atan2(P.dy, P.dx), a = S.a + wrap(pa - S.a);
   return {x:px + nx*side*off, y:py + ny*side*off, a, side, along};
 }
 // P90 (a tester: an invisible wall on some shores, and other times the ship went into the land): the hull is long and thin, so test
@@ -218,7 +219,8 @@ document.addEventListener('undock', () => {
 function docking(dt){
   const S = G.S, d = G.dock, px = S.x, py = S.y; G.turnRate = 0;
   // P88 (Nicholas): while the harbor menu covers the screen, the dockhands turn her round so she leaves bow first, out to sea
-  if (d.mode === 'moored' && G.sheetOpen){ const P = d.h.pier; if (Math.cos(d.a)*P.dx + Math.sin(d.a)*P.dy < 0) d.a += Math.PI; }
+  if (d.mode === 'moored'){ const P = d.h.pier, out = d.a + wrap(Math.atan2(P.dy, P.dx) - d.a), off = out - d.a; // (any berth still facing in turns round)
+    if (Math.abs(off) > 1e-3) d.a = G.sheetOpen ? out : d.a + Math.sign(off)*Math.min(Math.abs(off), dt*1.6); }
   if (d.mode === 'moored'){ S.x = d.x; S.y = d.y; S.a = d.a; G.v = 0; return; }
   d.t += dt/d.dur; const k = ease(Math.min(1, d.t));
   if (d.mode === 'in'){ S.x = d.x0 + (d.x - d.x0)*k; S.y = d.y0 + (d.y - d.y0)*k; S.a = turnTo(d.a0, d.a, Math.min(1, k*1.4)); }

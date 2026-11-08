@@ -1,35 +1,35 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=4dc6694';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=4dc6694';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=4dc6694';
-import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=4dc6694';
-import {showRewarded, ads, adPrivacy} from './ads.js?v=4dc6694';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=4dc6694';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=4dc6694';
-import {CYCLE} from './daynight.js?v=4dc6694';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=4dc6694';
-import {swapBoat, refreshAllTrees} from './entities.js?v=4dc6694';
-import {setZoom} from './input.js?v=4dc6694';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=4dc6694';
-import {tutHTML} from './tutorial.js?v=4dc6694';
-import {founded, blessing} from './crew.js?v=4dc6694';
-import {WHALE} from './wildlife.js?v=4dc6694';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=4dc6694';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal} from './quests.js?v=4dc6694';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=4dc6694';
-import {effectText, buy} from './upgrades.js?v=4dc6694';
-import {fleetHTML} from './fleetpage.js?v=4dc6694';
-import {myLevel} from './levels.js?v=4dc6694';
-import {askName} from './naming.js?v=4dc6694';
-import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=4dc6694';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=4dc6694';
-import {GOODS, WAR} from './config.js?v=4dc6694';
-import {fly} from './fly.js?v=4dc6694';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=4dc6694';
-import {RANKS} from './records.js?v=4dc6694';
-import {W, KINDS} from './weather.js?v=4dc6694';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=4dc6694';
-import {setTimeOfDay} from './daynight.js?v=4dc6694';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=f913895';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=f913895';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=f913895';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=f913895';
+import {showRewarded, ads, adPrivacy} from './ads.js?v=f913895';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=f913895';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=f913895';
+import {CYCLE} from './daynight.js?v=f913895';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=f913895';
+import {swapBoat, refreshAllTrees} from './entities.js?v=f913895';
+import {setZoom} from './input.js?v=f913895';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=f913895';
+import {tutHTML} from './tutorial.js?v=f913895';
+import {founded, blessing} from './crew.js?v=f913895';
+import {WHALE} from './wildlife.js?v=f913895';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=f913895';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=f913895';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=f913895';
+import {effectText, buy} from './upgrades.js?v=f913895';
+import {fleetHTML} from './fleetpage.js?v=f913895';
+import {myLevel} from './levels.js?v=f913895';
+import {askName} from './naming.js?v=f913895';
+import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=f913895';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=f913895';
+import {GOODS, WAR} from './config.js?v=f913895';
+import {fly} from './fly.js?v=f913895';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=f913895';
+import {RANKS} from './records.js?v=f913895';
+import {W, KINDS} from './weather.js?v=f913895';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=f913895';
+import {setTimeOfDay} from './daynight.js?v=f913895';
 
 const $ = id => document.getElementById(id);
 
@@ -65,7 +65,7 @@ export function updateUI(dt, nearDock){
   document.body.classList.toggle('sheeton', !!G.sheetOpen); // menus cover the whole screen: the HUD and little map step aside
   G.doneT = Math.max(0, (G.doneT || 0) - dt); $('goalPill').classList.toggle('done', G.doneT > 0); { const L = myLevel(), m = $('rank'); if (m.textContent !== String(L)){ const up = +m.textContent < L && G.medalSeen; m.textContent = L; G.medalSeen = true; if (up){ const el = $('medal'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } } } /* P72: the level medal, with a little pop when it rises */ // a check mark for a moment after a goal or job is done
   // P65: the red bubble only means something: a quest is done and you haven't looked at it yet; on the chart, a treasure map you haven't looked at
-  const pill = pillText(); put($('goalDot'), 'hidden', !!(!G.S.questNew || G.sheetOpen || G.doneT > 0));
+  const pill = pillText(); put($('goalDot'), 'hidden', !!(!(G.S.questNew || (G.S.claims || []).length) || G.sheetOpen || G.doneT > 0)); // P92: stays while a reward waits to be collected
   { const v = !!(!G.S.mapNew || G.sheetOpen); put($('chartDot'), 'hidden', v); put($('mapDot'), 'hidden', v); }
   { const d = G.S.gold - (G.goldSeen ?? G.S.gold); if (d > 0) stat('earned', d); G.goldSeen = G.S.gold; }
   if (pill && $('goalText').textContent !== pill){ $('goalText').textContent = pill; $('goalLbl').textContent = goal() ? 'Goal' : 'Job'; $('goalPill').title = $('goalLbl').textContent + ': ' + pill; }
@@ -172,9 +172,9 @@ function mapHTML(){
     .map(i => `${i.name} ${fmt(secs(home, i))}`).join(' · ');
   return `<div class="row"><div>Map size<small>Changing the map's scale starts you again at the Kallisto pier. Drachmae and ship stay.</small></div></div>
     <div class="row"><div>Distance between islands<small>Bigger = more open sea and longer trips.</small></div><b id="spreadVal">${(+d.spread).toFixed(1)}×</b></div>
-    <input type="range" id="spreadRange" min="0.5" max="1.5" step="0.1" value="${d.spread}" aria-label="Distance between islands">
+    <input type="range" id="spreadRange" min="0.5" max="2" step="0.1" value="${d.spread}" aria-label="Distance between islands">
     <div class="row"><div>Island size<small>Kallisto keeps its size so the town fits.</small></div><b id="isleVal">${(+d.isle).toFixed(1)}×</b></div>
-    <input type="range" id="isleRange" min="0.5" max="1.6" step="0.1" value="${d.isle}" aria-label="Island size">
+    <input type="range" id="isleRange" min="0.5" max="2" step="0.1" value="${d.isle}" aria-label="Island size">
     <div class="row"><div>Sailing times from Kallisto with your ${ship().name.toLowerCase()}<small>${trips} · across the whole map ${fmt(Math.round(WORLD/sp))}</small></div>
       <button class="btn gold" data-act="applymap">Apply</button></div>`;
 }
@@ -182,6 +182,8 @@ function mapHTML(){
 // Settings: the same Greek menu as the harbor, with a close button, and three tabs.
 // sound volumes: Off, Quiet, Medium, Loud
 const VOLS = [[0, 'Off'], [.3, 'Quiet'], [.6, 'Medium'], [1, 'Loud']];
+// P92 (Nicholas): the songs were too loud. Music has its own steps: the old Quiet is now Medium (and the default), the old Medium is Loud, plus a quieter Quiet.
+const MUSIC_VOLS = [[0, 'Off'], [.15, 'Quiet'], [.3, 'Medium'], [.6, 'Loud']];
 // full screen (Android browsers and computers; iPhones only through "Add to Home Screen")
 const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
 function toggleFull(){
@@ -206,12 +208,12 @@ function settingsHTML(){
   if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
   const game = card('Your voyage', `<div class="stats big">${IC.ship} ${shipName()} · ${mins} min at sea</div>${row('Voyage log', 'Ships sunk, days at sea and other fun numbers.', '<button class="btn" data-act="log">Open</button>')}${row('Leaderboard', 'Your ships ranked, and what each one has done.', '<button class="btn" data-act="openfleet" data-to="ranks">Open</button>')}${row('How to play', 'The pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}${row('Main menu', 'Your three voyages. This one is saved first. Erase a voyage there to start over.', '<button class="btn" data-act="mainmenu">Go</button>')}`)
     + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and soft music.', tog('sound', SND.on, 'Sound'))
-      + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${VOLS.map(([v, n]) => `<option value="${v}" ${VOLS.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
+      + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${(k === 'music' ? MUSIC_VOLS : VOLS).map(([v, n], _, L) => `<option value="${v}" ${L.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
       )
     + (APP ? '' : card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`)))
     + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
-    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 91'}</p>`;
+    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 92'}</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -268,6 +270,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'decline') decline(+b.dataset.i);
   if (a === 'deliver'){ const g0 = S.gold; deliver(+b.dataset.i, G.dock && G.dock.h); if (S.gold > g0) fly(b, 'gold', IC.coin, coinsFor(S.gold - g0), g0, S.gold, `+${S.gold - g0}`); }
   if (a === 'drop'){ drop(+b.dataset.i); toast('Job dropped'); }
+  if (a === 'claim'){ const g0 = S.gold, got = collect(+b.dataset.i); if (got) fly(b, 'gold', IC.coin, coinsFor(got), g0, S.gold, `+${got}`); }
   if (a === 'found' && S.gold >= CREW.foundCost){
     S.crewName = ($('crewName').value.trim() || 'The Sea Swallows').slice(0, 24); S.gold -= CREW.foundCost;
     S.look = {...S.look, flag:$('crewGod').value}; S.crewGod = S.look.flag; S.crew = []; swapBoat(); sfx('fanfare'); toast(S.crewName + '!', 2.5);

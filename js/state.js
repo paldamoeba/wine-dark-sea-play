@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=4dc6694';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=4dc6694';
-import {sfx} from './audio.js?v=4dc6694';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=f913895';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=f913895';
+import {sfx} from './audio.js?v=f913895';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -147,7 +147,9 @@ export function load(){
   G.fresh = !s; // nothing saved here yet: a brand new voyage
   G.S = s || newSave();
   // A different map (or map scale) than last time: keep drachmae and ship, start again at the Kallisto pier.
-  if (G.S.map !== MAP.key){ Object.assign(G.S, {map:MAP.key, x:START.x, y:START.y, a:START.a, world:null, explored:null}); }
+  // P92: only the scale changed (same map): the chart you uncovered stays, since it is drawn over the whole map
+  if (G.S.map !== MAP.key){ const sameMap = String(G.S.map || '').split(':')[0] === MAP.id;
+    Object.assign(G.S, {map:MAP.key, x:START.x, y:START.y, a:START.a, world:null}, sameMap ? {} : {explored:null}); }
   applyWorld(G.S.world);
   if (!G.S.explored || !decodeExplored(G.S.explored)) startingChart();
   reveal(G.S.x, G.S.y, REVEAL.sail);
@@ -195,7 +197,7 @@ export function loadSettings(){
   if (!rest.camP48){ rest.angle = 'low'; rest.camP48 = true; } // P48: the low camera became the default, once for everyone
   G.settings = {quality:'auto', detected:null, showFps:false, builder:false, angle:'low', ...rest, // a new player starts with builder tools off
     // Builder tools: only for making the game, removed before release.
-    tools: {zoom:1, speed:1, teleport:false, markers:true, crew:true, raiders:true, fleet:false, map:'D', spread:1, isle:1, ...(dev || {})}};
+    tools: {zoom:1, speed:1, teleport:false, markers:true, crew:true, raiders:true, fleet:false, map:'D', spread:1.5, isle:1.6, ...(dev || {})}};
   // The game reads G.settings.dev. With builder tools off it gets what a player would have; the builder values stay saved for later.
   Object.defineProperty(G.settings, 'dev', {enumerable:false, value:new Proxy({}, {
     get:(_, k) => (!G.settings.builder && k in PLAYER_DEV ? PLAYER_DEV : G.settings.tools)[k],

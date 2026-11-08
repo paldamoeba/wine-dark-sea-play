@@ -88,6 +88,7 @@ button:focus-visible{outline:3px solid var(--foam);outline-offset:2px}
 .mapbtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;width:112px;height:112px;border-radius:50%;border:0;background:transparent;cursor:pointer;padding:0}
 .mapview{position:fixed;inset:0;z-index:20;background:#efe2bf;color:var(--ink)}
 #mapCv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#mapPaper{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;background-repeat:no-repeat,repeat;background-size:100% 100%,256px 256px} /* P92: the chart's paper, as its own layer */
 .maphead{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 22px;background:linear-gradient(#efe2bf 55%,rgba(239,226,191,0));pointer-events:none}
 .maphead h2{font-family:var(--display);font-weight:400;font-size:clamp(22px,5.5vw,30px);margin:0;letter-spacing:.03em;color:#4a3b28}
 .maphead .btn{pointer-events:auto}
@@ -740,11 +741,11 @@ body.big .raid.capture{zoom:1.5}
 .legend{background:var(--cz-solid)!important;border:0!important;box-shadow:var(--cz-shadow)!important}
 .maphead .btn,.mapbtns .btn{background:var(--cz-teal)!important;box-shadow:0 3px 0 var(--cz-teal2)!important;border-radius:999px!important}
 /* ---- P50: the ability bar: round buttons at the bottom middle, only in a fight. The dark wedge is the cooldown. ---- */
-.abilities{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:14px;z-index:3;pointer-events:none}
+.abilities{touch-action:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:14px;z-index:3;pointer-events:none}
 .abilities[hidden]{display:none}
 .ab{pointer-events:auto;position:relative;width:66px;height:66px;border-radius:50%;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;
   background:conic-gradient(rgba(30,24,20,.5) var(--cd,0deg),transparent 0),var(--c,#e2725b);box-shadow:0 4px 0 var(--c2,#c95a44),0 6px 16px rgba(35,30,25,.22);color:#fff;
-  font:800 10.5px/1 var(--body);touch-action:manipulation;animation:none!important}
+  font:800 10.5px/1 var(--body);touch-action:none;animation:none!important}
 .ab[hidden]{display:none}
 .ab svg{width:28px;height:28px}
 .ab.fire{--c:#ef8a3a;--c2:#c46a22}.ab.chain{--c:#5b6b7a;--c2:#3f4c58}
