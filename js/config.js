@@ -158,11 +158,11 @@ export const UPGRADES = {
 };
 // P61: the Kallisto warehouse holds only so much; upgrade it at the shipyard. Level 1 is enough for the fishing boat,
 // level 2 for the bireme, level 3 for the trireme. What doesn't fit stays aboard your ship.
-export const WAREHOUSE = [
-  {cap:{wood:200, bronze:40, iron:20, linen:30}},
-  {cap:{wood:400, bronze:80, iron:40, linen:50},   cost:{wood:120, gold:100}},
-  {cap:{wood:700, bronze:140, iron:90, linen:80},  cost:{wood:300, iron:15, linen:20, gold:300}},
-  {cap:{wood:1100, bronze:220, iron:180, linen:120}, cost:{wood:600, bronze:60, iron:50, gold:700}},
+export const WAREHOUSE = [ // P93: 75% bigger, like the ships' loads
+  {cap:{wood:350, bronze:70, iron:40, linen:50}},
+  {cap:{wood:700, bronze:140, iron:70, linen:90},   cost:{wood:120, gold:100}},
+  {cap:{wood:1220, bronze:240, iron:160, linen:140},  cost:{wood:300, iron:15, linen:20, gold:300}},
+  {cap:{wood:1920, bronze:380, iron:320, linen:210}, cost:{wood:600, bronze:60, iron:50, gold:700}},
 ];
 export const UPGRADE_MAX = 10; // sails differ per ship: 5 levels for each sail it can carry
 export const SHIP_K = [.6, 1, 2, 3, 4.5];
@@ -311,21 +311,21 @@ export const COMBAT = {
   lootLife: 75,         // seconds floating loot stays before it sinks
   lootRange: 70,
 };
-export const ENEMIES = {
-  dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:64,  turn:1.5, fighters:1, dmg:1.5, sight:420, leash:800, gold:[3, 6], wood:10, len:44, beam:17},
-  skiff:  {name:'Raider skiff',  model:'skiff',  hull:90,  speed:80,  turn:1.05, fighters:3, dmg:2, sight:500, leash:900,  gold:[8, 14], wood:25, bronze:1, len:72,  beam:22},
-  galley: {name:'Raider galley', model:'raider', hull:220, speed:120, turn:.45, fighters:6, dmg:3, sight:600, leash:1100, gold:[25, 40], wood:60, bronze:6, iron:3, len:135, beam:28},
+export const ENEMIES = { // P93 (Nicholas: some ships gave only 6 gold): more coin, and every ship carries some linen and bronze or iron
+  dinghy: {name:'Raider boat',   model:'dinghy', hull:16,  speed:64,  turn:1.5, fighters:1, dmg:1.5, sight:420, leash:800, gold:[15, 25], bronze:1, linen:2, wood:10, len:44, beam:17},
+  skiff:  {name:'Raider skiff',  model:'skiff',  hull:90,  speed:80,  turn:1.05, fighters:3, dmg:2, sight:500, leash:900,  gold:[30, 45], linen:3, wood:25, bronze:2, len:72,  beam:22},
+  galley: {name:'Raider galley', model:'raider', hull:220, speed:120, turn:.45, fighters:6, dmg:3, sight:600, leash:1100, gold:[70, 100], linen:5, wood:60, bronze:6, iron:3, len:135, beam:28},
   // side: pirate (always hostile), merchant (peaceful, flees), navy (hunts pirates; hunts you only if one of them saw you raid)
-  merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:64, turn:.5, fighters:0, dmg:0, sight:450, gold:[18, 30], wood:30, len:110, beam:44},
+  merchant: {name:'Merchant ship', side:'merchant', model:'merchant', hull:90, speed:64, turn:.5, fighters:0, dmg:0, sight:450, gold:[45, 70], bronze:2, linen:4, wood:30, len:110, beam:44},
   // P65: small traders in the Shallows. They never shoot back: the first good money of the game for a rowboat.
-  trader:   {name:'Small trader', side:'merchant', model:'trader', hull:32, speed:50, turn:.6, fighters:0, dmg:0, sight:380, gold:[8, 14], wood:14, len:84, beam:36},
+  trader:   {name:'Small trader', side:'merchant', model:'trader', hull:32, speed:50, turn:.6, fighters:0, dmg:0, sight:380, gold:[25, 40], bronze:1, linen:3, wood:14, len:84, beam:36},
   // navies: one kind per city. A patrol switches city when its island changes hands.
-  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[25, 40], wood:50, bronze:5, iron:2, len:167, beam:49},
-  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[25, 40], wood:50, bronze:5, iron:2, len:141, beam:44},
+  athens:   {name:'Athenian trireme', side:'navy', city:'athens', model:'trireme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:230, speed:132, turn:.55, fighters:4, dmg:3, sight:650, gold:[60, 90], linen:3, wood:50, bronze:5, iron:2, len:167, beam:49},
+  sparta:   {name:'Spartan warship', side:'navy', city:'sparta', model:'bireme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:230, speed:132, turn:.6, fighters:4, dmg:3, sight:650, gold:[60, 90], linen:3, wood:50, bronze:5, iron:2, len:141, beam:44},
   // P64: the two-deck quinqueremes: the navies' heaviest ships (guarding their strongest fortresses) and a pirate one
-  athensQ:  {name:'Athenian quinquereme', side:'navy', city:'athens', model:'quinquereme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[80, 120], wood:120, bronze:20, iron:8, len:215, beam:62},
-  spartaQ:  {name:'Spartan quinquereme', side:'navy', city:'sparta', model:'quinquereme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[80, 120], wood:120, bronze:20, iron:8, len:215, beam:62},
-  pirateQ:  {name:'Pirate quinquereme', model:'quinquereme', look:{paint:'raider', sail:'blood', flag:'none', helm:'pirate'}, hull:480, speed:125, turn:.42, fighters:8, dmg:3.2, sight:650, leash:1300, gold:[90, 130], wood:120, bronze:18, iron:8, len:215, beam:62},
+  athensQ:  {name:'Athenian quinquereme', side:'navy', city:'athens', model:'quinquereme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[160, 220], linen:8, wood:120, bronze:20, iron:8, len:215, beam:62},
+  spartaQ:  {name:'Spartan quinquereme', side:'navy', city:'sparta', model:'quinquereme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[160, 220], linen:8, wood:120, bronze:20, iron:8, len:215, beam:62},
+  pirateQ:  {name:'Pirate quinquereme', model:'quinquereme', look:{paint:'raider', sail:'blood', flag:'none', helm:'pirate'}, hull:480, speed:125, turn:.42, fighters:8, dmg:3.2, sight:650, leash:1300, gold:[180, 250], linen:8, wood:120, bronze:18, iron:8, len:215, beam:62},
 };
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 // P64: three levels of fortress (by how far out they stand) and of bandit camp. Level 3 fortresses are guarded by quinqueremes.

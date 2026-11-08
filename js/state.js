@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=f913895';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=f913895';
-import {sfx} from './audio.js?v=f913895';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=0d16498';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=0d16498';
+import {sfx} from './audio.js?v=0d16498';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -69,7 +69,10 @@ export function addMat(k, n){ G.S[HAVE[k]] = Math.min(have(k) + n, Math.max(have
 export const LOADS = ['fish', 'wood', 'bronze', 'iron', 'linen', 'goods'];
 export const loadOf = k => FISH[k] ? 'fish' : GOODS[k] ? 'goods' : k;
 export function used(cat, cargo = G.S.cargo){ const keys = cat === 'fish' ? Object.keys(FISH) : cat === 'goods' ? Object.keys(GOODS) : [cat]; return keys.reduce((a, k) => a + (cargo[k] || 0), 0); }
-export const capOf = (cat, t = G.S.tier) => cat === 'fish' ? SHIPS[t].hold : SHIPS[t].cap[cat];
+// P93 (Nicholas: a full load of wood from a camp paid for just one upgrade, so explorers kept sailing home): every ship carries
+// 75% more wood, bronze, iron, linen and goods than the numbers in config SHIPS (the fish hold is unchanged)
+export const CARRY = 1.75;
+export const capOf = (cat, t = G.S.tier) => cat === 'fish' ? SHIPS[t].hold : Math.round(SHIPS[t].cap[cat]*CARRY/2)*2;
 export const room = cat => Math.max(0, capOf(cat) - used(cat));
 export const holdUsed = () => used('fish');
 // Put n of something aboard, as much as fits. Returns how many went aboard.

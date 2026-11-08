@@ -1,16 +1,16 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=f913895';
-import {G, ship, lvl, shipName, capOf} from './state.js?v=f913895';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=f913895';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=f913895';
-import {men} from './crew.js?v=f913895';
-import {SPECS, crewLayout} from './ships.js?v=f913895';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=f913895';
-import {HARBORS} from './world.js?v=f913895';
-import {planSources} from './combat.js?v=f913895';
-import {ranksBody} from './records.js?v=f913895';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=f913895';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=0d16498';
+import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=0d16498';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=0d16498';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=0d16498';
+import {men} from './crew.js?v=0d16498';
+import {SPECS, crewLayout} from './ships.js?v=0d16498';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=0d16498';
+import {HARBORS} from './world.js?v=0d16498';
+import {planSources} from './combat.js?v=0d16498';
+import {ranksBody} from './records.js?v=0d16498';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=0d16498';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
@@ -18,7 +18,7 @@ const KING = 11;
 const buildable = () => SHIPS.map((sh, t) => t).filter(t => PLANS[t]);
 // real numbers for a ship: with its upgrades if it's yours, as it comes from the yard if it isn't
 function numbers(t){ const b = SHIPS[t], u = ((G.S.ups || {})[t] || {}), m = men(t), c = crewLayout(SPECS[b.model], m);
-  return {hull:Math.round(b.hull*(1 + UPGRADES.hull.each*(u.hull || 0))), speed:Math.round(b.speed*(1 + UPGRADES.oars.each*(u.oars || 0) + UPGRADES.sail.each*(u.sail || 0))), turn:b.turn*(1 + UPGRADES.helm.each*(u.helm || 0)), hold:b.hold, goods:b.cap.goods, wood:b.cap.wood, men:m, most:b.men[1], archers:c.archers || m, rowers:c.rowers, ups:Object.keys(UPGRADES).filter(k => UPGRADES[k].ship).reduce((n, k) => n + (u[k] || 0), 0)}; }
+  return {hull:Math.round(b.hull*(1 + UPGRADES.hull.each*(u.hull || 0))), speed:Math.round(b.speed*(1 + UPGRADES.oars.each*(u.oars || 0) + UPGRADES.sail.each*(u.sail || 0))), turn:b.turn*(1 + UPGRADES.helm.each*(u.helm || 0)), hold:b.hold, goods:Math.round(b.cap.goods*CARRY/2)*2, wood:Math.round(b.cap.wood*CARRY/2)*2, men:m, most:b.men[1], archers:c.archers || m, rowers:c.rowers, ups:Object.keys(UPGRADES).filter(k => UPGRADES[k].ship).reduce((n, k) => n + (u[k] || 0), 0)}; }
 const TOP = {hull:900, speed:340, turn:2, hold:40, goods:110, men:56};
 const row = (label, v, max, txt, cmp) => `<div class="fstat"><span>${label}</span>${bar(v/max)}<b>${txt}${cmp ? ` <i class="${cmp > 0 ? 'up' : 'down'}">${cmp > 0 ? '+' : ''}${cmp}</i>` : ''}</b></div>`;
 function statRows(n, vs){ const d = (k, dp = 0) => vs ? +((n[k] - vs[k]).toFixed(dp)) : 0;

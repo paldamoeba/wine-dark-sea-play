@@ -1,8 +1,8 @@
 // The Kallisto shipwrights (P54): ship plans won in pieces are studied, then the ship is built. Both take real time, kept as
 // clock times (seconds since 1970) so they keep going while the game is closed. One study and one build at a time.
 // A video takes VIDEO_SKIP seconds off (a placeholder until real ads are chosen).
-import {PLANS, VIDEO_SKIP, SHIPS} from './config.js?v=f913895';
-import {G, save, pay} from './state.js?v=f913895';
+import {PLANS, VIDEO_SKIP, SHIPS} from './config.js?v=0d16498';
+import {G, save, pay} from './state.js?v=0d16498';
 
 export const clockNow = () => Date.now()/1000;
 export const piecesOf = t => (G.S.pieces || {})[t] || 0;
