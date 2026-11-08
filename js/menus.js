@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=0d16498';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=0d16498';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=0d16498';
-import {fleetBody, pinCard} from './fleetpage.js?v=0d16498';
-import {myLevel} from './levels.js?v=0d16498';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=0d16498';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=0d16498';
-import {planClues} from './combat.js?v=0d16498';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=0d16498';
-import {board, active, canDeliver, goal, claims} from './quests.js?v=0d16498';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=0d16498';
-import {colorHeld, colorInfo} from './colors.js?v=0d16498';
-import {shipPortrait} from './portrait.js?v=0d16498';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=0d16498';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=0e2662a';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=0e2662a';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=0e2662a';
+import {fleetBody, pinCard} from './fleetpage.js?v=0e2662a';
+import {myLevel} from './levels.js?v=0e2662a';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=0e2662a';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=0e2662a';
+import {planClues} from './combat.js?v=0e2662a';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=0e2662a';
+import {board, active, canDeliver, goal, claims} from './quests.js?v=0e2662a';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=0e2662a';
+import {colorHeld, colorInfo} from './colors.js?v=0e2662a';
+import {shipPortrait} from './portrait.js?v=0e2662a';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=0e2662a';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -291,22 +291,34 @@ function marketTab(h){
   // materials: each line shows the price, what you have in the warehouse and buttons for a few amounts
   const mrow = (k, desc, amounts) => { const p = matPrice(h, k), st = matStep(k), cheap = k === 'wood' ? p < TIMBER.price : k === 'linen' ? p < LINEN.price : false;
     if (p === null) return '';
-    const btn = n => `<button class="btn small ${n === amounts[amounts.length - 1] ? 'gold' : ''}" data-act="buymat" data-k="${k}" data-n="${n}" ${S.gold >= n/st*p ? '' : 'disabled'}>+${n} ${chip(IC.coin, n/st*p)}</button>`;
-    return `<div class="job"><span class="jic">${IC[k]}</span><div><b>${MAT_NAMES[k]}${cheap ? ' <span class="good">cheap here</span>' : ''}</b><small>${desc} · ${chip(IC.coin, p)} ${st > 1 ? `per ${st}` : 'each'} · you have ${have(k)}</small></div><div class="btnrow tight">${amounts.map(btn).join('')}</div></div>`; };
+    const left = stockLeft(h, k), btn = n => `<button class="btn small ${n === amounts[amounts.length - 1] ? 'gold' : ''}" data-act="buymat" data-k="${k}" data-n="${n}" ${S.gold >= n/st*p && left >= st ? '' : 'disabled'}>+${n} ${chip(IC.coin, n/st*p)}</button>`;
+    return `<div class="job"><span class="jic">${IC[k]}</span><div><b>${MAT_NAMES[k]}${cheap ? ' <span class="good">cheap here</span>' : ''}</b><small>${desc} · ${chip(IC.coin, p)} ${st > 1 ? `per ${st}` : 'each'} · you have ${have(k)} · <b class="${left ? '' : 'bad'}">${left ? `${left} for sale` : 'sold out'}</b></small></div><div class="btnrow tight">${amounts.map(btn).join('')}</div></div>`; };
   return card('Fish market', `<div class="tiles">${tiles}</div>
       <button class="btn gold wide" data-act="sell" ${val ? '' : 'disabled'}>${val ? `Sell the catch ${chip(IC.coin, '+' + val)}` : 'Nothing to sell'}</button>
       ${Object.keys(FISH).some(k => priceAt(h, k) > FISH[k].price) ? `<p class="note">${IC.star} pays more here than anywhere else.</p>` : ''}`)
     + tradeCard(h)
-    + card('Building materials', `${mrow('wood', 'For hulls, oars and upgrades', [10, 50])}${mrow('linen', 'For sails', [5, 20])}${mrow('bronze', 'For rams and arrowheads', [1, 5])}${mrow('iron', 'For warships and the warehouse', [1, 5])}
+    + card('Building materials', `${restockRow(h)}${mrow('wood', 'For hulls, oars and upgrades', [10, 50])}${mrow('linen', 'For sails', [5, 20])}${mrow('bronze', 'For rams and arrowheads', [1, 5])}${mrow('iron', 'For warships and the warehouse', [1, 5])}
       <p class="note">Bought materials go straight to your warehouse at Kallisto.${matPrice(h, 'bronze') === null ? ` Bronze: warship wrecks, or the smiths of ${Object.keys(BRONZE.at).join(', ')}.` : ''}${matPrice(h, 'iron') === null ? ` Iron: mines on ${IRON.mines.join(', ')}, warship wrecks, or the smiths of ${Object.keys(IRON.at).join(', ')}.` : ''}</p>`);
 }
 const home = h => h.is.port;
+// P93 (Nicholas): each market has only so much to sell. What's left shows on every line; it fills up again by itself
+// STOCK.refill seconds after you first buy there, or at once with a video.
+export const STOCK = {wood:150, linen:30, bronze:12, iron:10, goods:15, refill:1200};
+const stockCap = k => STOCK[GOODS[k] ? 'goods' : k];
+function stockOf(h){ const m = G.S.stock || (G.S.stock = {}), now = Date.now()/1000; let st = m[h.is.name];
+  if (!st || now - st.t > STOCK.refill) st = m[h.is.name] = {t:now}; return st; }
+export const stockLeft = (h, k) => { const v = stockOf(h)[k]; return v == null ? stockCap(k) : v; };
+export function takeStock(h, k, n){ const st = stockOf(h); if (!Object.keys(st).some(x => x !== 't')) st.t = Date.now()/1000; st[k] = stockLeft(h, k) - n; }
+export function restock(h){ if (G.S.stock) delete G.S.stock[h.is.name]; }
+const lowStock = h => [...['wood', 'linen', 'bronze', 'iron'].filter(k => matPrice(h, k) !== null), ...Object.keys(GOODS).filter(k => canBuyGood(h, k))].some(k => stockLeft(h, k) < stockCap(k)*.5);
+const refillIn = h => { const st = (G.S.stock || {})[h.is.name]; return st ? Math.max(0, Math.ceil((st.t + STOCK.refill - Date.now()/1000)/60)) : 0; };
+const restockRow = h => lowStock(h) ? `<div class="btnrow"><small class="note">The traders bring more in ${refillIn(h)} min.</small><button class="btn small" data-act="restock">${IC.play} Restock now</button></div>` : '';
 const MAT_NAMES = {wood:'Wood', bronze:'Bronze', iron:'Iron', linen:'Linen'};
 function tradeCard(h){
   const S = G.S, room = roomFor('goods');
   const rows = Object.entries(GOODS).filter(([k]) => canBuyGood(h, k) || S.cargo[k]).map(([k, g]) => { const p = goodPrice(h, k), sp = goodSell(h, k), n = S.cargo[k] || 0, made = TRADE.makes[h.is.name] === k, want = TRADE.wants[h.is.name] === k;
-    return `<div class="job"><span class="jic">${GOOD_IC(k)}</span><div><b>${g.label}${made ? ' <span class="good">made here: cheap</span>' : want ? ' <span class="good">wanted here</span>' : ''}</b><small>Buy ${p} · sell ${sp} · you have ${n}</small></div>
-      <div class="btnrow tight"><button class="btn ghostdark small" data-act="sellgood" data-k="${k}" ${n ? '' : 'disabled'}>Sell ${n ? chip(IC.coin, n*sp) : ''}</button>${[1, 5].map(q => `<button class="btn gold small" data-act="buygood" data-k="${k}" data-n="${q}" ${room >= q && S.gold >= p*q && canBuyGood(h, k) ? '' : 'disabled'}>+${q}</button>`).join('')}</div></div>`; }).join('');
+    return `<div class="job"><span class="jic">${GOOD_IC(k)}</span><div><b>${g.label}${made ? ' <span class="good">made here: cheap</span>' : want ? ' <span class="good">wanted here</span>' : ''}</b><small>Buy ${p} · sell ${sp} · you have ${n}${canBuyGood(h, k) ? ` · ${stockLeft(h, k) || 'sold out'}${stockLeft(h, k) ? ' for sale' : ''}` : ''}</small></div>
+      <div class="btnrow tight"><button class="btn ghostdark small" data-act="sellgood" data-k="${k}" ${n ? '' : 'disabled'}>Sell ${n ? chip(IC.coin, n*sp) : ''}</button>${[1, 5].map(q => `<button class="btn gold small" data-act="buygood" data-k="${k}" data-n="${q}" ${room >= q && S.gold >= p*q && canBuyGood(h, k) && stockLeft(h, k) >= 1 ? '' : 'disabled'}>+${q}</button>`).join('')}</div></div>`; }).join('');
   return card('Trade goods', `${rows}<p class="note">Every harbor makes one good cheaply and pays well for another. Buy where it's made, sell where it's wanted. Room for ${room} more.</p>`);
 }
 function jobsTab(h){

@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=0d16498';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=0d16498';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=0d16498';
-import {scene, screenToSea, setLair} from './scene.js?v=0d16498';
-import {wreckModel} from './models.js?v=0d16498';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=0d16498';
-import {mergeStatic, freeModel} from './merge.js?v=0d16498';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=0d16498';
-import {award} from './trophies.js?v=0d16498';
-import {makeFire, updateFire, burn} from './fire.js?v=0d16498';
-import {blessing, fighters, hasSail} from './crew.js?v=0d16498';
-import {progress, goal} from './quests.js?v=0d16498';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=0d16498';
-import {rollColor, unlockColor, colorName} from './colors.js?v=0d16498';
-import {toast} from './ui.js?v=0d16498';
-import {sink, rowNow, ROW} from './player.js?v=0d16498';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=0d16498';
-import {TOD} from './daynight.js?v=0d16498';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=0d16498';
-import {sfx} from './audio.js?v=0d16498';
-import {myLevel} from './levels.js?v=0d16498';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=0e2662a';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor} from './world.js?v=0e2662a';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=0e2662a';
+import {scene, screenToSea, setLair} from './scene.js?v=0e2662a';
+import {wreckModel} from './models.js?v=0e2662a';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=0e2662a';
+import {mergeStatic, freeModel} from './merge.js?v=0e2662a';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=0e2662a';
+import {award} from './trophies.js?v=0e2662a';
+import {makeFire, updateFire, burn} from './fire.js?v=0e2662a';
+import {blessing, fighters, hasSail} from './crew.js?v=0e2662a';
+import {progress, goal} from './quests.js?v=0e2662a';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=0e2662a';
+import {rollColor, unlockColor, colorName} from './colors.js?v=0e2662a';
+import {toast, popLater} from './ui.js?v=0e2662a';
+import {sink, rowNow, ROW} from './player.js?v=0e2662a';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=0e2662a';
+import {TOD} from './daynight.js?v=0e2662a';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=0e2662a';
+import {sfx} from './audio.js?v=0e2662a';
+import {myLevel} from './levels.js?v=0e2662a';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -728,13 +728,13 @@ function updateLoot(dt){
       // What's left over (and any bronze) goes aboard, as much as there's room for.
       // P84: a fortress's treasury or a camp's stores nearly fill your hold (FILL is the share of the free room for each supply)
       if (l.fill) for (const k of ['wood', 'bronze', 'iron', 'linen']) l[k] = Math.max(l[k] || 0, Math.round(room(k)*l.fill[k]));
-      const ph = TUNING.plankHull, cap = ship().hull*COMBAT.patchTo, need = Math.ceil(Math.max(0, cap - S.hull)/ph), patch = Math.min(need, l.wood), wood = putAboard('wood', l.wood - patch), bronze = putAboard('bronze', l.bronze), iron = putAboard('iron', l.iron), linen = putAboard('linen', l.linen || 0); if (iron) stat('iron', iron); if (linen) gain('linen', linen);
+      const ph = TUNING.plankHull, cap = ship().hull*COMBAT.patchTo, need = Math.ceil(Math.max(0, cap - S.hull)/ph), patch = Math.min(need, l.wood), wood = putAboard('wood', l.wood - patch), bronze = putAboard('bronze', l.bronze), iron = putAboard('iron', l.iron), linen = putAboard('linen', l.linen || 0); if (iron) stat('iron', iron); if (linen) popLater('linen', 'linen', linen);
       // a color from the wreck: paint pots or a bolt of dyed sailcloth among the loot
       if (l.color && unlockColor(l.color.kind, l.color.v)){ const c = l.color; setTimeout(() => { sfx('fanfare'); toast(`New ${c.kind === 'paint' ? 'hull color' : 'sail'}: ${colorName(c.kind, c.v)}!`, 4); }, 900); }
       S.hull = Math.max(S.hull, Math.min(cap, S.hull + patch*ph)); S.gold += l.gold; l.life = 0;
-      if (l.goods){ const ln = putAboard('linen', 2 + Math.floor(Math.random()*3)); if (ln) gain('linen', ln); } // merchants carry sailcloth
-      if (l.goods){ const n = putAboard(l.goods.k, l.goods.n); if (n) setTimeout(() => toast(`+${n} ${l.goods.k === 'oil' ? 'olive oil' : l.goods.k}`, 2.6), 3000); }
-      gain('coin', l.gold); if (wood) gain('wood', wood); if (bronze) gain('bronze', bronze); if (iron) gain('iron', iron); if (l.goods) gain(l.goods.k, l.goods.n);
+      if (l.goods){ const ln = putAboard('linen', 2 + Math.floor(Math.random()*3)); if (ln) popLater('linen', 'linen', ln); } // merchants carry sailcloth
+      if (l.goods){ const n = putAboard(l.goods.k, l.goods.n); if (n) setTimeout(() => toast(`+${n} ${l.goods.k === 'oil' ? 'olive oil' : l.goods.k}`, 2.6), 4500); }
+      popLater('gold', 'coin', l.gold); if (wood) popLater('wood', 'wood', wood); if (bronze) popLater('bronze', 'bronze', bronze); if (iron) popLater('iron', 'iron', iron); if (l.goods) popLater('goods', l.goods.k, l.goods.n); // P93: each '+n' pops up as its number starts climbing (ui.js tally)
       save();
     }
     if (l.life <= 0){ scene.remove(l.obj); LOOT.splice(i, 1); }

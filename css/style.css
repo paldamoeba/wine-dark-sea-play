@@ -1176,3 +1176,8 @@ select{pointer-events:none}
 
 /* P89: the pirate king's bar is small and sits under the little map (combat.js places it), clear of the power buttons */
 .bossbar{bottom:auto!important;transform:translateX(-50%)!important;width:150px!important;padding:4px 8px 6px!important}.bossbar b{font-size:12px!important;margin-bottom:3px!important}.bossbar .bar{height:7px!important}
+
+/* P93: the HUD steps aside while you just sail (ui.js hudQuiet) */
+.lifebar,.loads,.hudbar{transition:opacity .6s}
+body.hudquiet .lifebar,body.hudquiet .loads,body.hudquiet .hudbar{opacity:0}
+.job small b.bad{color:#b8402f} /* P93: sold out */

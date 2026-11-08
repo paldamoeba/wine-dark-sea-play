@@ -46,6 +46,13 @@ export const GODS = {
   apollo:  {name:'Apollo',    bg:'#ab4636', fg:'#f0cd62', sign:'sun'},
   artemis: {name:'Artemis',   bg:'#26473e', fg:'#e4ebe8', sign:'moon'},
   hermes:  {name:'Hermes',    bg:'#cf9035', fg:'#faf2df', sign:'wings'},
+  // P93 (Nicholas: more flags for variety): six more gods. They fly like the others but bring no blessing of their own.
+  ares:      {name:'Ares',       bg:'#7a1f1f', fg:'#e8c46a', sign:'helmet'},
+  aphrodite: {name:'Aphrodite',  bg:'#e48aa5', fg:'#fff4ea', sign:'shell'},
+  hephaestus:{name:'Hephaestus', bg:'#3a3431', fg:'#f08a3a', sign:'hammer'},
+  dionysus:  {name:'Dionysus',   bg:'#5b2a6e', fg:'#b7d36a', sign:'grapes'},
+  demeter:   {name:'Demeter',    bg:'#d9b44a', fg:'#5a3f12', sign:'wheat'},
+  hera:      {name:'Hera',       bg:'#1f6f78', fg:'#f3e3a4', sign:'crown'},
   athens:  {name:'Athens',    bg:'#f1ece0', fg:'#b8322a', sign:'owl', city:true},
   sparta:  {name:'Sparta',    bg:'#9e2a22', fg:'#efe0b8', sign:'lambda', city:true},
 };
@@ -117,6 +124,27 @@ function drawSign(c, sign, x, y, s, fg, bg){
     c.beginPath(); c.arc(s*.38, -s*.32, s*.06, 0, Math.PI*2); c.fill();
   } else if (sign === 'lambda'){ // the Spartan shield letter
     c.beginPath(); c.moveTo(-s*.42, s*.5); c.lineTo(-s*.1, -s*.55); c.lineTo(s*.1, -s*.55); c.lineTo(s*.42, s*.5); c.lineTo(s*.2, s*.5); c.lineTo(0, -s*.18); c.lineTo(-s*.2, s*.5); c.closePath(); c.fill();
+  } else if (sign === 'helmet'){ // a Corinthian helmet with its crest
+    c.beginPath(); c.moveTo(-s*.32, s*.5); c.lineTo(-s*.36, -s*.05); c.quadraticCurveTo(-s*.34, -s*.42, 0, -s*.44); c.quadraticCurveTo(s*.34, -s*.42, s*.36, -s*.05); c.lineTo(s*.32, s*.5); c.lineTo(s*.1, s*.5); c.lineTo(s*.08, s*.05); c.lineTo(-s*.08, s*.05); c.lineTo(-s*.1, s*.5); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(-s*.42, -s*.45); c.quadraticCurveTo(0, -s*.95, s*.42, -s*.45); c.quadraticCurveTo(0, -s*.62, -s*.42, -s*.45); c.fill();
+    c.fillStyle = bg; c.fillRect(-s*.26, -s*.12, s*.18, s*.07); c.fillRect(s*.08, -s*.12, s*.18, s*.07);
+  } else if (sign === 'shell'){ // a scallop shell
+    c.beginPath(); c.moveTo(0, s*.42); for (let i=0;i<=8;i++){ const a = Math.PI*(1.1 + i*.1); c.lineTo(Math.cos(a)*s*.5, Math.sin(a)*s*.5 + s*.05); } c.closePath(); c.fill();
+    c.strokeStyle = bg; c.lineWidth = s*.04; for (let i=1;i<8;i++){ const a = Math.PI*(1.1 + i*.1); c.beginPath(); c.moveTo(0, s*.38); c.lineTo(Math.cos(a)*s*.46, Math.sin(a)*s*.46 + s*.05); c.stroke(); }
+    c.fillStyle = fg; c.fillRect(-s*.16, s*.36, s*.32, s*.12);
+  } else if (sign === 'hammer'){ // the smith's hammer over an anvil
+    c.save(); c.rotate(-.6); c.fillRect(-s*.05, -s*.2, s*.1, s*.72); c.fillRect(-s*.28, -s*.42, s*.56, s*.24); c.restore();
+    c.beginPath(); c.moveTo(-s*.5, s*.18); c.lineTo(s*.42, s*.18); c.lineTo(s*.28, s*.32); c.lineTo(s*.16, s*.32); c.lineTo(s*.2, s*.5); c.lineTo(-s*.24, s*.5); c.lineTo(-s*.2, s*.32); c.lineTo(-s*.36, s*.3); c.closePath(); c.fill();
+  } else if (sign === 'grapes'){ // a bunch of grapes with a leaf
+    for (const [gx, gy] of [[-.24,-.12],[0,-.12],[.24,-.12],[-.12,.08],[.12,.08],[0,.28],[-.24,.08],[.24,.08],[-.12,.28],[.12,.28],[0,.46]]){ c.beginPath(); c.arc(gx*s, gy*s, s*.12, 0, Math.PI*2); c.fill(); }
+    c.beginPath(); c.ellipse(s*.2, -s*.42, s*.24, s*.12, -.4, 0, Math.PI*2); c.fill(); c.fillRect(-s*.03, -s*.5, s*.06, s*.3);
+  } else if (sign === 'wheat'){ // three ears of wheat
+    for (const r of [-.35, 0, .35]){ c.save(); c.rotate(r); c.fillRect(-s*.025, -s*.1, s*.05, s*.62);
+      for (let k=0;k<5;k++) for (const d of [-1, 1]){ c.beginPath(); c.ellipse(d*s*.07, -s*(.62 - k*.11), s*.06, s*.11, d*.5, 0, Math.PI*2); c.fill(); } c.restore(); }
+  } else if (sign === 'crown'){ // Hera's crown, with a peacock eye
+    c.beginPath(); c.moveTo(-s*.46, s*.3); c.lineTo(-s*.46, -s*.3); c.lineTo(-s*.23, 0); c.lineTo(0, -s*.42); c.lineTo(s*.23, 0); c.lineTo(s*.46, -s*.3); c.lineTo(s*.46, s*.3); c.closePath(); c.fill();
+    c.fillRect(-s*.46, s*.36, s*.92, s*.1);
+    c.fillStyle = bg; c.beginPath(); c.ellipse(0, s*.12, s*.1, s*.13, 0, 0, Math.PI*2); c.fill();
   } else if (sign === 'wings'){
     for (const d of [-1, 1]) for (let k=0;k<4;k++){ c.beginPath(); c.ellipse(d*s*(.2 + k*.1), -s*(.05 + k*.1), s*.32 - k*.04, s*.07, d*(-.5 - k*.18), 0, Math.PI*2); c.fill(); }
     c.beginPath(); c.arc(0, s*.12, s*.13, 0, Math.PI*2); c.fill();
@@ -194,7 +222,7 @@ function hull(s, paint){
   g.add(tube(st.map(p => [p.x, p.ky - .6, 0]), Math.max(1, B*.04), C.bottom, 8));
   for (let k=-2;k<=2;k++){ const p = mesh(new T.BoxGeometry(L*.6, .35, .5), C.inner); p.position.set(0, deckLevel + .2, k*B*.12); g.add(p); }
   for (let k=0;k<6;k++){ const x = (-.3 + k*.12)*L, w = W(Math.abs(x/(L/2)))*1.7; const bm = mesh(new T.BoxGeometry(1.6, 1.2, w), C.wale); bm.position.set(x, deckLevel + .6, 0); g.add(bm); }
-  g.userData = {W, deckY, deckLevel};
+  g.userData = {W, deckY, deckLevel, st, at, railR, waleR, K};
   return g;
 }
 
@@ -324,6 +352,47 @@ function oars(s, info, col){
     }
   }
   g.userData.list = list; return g;
+}
+// ---------- P93: hull upgrade looks (Nicholas: like the ships in other games that grow prettier, with gold around them) ----------
+// Pieces to choose from, shown on the bireme first (lk.decor = a list of keys):
+// gild: a gold rail and gold wale; band: a painted Greek key band under the rail; shields: bronze shields along the rails;
+// stern: the stern and bow fans gilded, with a gold scroll at the bow; pennants: long streamers from the stern and bow posts;
+// stripe: a gold stripe along the waterline.
+const GOLD_TRIM = '#cf9a34';
+const keyTex = () => canvasTex('meander', 512, 64, (c, w, h) => {
+  c.fillStyle = '#7a1f22'; c.fillRect(0, 0, w, h); c.fillStyle = '#f0c45a'; c.fillRect(0, 0, w, 6); c.fillRect(0, h - 6, w, 6);
+  c.strokeStyle = '#f0c45a'; c.lineWidth = 5; c.lineCap = 'square'; const u = 32;
+  for (let x = 4; x < w; x += u){ c.beginPath(); c.moveTo(x, h - 14); c.lineTo(x, 14); c.lineTo(x + u*.75, 14); c.lineTo(x + u*.75, h - 26); c.lineTo(x + u*.3, h - 26); c.lineTo(x + u*.3, 26); c.stroke(); }
+});
+function ribbon(rows, map, color){ // rows: [[top xyz, bottom xyz], ...] along the hull; the texture repeats along it
+  const pos = [], uv = [], idx = []; let len = 0;
+  rows.forEach(([a, b], i) => { if (i) len += Math.hypot(a[0] - rows[i - 1][0][0], a[1] - rows[i - 1][0][1]); pos.push(...a, ...b); uv.push(len/24, 1, len/24, 0); if (i){ const k = i*2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); } });
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  if (map){ map.wrapS = T.RepeatWrapping; } const m = new T.Mesh(g, mat(color || '#ffffff', {map, side:T.DoubleSide})); m.castShadow = false; m.receiveShadow = true; return m;
+}
+function hullDecor(s, info, lk, pc, dec){
+  const g = new T.Group(), {st, at, railR, waleR, K} = info, mid = st.filter(p => p.a < .86), out = (q, sgn, d) => [q[0], q[1], q[2] + sgn*d];
+  for (const sgn of [1, -1]){
+    if (dec.includes('gild')){ g.add(tube(st.map(p => [p.x, p.dy + railR*.35, sgn*p.w*1.01]), railR*.95, GOLD_TRIM, 8));
+      g.add(tube(st.map(p => out(at(p, sgn, 2/K), sgn, .15)), waleR*.95, GOLD_TRIM, 8)); }
+    if (dec.includes('band')) g.add(ribbon(mid.map(p => [out(at(p, sgn, 2/K + .025), sgn, .3), out(at(p, sgn, 2/K + .15), sgn, .3)]), keyTex()));
+    if (dec.includes('stripe')){ g.add(tube(mid.map(p => out(at(p, sgn, .36), sgn, .2)), waleR*.9, GOLD_TRIM, 6)); }
+    if (dec.includes('shields')){ const n = Math.max(4, Math.round(s.L/22));
+      for (let i = 0; i < n; i++){ const f = -.5 + i/(n - 1), x = f*s.L*.62, a = Math.abs(x/(s.L/2)), w = info.W(a), y = info.deckY(a) - 1.2;
+        const sh = new T.Group(); sh.position.set(x, y - 2.2, sgn*(w + .9)); sh.rotation.x = sgn*Math.PI/2; sh.rotation.z = 0;
+        const d = mesh(new T.CylinderGeometry(4.6, 4.6, .9, 18), i % 2 ? '#a8702e' : '#8e2a2a'); sh.add(d);
+        const rim = mesh(new T.TorusGeometry(4.6, .55, 6, 20), GOLD_TRIM); rim.rotation.x = Math.PI/2; sh.add(rim);
+        const boss = mesh(new T.SphereGeometry(1.3, 10, 8), GOLD_TRIM); boss.position.y = sgn*0 + .6; sh.add(boss); g.add(sh); } }
+    if (dec.includes('pennants')){ const cols = [pc.panel, '#ffffff', pc.wale];
+      for (const [x, y, dir] of [[-s.L/2 + 2, info.deckY(1) + 12, 1], [s.L/2 - 2, info.deckY(1) + 12, -1]]){ if (sgn < 0) continue;
+        cols.forEach((c, k) => { const L = s.L*.16, geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([0, 0, 0, 0, -3, 0, -dir*L, -1.5 - k*3, (k - 1)*2], 3)); geo.computeVertexNormals();
+          const m = new T.Mesh(geo, mat(c, {side:T.DoubleSide})); m.position.set(x, y + 4 - k*2.5, 0); g.add(m); });
+        const pole = mesh(new T.CylinderGeometry(.5, .5, 14, 5), GOLD_TRIM); pole.position.set(x, y - 2, 0); g.add(pole); } }
+  }
+  if (dec.includes('stern')){ // a gold scroll curling up at the bow
+    const pts = []; for (let k=0;k<=20;k++){ const u = k/20, a = u*Math.PI*1.5; pts.push([s.L/2 - 3 + Math.sin(a)*8*u, info.deckY(1) - 2 + (1 - Math.cos(a))*7*u + u*4, 0]); }
+    g.add(tube(pts, 1.3, GOLD_TRIM, 6)); }
+  return g;
 }
 function fan(x, y, dir, color){
   const g = new T.Group(); g.position.set(x, y, 0);
@@ -542,7 +611,8 @@ export function buildShip(key, look = {}, crew = true){
   if (lk.plate > 0){ const c = lk.plate >= 10 ? '#e3b341' : lk.plate >= 5 ? '#b07f3c' : '#7a5230', n = 6;
     for (let i=0;i<n;i++) for (const sg of [1, -1]){ const f = -.34 + i*.68/(n - 1), x = f*s.L, w = info.W(Math.abs(f*2));
       const b = mesh(new T.BoxGeometry(s.L*.68/n + 1, s.H*.2, 1.4), c); b.position.set(x, s.H*.28, sg*(w + .5)); b.rotation.y = -sg*f*.35; body.add(b); } }
-  const ornament = lk.paint === 'raider' ? '#271b1b' : 'fan';
+  const dec = lk.decor || []; if (dec.length) body.add(hullDecor(s, info, lk, pc, dec));
+  const ornament = dec.includes('stern') ? GOLD_TRIM : lk.paint === 'raider' ? '#271b1b' : 'fan';
   if (s.fans) body.add(fan(-s.L/2 + 1.5, info.deckY(1) - 3, 1, ornament));
   if (s.bowFans) body.add(fan(s.L/2 - 1.5, info.deckY(1) - 3, -1, ornament));
   if (s.eyes) for (const sg of [1, -1]){

@@ -1,35 +1,36 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=0d16498';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=0d16498';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=0d16498';
-import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=0d16498';
-import {showRewarded, ads, adPrivacy} from './ads.js?v=0d16498';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat} from './state.js?v=0d16498';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=0d16498';
-import {CYCLE} from './daynight.js?v=0d16498';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=0d16498';
-import {swapBoat, refreshAllTrees} from './entities.js?v=0d16498';
-import {setZoom} from './input.js?v=0d16498';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=0d16498';
-import {tutHTML} from './tutorial.js?v=0d16498';
-import {founded, blessing} from './crew.js?v=0d16498';
-import {WHALE} from './wildlife.js?v=0d16498';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=0d16498';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=0d16498';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=0d16498';
-import {effectText, buy} from './upgrades.js?v=0d16498';
-import {fleetHTML} from './fleetpage.js?v=0d16498';
-import {myLevel} from './levels.js?v=0d16498';
-import {askName} from './naming.js?v=0d16498';
-import {FLAG_COST, RENAME_COST, flagHeld} from './menus.js?v=0d16498';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=0d16498';
-import {GOODS, WAR} from './config.js?v=0d16498';
-import {fly} from './fly.js?v=0d16498';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=0d16498';
-import {RANKS} from './records.js?v=0d16498';
-import {W, KINDS} from './weather.js?v=0d16498';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=0d16498';
-import {setTimeOfDay} from './daynight.js?v=0d16498';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=0e2662a';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=0e2662a';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=0e2662a';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=0e2662a';
+import {showRewarded, ads, adPrivacy} from './ads.js?v=0e2662a';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat, gain} from './state.js?v=0e2662a';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=0e2662a';
+import {CYCLE} from './daynight.js?v=0e2662a';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=0e2662a';
+import {swapBoat, refreshAllTrees} from './entities.js?v=0e2662a';
+import {setZoom} from './input.js?v=0e2662a';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=0e2662a';
+import {tutHTML} from './tutorial.js?v=0e2662a';
+import {founded, blessing} from './crew.js?v=0e2662a';
+import {WHALE} from './wildlife.js?v=0e2662a';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=0e2662a';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=0e2662a';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=0e2662a';
+import {effectText, buy} from './upgrades.js?v=0e2662a';
+import {fleetHTML} from './fleetpage.js?v=0e2662a';
+import {myLevel} from './levels.js?v=0e2662a';
+import {askName} from './naming.js?v=0e2662a';
+import {FLAG_COST, RENAME_COST, flagHeld, stockLeft, takeStock, restock} from './menus.js?v=0e2662a';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=0e2662a';
+import {GOODS, WAR} from './config.js?v=0e2662a';
+import {fly} from './fly.js?v=0e2662a';
+import {combatState} from './combat.js?v=0e2662a';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=0e2662a';
+import {RANKS} from './records.js?v=0e2662a';
+import {W, KINDS} from './weather.js?v=0e2662a';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=0e2662a';
+import {setTimeOfDay} from './daynight.js?v=0e2662a';
 
 const $ = id => document.getElementById(id);
 
@@ -48,11 +49,36 @@ export function hideHint(){ if (G.S.hint){ G.S.hint = false; $('hint').hidden = 
 let lastHud = '', nearHarbor = null;
 // P84: write to the page only when something changed. Setting the same text again still makes the phone redo the layout, every frame.
 const put = (el, k, v) => { if (el[k] !== v) el[k] = v; };
+// P93 (Nicholas): loot comes in one thing at a time. The numbers on screen (shown) climb to what you really have, one kind
+// after another (drachmae, then fish, wood, bronze, iron, linen, goods), with its "+n" popping up as it starts. The save always
+// holds the real amounts; only the display catches up. Anything going down, and everything while a menu is open, shows at once.
+const shown = {}; let tallyQ = [], tallyT = 0;
+export function popLater(key, kind, n){ (G.tallyPops = G.tallyPops || []).push({key, kind, n}); }
+function tally(dt){
+  const T = {gold:G.S.gold}; for (const k of LOADS) T[k] = used(k);
+  for (const k in T){ if (shown[k] == null || T[k] < shown[k] || G.sheetOpen){ shown[k] = T[k]; tallyQ = tallyQ.filter(q => q !== k); continue; }
+    if (T[k] > shown[k] && !tallyQ.includes(k)) tallyQ.push(k); }
+  if (G.sheetOpen) for (const p of (G.tallyPops || []).splice(0)) gain(p.kind, p.n);
+  if ((tallyT -= dt) > 0 || !tallyQ.length) return;
+  const k = tallyQ[0], d = T[k] - shown[k];
+  if (!tallyQ.started){ tallyQ.started = k; const pops = G.tallyPops || []; for (let i = pops.length - 1; i >= 0; i--) if (pops[i].key === k){ gain(pops[i].kind, pops[i].n); pops.splice(i, 1); } }
+  shown[k] += Math.min(d, Math.max(1, Math.ceil(d*Math.min(1, dt*5))));
+  if (shown[k] >= T[k]){ tallyQ.shift(); tallyQ.started = null; tallyT = .3; }
+}
+// P93 (Nicholas): the drachmae, hull and supply bars fade away while you just sail. They come back while you gain or lose
+// anything (and a few seconds after), in a fight, when the hull is low, in a harbor, and for the first seconds of a voyage.
+let quietKey = '', loudT = 5;
+function hudQuiet(dt){ const k = [G.S.gold, ...LOADS.map(used), Math.ceil(G.S.hull)].join('|');
+  if (k !== quietKey){ quietKey = k; loudT = 4; } else loudT -= dt;
+  const busy = loudT > 0 || tallyQ.length || combatState.threat || combatState.target || G.S.hull < ship().hull*.35 || !!G.dock || G.sinking;
+  document.body.classList.toggle('hudquiet', !busy); }
+export const shownOf = k => shown[k] ?? (k === 'gold' ? G.S.gold : used(k));
 export function updateUI(dt, nearDock){
-  const sh = ship(), key = [G.S.gold, G.S.tier, ...LOADS.map(k => used(k)), Math.ceil(G.S.hull)].join('|');
+  tally(dt); hudQuiet(dt);
+  const sh = ship(), key = [shownOf('gold'), G.S.tier, ...LOADS.map(k => shownOf(k)), Math.ceil(G.S.hull)].join('|');
   if (key !== lastHud){
     lastHud = key;
-    $('gold').textContent = G.S.gold; drawLoads();
+    $('gold').textContent = shownOf('gold'); drawLoads();
     const pct = Math.max(0, G.S.hull/sh.hull*100); $('hullbar').style.width = pct + '%'; $('hullbar').classList.toggle('low', pct < 35);
   }
   const moored = !!G.dock && G.dock.mode === 'moored', h = nearDock, banned = h && h.is.city && (G.hunted || {})[h.is.city];
@@ -91,7 +117,7 @@ export function updateUI(dt, nearDock){
 const LOAD_IC = {fish:() => IC.fish(), wood:() => IC.wood, bronze:() => IC.bronze, iron:() => IC.iron, linen:() => IC.linen, goods:() => GOOD_IC('wine')};
 function drawLoads(){
   const S = G.S, rows = LOADS; // P59: every kind, always
-  $('loads').innerHTML = rows.map(k => { const u = used(k), c = capOf(k), p = Math.min(100, u/c*100);
+  $('loads').innerHTML = rows.map(k => { const u = shownOf(k), c = capOf(k), p = Math.min(100, u/c*100);
     return `<div class="ld ${u >= c ? 'full' : ''}" title="${k}"><i class="ic">${LOAD_IC[k]()}</i><span class="bar"><i style="width:${p}%"></i></span><b>${u}/${c}</b></div>`; }).join('');
 }
 
@@ -213,7 +239,7 @@ function settingsHTML(){
     + (APP ? '' : card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`)))
     + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
       + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
-    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 93'}</p>`;
+    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 94'}</p>`;
   const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
       <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
       ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
@@ -281,9 +307,10 @@ sheetEl.addEventListener('click', e => {
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
   if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); progress('upgrade', k); if (k === 'ram' || k === 'hull' || k === 'sail' || k === 'seats') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   // P93 (Nicholas: +20 linen did nothing): when the warehouse can't take the whole amount, buy as much as fits (in whole steps)
-  if (a === 'buymat'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k, st = matStep(k), p = matPrice(h, k), n = Math.min(+b.dataset.n, Math.floor(wareRoom(k)/st)*st), cost = n/st*p;
-    if (p !== null && n > 0 && S.gold >= cost){ sfx('buy'); fly(b, k, IC[k], Math.min(7, 2 + Math.round(n/st/2)), have(k), have(k) + n); S.gold -= cost; addMat(k, n); if (n < +b.dataset.n) toast(`Only ${n} fit in the warehouse`, 2.2); }
-    else if (n <= 0){ toast('Warehouse full. Build it bigger in the Warehouse tab', 2.6); return; } }
+  if (a === 'buymat'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k, st = matStep(k), p = matPrice(h, k), left = stockLeft(h, k), fit = Math.floor(wareRoom(k)/st)*st, n = Math.min(+b.dataset.n, fit, Math.floor(left/st)*st), cost = n/st*p;
+    if (p !== null && n > 0 && S.gold >= cost){ sfx('buy'); fly(b, k, IC[k], Math.min(7, 2 + Math.round(n/st/2)), have(k), have(k) + n); S.gold -= cost; addMat(k, n); takeStock(h, k, n); if (n < +b.dataset.n) toast(n === fit ? `Only ${n} fit in the warehouse` : `They only had ${n} left`, 2.2); }
+    else if (fit <= 0){ toast('Warehouse full. Build it bigger in the Warehouse tab', 2.6); return; } }
+  if (a === 'restock'){ const h = G.dock ? G.dock.h : HARBORS[0]; playVideo(() => { restock(h); sfx('coins'); render(); }, 'This one fills the market up again.', 'Market restocked!'); return; }
   if (a === 'flagpick'){ tabs.flagPick = tabs.flagPick === b.dataset.v ? null : b.dataset.v; sfx('click'); }
   const flagOn = v => { S.flags = [...new Set([...(S.flags || []), v])]; S.look = {...S.look, flag:v}; tabs.flagPick = null; swapBoat(); sfx('fanfare'); save(); };
   if (a === 'flagbuy' && S.gold >= FLAG_COST && !flagHeld(b.dataset.v)){ S.gold -= FLAG_COST; flagOn(b.dataset.v); }
@@ -291,7 +318,7 @@ sheetEl.addEventListener('click', e => {
   if (a === 'look' && (b.dataset.k === 'flag' ? flagHeld(b.dataset.v) : colorHeld(b.dataset.k, b.dataset.v))){ G.S.look = {...G.S.look, [b.dataset.k]:b.dataset.v}; swapBoat(); save(); }
   if (a === 'wareup'){ const nx = WAREHOUSE[(S.wareLv || 0) + 1]; if (nx && pay(nx.cost)){ S.wareLv = (S.wareLv || 0) + 1; sfx('hammer'); save(); } }
   if (a === 'buygood' || a === 'sellgood'){ const h = G.dock ? G.dock.h : HARBORS[0], k = b.dataset.k, from = b.closest('.job').querySelector('.jic');
-    if (a === 'buygood'){ const q = Math.min(+b.dataset.n || 1, room('goods')), c = q*goodPrice(h, k); if (q && S.gold >= c && canBuyGood(h, k)){ sfx('buy'); fly(from, 'hold', GOOD_IC(k), Math.min(5, q + 1)); S.gold -= c; S.cargo[k] = (S.cargo[k] || 0) + q; } }
+    if (a === 'buygood'){ const q = Math.min(+b.dataset.n || 1, room('goods'), stockLeft(h, k)), c = q*goodPrice(h, k); if (q > 0 && S.gold >= c && canBuyGood(h, k)){ takeStock(h, k, q); sfx('buy'); fly(from, 'hold', GOOD_IC(k), Math.min(5, q + 1)); S.gold -= c; S.cargo[k] = (S.cargo[k] || 0) + q; } }
     if (a === 'sellgood' && S.cargo[k]){ const g = S.cargo[k]*goodSell(h, k); sfx('coins'); fly(from, 'gold', IC.coin, coinsFor(g), S.gold, S.gold + g, `+${g}`); S.gold += g; S.cargo[k] = 0; progress('trade'); } }
   if (a === 'sell'){ const g = catchValue(G.dock ? G.dock.h : HARBORS[0]);
     if (g){ sfx('coins'); const tiles = [...sheetEl.querySelectorAll('.tiles .tile:not(.dim)')], n = coinsFor(g); fly(tiles.length ? tiles : b, 'gold', IC.coin, n, S.gold, S.gold + g, `+${g}`); }
