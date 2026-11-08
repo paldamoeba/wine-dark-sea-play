@@ -2,8 +2,8 @@
 // Only rewarded videos: the player chooses to watch one for a reward (a shorter wait, a color, a repair, sailing home). No banners.
 // Test builds always ask Google for its sample test ads; only the store build (RELEASE) uses the real ad unit.
 // Europe and the UK (and US states with privacy laws) get Google's consent form first, from the message set up in AdMob, Privacy & messaging.
-import {APP, RELEASE} from './state.js?v=5a19ef6';
-import {hush} from './audio.js?v=5a19ef6';
+import {APP, RELEASE} from './state.js?v=8772133';
+import {hush} from './audio.js?v=8772133';
 
 export const ADMOB = {
   real:'ca-app-pub-4758417555480046/2855047321',  // "Shorten wait", Wine-Dark Sea (app ID ca-app-pub-4758417555480046~2858916755 is in the Android manifest)
@@ -30,6 +30,16 @@ export async function initAds(){
   try { await P.initialize({maxAdContentRating:'ParentalGuidance'}); ads.on = true; prepare(); } catch (e){ ads.err = 'init: ' + (e && e.message || e); }
 }
 export function adPrivacy(){ if (P) P.showPrivacyOptionsForm().catch(() => {}); }
+// P100: test app only. Shows Google's consent form as a player in Europe sees it, from anywhere. Google allows that only on a test
+// device: its code (a hash) is printed in the phone's log as addTestDeviceHashedId("...") the first time the app asks for consent.
+export const CONSENT_TEST = !!P && !RELEASE;
+export async function consentTest(hash){
+  if (!CONSENT_TEST) return 'Only in the test app';
+  try { await P.resetConsentInfo();
+    let c = await P.requestConsentInfo({debugGeography:1, testDeviceIdentifiers:hash ? [hash.trim()] : []}); // 1 = EEA
+    if (c.isConsentFormAvailable && c.status === 'REQUIRED'){ c = await P.showConsentForm(); ads.privacy = c.privacyOptionsRequirementStatus === 'REQUIRED'; return 'Form shown'; }
+    return 'No form: status ' + c.status + (hash ? '' : ' (add the test device code)'); }
+  catch (e){ return 'Error: ' + (e && e.message || e); } }
 
 // Show a video. done() once the player has earned the reward; fail(reason) otherwise ('none' = no video to show, 'closed' = closed early).
 // P89 (Nicholas: the video played but no reward came): the reward can reach the game after the video is closed, or only through the

@@ -1,16 +1,16 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=5a19ef6';
-import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=5a19ef6';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=5a19ef6';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=5a19ef6';
-import {men} from './crew.js?v=5a19ef6';
-import {SPECS, crewLayout} from './ships.js?v=5a19ef6';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=5a19ef6';
-import {HARBORS} from './world.js?v=5a19ef6';
-import {planSources} from './combat.js?v=5a19ef6';
-import {ranksBody} from './records.js?v=5a19ef6';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=5a19ef6';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=8772133';
+import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=8772133';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=8772133';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=8772133';
+import {men} from './crew.js?v=8772133';
+import {SPECS, crewLayout} from './ships.js?v=8772133';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=8772133';
+import {HARBORS} from './world.js?v=8772133';
+import {planSources} from './combat.js?v=8772133';
+import {ranksBody} from './records.js?v=8772133';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=8772133';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
