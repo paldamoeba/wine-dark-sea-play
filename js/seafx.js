@@ -1,8 +1,8 @@
 // P70: two things that live on and over the sea, drawn in the 3D world so ships and islands properly hide them:
 // the bubbles of sardine schools, and the wind.
-import {G} from './state.js?v=8772133';
-import {SHOALS, shoalOn, waterY, hash} from './world.js?v=8772133';
-import {SHORE_FISH} from './config.js?v=8772133';
+import {G} from './state.js?v=594c3b4';
+import {SHOALS, shoalOn, waterY, hash} from './world.js?v=594c3b4';
+import {SHORE_FISH} from './config.js?v=594c3b4';
 const T = window.THREE;
 
 // ---- fish bubbles: a few round bubbles popping on the water while a school is out. One mesh, rebuilt each frame ----

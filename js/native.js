@@ -1,5 +1,5 @@
 // P78: what only the phone app needs: the Android back button, and saving the moment the app is put away.
-import {G, save} from './state.js?v=8772133';
+import {G, save} from './state.js?v=594c3b4';
 const N = window.Capacitor, App = N && N.isNativePlatform && N.isNativePlatform() && N.Plugins && N.Plugins.App;
 export const isApp = !!App;
 if (App){
