@@ -447,7 +447,8 @@ function wedge(len, h0, w0, h1, w1, color, lift = 0){
 // a curved cowl on top and raised ribs along the sides. Bow timbers flow down into it.
 export function ram(s, color = '#b8843e', k = 1, hullColor = '#7a4b28'){
   const g = new T.Group(), h = Math.max(4, s.H*(s.bigRam ? .36 : .3))*k, fl = s.L*.12, bl = s.L*(s.bigRam ? .13 : .11)*k, w0 = s.B*.22, w1 = s.B*.12;
-  const fair = wedge(fl, h*1.3, s.B*.24, h*1.08, s.B*.2, hullColor, -h*.05); fair.position.x = fl/2; g.add(fair); // a short neck of bow timber into the ram (P97: no longer a big block under the bow)
+  const y0 = keelAt(s, .74) + h*1.25, room = (s.H*.2 - 1.2 - y0)*2; // P99: the neck stays under the deck (on small boats it poked through the floor)
+  if (room > h*.6){ const fair = wedge(fl, Math.min(h*1.3, room), s.B*.24, Math.min(h*1.08, room), s.B*.2, hullColor, -h*.05); fair.position.x = fl/2; g.add(fair); } // (small boats have no room for it: the ram sits straight on the bow) // a short neck of bow timber into the ram (P97: no longer a big block under the bow)
   const ext = (pts, depth, c) => { const sh = new T.Shape(); pts.forEach(([x, y], i) => i ? sh.lineTo(x, y) : sh.moveTo(x, y));
     const ge = new T.ExtrudeGeometry(sh, {depth, bevelEnabled:true, bevelSize:Math.min(.6, depth*.12), bevelThickness:Math.min(.6, depth*.12), bevelSegments:2, steps:1}); ge.translate(0, 0, -depth/2); return mesh(ge, c); };
   // the sheath: a rounded bronze beak, thick at the stem and narrowing to the tip (a lathe turned to lie along x)
