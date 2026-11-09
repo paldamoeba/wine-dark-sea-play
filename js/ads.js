@@ -2,8 +2,8 @@
 // Only rewarded videos: the player chooses to watch one for a reward (a shorter wait, a color, a repair, sailing home). No banners.
 // Test builds always ask Google for its sample test ads; only the store build (RELEASE) uses the real ad unit.
 // Europe and the UK (and US states with privacy laws) get Google's consent form first, from the message set up in AdMob, Privacy & messaging.
-import {APP, RELEASE} from './state.js?v=df93f2f';
-import {hush} from './audio.js?v=df93f2f';
+import {APP, RELEASE} from './state.js?v=8cf56df';
+import {hush} from './audio.js?v=8cf56df';
 
 export const ADMOB = {
   real:'ca-app-pub-4758417555480046/2855047321',  // "Shorten wait", Wine-Dark Sea (app ID ca-app-pub-4758417555480046~2858916755 is in the Android manifest)
@@ -53,6 +53,11 @@ export function showRewarded(done, fail){
   const end = () => { if (over) return; over = true; clearTimeout(timer); subs.forEach(s => s.then(h => h.remove()).catch(() => {})); hush(false);
     if (paid) done(); else { log('no reward'); fail('closed'); } setTimeout(prepare, 500); };
   const closed = what => { log(what); clearTimeout(timer); timer = setTimeout(end, 1500); };
+  // P104 (Nicholas: after a revive video he came back to a ship still sinking, for good): sometimes no "closed" news ever comes
+  // back from the ad. So when the game is on screen again, finish a moment later anyway; and never wait more than 3 minutes.
+  const back = () => { if (document.visibilityState === 'visible' && !over && !timer){ log('back in the game'); timer = setTimeout(end, 2500); } };
+  document.addEventListener('visibilitychange', back); subs.push(Promise.resolve({remove:() => document.removeEventListener('visibilitychange', back)}));
+  const cap = setTimeout(() => { log('gave up waiting'); end(); }, 180000); subs.push(Promise.resolve({remove:() => clearTimeout(cap)}));
   subs.push(P.addListener('onRewardedVideoAdReward', () => pay('event')));
   subs.push(P.addListener('onRewardedVideoAdDismissed', () => closed('closed')));
   subs.push(P.addListener('onRewardedVideoAdFailedToShow', e => { log('failed to show ' + JSON.stringify(e)); end(); }));

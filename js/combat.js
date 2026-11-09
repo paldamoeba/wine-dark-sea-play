@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=df93f2f';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=df93f2f';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=df93f2f';
-import {scene, screenToSea, setLair} from './scene.js?v=df93f2f';
-import {wreckModel} from './models.js?v=df93f2f';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=df93f2f';
-import {mergeStatic, freeModel} from './merge.js?v=df93f2f';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=df93f2f';
-import {award} from './trophies.js?v=df93f2f';
-import {makeFire, updateFire, burn} from './fire.js?v=df93f2f';
-import {blessing, fighters, hasSail} from './crew.js?v=df93f2f';
-import {progress, goal} from './quests.js?v=df93f2f';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=df93f2f';
-import {rollColor, unlockColor, colorName} from './colors.js?v=df93f2f';
-import {toast, popLater} from './ui.js?v=df93f2f';
-import {sink, rowNow, ROW} from './player.js?v=df93f2f';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=df93f2f';
-import {TOD} from './daynight.js?v=df93f2f';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=df93f2f';
-import {sfx} from './audio.js?v=df93f2f';
-import {myLevel} from './levels.js?v=df93f2f';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=8cf56df';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=8cf56df';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=8cf56df';
+import {scene, screenToSea, setLair} from './scene.js?v=8cf56df';
+import {wreckModel} from './models.js?v=8cf56df';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=8cf56df';
+import {mergeStatic, freeModel} from './merge.js?v=8cf56df';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=8cf56df';
+import {award} from './trophies.js?v=8cf56df';
+import {makeFire, updateFire, burn} from './fire.js?v=8cf56df';
+import {blessing, fighters, hasSail} from './crew.js?v=8cf56df';
+import {progress, goal} from './quests.js?v=8cf56df';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=8cf56df';
+import {rollColor, unlockColor, colorName} from './colors.js?v=8cf56df';
+import {toast, popLater} from './ui.js?v=8cf56df';
+import {sink, rowNow, ROW} from './player.js?v=8cf56df';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=8cf56df';
+import {TOD} from './daynight.js?v=8cf56df';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=8cf56df';
+import {sfx} from './audio.js?v=8cf56df';
+import {myLevel} from './levels.js?v=8cf56df';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -173,7 +173,7 @@ function buildEnemy(e, real = e.real || alwaysReal(e)){ const old = e.obj;
   if (real) mergeStatic(e.obj);
   e.real = real; e.obj.add(e.fire);
   if (e.towers) e.towers.forEach((t, i) => { if (!t.fire) t.fire = makeFire(26, 40, 0); t.fire.position.set(FORT_GUNS[i][0], 70, FORT_GUNS[i][1]); e.obj.add(t.fire); });
-  if (old){ e.obj.position.copy(old.position); e.obj.rotation.order = old.rotation.order; e.obj.rotation.copy(old.rotation); e.obj.scale.copy(old.scale); e.obj.visible = old.visible; scene.remove(old); if (old.userData.standIn !== true){ old.remove(e.fire); freeModel(old); } if (e.dismastT > 0) (e.obj.userData.sails || []).forEach(s => s.visible = false); }
+  if (old){ e.obj.position.copy(old.position); if (!(real && e.fort)){ e.obj.rotation.order = old.rotation.order; e.obj.rotation.copy(old.rotation); e.obj.scale.copy(old.scale); } /* P104: a fortress or camp keeps its own turn and size (the stand-in's were copied over them, so they all faced the same way and hung off their islands) */ e.obj.visible = old.visible; scene.remove(old); if (old.userData.standIn !== true){ old.remove(e.fire); freeModel(old); } if (e.dismastT > 0) (e.obj.userData.sails || []).forEach(s => s.visible = false); }
   else if (e.fort) e.obj.position.set(e.x, e.baseY, e.y);
   scene.add(e.obj); }
 export function rebuildEnemies(){ enemies.forEach(e => buildEnemy(e, e.real || alwaysReal(e))); }

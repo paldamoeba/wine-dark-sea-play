@@ -1,19 +1,19 @@
 // The showroom: every 3D model in the game on one calm sea, to look at from all sides, under different lights.
 // Uses the game's own builders, so what you see here is exactly what sails in the game.
-import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=df93f2f';
-import {makePost} from './glow.js?v=df93f2f';
-import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=df93f2f';
-import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=df93f2f';
-import {buildArena} from './arenabuild.js?v=df93f2f';
-import {IDEAS} from './shipideas.js?v=df93f2f';
-import {makeFire, updateFire} from './fire.js?v=df93f2f';
-import {updateSmoke} from './smoke.js?v=df93f2f';
-import {addGrass, updateGrass} from './grass.js?v=df93f2f';
-import {makeWind} from './seafx.js?v=df93f2f';
-import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=df93f2f';
-import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=df93f2f';
-import {CAMPS, FORTS, QUALITY} from './config.js?v=df93f2f';
-import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=df93f2f';
+import {buildShip, animateShip, SPECS, person, beanGeo, cuteHead, mat, setTorches, HELMETS, statue, flicker} from './ships.js?v=8cf56df';
+import {makePost} from './glow.js?v=8cf56df';
+import {SOUNDS, STYLES, BATTLE, SONGBOOK, sfx, updateAudio, testMusic, stopMusic, startAudio} from './audio.js?v=8cf56df';
+import {buildColossus, marbleColossus, buildFortress, buildGladiator, buildCamp} from './monuments.js?v=8cf56df';
+import {buildArena} from './arenabuild.js?v=8cf56df';
+import {IDEAS} from './shipideas.js?v=8cf56df';
+import {makeFire, updateFire} from './fire.js?v=8cf56df';
+import {updateSmoke} from './smoke.js?v=8cf56df';
+import {addGrass, updateGrass} from './grass.js?v=8cf56df';
+import {makeWind} from './seafx.js?v=8cf56df';
+import {seaUniforms, waterMaterial, bedMaterial, swellAt, SEA_LOOKS} from './water.js?v=8cf56df';
+import {ISLANDS, CITIES, WORLD, landDist, shoreK, islandHeights, siteClear, inPoly, rng} from './world.js?v=8cf56df';
+import {CAMPS, FORTS, QUALITY} from './config.js?v=8cf56df';
+import {slab, WIN_MAT, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, gull, whaleModel, dolphinModel, krakenModel, icebergModel, wreckModel, fishModel, mineModel} from './models.js?v=8cf56df';
 
 const T = window.THREE, $ = id => document.getElementById(id);
 const renderer = new T.WebGLRenderer({canvas:$('stage'), antialias:true});

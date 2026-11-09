@@ -1,19 +1,19 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=df93f2f';
-import {SPECS} from './ships.js?v=df93f2f';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=df93f2f';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=df93f2f';
-import {W} from './weather.js?v=df93f2f';
-import {steering} from './input.js?v=df93f2f';
-import {toast, showZone} from './ui.js?v=df93f2f';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=df93f2f';
-import {LAIR_ROCKS} from './lair.js?v=df93f2f';
-import {startFish, stopFish} from './fishing.js?v=df93f2f';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=df93f2f';
-import {progress} from './quests.js?v=df93f2f';
-import {startSink} from './sinking.js?v=df93f2f';
-import {sfx} from './audio.js?v=df93f2f';
-import {ARENA} from './arena.js?v=df93f2f';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=8cf56df';
+import {SPECS} from './ships.js?v=8cf56df';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=8cf56df';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=8cf56df';
+import {W} from './weather.js?v=8cf56df';
+import {steering} from './input.js?v=8cf56df';
+import {toast, showZone} from './ui.js?v=8cf56df';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=8cf56df';
+import {LAIR_ROCKS} from './lair.js?v=8cf56df';
+import {startFish, stopFish} from './fishing.js?v=8cf56df';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=8cf56df';
+import {progress} from './quests.js?v=8cf56df';
+import {startSink} from './sinking.js?v=8cf56df';
+import {sfx} from './audio.js?v=8cf56df';
+import {ARENA} from './arena.js?v=8cf56df';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -230,6 +230,21 @@ function docking(dt){
 // It only works again once you've sailed out of it (so leaving the harbor doesn't pull you straight back in).
 // P65: the chart's video button: home at once
 document.addEventListener('fasthome', () => { if (G.sinking) return; stopFish(); G.act = null; G.cruise = false; G.rowT = 0; moorAt(HARBORS[0]); G.curZone = zoneAt(G.S.x, G.S.y); unload(); save(); });
+// P104 (Nicholas): Settings, "Stuck?": the ship hops to clear water close to where she is, facing away from the land.
+// A sinking ship goes down as usual and is towed home (a revive is the video's job).
+document.addEventListener('respawn', () => {
+  const S = G.S, sh = ship(); if (ARENA.on){ toast('Not during the games', 2.5); return; } if (G.sinking){ G.sinking.ask = false; G.sinking.t = Math.max(G.sinking.t, SINK_SECONDS); return; }
+  const clear = (x, y) => x > 200 && y > 200 && x < WORLD - 200 && y < WORLD - 200 && landDist(x, y) > sh.beam + 70
+    && ![...LAIR_ROCKS, ...ICEBERGS].some(b => Math.hypot(x - b.x, y - b.y) < b.r + sh.beam + 30)
+    && ![...HARBORS.map(h => h.pier), ...TOWN_PIERS].some(P => pierDist(P, x, y) < sh.beam + 40);
+  let spot = null;
+  for (let r = 0; r <= 1500 && !spot; r += 50) for (let k = 0, n = Math.max(1, Math.round(r/25)); k < n; k++){ const a = k/n*Math.PI*2 + r*.01, x = S.x + Math.cos(a)*r, y = S.y + Math.sin(a)*r; if (clear(x, y)){ spot = {x, y}; break; } }
+  if (!spot) spot = {x:START.x, y:START.y};
+  const e = 40, gx = landDist(spot.x + e, spot.y) - landDist(spot.x - e, spot.y), gy = landDist(spot.x, spot.y + e) - landDist(spot.x, spot.y - e);
+  stopFish(); G.act = null; G.dock = null; G.cruise = false; G.rowT = 0; G.v = 0; G.turnRate = 0; G.dest = null; G.joy = null;
+  Object.assign(S, {x:spot.x, y:spot.y, a:Math.hypot(gx, gy) > 1e-6 ? Math.atan2(gy, gx) : S.a}); G.cam = {x:spot.x, y:spot.y};
+  ringArmed = false; G.curZone = zoneAt(S.x, S.y); toast('Back on open water', 2.5); save();
+});
 export const RING_R = 70;
 export const harborRing = h => ({x:h.pier.x + h.pier.dx*(PIER_LEN + 75), y:h.pier.y + h.pier.dy*(PIER_LEN + 75)});
 let ringArmed = false, started = false;
