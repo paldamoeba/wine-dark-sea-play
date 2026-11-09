@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=8cf56df';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=8cf56df';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=8cf56df';
-import {scene, screenToSea, setLair} from './scene.js?v=8cf56df';
-import {wreckModel} from './models.js?v=8cf56df';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=8cf56df';
-import {mergeStatic, freeModel} from './merge.js?v=8cf56df';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=8cf56df';
-import {award} from './trophies.js?v=8cf56df';
-import {makeFire, updateFire, burn} from './fire.js?v=8cf56df';
-import {blessing, fighters, hasSail} from './crew.js?v=8cf56df';
-import {progress, goal} from './quests.js?v=8cf56df';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=8cf56df';
-import {rollColor, unlockColor, colorName} from './colors.js?v=8cf56df';
-import {toast, popLater} from './ui.js?v=8cf56df';
-import {sink, rowNow, ROW} from './player.js?v=8cf56df';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=8cf56df';
-import {TOD} from './daynight.js?v=8cf56df';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=8cf56df';
-import {sfx} from './audio.js?v=8cf56df';
-import {myLevel} from './levels.js?v=8cf56df';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=a41a65b';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=a41a65b';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=a41a65b';
+import {scene, screenToSea, setLair} from './scene.js?v=a41a65b';
+import {wreckModel} from './models.js?v=a41a65b';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=a41a65b';
+import {mergeStatic, freeModel} from './merge.js?v=a41a65b';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=a41a65b';
+import {award} from './trophies.js?v=a41a65b';
+import {makeFire, updateFire, burn} from './fire.js?v=a41a65b';
+import {blessing, fighters, hasSail} from './crew.js?v=a41a65b';
+import {progress, goal} from './quests.js?v=a41a65b';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=a41a65b';
+import {rollColor, unlockColor, colorName} from './colors.js?v=a41a65b';
+import {toast, popLater} from './ui.js?v=a41a65b';
+import {sink, rowNow, ROW} from './player.js?v=a41a65b';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=a41a65b';
+import {TOD} from './daynight.js?v=a41a65b';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=a41a65b';
+import {sfx} from './audio.js?v=a41a65b';
+import {myLevel} from './levels.js?v=a41a65b';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -322,7 +322,7 @@ function charge(e, dt, C, fighting, d, K){
     if (e.rushW <= 0){ e.rushT = C.rushTime; G.shake = Math.min(1, (G.shake || 0) + .4); } }
   else if (e.rushT > 0){ e.rushT -= dt; e.v = C.speed*C.rushK; e.x += Math.cos(e.a)*e.v*dt; e.y += Math.sin(e.a)*e.v*dt; line.material.opacity = .22;
     const dx = S.x - e.x, dy = S.y - e.y, along = dx*Math.cos(e.a) + dy*Math.sin(e.a), side = Math.abs(-dx*Math.sin(e.a) + dy*Math.cos(e.a));
-    if (!e.rushHit && !G.sinking && Math.abs(along) < e.spec.len*.55 && side < e.spec.beam*.55 + ship().beam*.5){ e.rushHit = true; S.hull -= C.rushDmg; G.hurt = 1; G.shake = 1; G.kick = .25; sfx('ram', e); G.pops = [...(G.pops || []), {t:G.t, txt:`-${C.rushDmg}`, x:S.x, y:S.y, c:'#ff8a6a'}];
+    if (!e.rushHit && !G.sinking && !(G.graceT > 0) && Math.abs(along) < e.spec.len*.55 && side < e.spec.beam*.55 + ship().beam*.5){ e.rushHit = true; S.hull -= C.rushDmg; G.hurt = 1; G.shake = 1; G.kick = .25; sfx('ram', e); G.pops = [...(G.pops || []), {t:G.t, txt:`-${C.rushDmg}`, x:S.x, y:S.y, c:'#ff8a6a'}];
       if (S.hull <= 0){ sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; } }
     const nx = e.x + Math.cos(e.a)*e.spec.len*.5, ny = e.y + Math.sin(e.a)*e.spec.len*.5, rock = e.boss && LAIR_ROCKS.find(r => Math.hypot(nx - r.x, ny - r.y) < r.r + 10);
     if (rock || (e.arena && e.wallHit && e.rushT < C.rushTime - .3)){ // into the rocks: stunned, and it costs him
@@ -369,7 +369,7 @@ function steer(e, tx, ty, speed, dt){
 // P65: the Shallows are only safe from big ships. Bandits and small raiders fight you there, but not right off the Kallisto pier.
 const smallRaider = e => side(e) === 'pirate' && e.spec.len <= 72;
 const homeWaters = () => Math.hypot(G.S.x - HOME.x, G.S.y - HOME.y) < 1200;
-const playerSafe = (e) => (zoneAt(G.S.x, G.S.y) === 0 && !(e && (e.bandit || (smallRaider(e) && !homeWaters())))) || G.sheetOpen || !!G.dock || !G.settings.dev.raiders;
+const playerSafe = (e) => (zoneAt(G.S.x, G.S.y) === 0 && !(e && (e.bandit || (smallRaider(e) && !homeWaters())))) || G.sheetOpen || !!G.dock || !G.settings.dev.raiders || G.graceT > 0;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // Fighting: close in from the side, then keep moving. Every few seconds a ship picks a new move:
@@ -410,7 +410,8 @@ function sail(e, dt, speed, pause){
 }
 
 function pirate(e, dt){
-  const S = G.S, d = dist(e, S), fromHome = dist(e, e.home), safe = playerSafe(e);
+  if (e.calmT > 0) e.calmT -= dt; // P105: the ship that sank you leaves you alone for a while after a revive
+  const S = G.S, d = dist(e, S), fromHome = dist(e, e.home), safe = playerSafe(e) || e.calmT > 0;
   if (e.foe && (e.foe.dead || dist(e, e.foe) > 800)) e.foe = null;
   if (e.mode === 'chase' && !e.foe && (safe || fromHome > e.spec.leash || d > e.spec.sight*1.6)) e.mode = 'return';
   else if (e.mode !== 'chase' && !safe && d < e.spec.sight && fromHome < e.spec.leash*.8){
@@ -525,7 +526,7 @@ function updateStones(dt){
     if (k < 1) continue;
     st.live = false; st.m.visible = st.r.visible = false; st.splash = .9; st.sp.visible = true; sfx('bigsplash', {x:st.tx, y:st.ty});
     const S = G.S;
-    if (!G.sheetOpen && !G.sinking && Math.hypot(S.x - st.tx, S.y - st.ty) < FORTS.stoneHit){
+    if (!G.sheetOpen && !G.sinking && !(G.graceT > 0) && Math.hypot(S.x - st.tx, S.y - st.ty) < FORTS.stoneHit){
       S.hull -= FORTS.stoneDmg; G.hurt = 1; sfx('hurt'); if (st.pot) G.burnT = Math.max(G.burnT || 0, BOSS.burnSeconds); G.kick = Math.min(.25, (G.kick || 0) + .15); G.shake = 1;
       if (!S.stoneTip){ S.stoneTip = true; toast('Hit by a stone!', 4); }
       if (S.hull <= 0){ sink(); enemies.forEach(e => { if (e.mode === 'chase') e.mode = 'return'; e.angry = false; e.attacked = false; }); crimeT = 0; }
@@ -619,7 +620,7 @@ function land(a){
     if (e.ally){ if (e.hull < e.spec.hull*.2) allyHome(e); return; } // your ships never sink: badly hurt, they limp home
     if (a.from && side(e) === 'merchant' && side(a.from) === 'pirate') e.scare = a.from;
     if (e.hull <= 0) sinkEnemy(e, !a.from); return; }
-  if (G.sheetOpen || G.sinking) return;
+  if (G.sheetOpen || G.sinking || G.graceT > 0) return;
   G.S.hull -= a.dmg; G.hurt = 1; if (a.fire) G.burnT = BOSS.burnSeconds;
   // a hit rocks the boat away from the shooter and shakes the view; harder on small boats
   const src = a.from, push = Math.min(10, a.dmg*90/ship().len);
@@ -1031,6 +1032,7 @@ export function updateCombat(dt){
   }
   // ships hit by fire arrows burn for a few seconds; so does your ship after a flaming volley
   for (const e of enemies){ if (!(e.burnT > 0) || e.dead) continue; e.burnT -= dt; if (!soak(e, FIRE_ARROWS.dps(lvl('fire'))*dt)) e.hull -= FIRE_ARROWS.dps(lvl('fire'))*dt; if (e.hull <= 0) sinkEnemy(e, true); }
+  if (G.graceT > 0) G.graceT -= dt;
   if (G.burnT > 0 && !G.sinking){ G.burnT -= dt; G.S.hull -= BOSS.burnDps*dt; G.hurt = Math.max(G.hurt || 0, .4); if (G.S.hull <= 0){ G.burnT = 0; sink(); enemies.forEach(o => { if (o.mode === 'chase') o.mode = 'return'; o.angry = false; o.attacked = false; }); crimeT = 0; } }
   // P85: he appears once the chart is whole (and until he is beaten), whatever the story goal
   const gl = goal(); if (!boss.e && chartDone() && !G.S.chapter) spawnBoss();
@@ -1078,3 +1080,8 @@ export function updateCombat(dt){
 
 // Builder: go straight to him
 document.addEventListener('toking', () => { const S = G.S; G.dock = null; if (!boss.e){ S.chapter = 0; S.bossHull = 0; spawnBoss(); } G.lairK = 0; const a = Math.atan2(WORLD*.5 - LAIR.y, WORLD*.5 - LAIR.x); S.x = LAIR.x + Math.cos(a)*800; S.y = LAIR.y + Math.sin(a)*800; S.a = a + Math.PI; G.cam = {x:S.x, y:S.y}; G.v = 0; });
+
+// P105 (Nicholas: the revive 'did not work'): the video worked, but the pirate that sank you waited beside you and sank you again
+// within seconds. Now, back afloat, nobody can hurt you for 12 s, and every hostile ship nearby sails home and ignores you for 40 s.
+document.addEventListener('revived', () => { G.graceT = 12; combatState.target = null;
+  for (const e of enemies){ if (e.dead || dist(e, G.S) > 2500) continue; e.calmT = 40; e.rushT = 0; e.foe = null; if (e.mode === 'chase' || e.mode === 'hunt') e.mode = 'return'; e.angry = false; e.attacked = false; } });

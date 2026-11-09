@@ -2,8 +2,8 @@
 // Only rewarded videos: the player chooses to watch one for a reward (a shorter wait, a color, a repair, sailing home). No banners.
 // Test builds always ask Google for its sample test ads; only the store build (RELEASE) uses the real ad unit.
 // Europe and the UK (and US states with privacy laws) get Google's consent form first, from the message set up in AdMob, Privacy & messaging.
-import {APP, RELEASE} from './state.js?v=8cf56df';
-import {hush} from './audio.js?v=8cf56df';
+import {APP, RELEASE} from './state.js?v=a41a65b';
+import {hush} from './audio.js?v=a41a65b';
 
 export const ADMOB = {
   real:'ca-app-pub-4758417555480046/2855047321',  // "Shorten wait", Wine-Dark Sea (app ID ca-app-pub-4758417555480046~2858916755 is in the Android manifest)
@@ -19,17 +19,27 @@ async function prepare(){
   catch (e){ ads.err = String(e && e.message || e); setTimeout(prepare, 60000); } // no video right now (offline, or none to give): try again in a minute
   ads.loading = false;
 }
-export async function initAds(){
-  if (!P) return;
+const note = m => { ads.log.push(new Date().toLocaleTimeString() + ' ' + m); if (ads.log.length > 30) ads.log.shift(); };
+// P105: Google's consent answer also says whether the game must offer a "Privacy settings" button (the UMP privacy options
+// entry point). The Europe and US states messages in AdMob depend on it. If the phone was offline, ask again every minute.
+let started = false;
+async function consent(){
   try {
     let c = await P.requestConsentInfo();
     if (c.status === 'REQUIRED' && c.isConsentFormAvailable) c = await P.showConsentForm();
-    ads.privacy = c.privacyOptionsRequirementStatus === 'REQUIRED'; // then Settings shows "Ad privacy choices"
-    if (c.canRequestAds === false) return;
-  } catch (e){ ads.err = 'consent: ' + (e && e.message || e); } // no answer from Google (offline): ads can still load once online
-  try { await P.initialize({maxAdContentRating:'ParentalGuidance'}); ads.on = true; prepare(); } catch (e){ ads.err = 'init: ' + (e && e.message || e); }
+    ads.privacy = c.privacyOptionsRequirementStatus === 'REQUIRED'; // then Settings shows "Privacy settings"
+    note('consent ' + c.status + ', privacy button ' + (ads.privacy ? 'on' : 'off'));
+    if (c.canRequestAds === false) return false;
+  } catch (e){ ads.err = 'consent: ' + (e && e.message || e); note(ads.err); setTimeout(retry, 60000); } // no answer from Google (offline): ads can still load once online
+  return true;
 }
-export function adPrivacy(){ if (P) P.showPrivacyOptionsForm().catch(() => {}); }
+async function retry(){ if (await consent() && !started) startAds(); }
+async function startAds(){ started = true; try { await P.initialize({maxAdContentRating:'ParentalGuidance'}); ads.on = true; prepare(); } catch (e){ started = false; ads.err = 'init: ' + (e && e.message || e); } }
+export async function initAds(){
+  if (!P) return;
+  if (await consent()) startAds();
+}
+export function adPrivacy(){ if (P) P.showPrivacyOptionsForm().then(c => { if (c) ads.privacy = c.privacyOptionsRequirementStatus !== 'NOT_REQUIRED'; note('privacy settings closed'); }).catch(e => note('privacy settings: ' + (e && e.message || e))); }
 // P100: test app only. Shows Google's consent form as a player in Europe sees it, from anywhere. Google allows that only on a test
 // device: its code (a hash) is printed in the phone's log as addTestDeviceHashedId("...") the first time the app asks for consent.
 export const CONSENT_TEST = !!P && !RELEASE;

@@ -1,8 +1,8 @@
 // P73, P74: the loading screen: your own ship under way, up close, while the game loads. The picture runs on a background thread when it can (bootworker.js),
 // or on the page if not. If neither works the plain title card stays. The canvas also has a slow sway in the CSS.
-import {SHIPS} from './config.js?v=8cf56df';
-import {G, lvl} from './state.js?v=8cf56df';
-import {men} from './crew.js?v=8cf56df';
+import {SHIPS} from './config.js?v=a41a65b';
+import {G, lvl} from './state.js?v=a41a65b';
+import {men} from './crew.js?v=a41a65b';
 const THREE_URL = new URL('../vendor/three.min.js', import.meta.url).href; // inside the game, so it works offline in the app
 
 export function startBootShip(){
@@ -22,7 +22,7 @@ export function startBootShip(){
   if (name){ const el = document.createElement('p'); el.textContent = name; boot.querySelector('h1').after(el); }
   const canvas = () => { if (cv) cv.remove(); cv = document.createElement('canvas'); cv.width = Math.round(innerWidth*dpr); cv.height = Math.round(innerHeight*dpr); boot.prepend(cv); return cv; };
   const pageScene = async () => { if (gone) return; smooth = false; if (worker){ worker.terminate(); worker = null; }
-    try { const {runBootScene} = await import('./bootscene.js?v=8cf56df'); if (gone) return; const c = canvas(); onPage = runBootScene(c, info, innerWidth, innerHeight, dpr, () => c.classList.add('on')); } catch (e) { /* the plain title card stays */ } };
+    try { const {runBootScene} = await import('./bootscene.js?v=a41a65b'); if (gone) return; const c = canvas(); onPage = runBootScene(c, info, innerWidth, innerHeight, dpr, () => c.classList.add('on')); } catch (e) { /* the plain title card stays */ } };
   addEventListener('resize', size);
   const q = window.__TEST && __TEST.get('bootpage');
   if (q || !window.Worker || !HTMLCanvasElement.prototype.transferControlToOffscreen){ pageScene(); return api; }

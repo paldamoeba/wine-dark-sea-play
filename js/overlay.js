@@ -1,17 +1,17 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {omen} from './omens.js?v=8cf56df';
-import {OMENS} from './config.js?v=8cf56df';
-import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=8cf56df';
-import {G, isExplored} from './state.js?v=8cf56df';
-import {fogLayer, islandPath} from './map.js?v=8cf56df';
-import {view, project, screenToSea} from './scene.js?v=8cf56df';
-import {JOY_RADIUS} from './input.js?v=8cf56df';
-import {enemies, combatState, capture, aimLeads, planSources, towerPos, towersUp} from './combat.js?v=8cf56df';
-import {drawFish} from './fishing.js?v=8cf56df';
-import {whale} from './wildlife.js?v=8cf56df';
-import {W as WIND} from './weather.js?v=8cf56df';
-import {bottle} from './quests.js?v=8cf56df';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=8cf56df';
+import {omen} from './omens.js?v=a41a65b';
+import {OMENS} from './config.js?v=a41a65b';
+import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=a41a65b';
+import {G, isExplored} from './state.js?v=a41a65b';
+import {fogLayer, islandPath} from './map.js?v=a41a65b';
+import {view, project, screenToSea} from './scene.js?v=a41a65b';
+import {JOY_RADIUS} from './input.js?v=a41a65b';
+import {enemies, combatState, capture, aimLeads, planSources, towerPos, towersUp} from './combat.js?v=a41a65b';
+import {drawFish} from './fishing.js?v=a41a65b';
+import {whale} from './wildlife.js?v=a41a65b';
+import {W as WIND} from './weather.js?v=a41a65b';
+import {bottle} from './quests.js?v=a41a65b';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=a41a65b';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;

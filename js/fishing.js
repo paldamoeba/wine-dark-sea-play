@@ -1,11 +1,11 @@
 // Fishing minigame: a needle spins around a ring over your boat. Tap (or press Space) while it is in the green part.
 // Bigger fish have a smaller green part and a faster needle (see FISH in config.js).
-import {FISH} from './config.js?v=8cf56df';
-import {G, ship, holdUsed, save, gain} from './state.js?v=8cf56df';
-import {toast} from './ui.js?v=8cf56df';
-import {blessing, catchRoll} from './crew.js?v=8cf56df';
-import {progress} from './quests.js?v=8cf56df';
-import {sfx} from './audio.js?v=8cf56df';
+import {FISH} from './config.js?v=a41a65b';
+import {G, ship, holdUsed, save, gain} from './state.js?v=a41a65b';
+import {toast} from './ui.js?v=a41a65b';
+import {blessing, catchRoll} from './crew.js?v=a41a65b';
+import {progress} from './quests.js?v=a41a65b';
+import {sfx} from './audio.js?v=a41a65b';
 
 const TAU = Math.PI*2;
 const angDiff = (a, b) => ((a - b + Math.PI*3) % TAU) - Math.PI;
