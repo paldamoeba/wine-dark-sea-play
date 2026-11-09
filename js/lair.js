@@ -1,13 +1,13 @@
 // P77: the pirate king's lair, alone in the empty far north-east of the Aegean. Wine-dark water, a ring of black sea stacks with fires on them,
 // a dark fortress on a great rock, the burning wrecks of his victims, drifting embers and a red haze. It all clears once he is beaten.
-import {G} from './state.js?v=a41a65b';
-import {scene, setLair} from './scene.js?v=a41a65b';
-import {WORLD, waveAt, rng} from './world.js?v=a41a65b';
-import {mesh, mat} from './ships.js?v=a41a65b';
-import {wreckModel} from './models.js?v=a41a65b';
-import {buildFortress} from './monuments.js?v=a41a65b';
-import {makeFire, updateFire} from './fire.js?v=a41a65b';
-import {mergeStatic} from './merge.js?v=a41a65b';
+import {G} from './state.js?v=31ffc4c';
+import {scene, setLair} from './scene.js?v=31ffc4c';
+import {WORLD, waveAt, rng} from './world.js?v=31ffc4c';
+import {mesh, mat} from './ships.js?v=31ffc4c';
+import {wreckModel} from './models.js?v=31ffc4c';
+import {buildFortress} from './monuments.js?v=31ffc4c';
+import {makeFire, updateFire} from './fire.js?v=31ffc4c';
+import {mergeStatic} from './merge.js?v=31ffc4c';
 
 const T = window.THREE;
 // P89 (Nicholas): larger and more spaced out: everything sits LK times further from the middle than before

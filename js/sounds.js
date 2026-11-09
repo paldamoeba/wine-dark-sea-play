@@ -1,10 +1,10 @@
 // Tells the sound engine what is going on around the ship each frame: speed, weather, land, wrecks, fights, harbors.
-import {G, ship, lvl, PUBLIC} from './state.js?v=a41a65b';
-import {SHIPS} from './config.js?v=a41a65b';
-import {landDist, WRECKS} from './world.js?v=a41a65b';
-import {W, KINDS} from './weather.js?v=a41a65b';
-import {combatState} from './combat.js?v=a41a65b';
-import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=a41a65b';
+import {G, ship, lvl, PUBLIC} from './state.js?v=31ffc4c';
+import {SHIPS} from './config.js?v=31ffc4c';
+import {landDist, WRECKS} from './world.js?v=31ffc4c';
+import {W, KINDS} from './weather.js?v=31ffc4c';
+import {combatState} from './combat.js?v=31ffc4c';
+import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=31ffc4c';
 
 Object.assign(SND, G.settings.sound || {});
 // P92: music one step quieter for everyone (old Quiet .3 -> Medium .3 is the new middle; Medium .6 -> .3, Loud 1 -> .6, Quiet .3 -> .15)

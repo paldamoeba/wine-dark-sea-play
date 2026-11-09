@@ -1,31 +1,32 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=a41a65b';
-import {SPECS} from './ships.js?v=a41a65b';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=a41a65b';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=a41a65b';
-import {W} from './weather.js?v=a41a65b';
-import {steering} from './input.js?v=a41a65b';
-import {toast, showZone} from './ui.js?v=a41a65b';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=a41a65b';
-import {LAIR_ROCKS} from './lair.js?v=a41a65b';
-import {startFish, stopFish} from './fishing.js?v=a41a65b';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=a41a65b';
-import {progress} from './quests.js?v=a41a65b';
-import {startSink} from './sinking.js?v=a41a65b';
-import {sfx} from './audio.js?v=a41a65b';
-import {ARENA} from './arena.js?v=a41a65b';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=31ffc4c';
+import {SPECS} from './ships.js?v=31ffc4c';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=31ffc4c';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=31ffc4c';
+import {W} from './weather.js?v=31ffc4c';
+import {steering} from './input.js?v=31ffc4c';
+import {toast, showZone} from './ui.js?v=31ffc4c';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=31ffc4c';
+import {LAIR_ROCKS} from './lair.js?v=31ffc4c';
+import {startFish, stopFish} from './fishing.js?v=31ffc4c';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=31ffc4c';
+import {progress} from './quests.js?v=31ffc4c';
+import {startSink} from './sinking.js?v=31ffc4c';
+import {sfx} from './audio.js?v=31ffc4c';
+import {ARENA} from './arena.js?v=31ffc4c';
+import {ads, note} from './ads.js?v=31ffc4c';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
   if (G.sinking) return;
-  stat('sunkMe'); G.sinking = {t:0, side:Math.random() < .5 ? 1 : -1}; sfx('sink'); G.dest = null; G.joy = null; stopFish(); G.act = null;
+  G.vidAt = 0; stat('sunkMe'); G.sinking = {t:0, side:Math.random() < .5 ? 1 : -1}; sfx('sink'); G.dest = null; G.joy = null; stopFish(); G.act = null;
   startSink(G.S.x, G.S.y, ship().len);
   // P82 (Nicholas): a video brings you back afloat, up to three times each time you put out to sea (not in the arena's games)
   if (revivesLeft() > 0 && !ARENA.on){ G.sinking.ask = true; document.dispatchEvent(new CustomEvent('askrevive', {detail:revivesLeft()})); }
 }
 export const REVIVES = 3;
 export const revivesLeft = () => REVIVES - (G.revives || 0);
-export function revive(){ if (!G.sinking) return; G.sinking = null; G.revives = (G.revives || 0) + 1; G.S.hull = ship().hull; G.burnT = 0; G.v = 0; G.hurt = 0; sfx('blessing'); toast('Back afloat! The pirates sail off', 3); document.dispatchEvent(new Event('revived')); } // P105: full hull, and see combat.js 'revived'
+export function revive(){ G.vidAt = 0; if (!G.sinking){ note('revive: not sinking'); return; } note('revive: back afloat'); G.sinking = null; G.revives = (G.revives || 0) + 1; G.S.hull = ship().hull; G.burnT = 0; G.v = 0; G.hurt = 0; sfx('blessing'); toast('Back afloat! The pirates sail off', 3); document.dispatchEvent(new Event('revived')); } // P105: full hull, and see combat.js 'revived'
 document.addEventListener('docked', () => { G.revives = 0; });
 document.addEventListener('revive', () => revive());
 document.addEventListener('giveup', () => giveUp());
@@ -271,6 +272,10 @@ export function updatePlayer(dt){
   if (!G.sheetOpen){ S.playSeconds = (S.playSeconds || 0) + dt; shipTime(dt); }
   if (S.bless > 0) S.bless = Math.max(0, S.bless - dt);
   // P82: while you choose (video or towed home) she lists over but stays up
+  // P106 (Nicholas, twice: after the revive video the ship stayed half sunk for good): whatever the ad side does, once the video is
+  // over and the game is on screen, decide here: a reward was paid since the video started = back afloat, otherwise towed home.
+  if (G.sinking && G.sinking.ask && G.vidAt && !document.hidden && Date.now() - G.vidAt > 3000 && (!ads.busy || (ads.paidAt >= G.vidAt && Date.now() - ads.paidAt > 6000))){ // paid but the ad side never finished: 6 s later is enough
+    const paid = ads.paidAt >= G.vidAt; note('safety net: ' + (paid ? 'revive' : 'tow home')); G.vidAt = 0; if (paid) revive(); else giveUp(); }
   if (G.sinking){ G.sinking.t = G.sinking.ask ? Math.min(G.sinking.t + dt, 1.5) : G.sinking.t + dt; G.v *= Math.exp(-dt*2); if (G.sinking.t > SINK_SECONDS) washUp(); return null; }
   if (G.dock){ G.nearPier = null; docking(dt); const k = Math.min(1, dt*3.5); G.cam.x += (S.x - G.cam.x)*k; G.cam.y += (S.y - G.cam.y)*k; spawnWake(); return null; }
   move(dt, sh);

@@ -2,8 +2,8 @@
 // Only rewarded videos: the player chooses to watch one for a reward (a shorter wait, a color, a repair, sailing home). No banners.
 // Test builds always ask Google for its sample test ads; only the store build (RELEASE) uses the real ad unit.
 // Europe and the UK (and US states with privacy laws) get Google's consent form first, from the message set up in AdMob, Privacy & messaging.
-import {APP, RELEASE} from './state.js?v=a41a65b';
-import {hush} from './audio.js?v=a41a65b';
+import {APP, RELEASE} from './state.js?v=31ffc4c';
+import {hush} from './audio.js?v=31ffc4c';
 
 export const ADMOB = {
   real:'ca-app-pub-4758417555480046/2855047321',  // "Shorten wait", Wine-Dark Sea (app ID ca-app-pub-4758417555480046~2858916755 is in the Android manifest)
@@ -11,7 +11,7 @@ export const ADMOB = {
 };
 const P = APP && window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.AdMob;
 const unit = RELEASE ? ADMOB.real : ADMOB.test;
-export const ads = {on:false, ready:false, loading:false, privacy:false, err:'', log:[]};
+export const ads = {on:false, ready:false, loading:false, privacy:false, err:'', log:[], busy:false, paidAt:0};
 
 async function prepare(){
   if (!P || !ads.on || ads.ready || ads.loading) return; ads.loading = true;
@@ -19,7 +19,7 @@ async function prepare(){
   catch (e){ ads.err = String(e && e.message || e); setTimeout(prepare, 60000); } // no video right now (offline, or none to give): try again in a minute
   ads.loading = false;
 }
-const note = m => { ads.log.push(new Date().toLocaleTimeString() + ' ' + m); if (ads.log.length > 30) ads.log.shift(); };
+export const note = m => { ads.log.push(new Date().toLocaleTimeString() + ' ' + m); if (ads.log.length > 30) ads.log.shift(); };
 // P105: Google's consent answer also says whether the game must offer a "Privacy settings" button (the UMP privacy options
 // entry point). The Europe and US states messages in AdMob depend on it. If the phone was offline, ask again every minute.
 let started = false;
@@ -57,11 +57,13 @@ export async function consentTest(hash){
 // (Builder tab, "Ad log") so a phone problem can be seen.
 export function showRewarded(done, fail){
   if (!P || !ads.ready){ prepare(); fail('none'); return; }
-  ads.ready = false; let paid = false, over = false, timer = 0; const subs = [];
+  ads.ready = false; ads.busy = true; let paid = false, over = false, timer = 0; const subs = [];
   const log = m => { ads.log.push(new Date().toLocaleTimeString() + ' ' + m); if (ads.log.length > 30) ads.log.shift(); };
-  const pay = how => { log('reward (' + how + ')'); if (paid) return; paid = true; if (over){ done(); return; } if (!timer) timer = setTimeout(end, 4000); }; // closed never heard: pay anyway
-  const end = () => { if (over) return; over = true; clearTimeout(timer); subs.forEach(s => s.then(h => h.remove()).catch(() => {})); hush(false);
-    if (paid) done(); else { log('no reward'); fail('closed'); } setTimeout(prepare, 500); };
+  const pay = how => { log('reward (' + how + ')'); if (paid) return; paid = true; ads.paidAt = Date.now(); if (over){ done(); return; } if (!timer) timer = setTimeout(end, 4000); }; // closed never heard: pay anyway
+  const end = () => { if (over) return; over = true; ads.busy = false; clearTimeout(timer);
+    try { subs.forEach(s => Promise.resolve(s).then(h => h && h.remove && h.remove()).catch(() => {})); hush(false); } catch (e){ log('cleanup error ' + (e && e.message || e)); }
+    try { if (paid){ log('giving the reward'); done(); } else { log('no reward'); fail('closed'); } } catch (e){ log('reward error ' + (e && e.message || e)); } // P106: shows in the Ad log if the game side breaks
+    setTimeout(prepare, 500); };
   const closed = what => { log(what); clearTimeout(timer); timer = setTimeout(end, 1500); };
   // P104 (Nicholas: after a revive video he came back to a ship still sinking, for good): sometimes no "closed" news ever comes
   // back from the ad. So when the game is on screen again, finish a moment later anyway; and never wait more than 3 minutes.
