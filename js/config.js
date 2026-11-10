@@ -214,7 +214,13 @@ export const VIDEO_SKIP = 600; // each video takes 10 minutes off studying or bu
 export const NEUTRAL_R = 8000; // P52: the fortresses stand far out
 export const FORTS = {pirates:['Thasos', 'Kos'], // every city island except the capitals has a fortress too
   hull:{city:450, pirate:350}, fighters:7, dmg:2.5, range:560, every:3.4, gold:[320, 520], wood:150, bronze:25, rebuild:600, guards:2,
-  stoneEvery:5.2, stoneRange:950, stoneFlight:2.6, stoneDmg:14, stoneHit:58, heal:2.5, healAfter:120};
+  stoneEvery:5.2, stoneRange:950, stoneFlight:2.6, stoneDmg:14, stoneHit:58, heal:2.5, healAfter:120,
+  // P114 (Nicholas: "the fort is in the middle of the island. Then for that fight we can have the camera go back further, and the
+  // range go further as well"): in the far waters you sail a big ship, so a fortress fights at longer range by its level: its
+  // archers, its catapults, your own arrows at it, its warning and its no-go waters all stretch by farK together (the fight stays as
+  // fair as it was), and the camera pulls back by cam while you are in its waters. Thasos, the pirates' stronghold, stands in the
+  // middle of its island, 1.3x the size, and fights furthest of all.
+  farK:[1, 1, 1.12, 1.25], thasos:{k:1.45, size:1.3, cam:1.6}, cam:k => 1 + (k - 1)*.9, lean:.5, leanMax:700};
 
 // Trade goods: each harbor makes one cheaply and wants another. Buy low, sail, sell high.
 // price at a harbor = base × (made here .6 · wanted here 1.45 · otherwise 1). You sell for 85% of the price.

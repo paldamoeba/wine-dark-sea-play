@@ -1,12 +1,12 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=e95989f';
-import {FORTS} from './config.js?v=e95989f';
-import {CITIES} from './world.js?v=e95989f';
-import {enemies, hostile, planReward, towersUp, campLeft} from './combat.js?v=e95989f';
-import {SHIPS, PLANS} from './config.js?v=e95989f';
-import {sfx} from './audio.js?v=e95989f';
-import {siteLevel, myLevel, standing} from './levels.js?v=e95989f';
+import {G} from './state.js?v=2e023d0';
+import {FORTS} from './config.js?v=2e023d0';
+import {CITIES} from './world.js?v=2e023d0';
+import {enemies, hostile, planReward, towersUp, campLeft} from './combat.js?v=2e023d0';
+import {SHIPS, PLANS} from './config.js?v=2e023d0';
+import {sfx} from './audio.js?v=2e023d0';
+import {siteLevel, myLevel, standing} from './levels.js?v=2e023d0';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
@@ -19,7 +19,7 @@ export function updateFortWatch(dt){
   if (!G.dock && !G.sheetOpen && !G.mapOpen) for (const f of enemies){ if (!f.fort && !f.named) continue;
     // a standing hostile fort, or a fallen pirate fort whose guards still sail
     const live = !f.dead && hostile(f), siege = f.dead && f.owner === 'pirate' && f.guards.some(g => !g.dead); if (!live && !siege) continue;
-    const d = Math.hypot(f.x - G.S.x, f.y - G.S.y) - (f.camp || f.named ? WARN - 900 : 0); if (d < bd){ bd = d; best = f; } } // camps have no catapults: the warning comes closer
+    const d = Math.hypot(f.x - G.S.x, f.y - G.S.y) - (f.camp || f.named ? WARN - 900 : 0) - (f.fort && !f.camp ? (f.reach || 0) + FORTS.stoneRange*((f.farK || 1) - 1) : 0); /* P114: counted from the shore it guards, and as far as it shoots */ if (d < bd){ bd = d; best = f; } } // camps have no catapults: the warning comes closer
   if (best && best !== inside && !best.dead && !best.named){ // just sailed into its waters (P72: a named pirate has no message: its name is over the ship and it shows under the map)
     // P82 (Nicholas): no card in the middle of the screen any more. The bar under the map turns red and pulses, with the warning sound
     cautionT = 5; sfx('warn'); last = '';

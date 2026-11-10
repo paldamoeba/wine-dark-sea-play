@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=e95989f';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=e95989f';
-import {G} from './state.js?v=e95989f';
-import {TOD, updateDayNight} from './daynight.js?v=e95989f';
-import {showGrass} from './grass.js?v=e95989f';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=e95989f';
+import {QUALITY, SHIPS} from './config.js?v=2e023d0';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=2e023d0';
+import {G} from './state.js?v=2e023d0';
+import {TOD, updateDayNight} from './daynight.js?v=2e023d0';
+import {showGrass} from './grass.js?v=2e023d0';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=2e023d0';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -129,7 +129,9 @@ let camK = 1; // 1 at sea, closer while tied up at the pier
 export function updateCamera(){
   const f60 = (G.dt || 1/60)*60; // P84: eases the same at any frame rate
   camK += ((G.dock && G.dock.mode !== 'out' ? .5 : 1) - camK) * (1 - (1 - .04)**f60);
-  const dk = Math.min(1.85, (DEPTH_ZOOM[Math.max(0, G.curZone)] || 1)*(SHIP_ZOOM[SHIPS[G.S.tier].rank] || 1));
+  // P114: in a fortress's waters the camera pulls back by that fortress's share (combat.js sets G.fortCam each frame of the fight); it eases out and back like the zone zoom
+  const fc = G.fortCam && G.t - G.fortCam.t < .6 && !G.dock ? G.fortCam.k : 1;
+  const dk = Math.min(1.85, (DEPTH_ZOOM[Math.max(0, G.curZone)] || 1)*(SHIP_ZOOM[SHIPS[G.S.tier].rank] || 1))*fc;
   if (Math.abs(dk - depthK) > .002){ depthK += (dk - depthK)*(1 - (1 - .012)**f60); if (zoomBucket(viewZoom()) !== zoomBucket(lastZoom)) applyZoom(); }
   const dist = (view.H > view.W ? 740 : 600) * viewZoom() * camK;
   // camera angle (a setting): high looks down more, low sees further toward the horizon

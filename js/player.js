@@ -1,20 +1,20 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=e95989f';
-import {SPECS} from './ships.js?v=e95989f';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=e95989f';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=e95989f';
-import {W} from './weather.js?v=e95989f';
-import {steering} from './input.js?v=e95989f';
-import {toast, showZone} from './ui.js?v=e95989f';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=e95989f';
-import {LAIR_ROCKS} from './lair.js?v=e95989f';
-import {startFish, stopFish} from './fishing.js?v=e95989f';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=e95989f';
-import {progress} from './quests.js?v=e95989f';
-import {startSink} from './sinking.js?v=e95989f';
-import {sfx} from './audio.js?v=e95989f';
-import {ARENA} from './arena.js?v=e95989f';
-import {ads, note} from './ads.js?v=e95989f';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON, FORTS} from './config.js?v=2e023d0';
+import {SPECS} from './ships.js?v=2e023d0';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=2e023d0';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=2e023d0';
+import {W} from './weather.js?v=2e023d0';
+import {steering} from './input.js?v=2e023d0';
+import {toast, showZone} from './ui.js?v=2e023d0';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=2e023d0';
+import {LAIR_ROCKS} from './lair.js?v=2e023d0';
+import {startFish, stopFish} from './fishing.js?v=2e023d0';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=2e023d0';
+import {progress} from './quests.js?v=2e023d0';
+import {startSink} from './sinking.js?v=2e023d0';
+import {sfx} from './audio.js?v=2e023d0';
+import {ARENA} from './arena.js?v=2e023d0';
+import {ads, note} from './ads.js?v=2e023d0';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -264,6 +264,7 @@ function harborRings(){
 }
 
 // Returns null (harbors are entered through their rings now, see harborRings()).
+const camOff = {x:0, y:0};
 export function updatePlayer(dt){
   const S = G.S, sh = ship();
   // coming back to the game at a harbor (inside or by its ring): start tied up at the pier, not out on the water
@@ -292,7 +293,12 @@ export function updatePlayer(dt){
   gather(dt, sh);
   regrow(dt);
   spawnWake();
-  const k = Math.min(1, dt*3.5); G.cam.x += (S.x - G.cam.x)*k; G.cam.y += (S.y - G.cam.y)*k;
+  // P114: in a fortress fight the view leans toward the fortress (up to FORTS.lean of the way, FORTS.leanMax at most), so a
+  // fortress standing well inland is on screen while you fight it from the water. It eases in and out.
+  { const fc = G.fortCam && G.t - G.fortCam.t < .6 ? G.fortCam : null, kk = Math.min(1, dt*1.2); let ox = 0, oy = 0;
+    if (fc){ const dx = fc.x - S.x, dy = fc.y - S.y, d = Math.hypot(dx, dy) || 1, m = Math.min(d*FORTS.lean, FORTS.leanMax)*fc.lean; ox = dx/d*m; oy = dy/d*m; }
+    camOff.x += (ox - camOff.x)*kk; camOff.y += (oy - camOff.y)*kk; }
+  const k = Math.min(1, dt*3.5); G.cam.x += (S.x + camOff.x - G.cam.x)*k; G.cam.y += (S.y + camOff.y - G.cam.y)*k;
   // dockhands come out on the pier as you sail up, before you ask to dock
   G.nearPier = HARBORS.find(h => pierDist(h.pier, S.x, S.y) < TUNING.dockRange*3) || null;
   // P55: back to the button (Nicholas preferred it): near a pier and slow, the "Enter harbor" button shows

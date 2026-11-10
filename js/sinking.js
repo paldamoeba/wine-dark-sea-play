@@ -1,7 +1,7 @@
 // Sinking ships: the hull lists over, the bow lifts, and it slides under. Foam rings and floating planks are left behind.
-import {waveAt} from './world.js?v=e95989f';
-import {scene} from './scene.js?v=e95989f';
-import {mesh} from './models.js?v=e95989f';
+import {waveAt} from './world.js?v=2e023d0';
+import {scene} from './scene.js?v=2e023d0';
+import {mesh} from './models.js?v=2e023d0';
 
 const T = window.THREE;
 

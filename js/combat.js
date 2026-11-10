@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=e95989f';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=e95989f';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=e95989f';
-import {scene, screenToSea, setLair} from './scene.js?v=e95989f';
-import {wreckModel} from './models.js?v=e95989f';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=e95989f';
-import {mergeStatic, freeModel} from './merge.js?v=e95989f';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=e95989f';
-import {award} from './trophies.js?v=e95989f';
-import {makeFire, updateFire, burn} from './fire.js?v=e95989f';
-import {blessing, fighters, hasSail} from './crew.js?v=e95989f';
-import {progress, goal} from './quests.js?v=e95989f';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=e95989f';
-import {rollColor, unlockColor, colorName} from './colors.js?v=e95989f';
-import {toast, popLater} from './ui.js?v=e95989f';
-import {sink, rowNow, ROW} from './player.js?v=e95989f';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=e95989f';
-import {TOD} from './daynight.js?v=e95989f';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=e95989f';
-import {sfx} from './audio.js?v=e95989f';
-import {myLevel} from './levels.js?v=e95989f';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=2e023d0';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=2e023d0';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=2e023d0';
+import {scene, screenToSea, setLair} from './scene.js?v=2e023d0';
+import {wreckModel} from './models.js?v=2e023d0';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=2e023d0';
+import {mergeStatic, freeModel} from './merge.js?v=2e023d0';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=2e023d0';
+import {award} from './trophies.js?v=2e023d0';
+import {makeFire, updateFire, burn} from './fire.js?v=2e023d0';
+import {blessing, fighters, hasSail} from './crew.js?v=2e023d0';
+import {progress, goal} from './quests.js?v=2e023d0';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=2e023d0';
+import {rollColor, unlockColor, colorName} from './colors.js?v=2e023d0';
+import {toast, popLater} from './ui.js?v=2e023d0';
+import {sink, rowNow, ROW} from './player.js?v=2e023d0';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=2e023d0';
+import {TOD} from './daynight.js?v=2e023d0';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=2e023d0';
+import {sfx} from './audio.js?v=2e023d0';
+import {myLevel} from './levels.js?v=2e023d0';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -86,6 +86,7 @@ for (const is of ISLANDS){
   const lv = fortLv(is), spec = fortSpec(owner, lv);
   const f = {kind:'fort', fort:true, owner, tier:lv, isle:is, spec, city:spec.city, ...siteFields(site), home:{x:site.x, y:site.y}, v:0, hull:spec.hull, cool:2, stoneT:[2, 4.5],
     mode:'patrol', dead:false, sinkY:0, respawn:0, obj:null, angry:false, attacked:false, lost:0, calm:0, quiet:0, guards:[]};
+  f.farK = is.name === 'Thasos' ? FORTS.thasos.k : FORTS.farK[lv] || 1; spec.sight = FORTS.range*f.farK; /* P114: longer ranges by level */
   resetTowers(f); enemies.push(f); is.fort = f;
   // P67: the guards ring the water in front of the fortress, close enough to see from it. Stronger fortresses have more of them.
   const far = lv === 3 && (is.name === 'Thasos' || FORT_ISLES.indexOf(is) >= FORT_ISLES.length - 2), n = far ? FORT_LV[lv].most : FORT_LV[lv].guards;
@@ -496,8 +497,9 @@ function fortThink(e, dt){
   e.cool -= dt; e.quiet = (e.quiet || 0) + dt;
   if (e.quiet > FORTS.healAfter && e.hull < e.spec.hull) e.hull = Math.min(e.spec.hull, e.hull + FORTS.heal*dt);
   if (!hostile(e) || playerSafe(e) || G.sinking) return;
-  const d = dist(e, G.S) - (e.reach || 0);
-  if (d < FORTS.stoneRange && !e.camp) e.stoneT.forEach((t, i) => { if (e.towers && e.towers[i].hp <= 0) return; e.stoneT[i] = t - dt; if (e.stoneT[i] <= 0){ e.stoneT[i] = FORTS.stoneEvery*(.85 + Math.random()*.3); throwStone(e, i); } });
+  const d = dist(e, G.S) - (e.reach || 0), K = e.farK || 1;
+  if (!e.camp && d < FORTS.stoneRange*K + 250) G.fortCam = {k:e.isle && e.isle.name === 'Thasos' ? FORTS.thasos.cam : FORTS.cam(K), t:G.t, x:e.x, y:e.y, lean:Math.min(1, (e.reach || 0)/300)}; /* lean: only forts that stand well inland need it */ /* P114: the camera pulls back for the fight (scene.js) */
+  if (d < FORTS.stoneRange*K && !e.camp) e.stoneT.forEach((t, i) => { if (e.towers && e.towers[i].hp <= 0) return; e.stoneT[i] = t - dt; if (e.stoneT[i] <= 0){ e.stoneT[i] = FORTS.stoneEvery*(.85 + Math.random()*.3); throwStone(e, i); } });
   if (d > e.spec.sight || e.cool > 0) return;
   // P82: fewer archers as towers fall (and, at a bandit camp, as the bandits fall: see campLeft)
   const shooters = e.camp ? campLeft(e) : e.towers ? Math.max(1, Math.round(e.spec.fighters*(1 + towersUp(e))/5)) : e.spec.fighters; if (shooters <= 0) return;
@@ -861,7 +863,7 @@ function nearestShip(range, ok){ let best = null, bd = Infinity;
   for (const e of enemies){ if (e.dead || !ok(e)) continue; const d = dist(e, G.S) - (e.reach || 0), lim = typeof range === 'function' ? range(e) : range; if (d < lim && d < bd){ bd = d; best = e; } } return best; }
 // P85: how far a ship's arrows fly, by its length; yours reach further at fortresses and camps
 export const rangeOf = spec => COMBAT.range + COMBAT.rangePerLen*Math.max(0, (spec.len || 40) - 40);
-const myRange = e => rangeOf(ship()) + (e && e.fort ? COMBAT.siegeRange : 0);
+const myRange = e => (rangeOf(ship()) + (e && e.fort ? COMBAT.siegeRange : 0))*(e && e.fort && e.farK || 1); // P114: and as far again as the fortress itself reaches
 export const rangeK = () => rangeOf(ship())/COMBAT.range; // the aimed powers reach further on a bigger ship too
 export const aimRange = k => ABILITIES[k].range*rangeK();
 function playerCrew(dt){
@@ -1101,7 +1103,7 @@ document.addEventListener('revived', () => { G.graceT = 12; combatState.target =
 export const NOGO = {fort:950, capital:600, warn:8, cool:20, reach:2600, harbor:80};
 export function noGoZones(){ const z = [];
   // P112: a city's own trading harbor is never inside its no-go waters: the zone stops NOGO.harbor short of the harbor's dock (Milos's harbor moved to its north shore, 960 from the fortress)
-  for (const e of enemies) if (e.fort && !e.camp && e.city && !e.dead){ let r = (e.reach || 0) + NOGO.fort; const h = e.isle && e.isle.harbor; if (h) r = Math.min(r, Math.max((e.reach || 0) + 770, Math.hypot(h.dock.x - e.x, h.dock.y - e.y) - NOGO.harbor)); /* never smaller than the war council's reach (520) plus 250, or the warning could never start */ z.push({x:e.x, y:e.y, r, city:e.city, fort:e}); }
+  for (const e of enemies) if (e.fort && !e.camp && e.city && !e.dead){ let r = (e.reach || 0) + NOGO.fort*(e.farK || 1); const h = e.isle && e.isle.harbor; if (h) r = Math.min(r, Math.max((e.reach || 0) + 770, Math.hypot(h.dock.x - e.x, h.dock.y - e.y) - NOGO.harbor)); /* never smaller than the war council's reach (520) plus 250, or the warning could never start */ z.push({x:e.x, y:e.y, r, city:e.city, fort:e}); }
   for (const is of ISLANDS) if (is.capital && is.city) z.push({x:is.x, y:is.y, r:is.r + NOGO.capital, city:is.city});
   return z; }
 let trespass = null;

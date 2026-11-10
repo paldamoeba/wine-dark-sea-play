@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=e95989f';
-import {MAPDATA} from './mapdata.js?v=e95989f';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=2e023d0';
+import {MAPDATA} from './mapdata.js?v=2e023d0';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -36,7 +36,7 @@ export const ZONES = [
 // Each island: x, y = center; r = farthest shore point; tiers = outlines [beach, grass, hilltop] around the center as [[x, y], ...].
 let WORLD_, HOME_, ZC, ZR, WOB, islands, pier;
 { // map D
-  const M = MAPDATA[MAP.id], kp = UNIT*MAP.spread, GROW = {Rhodes:1.25, Syros:2.4, Milos:1.6, Ikaria:1.4, Tinos:1.4, Ios:1.3, Donousa:2.6, Amorgos:1.9, Sikinos:1.75}; // P69: bigger than their real size, for room around the camp and the fortress; P92 the camp islands too (Nicholas)
+  const M = MAPDATA[MAP.id], kp = UNIT*MAP.spread, GROW = {Rhodes:1.25, Thasos:1.25, Syros:2.4, Milos:1.6, Ikaria:1.4, Tinos:1.4, Ios:1.3, Donousa:2.6, Amorgos:1.9, Sikinos:1.75}; // P69: bigger than their real size, for room around the camp and the fortress; P92 the camp islands too (Nicholas)
   islands = M.feats.map(f => {
     const ks = (f.frame ? kp : f.home ? UNIT : UNIT*MAP.isle)*(GROW[f.n] || 1);
     const tiers = f.t.map(t => { const out = []; for (let i=0;i<t.length;i+=2) out.push([t[i]*ks, t[i+1]*ks]); return out; });
@@ -309,6 +309,21 @@ function findSite(is, camp, loose){
 }
 export function siteFor(is, camp){ if (is.site === undefined) is.site = findSite(is, camp) || findSite(is, camp, true) || findSite(is, camp, 2); return is.site; } // P107: 2 = a bit closer to the town (Chalkidiki)
 for (const is of named) if (is.pirate || (is.city && !is.capital)) siteFor(is, false);
+// P114: Thasos's fortress stands in the middle of the island, on the high ground, bigger than the rest, with a long stair down to its jetty
+function centralSite(is, s){ const [, grass, hill] = is.tiers; if (!grass) return null;
+  const {top, hillTop} = islandHeights(is), inHill = (x, y) => !!hill && inPoly(hill, x - is.x, y - is.y), inGrass = (x, y) => inPoly(grass, x - is.x, y - is.y), groundAt = (x, y) => inHill(x, y) ? hillTop : inGrass(x, y) ? top : 4;
+  const R = FORT_FOOT*s, step = Math.max(14, is.r/44); let best = null;
+  for (let gx = -is.r; gx <= is.r; gx += step) for (let gy = -is.r; gy <= is.r; gy += step){ const x = is.x + gx, y = is.y + gy; if (!inGrass(x, y)) continue; let ok = true, hillN = 0;
+    for (let k=0; k<16 && ok; k++){ const a = k/16*6.283, c = Math.cos(a), n = Math.sin(a); if (!inGrass(x + c*R, y + n*R)) ok = false; else if (inHill(x + c*R*.7, y + n*R*.7)) hillN++; }
+    if (!ok) continue; const onHill = inHill(x, y) && hillN >= 12, score = -gridDist(x, y) + (onHill ? 400 : hillN*8); if (!best || score > best.score) best = {score, x, y, onHill}; }
+  if (!best) return null; const {x, y} = best; let face = null;
+  for (let k=0; k<48; k++){ const a = k/48*6.283, c = Math.cos(a), n = Math.sin(a); let t = 0; while (t < is.r*2 && gridDist(x + c*t, y + n*t) < 0) t += 10; if (gridDist(x + c*t, y + n*t) < 0) continue;
+    if (gridDist(x + c*(t + 160), y + n*(t + 160)) < 60 || gridDist(x + c*(t + 320), y + n*(t + 320)) < 140) continue; if (!face || t < face.t) face = {t, a, c, n}; }
+  if (!face) return null; const f = face, ground = best.onHill ? hillTop : top, path = [], shore = {x:x + f.c*f.t, y:y + f.n*f.t};
+  const hs = []; for (let d = R*.62; d < f.t; d += 11) hs.push({d, h:groundAt(x + f.c*d, y + f.n*d)});
+  hs.forEach((p, i) => { const nb = hs.slice(Math.max(0, i - 3), i + 4), av = nb.reduce((q, w) => q + w.h, 0)/nb.length; path.push({d:p.d, h:Math.max(p.h, av)}); });
+  return {x, y, a:f.a, s, k:s, R, ground, onHill:best.onHill, depth:f.t, path, shore, sea:{x:shore.x + f.c*250, y:shore.y + f.n*250}, central:true}; }
+{ const th = islands.find(i => i.name === 'Thasos'); if (th){ const t = centralSite(th, FORTS.thasos.size); if (t) th.site = t; } }
 for (const is of islands) if (PIRATE_ISLES.includes(is.name)) siteFor(is, false);
 for (const c of CAMPS){ const is = islands.find(i => i.name === c.isle); if (is && is.site === undefined) siteFor(is, true); }
 // ---- P112 (Nicholas: "a longer one. Like for a big port"): ports. The great cities get a long stone harbor wall (mole) that runs
