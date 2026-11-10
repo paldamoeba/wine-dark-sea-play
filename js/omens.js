@@ -1,11 +1,11 @@
 // P78: blessings found out in the world. Now and then a god's fire burns on the open sea, marked on the chart and the small map. Sail through it for a blessing that lasts a few minutes.
 // The effects go through blessing() in crew.js, on top of the god on your flag. One at a time: a new one takes the place of the old.
-import {OMENS, OMEN} from './config.js?v=31ffc4c';
-import {G, ship, stat, save} from './state.js?v=31ffc4c';
-import {scene} from './scene.js?v=31ffc4c';
-import {landDist, waveAt, WORLD} from './world.js?v=31ffc4c';
-import {sfx} from './audio.js?v=31ffc4c';
-import {toast} from './ui.js?v=31ffc4c';
+import {OMENS, OMEN} from './config.js?v=805d5f0';
+import {G, ship, stat, save} from './state.js?v=805d5f0';
+import {scene} from './scene.js?v=805d5f0';
+import {landDist, waveAt, WORLD} from './world.js?v=805d5f0';
+import {sfx} from './audio.js?v=805d5f0';
+import {toast} from './ui.js?v=805d5f0';
 const T = window.THREE, KEYS = Object.keys(OMENS), rand = (a, b) => a + Math.random()*(b - a);
 export const omen = {on:false, x:0, y:0, g:'ares', life:0, wait:rand(...OMEN.first)};
 // the fire: a stone float with a bronze bowl, a flame and a tall beam of colored light you can spot from far off

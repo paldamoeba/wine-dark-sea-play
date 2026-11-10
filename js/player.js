@@ -1,20 +1,20 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=31ffc4c';
-import {SPECS} from './ships.js?v=31ffc4c';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=31ffc4c';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=31ffc4c';
-import {W} from './weather.js?v=31ffc4c';
-import {steering} from './input.js?v=31ffc4c';
-import {toast, showZone} from './ui.js?v=31ffc4c';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=31ffc4c';
-import {LAIR_ROCKS} from './lair.js?v=31ffc4c';
-import {startFish, stopFish} from './fishing.js?v=31ffc4c';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=31ffc4c';
-import {progress} from './quests.js?v=31ffc4c';
-import {startSink} from './sinking.js?v=31ffc4c';
-import {sfx} from './audio.js?v=31ffc4c';
-import {ARENA} from './arena.js?v=31ffc4c';
-import {ads, note} from './ads.js?v=31ffc4c';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON} from './config.js?v=805d5f0';
+import {SPECS} from './ships.js?v=805d5f0';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=805d5f0';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=805d5f0';
+import {W} from './weather.js?v=805d5f0';
+import {steering} from './input.js?v=805d5f0';
+import {toast, showZone} from './ui.js?v=805d5f0';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=805d5f0';
+import {LAIR_ROCKS} from './lair.js?v=805d5f0';
+import {startFish, stopFish} from './fishing.js?v=805d5f0';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=805d5f0';
+import {progress} from './quests.js?v=805d5f0';
+import {startSink} from './sinking.js?v=805d5f0';
+import {sfx} from './audio.js?v=805d5f0';
+import {ARENA} from './arena.js?v=805d5f0';
+import {ads, note} from './ads.js?v=805d5f0';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){

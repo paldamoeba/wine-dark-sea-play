@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=31ffc4c';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=31ffc4c';
-import {G} from './state.js?v=31ffc4c';
-import {TOD, updateDayNight} from './daynight.js?v=31ffc4c';
-import {showGrass} from './grass.js?v=31ffc4c';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=31ffc4c';
+import {QUALITY, SHIPS} from './config.js?v=805d5f0';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=805d5f0';
+import {G} from './state.js?v=805d5f0';
+import {TOD, updateDayNight} from './daynight.js?v=805d5f0';
+import {showGrass} from './grass.js?v=805d5f0';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=805d5f0';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -141,7 +141,7 @@ export function updateCamera(){
   sun.position.set(G.cam.x + TOD.dir.x, TOD.dir.y, G.cam.y + TOD.dir.z); sun.target.position.set(G.cam.x, 0, G.cam.y);
 }
 // The light: time of day first (daynight.js), then the weather on top. Storms are darker still at night.
-const LAIRSUN = new T.Color('#ff9a6a'), LAIRFOG = new T.Color('#2a0f1c'), NIGHTSTORM = new T.Color('#1d2533'), stormC = new T.Color();
+const LAIRSUN = new T.Color('#ff9a6a'), LAIRFOG = new T.Color('#3d1a28'), NIGHTSTORM = new T.Color('#1d2533'), stormC = new T.Color();
 export function updateWeather(dt = 1/60){
   updateDayNight(dt, SKY);
   const k = G.stormK, n = TOD.night;
@@ -149,7 +149,8 @@ export function updateWeather(dt = 1/60){
   stormC.copy(STORMSKY).lerp(NIGHTSTORM, n);
   scene.fog.color.copy(TOD.sky).lerp(MIST, m*.5*(1 - n)).lerp(stormC, k).lerp(LAIRFOG, (G.lairK || 0)*.86); scene.background.copy(scene.fog.color);
   const z = viewZoom();
-  scene.fog.near = (1000 - k*550 - m*420 - n*150)*z; scene.fog.far = (2300 - k*1000 - m*750 - n*250)*z;
+  const lf = G.lairK || 0; // P107 (Nicholas: fog at the pirate king's for drama): the wine-red haze closes in around you there
+  scene.fog.near = Math.max(120, 1000 - k*550 - m*420 - n*150 - lf*210)*z; scene.fog.far = Math.max(700, 2300 - k*1000 - m*750 - n*250 - lf*270)*z;
   sun.color.copy(TOD.sun); hemi.color.copy(TOD.hemiS); hemi.groundColor.copy(TOD.hemiG); waterMat.color.copy(TOD.water);
   sun.intensity = Math.max(.05, TOD.sunI - k*.42*TOD.sunI/.64 + m*.08) + G.flash*.8; hemi.intensity = Math.max(.15, TOD.hemiI - k*.22 + m*.1) + G.flash*.6; { const lk = G.lairK || 0; if (lk > .01){ sun.intensity *= 1 - .35*lk; sun.color.lerp(LAIRSUN, .7*lk); hemi.color.lerp(LAIRSUN, .35*lk); hemi.intensity *= 1 - .22*lk; scene.fog.near *= 1 - .3*lk; scene.fog.far *= 1 - .18*lk; } }
   foamU.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); foamU.uGlint.value = TOD.glint*(1 - k*.8 - m*.5); foamU.uStorm.value = Math.min(1, k + m*.4); foamU.uSky.value.copy(scene.fog.color);

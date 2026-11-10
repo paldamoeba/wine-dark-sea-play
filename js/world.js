@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=31ffc4c';
-import {MAPDATA} from './mapdata.js?v=31ffc4c';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=805d5f0';
+import {MAPDATA} from './mapdata.js?v=805d5f0';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -48,6 +48,18 @@ let WORLD_, HOME_, ZC, ZR, WOB, islands, pier;
   // and the Shallows move with it: the small islands around it are where the game starts (treasure and bandit camps)
   if (MAP.id === 'D'){ const nx = 4.61*kp, ny = 5.5*kp, dx = nx - HOME_.x, dy = ny - HOME_.y; HOME_.x = nx; HOME_.y = ny; pier.x += dx; pier.y += dy; ZC = {x:nx, y:ny}; }
 }
+// P107 (Nicholas): round sand blobs stuck on Attica (and one on the Peloponnese) look bad: a beach point much farther from the grass
+// than the rest of that beach: those two get a new beach, the grass grown outward by their usual beach width. Amorgos had a thin strip of grass inside a very wide beach,
+// so its bandit camp was squeezed: its grass is redrawn as the beach shrunk in by a normal beach width.
+{ const near = (P, x, y) => { let best = null, bd = Infinity; for (let i=0;i<P.length;i++){ const [ax, ay] = P[i], [bx, by] = P[(i+1) % P.length], ex = bx - ax, ey = by - ay;
+      const t = Math.max(0, Math.min(1, ((x - ax)*ex + (y - ay)*ey)/(ex*ex + ey*ey || 1))), qx = ax + ex*t, qy = ay + ey*t, d = Math.hypot(x - qx, y - qy); if (d < bd){ bd = d; best = [qx, qy]; } } return {d:bd, p:best}; };
+  for (const is of islands){ const [beach, grass] = is.tiers; if (!grass || is.frame) continue;
+    const ds = beach.map(([x, y]) => near(grass, x, y).d), med = [...ds].sort((p, q) => p - q)[Math.floor(ds.length*.3)]; // the beach width most of the shore has (the blobs skew the middle)
+    if (['Attica', 'Peloponnese'].includes(is.name)) { // the beach is redrawn as the grass grown outward by the island's usual beach width
+      let sa = 0; for (let i=0;i<grass.length;i++){ const [x0, y0] = grass[i], [x1, y1] = grass[(i+1) % grass.length]; sa += x0*y1 - x1*y0; } const o = sa > 0 ? 1 : -1, n = grass.length;
+      is.tiers[0] = grass.map(([x, y], i) => { const [ax, ay] = grass[(i + n - 1) % n], [bx, by] = grass[(i+1) % n]; let nx = (by - ay)*o, ny = -(bx - ax)*o; const L = Math.hypot(nx, ny) || 1; return [x + nx/L*med, y + ny/L*med]; }); }
+    if (is.name === 'Amorgos'){ let cx = 0, cy = 0; for (const [x, y] of beach){ cx += x/beach.length; cy += y/beach.length; }
+      is.tiers[1] = beach.map(([x, y]) => { const d = Math.hypot(x - cx, y - cy) || 1, k = Math.max(.3, 1 - 70/d); return [cx + (x - cx)*k, cy + (y - cy)*k]; }); } } }
 const area = pts => { let a = 0; for (let i=0;i<pts.length;i++){ const [x0, y0] = pts[i], [x1, y1] = pts[(i+1) % pts.length]; a += x0*y1 - x1*y0; } return Math.abs(a)/2; };
 for (const is of islands){
   is.r = Math.max(...is.tiers[0].map(([x, y]) => Math.hypot(x, y)));
@@ -103,7 +115,9 @@ const SDF = (() => {
   return out;
 })();
 export function landDist(x, y){
-  const fx = x/CELL, fy = y/CELL;
+  // P107 (Nicholas: every island lets you onto the beach on the east side but stops you well out on the west): each grid value is
+  // the middle of its cell, (i + .5)*CELL, but was read as if it sat at i*CELL, so the whole land map sat half a cell north-west
+  const fx = x/CELL - .5, fy = y/CELL - .5;
   if (fx < 0 || fy < 0 || fx >= GN-1 || fy >= GN-1) return 999;
   const x0 = fx|0, y0 = fy|0, tx = fx - x0, ty = fy - y0, i = y0*GN + x0;
   return (SDF[i]*(1-tx) + SDF[i+1]*tx)*(1-ty) + (SDF[i+GN]*(1-tx) + SDF[i+GN+1]*tx)*ty;
@@ -239,10 +253,10 @@ function findSite(is, camp, loose){
   const groundAt = (x, y) => inHill(x, y) ? hillTop : inGrass(x, y) ? top : 4;
   const foot = camp ? CAMP_FOOT : FORT_FOOT, maxDepth = camp ? 190 : 300, wide = is.r > 500, busy = [...HARBORS.filter(h => h.is === is).map(h => h.pier), ...TOWN_PIERS.filter(p => Math.hypot(p.x - is.x, p.y - is.y) < is.r + 200)];
   const toHome = Math.atan2(HOME.y - is.y, HOME.x - is.x), RAYS = 32, step = Math.max(22, is.r/34);
-  for (const s of camp ? [1, .85, .7, .58, .46] : [1, .92, .84, .76, .68, .6]){ const R = foot*s; let best = null;
+  for (const s of camp ? [1, .85, .7, .58, .46] : [1, .92, .84, .76, .68, .6, .54]){ /* P107: .54 so Troy keep their fortress after the land map moved half a cell */ const R = foot*s; let best = null;
     for (let gx = -is.r; gx <= is.r; gx += step) for (let gy = -is.r; gy <= is.r; gy += step){ const x = is.x + gx, y = is.y + gy, sd = landDist(x, y);
       if (sd > -R*(loose ? .45 : .82) || sd < -maxDepth || !inGrass(x, y) || !inPoly(is.tiers[0], gx, gy)) continue;
-      if (busy.some(p => Math.hypot(p.x - x, p.y - y) < (wide ? 560 : 230) + R)) continue; // clear of the town and its pier
+      if (busy.some(p => Math.hypot(p.x - x, p.y - y) < (wide ? (loose === 2 ? 400 : 560) : 230) + R)) continue; // clear of the town and its pier
       const onHill = inHill(x, y); let ok = true;
       for (let k=0; k<14 && ok; k++){ const a = k/14*6.283, c = Math.cos(a), n = Math.sin(a);
         if (landDist(x + c*R, y + n*R) > (loose ? 18 : 2)) ok = false; // nothing hangs over the water (a crag covers any drop to the sand)
@@ -265,7 +279,7 @@ function findSite(is, camp, loose){
       return {x, y, a:f.a, s, k:camp ? s*campK(is) : s, R, ground, onHill:best.onHill, depth:f.t, path, shore, sea:{x:shore.x + f.c*250, y:shore.y + f.n*250}}; } }
   return null;
 }
-export function siteFor(is, camp){ if (is.site === undefined) is.site = findSite(is, camp) || findSite(is, camp, true); return is.site; }
+export function siteFor(is, camp){ if (is.site === undefined) is.site = findSite(is, camp) || findSite(is, camp, true) || findSite(is, camp, 2); return is.site; } // P107: 2 = a bit closer to the town (Chalkidiki)
 for (const is of named) if (is.pirate || (is.city && !is.capital)) siteFor(is, false);
 for (const is of islands) if (PIRATE_ISLES.includes(is.name)) siteFor(is, false);
 for (const c of CAMPS){ const is = islands.find(i => i.name === c.isle); if (is && is.site === undefined) siteFor(is, true); }

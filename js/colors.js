@@ -1,8 +1,8 @@
 // P65: hull and sail colors are found, not given. Each ship you sink can carry one (rarer colors, lower odds), and some can be
 // unlocked with a video instead. A ship's own colors are always yours once you own that ship.
-import {COLORS, FREE_COLORS, SHIPS} from './config.js?v=31ffc4c';
-import {G, save, stat} from './state.js?v=31ffc4c';
-import {SPECS, PAINTS, SAILS} from './ships.js?v=31ffc4c';
+import {COLORS, FREE_COLORS, SHIPS} from './config.js?v=805d5f0';
+import {G, save, stat} from './state.js?v=805d5f0';
+import {SPECS, PAINTS, SAILS} from './ships.js?v=805d5f0';
 
 const held = kind => (G.S.colors || {})[kind] || [];
 export function colorHeld(kind, v){

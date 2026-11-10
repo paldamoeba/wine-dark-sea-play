@@ -1,20 +1,20 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=31ffc4c';
-import {SHIPS, IRON} from './config.js?v=31ffc4c';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=31ffc4c';
-import {G, ship, lvl} from './state.js?v=31ffc4c';
-import {men} from './crew.js?v=31ffc4c';
-import {scene} from './scene.js?v=31ffc4c';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=31ffc4c';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=31ffc4c';
-import {addTown, figure} from './town.js?v=31ffc4c';
-import {makeFire, updateFire, burn} from './fire.js?v=31ffc4c';
-import {addGrass} from './grass.js?v=31ffc4c';
-import {sinkPose} from './sinking.js?v=31ffc4c';
-import {moored} from './fleet.js?v=31ffc4c';
-import {sailCount} from './upgrades.js?v=31ffc4c';
-import {hasSail} from './crew.js?v=31ffc4c';
-import {placeOnWaves} from './combat.js?v=31ffc4c';
+import {mergeStatic} from './merge.js?v=805d5f0';
+import {SHIPS, IRON} from './config.js?v=805d5f0';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=805d5f0';
+import {G, ship, lvl} from './state.js?v=805d5f0';
+import {men} from './crew.js?v=805d5f0';
+import {scene} from './scene.js?v=805d5f0';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm} from './models.js?v=805d5f0';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=805d5f0';
+import {addTown, figure} from './town.js?v=805d5f0';
+import {makeFire, updateFire, burn} from './fire.js?v=805d5f0';
+import {addGrass} from './grass.js?v=805d5f0';
+import {sinkPose} from './sinking.js?v=805d5f0';
+import {moored} from './fleet.js?v=805d5f0';
+import {sailCount} from './upgrades.js?v=805d5f0';
+import {hasSail} from './crew.js?v=805d5f0';
+import {placeOnWaves} from './combat.js?v=805d5f0';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -63,7 +63,13 @@ ISLANDS.forEach((is, i) => {
   is.ht = hill ? hillTop : top;
   g.add(slab(beach, -14, 4, cold ? '#d8dfe3' : '#e6d29c'));
   if (grass) g.add(slab(grass, 4, top, cold ? '#f2f6f8' : is.trees || is.port || is.harbor || is.frame ? '#76883c' : '#8a8a74'));
-  if (hill) g.add(slab(hill, top, hillTop, cold ? '#c7d2d9' : '#8a8a74'));
+  // P107 (Nicholas: the rock looks weird): the hilltop had straight walls like a cut block; now its sides slope and a few
+  // boulders sit on and around it, so it reads as a rocky hill
+  if (hill){ g.add(slab(hill, top, hillTop, cold ? '#c7d2d9' : '#8f8a76', 11));
+    for (let k=0;k<Math.min(7, 2 + size/250);k++){ const p = spotIn(R, hill, 14); if (!p || !siteClear(is, p[0], p[1])) continue; const s = 6 + R()*9, rock = mesh(new T.DodecahedronGeometry(s, 0), cold ? '#b9c3c9' : ['#9a9483', '#8a8473', '#a59f8c'][k % 3]);
+      rock.position.set(p[0], hillTop + s*.3, p[1]); rock.rotation.set(R()*3, R()*3, 0); rock.scale.y = .7; g.add(rock); }
+    for (let k=0;k<Math.min(8, 3 + size/220);k++){ const [hx, hz] = hill[Math.floor(R()*hill.length)], s = 5 + R()*7; if (!siteClear(is, hx, hz)) continue; const rock = mesh(new T.DodecahedronGeometry(s, 0), cold ? '#b9c3c9' : '#948e7c');
+      rock.position.set(hx*1.03, top + s*.4, hz*1.03); rock.rotation.set(R()*3, R()*3, 0); g.add(rock); } }
   // a few rocks along the shore
   for (let k=0;k<Math.min(8, 3 + size/300);k++){ const [x, z] = beach[Math.floor(R()*beach.length)], s = 7 + R()*10, rock = mesh(new T.DodecahedronGeometry(s, 0), '#9a9483');
     rock.position.set(x*1.02, 1, z*1.02); rock.rotation.set(R()*3, R()*3, 0); g.add(rock); }
@@ -74,7 +80,7 @@ ISLANDS.forEach((is, i) => {
       is.mine = {x:is.x + c*(r + 30), y:is.y + s*(r + 30), stock:IRON.stock, regen:0}; break; } }
   // trees: on the grass, or on the hilltop if they land there
   is.treeObjs = [];
-  const ground = grass || beach, treeAt = ([x, z]) => hill && inPoly(hill, x, z) ? hillTop : top;
+  const ground = grass || beach, treeAt = ([x, z]) => !hill || !inPoly(hill, x, z) ? top : depthIn(hill, x, z) >= 11 ? hillTop : (top + hillTop)/2; // P107: half way up the sloped edge
   // every island gets its own mix of tree colors: some cypresses, some round trees in blossom or autumn colors
   const tree = () => cold ? cypress(['#2f4d3a', '#f4f8fa']) : R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
   for (let k=0;k<is.trees;k++){ const p = spotIn(R, ground, 10, 0, 0, size*.45) || spotIn(R, ground, 4) || [0, 0], c = tree();
@@ -108,7 +114,11 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   for (let k=0;k<300;k++){ const p = spotIn(R, ground, 1, px, pz, 260); if (!p) continue; const d = depthIn(ground, p[0], p[1]); if (d > best){ best = d; cx = p[0]; cz = p[1]; } }
   // ---- streets: a main street runs inland from the pier, with side streets across it. Houses line both sides, facing the
   // street; trees fill the gaps; the temple and the city's god stand on a little square at the top of the main street ----
-  const ux = -PIER.dx, uz = -PIER.dy, vx = -uz, vz = ux, x0 = px + ux*24, z0 = pz + uz*24, stone = '#e2d3ae', houses = [], keep = [];
+  const ux = -PIER.dx, uz = -PIER.dy, vx = -uz, vz = ux, stone = '#e2d3ae', houses = [], keep = [];
+  // P107 (Nicholas: Peloponnese is big and empty): on 8 town islands the beach in front of the pier is wide, so the street, which
+  // started 24 from the pier, began on sand and never got going: no houses at all. Now it starts where the grass does.
+  let s0 = 24; while (s0 < 220 && !flat([px + ux*(s0 + 20), pz + uz*(s0 + 20)], 10)) s0 += 10;
+  const x0 = px + ux*s0, z0 = pz + uz*s0;
   let len = 0; while (len < 300 && flat([x0 + ux*(len + 20), z0 + uz*(len + 20)], 10)) len += 20;
   const roads = [], road = (x, z, l, w, a2) => { roads.push({x, z, l, w, c:Math.cos(a2), s:Math.sin(a2)}); const r = mesh(new T.BoxGeometry(l, 1, w), stone, {}, false); r.position.set(x, top + .4, z); r.rotation.y = -a2; r.receiveShadow = true; g.add(r); };
   if (len > 40){ road(x0 + ux*len/2, z0 + uz*len/2, len, 16, Math.atan2(uz, ux));
@@ -137,7 +147,7 @@ function buildTown(is, g, top, R, groundAll, PIER, hill){
   // little farms just outside town: vineyards, olive groves, wheat and vegetables, turned to face the town
   const onRoad = (x, z, m) => roads.some(r => { const dx = x - r.x, dz = z - r.z; return Math.abs(dx*r.c + dz*r.s) < r.l/2 + m && Math.abs(-dx*r.s + dz*r.c) < r.w/2 + m; });
   for (let k=0, n=0, kind=Math.floor(R()*4); k<300 && n<(is.port ? 4 : 3); k++){ const p = spotIn(R, ground, 26, cx, cz, 340);
-    if (!flat(p, 26) || Math.hypot(p[0] - cx, p[1] - cz) < (is.port ? 60 : 90) || keep.some(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) < (is.port ? 34 : 42)) || onRoad(p[0], p[1], 30) || Math.hypot(p[0] - px, p[1] - pz) < 70) continue;
+    if (!flat(p, 26) || [[30, 0], [-30, 0], [0, 30], [0, -30], [22, 22], [-22, 22], [22, -22], [-22, -22]].some(([a, b]) => off(p[0] + a, p[1] + b)) || Math.hypot(p[0] - cx, p[1] - cz) < (is.port ? 60 : 90) || keep.some(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) < (is.port ? 34 : 42)) || onRoad(p[0], p[1], 30) || Math.hypot(p[0] - px, p[1] - pz) < 70) continue;
     const f = farm(kind++); f.position.set(p[0], top, p[1]); f.rotation.y = -Math.atan2(cz - p[1], cx - p[0]); g.add(f); popIn(f); keep.push(p, [p[0] + 16, p[1]], [p[0] - 16, p[1]], [p[0], p[1] + 16], [p[0], p[1] - 16]); n++; }
   let sp = null; for (let k=0;k<60 && !sp;k++){ const p = spotIn(R, ground, 8, px - PIER.dx*30, pz - PIER.dy*30, 60); if (p && keep.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 24)) sp = p; }
   if (!is.port && sp){ // a flagpole by the pier with the owner's colors
