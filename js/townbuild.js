@@ -4,11 +4,11 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=1810eda';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=1810eda';
-import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=1810eda';
-import {addTown} from './town.js?v=1810eda';
-import {mergeStatic} from './merge.js?v=1810eda';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=910e0aa';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=910e0aa';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=910e0aa';
+import {addTown} from './town.js?v=910e0aa';
+import {mergeStatic} from './merge.js?v=910e0aa';
 const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;

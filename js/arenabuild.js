@@ -2,9 +2,9 @@
 // basin around ARENA = {x, y, gate} (gate = the angle out through the gate) and leaves out pieces that would stand on land
 // (landD(x, y) < 0 on land). It sets ARENA.fort and returns the group (placed at ARENA.x, 0, ARENA.y, not added to a scene)
 // with what arena.js needs to run the games: the wall pieces and posts ships bump into, the crowd, the torches, the Colossus.
-import {mat, torch} from './ships.js?v=1810eda';
-import {figure} from './town.js?v=1810eda';
-import {buildGladiator, marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=1810eda';
+import {mat, torch} from './ships.js?v=910e0aa';
+import {figure} from './town.js?v=910e0aa';
+import {buildGladiator, marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=910e0aa';
 
 const T = window.THREE;
 export const BACK = 2300; // how far behind the middle a side wall may run to reach the shore
@@ -61,7 +61,9 @@ export function buildArena(ARENA, landD = () => 1e9){
       if (k % 5 === 2){ const t = torch(); t.position.set(0, 7, 12); t.scale.setScalar(1.2); p.add(t); torches.push(t); }
       if (k % 6 === 4){ box(1.8, 46, 1.8, mat('#6e3d1e'), 0, 30, -12, p); box(1, 22, 20, BANNERS[(k/6 | 0) % 3], 0, 41, -2, p); }
       else for (let c = 0; c < 4; c++){ const fg = figure(['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f'][(k + c) % 5]); fg.scale.setScalar(1.1); fg.visible = true;
-        fg.position.set((c - 1.5)*L*.24, DECK_Y, (c % 2 ? 8 : -6)); fg.userData.ph = Math.random()*6; fg.userData.h = DECK_Y + 1.5; fg.userData.noMerge = true; p.add(fg); crowd.push(fg); } } }
+        fg.position.set((c - 1.5)*L*.24, DECK_Y, (c % 2 ? 8 : -6)); p.add(fg);
+        /* P116: one in four of the waterfront crowd jumps and cheers; the rest stand still and are glued into the quay's pieces (they were 130 separate figures) */
+        if ((k + c) % 4 === 0){ fg.userData.ph = Math.random()*6; fg.userData.h = DECK_Y + 1.5; fg.userData.noMerge = true; crowd.push(fg); } else { fg.userData = {}; } } } }
   // a white plinth at each side of the gate, for his feet
   const plinths = [-1, 1].map(s => { const [x, z] = at(H, s*GW);
     const pl = box(80, 34, 80, white, x, 5, z); pl.rotation.y = -ARENA.gate; box(88, 4, 88, ledge, x, 23, z).rotation.y = -ARENA.gate;

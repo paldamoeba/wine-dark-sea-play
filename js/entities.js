@@ -1,50 +1,58 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=1810eda';
-import {SHIPS, IRON} from './config.js?v=1810eda';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=1810eda';
-import {G, ship, lvl} from './state.js?v=1810eda';
-import {men} from './crew.js?v=1810eda';
-import {scene} from './scene.js?v=1810eda';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=1810eda';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=1810eda';
-import {figure} from './town.js?v=1810eda';
-import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=1810eda';
-import {makeFire, updateFire, burn} from './fire.js?v=1810eda';
-import {addGrass} from './grass.js?v=1810eda';
-import {sinkPose} from './sinking.js?v=1810eda';
-import {moored} from './fleet.js?v=1810eda';
-import {sailCount} from './upgrades.js?v=1810eda';
-import {hasSail} from './crew.js?v=1810eda';
-import {placeOnWaves} from './combat.js?v=1810eda';
+import {mergeStatic} from './merge.js?v=910e0aa';
+import {SHIPS, IRON} from './config.js?v=910e0aa';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=910e0aa';
+import {G, ship, lvl} from './state.js?v=910e0aa';
+import {men} from './crew.js?v=910e0aa';
+import {scene} from './scene.js?v=910e0aa';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=910e0aa';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=910e0aa';
+import {figure} from './town.js?v=910e0aa';
+import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=910e0aa';
+import {makeFire, updateFire, burn} from './fire.js?v=910e0aa';
+import {addGrass} from './grass.js?v=910e0aa';
+import {sinkPose} from './sinking.js?v=910e0aa';
+import {moored} from './fleet.js?v=910e0aa';
+import {sailCount} from './upgrades.js?v=910e0aa';
+import {hasSail} from './crew.js?v=910e0aa';
+import {placeOnWaves} from './combat.js?v=910e0aa';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
 const ISLE_GROUPS = [];
 // one island per frame, nearest first
-export function mergeNearIslands(reach = 3600, all = false){ let best = null, bd = reach; for (let i = ISLE_GROUPS.length - 1; i >= 0; i--){ const g = ISLE_GROUPS[i], d = Math.hypot(g.position.x - G.cam.x, g.position.z - G.cam.y); if (all){ if (d < reach){ if (g.userData.lazy){ g.userData.lazy(); delete g.userData.lazy; } mergeStatic(g); ISLE_GROUPS.splice(i, 1); } } else if (d < bd){ bd = d; best = i; } } if (best != null){ const g = ISLE_GROUPS[best]; if (g.userData.lazy){ g.userData.lazy(); delete g.userData.lazy; } mergeStatic(g); ISLE_GROUPS.splice(best, 1); } }
-const POPS = [], POP_R = 1300, popEase = t => { const c = 1.9; return 1 + (c + 1)*Math.pow(t - 1, 3) + c*Math.pow(t - 1, 2); };
-function popIn(o){ o.userData.keep = true; Object.assign(o.userData, {s0:o.scale.x, y0:o.position.y, on:false, pop:0}); o.scale.setScalar(.001); POPS.push(o); }
+export function mergeNearIslands(reach = 3600, all = false){ let best = null, bd = reach; for (let i = ISLE_GROUPS.length - 1; i >= 0; i--){ const g = ISLE_GROUPS[i], d = Math.hypot(g.position.x - G.cam.x, g.position.z - G.cam.y) - (g.userData.isR || 0); /* P116: from its shore, not its middle: a big island's town is built before you can see it */ if (all){ if (d < reach){ if (g.userData.lazy){ g.userData.lazy(); delete g.userData.lazy; } mergeStatic(g); ISLE_GROUPS.splice(i, 1); } } else if (d < bd){ bd = d; best = i; } } if (best != null){ const g = ISLE_GROUPS[best]; if (g.userData.lazy){ g.userData.lazy(); delete g.userData.lazy; } mergeStatic(g); ISLE_GROUPS.splice(best, 1); } }
+const POP_R = 1300, popEase = t => { const c = 1.9; return 1 + (c + 1)*Math.pow(t - 1, 3) + c*Math.pow(t - 1, 2); };
+// P116: pops are kept per island, and an island whose every pop is tucked away and which lies well beyond the pop distance is
+// skipped whole (there are thousands of houses and trees now; most frames only one or two islands are looked at). A tucked-away
+// thing is hidden, not just shrunk to nothing: it used to stay in the drawing list at a thousandth of its size.
+// It also keeps its own proportions now (a tall house pops up tall).
+const POP_SETS = new Map();
+function popIn(o){ o.userData.keep = true; Object.assign(o.userData, {sv:o.scale.clone(), y0:o.position.y, on:false, pop:0}); o.scale.setScalar(.001); o.visible = false;
+  const g = o.parent; let set = POP_SETS.get(g); if (!set) POP_SETS.set(g, set = {g, list:[], on:0}); set.list.push(o); }
 const popV = new T.Vector3();
 function updatePops(dt){
   const z = Math.max(1, G.settings.dev.zoom || 1), r = POP_R*z, cx = G.cam.x, cy = G.cam.y;
-  for (const o of POPS){ const u = o.userData;
-    if (!u.wp){ o.updateWorldMatrix(true, false); u.wp = o.getWorldPosition(popV).clone(); }
-    const d = Math.hypot(u.wp.x - cx, u.wp.z - cy);
-    if (!u.on){ if (d < r){ u.on = true; u.pop = -Math.random()*.35; } else continue; } // a small random delay so they don't all pop at once
-    else if (d > r + 500){ u.on = false; o.scale.setScalar(.001); continue; }
-    if (u.pop >= .5) continue;
-    u.pop += dt; const k = Math.max(0, u.pop)/.5;
-    o.scale.setScalar(Math.max(.001, u.s0*popEase(Math.min(1, k)))); o.position.y = u.y0 + Math.sin(Math.min(1, k)*Math.PI)*6*u.s0;
-    if (k >= 1){ o.scale.setScalar(u.s0); o.position.y = u.y0; u.pop = .5; }
-  }
+  for (const set of POP_SETS.values()){ const g = set.g;
+    if (!set.on && Math.hypot(g.position.x - cx, g.position.z - cy) > r + (g.userData.isR || 0) + 200) continue;
+    for (const o of set.list){ const u = o.userData;
+      if (!u.wp){ o.updateWorldMatrix(true, false); u.wp = o.getWorldPosition(popV).clone(); }
+      const d = Math.hypot(u.wp.x - cx, u.wp.z - cy);
+      if (!u.on){ if (d < r){ u.on = true; set.on++; o.visible = true; u.pop = -Math.random()*.35; } else continue; } // a small random delay so they don't all pop at once
+      else if (d > r + 500){ u.on = false; set.on--; o.visible = false; o.scale.setScalar(.001); continue; }
+      if (u.pop >= .5) continue;
+      u.pop += dt; const k = Math.max(0, u.pop)/.5, e = Math.max(.001, popEase(Math.min(1, k)));
+      o.scale.set(u.sv.x*e, u.sv.y*e, u.sv.z*e); o.position.y = u.y0 + Math.sin(Math.min(1, k)*Math.PI)*6*u.sv.y;
+      if (k >= 1){ o.scale.copy(u.sv); o.position.y = u.y0; u.pop = .5; } } }
 }
 
 // ---- islands ----
 // Each island is stacked flat layers of its real outline: sand, grass, and a rocky hilltop on the bigger ones.
 // The edges are bevelled so every layer has a soft rounded rim.
+const HOME_X = home.x, HOME_Y = home.y;
 const flags = []; // city harbor flags, recolored when an island changes hands
 ISLANDS.forEach((is, i) => {
-  const R = rng(i*977+13), g = new T.Group(); g.position.set(is.x, 0, is.y);
+  const R = rng(i*977+13), g = new T.Group(); g.position.set(is.x, 0, is.y); g.userData.isR = is.r;
   const [beach, grass, hill] = is.tiers, size = Math.sqrt(is.area);
   // the far north is cold: snow on the islands, pale stone beaches, snowy cypresses
   const cold = is.y < WORLD_N*.3; is.cold = cold;
@@ -77,19 +85,24 @@ ISLANDS.forEach((is, i) => {
   if (!is.trees && !is.port && !is.harbor && !is.frame){ const c = tree(); c.position.set(0, treeAt([0, 0]), 0); c.scale.setScalar(.7); g.add(c); popIn(c); }
   // the mainland gets scattered trees too, just for looks
   if (is.frame) for (let k=0;k<Math.min(60, is.area/90000);k++){ const p = spotIn(R, ground, 20); if (!p) break; const c = tree(); c.position.set(p[0], treeAt(p), p[1]); g.add(c); popIn(c); }
+  // P116: an island's town, its trees' final places and its grass are worked out when you first come near it (or at once if the
+  // voyage starts close by), not all at the start: the load is shorter by the twenty towns you can't see yet
+  const finish = () => {
   if (is.harbor || is.town){ const free = buildTown(is, g, (is.harbor || is.town).pier, {top, hillTop, R, ground, hill, popIn, flags});
     // trees that landed in the streets or on houses move elsewhere on the island
     for (const c of is.treeObjs){ if (free(c.position.x, c.position.z)) continue;
-      for (let k=0;k<40;k++){ const p = spotIn(R, ground, 10); if (p && free(...p)){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } }
+      for (let k=0;k<40;k++){ const p = spotIn(R, ground, 10); if (p && free(...p)){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; c.userData.wp = null; break; } } }
     is.free = free; }
   // P68: trees that landed where the fortress or its stair stands move elsewhere
   if (is.site){ for (const c of is.treeObjs){ if (siteClear(is, c.position.x, c.position.z)) continue;
-      for (let k=0;k<60;k++){ const p = spotIn(R, ground, 8); if (p && siteClear(is, p[0], p[1]) && (!is.free || is.free(...p))){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } }
+      for (let k=0;k<60;k++){ const p = spotIn(R, ground, 8); if (p && siteClear(is, p[0], p[1]) && (!is.free || is.free(...p))){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; c.userData.wp = null; break; } } }
     const free0 = is.free; is.free = (x, z) => siteClear(is, x, z) && (!free0 || free0(x, z)); }
   // grass on the green islands (High graphics)
   if (grass && !cold && (is.trees || is.port || is.harbor || is.frame)) addGrass(g, grass, hill, top, rng(i*131 + 7), is.free, '#f2f7e4');
   // P74: the houses, walls and rocks that never move are glued together when you first come near (see updatePops)
-  if (is.portx) g.userData.lazy = () => buildPort(is, g, is.portx, rng(i*389 + 5)); /* P112: the port's stone is built when you first come near */
+    if (is.portx) buildPort(is, g, is.portx, rng(i*389 + 5)); };
+  const S0 = G.S || {}, nearStart = is.port || Math.hypot((S0.x ?? HOME_X) - is.x, (S0.y ?? HOME_Y) - is.y) < is.r + 4200;
+  if (nearStart || !(is.harbor || is.town || is.portx)) finish(); else g.userData.lazy = finish;
   for (const o of [...is.treeObjs]) o.userData.keep = true; g.userData.mergeLater = true; ISLE_GROUPS.push(g);
   scene.add(g);
 });
