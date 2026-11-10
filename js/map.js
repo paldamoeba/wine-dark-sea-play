@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=805d5f0';
-import {OMENS} from './config.js?v=805d5f0';
-import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=805d5f0';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=805d5f0';
-import {GOODS} from './config.js?v=805d5f0';
-import {sfx} from './audio.js?v=805d5f0';
-import {playVideo, toast} from './ui.js?v=805d5f0';
-import {ARENA} from './arena.js?v=805d5f0';
-import {enemies, planReward, planSources, combatState} from './combat.js?v=805d5f0';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=805d5f0';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=805d5f0';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=805d5f0';
+import {omen} from './omens.js?v=e54c475';
+import {OMENS} from './config.js?v=e54c475';
+import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=e54c475';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=e54c475';
+import {GOODS} from './config.js?v=e54c475';
+import {sfx} from './audio.js?v=e54c475';
+import {playVideo, toast} from './ui.js?v=e54c475';
+import {ARENA} from './arena.js?v=e54c475';
+import {enemies, planReward, planSources, combatState, noGoZones} from './combat.js?v=e54c475';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=e54c475';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=e54c475';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=e54c475';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), main = cv.getContext('2d');
@@ -238,6 +238,11 @@ function drawMarks(pinned){
     c.strokeStyle = '#cbbd9a'; c.lineWidth = Math.max(2, 22*view.z); c.lineCap = 'butt'; c.beginPath();
     for (const w of ARENA.walls || []){ const [x0, y0] = toScreen(w.x - w.tx*w.L/2, w.y - w.ty*w.L/2), [x1, y1] = toScreen(w.x + w.tx*w.L/2, w.y + w.ty*w.L/2); c.moveTo(x0, y0); c.lineTo(x1, y1); }
     c.stroke(); label('Arena of Rhodes', ax, ay + Math.max(5, ARENA.R*1.45*view.z) + 16, '400 14px Marcellus, Georgia, serif', INK); }
+  // P107: no-go waters: a dashed ring in the owner's color (gone while you hold that city's war contract)
+  if (on('forts')){ c.save(); c.setLineDash([8, 6]); c.lineWidth = 2;
+    for (const z of noGoZones()){ if (!isExplored(z.x, z.y) || (G.S.war && G.S.war.city === z.city)) continue; const [zx, zy] = toScreen(z.x, z.y), r = z.r*view.z; if (r < 6) continue;
+      c.strokeStyle = CITIES[z.city].color; c.globalAlpha = .75; c.beginPath(); c.arc(zx, zy, r, 0, Math.PI*2); c.stroke(); c.globalAlpha = .08; c.fillStyle = CITIES[z.city].color; c.fill(); }
+    c.restore(); }
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
   for (const e of enemies){ if (!e.named || e.dead || !on('named')) continue; const pinOn = G.S.pin && planReward(e) === G.S.pin; if (!pinOn && !isExplored(e.home.x, e.home.y)) continue; if (pinOn && !isExplored(e.home.x, e.home.y)) reveal(e.home.x, e.home.y, 500);
     const [nx, ny] = toScreen(e.home.x, e.home.y); badge(nx, ny, 15, 'named', '#7a2426', {k:1.3}); levelTag(nx, ny - 22, siteLevel(e)); label(e.named.name, nx, ny + 28, '700 12px Nunito, sans-serif', '#5a1e14'); }

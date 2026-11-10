@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=805d5f0';
-import {MAPDATA} from './mapdata.js?v=805d5f0';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=e54c475';
+import {MAPDATA} from './mapdata.js?v=e54c475';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -298,7 +298,7 @@ function offshore(is, toward, gap){
 }
 export const patrolRoute = is => { const r = is.r + 480, a0 = hash(is.x, is.y)*6.28;
   return Array.from({length:6}, (_, j) => { const a = a0 + j/6*Math.PI*2, p = {x:is.x + Math.cos(a)*r, y:is.y + Math.sin(a)*r}; pushOut(p, 160); return p; }); };
-const R2 = rng(53), traffic = [];
+const R2 = rng(53), traffic = [], NAVY_SQUADS = {perCity:4, sizes:[3, 2, 3, 2]};
 {
   // P84 (Nicholas): fewer merchants (12 to 9, and 4 small traders in the Shallows instead of 5): raiding them should be a sometimes thing
   const nMerch = 9, perCity = 6, pairs = new Set();
@@ -321,6 +321,20 @@ const R2 = rng(53), traffic = [];
     const mine = named.filter(i => i.city === c && zoneAt(i.x, i.y) > 0), theirs = named.filter(i => i.city === rival(c));
     const gapTo = is => Math.min(...theirs.map(o => Math.hypot(o.x - is.x, o.y - is.y)));
     mine.filter(i => !i.capital).sort((p, q) => gapTo(p) - gapTo(q)).slice(0, perCity).forEach(is => { const t = {kind:'navy', isle:is, route:patrolRoute(is)}; is.patrol = t; traffic.push(t); });
+  }
+  // P107 (Nicholas: sailing about you only ever meet the fortress guards, so you never see a battle): squads of 2 or 3 warships
+  // sail out from their own islands to the border, where they meet the other city's squads, then home past another island of theirs.
+  // They don't count as an island's guard (no is.patrol), never raid, and fight pirates and the rival navy they meet.
+  let sq = 0;
+  for (const c of Object.keys(CITIES)){
+    const mine = named.filter(i => i.city === c && zoneAt(i.x, i.y) > 0), theirs = named.filter(i => i.city === rival(c)); if (!mine.length || !theirs.length) continue;
+    const nearest = (is, list) => list.reduce((b, o) => Math.hypot(o.x - is.x, o.y - is.y) < Math.hypot(b.x - is.x, b.y - is.y) ? o : b);
+    const border = [...mine].sort((p, q) => Math.hypot(nearest(p, theirs).x - p.x, nearest(p, theirs).y - p.y) - Math.hypot(nearest(q, theirs).x - q.x, nearest(q, theirs).y - q.y));
+    for (let k = 0; k < NAVY_SQUADS.perCity; k++){ const a = border[k % border.length], b = nearest(a, theirs), back = nearest(a, mine.filter(o => o !== a).length ? mine.filter(o => o !== a) : mine);
+      const mid = {x:(a.x + b.x)/2, y:(a.y + b.y)/2}; pushOut(mid, 300);
+      const route = [offshore(a, b, 260), mid, offshore(back, b, 260)]; route.forEach(p => pushOut(p, 200));
+      const n = NAVY_SQUADS.sizes[k % NAVY_SQUADS.sizes.length], id = sq++;
+      for (let j = 0; j < n; j++) traffic.push({kind:'navy', isle:a, route, roam:true, squad:id, wing:j}); }
   }
 }
 export const TRAFFIC = traffic.map(t => ({...t, home:t.route[0]}));

@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=805d5f0';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=805d5f0';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=805d5f0';
-import {scene, screenToSea, setLair} from './scene.js?v=805d5f0';
-import {wreckModel} from './models.js?v=805d5f0';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=805d5f0';
-import {mergeStatic, freeModel} from './merge.js?v=805d5f0';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=805d5f0';
-import {award} from './trophies.js?v=805d5f0';
-import {makeFire, updateFire, burn} from './fire.js?v=805d5f0';
-import {blessing, fighters, hasSail} from './crew.js?v=805d5f0';
-import {progress, goal} from './quests.js?v=805d5f0';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=805d5f0';
-import {rollColor, unlockColor, colorName} from './colors.js?v=805d5f0';
-import {toast, popLater} from './ui.js?v=805d5f0';
-import {sink, rowNow, ROW} from './player.js?v=805d5f0';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=805d5f0';
-import {TOD} from './daynight.js?v=805d5f0';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=805d5f0';
-import {sfx} from './audio.js?v=805d5f0';
-import {myLevel} from './levels.js?v=805d5f0';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=e54c475';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=e54c475';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=e54c475';
+import {scene, screenToSea, setLair} from './scene.js?v=e54c475';
+import {wreckModel} from './models.js?v=e54c475';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=e54c475';
+import {mergeStatic, freeModel} from './merge.js?v=e54c475';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=e54c475';
+import {award} from './trophies.js?v=e54c475';
+import {makeFire, updateFire, burn} from './fire.js?v=e54c475';
+import {blessing, fighters, hasSail} from './crew.js?v=e54c475';
+import {progress, goal} from './quests.js?v=e54c475';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=e54c475';
+import {rollColor, unlockColor, colorName} from './colors.js?v=e54c475';
+import {toast, popLater} from './ui.js?v=e54c475';
+import {sink, rowNow, ROW} from './player.js?v=e54c475';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=e54c475';
+import {TOD} from './daynight.js?v=e54c475';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=e54c475';
+import {sfx} from './audio.js?v=e54c475';
+import {myLevel} from './levels.js?v=e54c475';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -41,10 +41,12 @@ function makeEnemy(r0){
     mode:'patrol', pa:Math.random()*6.28, dead:false, sinkY:0, respawn:0, obj:null, leg:1, wait:0, angry:false, attacked:false, foe:null, lost:0, calm:0,
     lane:(Math.random()*2 - 1)*120, spd:.88 + Math.random()*.24, orbit:Math.random() < .5 ? 1 : -1, ring:170 + Math.random()*130, tacT:0};
   if (r.route && r.kind === 'merchant'){ const k = Math.random(), [p, q] = r.route; e.x = p.x + (q.x - p.x)*k; e.y = p.y + (q.y - p.y)*k; pushOut(e, 100); }
-  if (side(e) === 'navy' && !e.guard) e.isle.patrol = e;
+  if (side(e) === 'navy' && !e.guard && !e.roam) e.isle.patrol = e;
+  if (e.roam){ e.x += e.wing*70; e.y += e.wing*50; e.home = {x:e.x, y:e.y}; }
   return e;
 }
 export const enemies = [...RAIDERS, ...TRAFFIC].map(makeEnemy);
+for (const e of enemies) if (e.roam && e.wing) e.lead = enemies.find(o => o.roam && o.squad === e.squad && !o.wing); // P107: the squad keeps formation behind its leader
 
 // ---- forts: a stepped stone fortress on the shore of every city island (not the capitals), and two pirate forts ----
 // Each one has archers on the walls, catapults on two bastions that throw stones far out to sea, and guard ships.
@@ -463,6 +465,12 @@ function navy(e, dt){
   const offStation = e.guard && dist(e, e.home) > 900; // P67: a fortress's guards don't chase far from it, and never leave on raids: the card counts them, so they must be there
   if (!tgt && !offStation){ let bd = e.spec.sight; for (const o of enemies){ if (o.dead || !(side(o) === 'pirate' || (side(o) === 'navy' && o.city !== e.city))) continue; const od = dist(e, o); if (od < bd && zoneAt(o.x, o.y) !== 0){ bd = od; tgt = o; } } }
   if (tgt){ startFight(e); fight(e, tgt === 'player' ? null : tgt, dt); return; }
+  // P107: a squad at sea: the leader sails the route, the others hold station off its quarters; if the leader is sunk they go on alone
+  if (e.roam){ const L = e.lead && !e.lead.dead ? e.lead : null; e.mode = 'patrol';
+    if (L){ const s = e.wing % 2 ? 1 : -1, back = 70 + 50*Math.ceil(e.wing/2), side = 60*Math.ceil(e.wing/2)*s, c = Math.cos(L.a), n = Math.sin(L.a);
+      const tx = L.x - c*back - n*side, ty = L.y - n*back + c*side, gap = Math.hypot(tx - e.x, ty - e.y); steer(e, tx, ty, Math.min(e.spec.speed, e.spec.speed*.45 + gap*.6), dt); }
+    else sail(e, dt, e.spec.speed*.5, 2);
+    return; }
   // every few minutes a warship sails out to attack the nearest enemy island, then comes home
   e.raidT = (e.raidT ?? ISLES.raidEvery[0]*Math.random()*1.5) - dt;
   if (offStation){ e.mode = 'return'; steer(e, e.home.x, e.home.y, e.spec.speed*.8, dt); return; }
@@ -997,7 +1005,7 @@ function nightRaiders(){
 }
 const bossOn = () => enemies.some(e => e.boss && !e.dead && dist(e, G.S) < 3000);
 export function updateCombat(dt){
-  nightRaiders(); growFar(dt);
+  nightRaiders(); growFar(dt); waters(dt);
   realizeNear();
   updateAbilities(dt); syncAllies(); updateScrolls(); updateLair(dt);
   for (const e of enemies){
@@ -1085,3 +1093,33 @@ document.addEventListener('toking', () => { const S = G.S; G.dock = null; if (!b
 // within seconds. Now, back afloat, nobody can hurt you for 12 s, and every hostile ship nearby sails home and ignores you for 40 s.
 document.addEventListener('revived', () => { G.graceT = 12; combatState.target = null;
   for (const e of enemies){ if (e.dead || dist(e, G.S) > 2500) continue; e.calmT = 40; e.rushT = 0; e.foe = null; if (e.mode === 'chase' || e.mode === 'hunt') e.mode = 'return'; e.angry = false; e.attacked = false; } });
+
+// ---- P107 (Nicholas: it's odd that you always have to choose to fight Athens or Sparta): no-go waters ----
+// The water around each city fortress (its stone range) and around the two capitals is closed to you unless you hold a war contract
+// from that city. Sail in and you get a few seconds' warning; stay and that city's fortress and nearby warships attack. Leave and
+// the fortress calms down after a while; warships forget you as usual. Not in the Shallows, the Arena of Rhodes, or while docked.
+export const NOGO = {fort:950, capital:600, warn:8, cool:20, reach:2600};
+export function noGoZones(){ const z = [];
+  for (const e of enemies) if (e.fort && !e.camp && e.city && !e.dead) z.push({x:e.x, y:e.y, r:(e.reach || 0) + NOGO.fort, city:e.city, fort:e});
+  for (const is of ISLANDS) if (is.capital && is.city) z.push({x:is.x, y:is.y, r:is.r + NOGO.capital, city:is.city});
+  return z; }
+let trespass = null;
+const welcome = c => G.S.war && G.S.war.city === c;
+export function noGoAt(x, y){ if (zoneAt(x, y) === 0) return null; const A = G.arenaZone; if (A && Math.hypot(x - A.x, y - A.y) < A.r) return null;
+  for (const z of noGoZones()) if (Math.hypot(x - z.x, y - z.y) < z.r && !welcome(z.city)) return z; return null; }
+function waters(dt){
+  const S = G.S, z = !G.dock && !G.sinking && G.voyageOn !== false ? noGoAt(S.x, S.y) : null, adjC = c => c === 'athens' ? 'Athenian' : 'Spartan';
+  if (z){
+    if (!trespass || trespass.city !== z.city) trespass = {city:z.city, t:0, out:0, hit:false, shown:-1};
+    const T = trespass; T.out = 0; if (G.sheetOpen || nearCouncil()) return; T.t += dt; // talking at their war council stops the clock
+    if ((G.hunted || {})[z.city]) T.hit = true; // already at war with you: nothing to warn about
+    if (!T.hit){ const left = Math.ceil(NOGO.warn - T.t); if (left !== T.shown && left > 0){ T.shown = left; if (left === NOGO.warn){ toast(`${adjC(z.city)} waters! Turn back, or get a contract at their war council`, 2.6); sfx('horn'); } else if (left <= 5) toast(`${adjC(z.city)} waters! Turn back: ${left}`, 1.2); } }
+    if (!T.hit && T.t >= NOGO.warn){ T.hit = true; stat('trespass');
+      for (const e of enemies){ if (e.dead || e.city !== z.city || !(e.fort || side(e) === 'navy') || e.camp || dist(e, S) > NOGO.reach) continue; e.angry = true; e.lost = 0; if (e.fort) e.trespass = true; }
+      toast(`${CITIES[z.city].name} attacks!`, 3); sfx('horn'); }
+    return; }
+  if (!trespass) return;
+  const T = trespass; T.out += dt;
+  if (!T.hit && T.out > .4){ toast('Back in open water', 1.6); trespass = null; return; }
+  if (T.hit && T.out > NOGO.cool){ for (const e of enemies) if (e.trespass){ e.trespass = false; e.angry = false; } trespass = null; }
+}

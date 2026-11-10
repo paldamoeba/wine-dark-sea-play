@@ -2,17 +2,17 @@
 // Blender picture; it was a stone ring before). The marble Colossus stands astride the gate in the front breakwater, facing
 // the open sea, and you sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round
 // won. The crowd on the walkways cheers.
-import {ISLANDS, landDist} from './world.js?v=805d5f0';
-import {G, save, ship} from './state.js?v=805d5f0';
-import {scene} from './scene.js?v=805d5f0';
-import {TORCH_ROOTS} from './ships.js?v=805d5f0';
-import {mergeStatic} from './merge.js?v=805d5f0';
-import {award, TROPHIES} from './trophies.js?v=805d5f0';
-import {spawnArena, clearArena, enemies, lobStone} from './combat.js?v=805d5f0';
-import {ENEMIES} from './config.js?v=805d5f0';
-import {toast} from './ui.js?v=805d5f0';
-import {sfx} from './audio.js?v=805d5f0';
-import {buildArena, frame, H, BW} from './arenabuild.js?v=805d5f0';
+import {ISLANDS, landDist} from './world.js?v=e54c475';
+import {G, save, ship} from './state.js?v=e54c475';
+import {scene} from './scene.js?v=e54c475';
+import {TORCH_ROOTS} from './ships.js?v=e54c475';
+import {mergeStatic} from './merge.js?v=e54c475';
+import {award, TROPHIES} from './trophies.js?v=e54c475';
+import {spawnArena, clearArena, enemies, lobStone} from './combat.js?v=e54c475';
+import {ENEMIES} from './config.js?v=e54c475';
+import {toast} from './ui.js?v=e54c475';
+import {sfx} from './audio.js?v=e54c475';
+import {buildArena, frame, H, BW} from './arenabuild.js?v=e54c475';
 
 const T = window.THREE;
 const R = 780; // only picks the spot
@@ -61,6 +61,7 @@ function wallPush(p, rad){
   for (const o of posts){ const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy) || 1, r = o.r + rad; if (d < r){ p.x = o.x + dx/d*r; p.y = o.y + dy/d*r; hit = true; } }
   return hit;
 }
+if (ARENA) G.arenaZone = {x:ARENA.x, y:ARENA.y, r:ARENA.R*2.2}; // P107: no-go waters stop short of the arena (combat.js)
 const local = p => { const dx = p.x - ARENA.x, dy = p.y - ARENA.y; return [dx*ux + dy*uy, -dx*uy + dy*ux]; };
 export const inArena = (p, m = 0) => { if (!ARENA) return false; const [u, v] = local(p); return Math.abs(u) < H - m && Math.abs(v) < H - m; };
 
