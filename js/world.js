@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=b709147';
-import {MAPDATA} from './mapdata.js?v=b709147';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=7839b26';
+import {MAPDATA} from './mapdata.js?v=7839b26';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -117,7 +117,14 @@ const SDF = (() => {
   for (let i=0;i<N;i++) out[i] = (land[i] ? -(toWater[i] - .5) : toLand[i] - .5)*CELL;
   return out;
 })();
-export function landDist(x, y){
+// P112: the harbor walls of the big ports count as land too (PORT_SOLIDS, filled in further down): ships slide along them and
+// steer round them like any shore. Each is a run of round-ended bars [x0, y0, x1, y1, half width], checked only near its port.
+const PORT_SOLIDS = [];
+export function landDist(x, y){ let d = gridDist(x, y);
+  for (let i = 0; i < PORT_SOLIDS.length; i++){ const p = PORT_SOLIDS[i]; if (x < p.x0 || x > p.x1 || y < p.y0 || y > p.y1) continue;
+    for (const g of p.segs){ const ex = g[2] - g[0], ey = g[3] - g[1], t = Math.max(0, Math.min(1, ((x - g[0])*ex + (y - g[1])*ey)/(ex*ex + ey*ey || 1))), q = Math.hypot(x - g[0] - ex*t, y - g[1] - ey*t) - g[4]; if (q < d) d = q; } }
+  return d; }
+function gridDist(x, y){
   // P107 (Nicholas: every island lets you onto the beach on the east side but stops you well out on the west): each grid value is
   // the middle of its cell, (i + .5)*CELL, but was read as if it sat at i*CELL, so the whole land map sat half a cell north-west
   const fx = x/CELL - .5, fy = y/CELL - .5;
@@ -208,10 +215,13 @@ export function seaOwner(x, y){ let best = null, bd = Infinity;
 // ---- harbors: Kallisto, plus two for each city. Each market pays more for some fish. ----
 // A harbor's pier faces Kallisto, starting where the shore is. It belongs to whoever holds the island.
 const HARBOR_AT = {Naxos:{tuna:1.3}, Chios:{sardine:1.5}, Milos:{swordfish:1.3}, Crete:{tuna:1.15, sardine:1.2}};
+// P112 (Nicholas called Milos out): its pier landed on the island's north-east corner, where no quay or town fits; turned
+// to the long north shore instead
+const PIER_TURN = {Milos:-.7};
 function makePier(is){
   const base = Math.atan2(HOME.y - is.y, HOME.x - is.x);
   for (const off of [0, .35, -.35, .7, -.7, 1.05, -1.05, 1.4, -1.4]){
-    const a = base + off, dx = Math.cos(a), dy = Math.sin(a);
+    const a = base + off + (PIER_TURN[is.name] || 0), dx = Math.cos(a), dy = Math.sin(a);
     let t = is.r + 60; while (t > 0 && landDist(is.x + dx*t, is.y + dy*t) > 0) t -= 6; // walk in from the sea to the shore
     const p = {x:is.x + dx*(t - 12), y:is.y + dy*(t - 12), dx, dy};
     if (landDist(p.x + dx*(PIER_LEN + 60), p.y + dy*(PIER_LEN + 60)) > 70 && landDist(p.x + dx*PIER_LEN*.5 - dy*40, p.y + dy*PIER_LEN*.5 + dx*40) > 10) return p;
@@ -294,6 +304,51 @@ export function siteFor(is, camp){ if (is.site === undefined) is.site = findSite
 for (const is of named) if (is.pirate || (is.city && !is.capital)) siteFor(is, false);
 for (const is of islands) if (PIRATE_ISLES.includes(is.name)) siteFor(is, false);
 for (const c of CAMPS){ const is = islands.find(i => i.name === c.isle); if (is && is.site === undefined) siteFor(is, true); }
+// ---- P112 (Nicholas: "a longer one. Like for a big port"): ports. The great cities get a long stone harbor wall (mole) that runs
+// well out to sea and curves round to shelter a basin, a shorter wall on the other side, a stone quay along the shore, side
+// piers, a lighthouse on the long wall's end and merchant ships at berth. The other city islands with a fortress get a quay and
+// one short wall with a beacon. Rhodes is left out: the Arena is its harbor (arena.js). Everything here is worked out after the
+// fortress sites, so no site moves. is.portx = {kind, w, quay:[{x, y}], arms:[{pts:[{x, y, h}], main}], piers, berths, light}.
+export const GREAT_CITIES = ['Crete', 'Rhodes', 'Milos', 'Chios', 'Lesbos', 'Euboea'];
+export const portKind = is => is.name === 'Rhodes' || is.port ? null : GREAT_CITIES.includes(is.name) || is.capital ? 'great' : is.city && is.site ? 'medium' : null;
+const PORT_Z = {great:{span:290, long:560, short:330, w:32, turn:1.2, side:95}, medium:{span:150, long:270, short:0, w:26, turn:1, side:0}};
+export const PORTS = [];
+function makePort(is, P, kind){ const Z = PORT_Z[kind], dx = P.dx, dy = P.dy, nx = -dy, ny = dx, at = (s, t) => ({x:P.x + nx*s + dx*t, y:P.y + ny*s + dy*t});
+  const shore = s => { for (let t = 300; t > -260; t -= 5){ const q = at(s, t); if (landDist(q.x, q.y) <= 0) return t + 5; } return null; };
+  const t0 = shore(0); if (t0 == null) return null;
+  // the quay follows the shore either side of the pier, as far as the shore keeps a steady line
+  const rows = [{s:0, t:t0}];
+  for (const sg of [-1, 1]){ let prev = t0; for (let s = 30; s <= Z.span; s += 30){ const t = shore(sg*s); if (t == null || Math.abs(t - prev) > 60) break; prev = t; sg < 0 ? rows.unshift({s:sg*s, t}) : rows.push({s:sg*s, t}); } }
+  const sm = rows.map((r, i) => ({s:r.s, t:(rows[Math.max(0, i - 1)].t + 2*r.t + rows[Math.min(rows.length - 1, i + 1)].t)/4 + 2})), quay = sm.map(r => at(r.s, r.t));
+  // a wall: out to sea from the end of the quay, then bending in toward the pier's line. It stops short of other land, the
+  // fortress's own jetty, and the water ships need in front of the pier.
+  const arm = (sg, len, turn) => { const r = sg < 0 ? sm[0] : sm[sm.length - 1]; if (Math.abs(r.s) < 90) return null;
+    let p = at(r.s, r.t - 6), h = Math.atan2(dy, dx); const pts = [{...p, h}], n = Math.round(len/30);
+    for (let i = 1; i <= n; i++){ if (i/n > .4) h -= sg*turn/(n*.6); const q = {x:p.x + Math.cos(h)*30, y:p.y + Math.sin(h)*30, h}, l = (q.x - P.x)*nx + (q.y - P.y)*ny, tt = (q.x - P.x)*dx + (q.y - P.y)*dy;
+      if (gridDist(q.x, q.y) < Math.min(70, i*30 - 25)) break; if (Math.abs(l) < (is.harbor ? 120 : 80) && tt < PIER_LEN + (is.harbor ? 260 : 90)) break;
+      if (is.site && Math.hypot(q.x - is.site.shore.x, q.y - is.site.shore.y) < 260) break;
+      pts.push(q); p = q; }
+    return pts.length > 3 ? {pts, sg} : null; };
+  const a1 = arm(1, Z.long, Z.turn), a2 = arm(-1, Z.long, Z.turn), away = is.site ? ((is.site.x - P.x)*nx + (is.site.y - P.y)*ny > 0 ? -1 : 1) : 1;
+  let main = !a1 ? a2 : !a2 ? a1 : a1.pts.length !== a2.pts.length ? (a1.pts.length > a2.pts.length ? a1 : a2) : (away > 0 ? a1 : a2);
+  const arms = []; if (main){ main.main = true; arms.push(main); if (Z.short){ const o = arm(-main.sg, Z.short, .7); if (o) arms.push(o); } }
+  // side piers (the great ports), solid like every pier; Crete's are the ones it had in P110
+  const piers = []; if (Z.side) for (const sg of [1, -1]){ let q = null;
+    for (let t = -120; t <= 80 && !q; t += 6){ const c = at(sg*Z.side, t); if (landDist(c.x, c.y) > -8 && landDist(c.x - dx*14, c.y - dy*14) < -8) q = {x:c.x, y:c.y, dx, dy, extra:true}; }
+    if (q && landDist(q.x + dx*(PIER_LEN + 40), q.y + dy*(PIER_LEN + 40)) > 50) piers.push(q); }
+  // merchant ships tied up along the inside of the long wall, bow to the sea
+  const berths = []; if (kind === 'great' && main) [[2, 'merchant'], [5, 'trader']].forEach(([i, model], k) => { if (i + 2 >= main.pts.length) return; const a = main.pts[i], b = main.pts[i + 1], h = b.h, B = model === 'merchant' ? 44 : 36, L = model === 'merchant' ? 110 : 84, o = Z.w/2 + B/2 + 5;
+      berths.push({x:(a.x + b.x)/2 + Math.sin(h)*o*main.sg, y:(a.y + b.y)/2 - Math.cos(h)*o*main.sg, a:h + (k ? Math.PI : 0), model, L, B}); });
+  const tip = main && main.pts[main.pts.length - 1];
+  return {is, kind, w:Z.w, pier:P, quay, arms, piers, berths, light:tip ? {x:tip.x, y:tip.y, big:kind === 'great'} : null}; }
+for (const is of named){ const kind = portKind(is), t = is.harbor || is.town; if (!kind || !t) continue; const port = makePort(is, t.pier, kind); if (!port) continue;
+  if (is.harbor && is.harbor.extra) port.piers = is.harbor.extra; else { for (const q of port.piers) TOWN_PIERS.push(q); if (is.harbor) is.harbor.extra = port.piers; }
+  const segs = []; for (const a of port.arms){ for (let i = 0; i + 1 < a.pts.length; i++) segs.push([a.pts[i].x, a.pts[i].y, a.pts[i+1].x, a.pts[i+1].y, port.w/2 + 5]); }
+  if (port.light) segs.push([port.light.x, port.light.y, port.light.x, port.light.y, port.light.big ? 30 : port.w/2 + 9]);
+  for (const b of port.berths){ const c = Math.cos(b.a), n = Math.sin(b.a), l = (b.L - b.B)/2; segs.push([b.x - c*l, b.y - n*l, b.x + c*l, b.y + n*l, b.B/2 + 2]); }
+  if (segs.length){ const xs = segs.flatMap(g => [g[0], g[2]]), ys = segs.flatMap(g => [g[1], g[3]]); PORT_SOLIDS.push({x0:Math.min(...xs) - 320, x1:Math.max(...xs) + 320, y0:Math.min(...ys) - 320, y1:Math.max(...ys) + 320, segs}); }
+  is.portx = port; PORTS.push(port); }
+for (let i = SHOALS.length - 1; i >= 0; i--) if (landDist(SHOALS[i].x, SHOALS[i].y) < 30) SHOALS.splice(i, 1); // no sardine school under a harbor wall
 // Nothing else (trees, houses, grass) stands on a fortress or on its stair. x, z are relative to the island.
 export function siteClear(is, x, z){ const t = is.site; if (!t) return true; const px = x + is.x - t.x, py = z + is.y - t.y; if (Math.hypot(px, py) < t.R + 14) return false;
   const c = Math.cos(t.a), n = Math.sin(t.a), al = px*c + py*n; return !(al > 0 && al < t.depth + 10 && Math.abs(-px*n + py*c) < 26); }

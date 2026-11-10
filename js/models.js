@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=b709147';
+import {hash} from './world.js?v=7839b26';
 
-import {smokeColumn} from './smoke.js?v=b709147';
+import {smokeColumn} from './smoke.js?v=7839b26';
 const T = window.THREE;
-import {mat} from './ships.js?v=b709147';
+import {mat} from './ships.js?v=7839b26';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -163,6 +163,22 @@ export function stoa(n = 6, style = null){ const key = 'stoa' + n + style;
     P.push([boxGeo, '#e9e2cf', at(0, 17.6, 0, 20, 1.6, L + 2)], [boxGeo, roof, at(-.5, 19.6, 0, 21.5, 2.6, L + 5)]);
     marketGeos[key] = mergeParts(P); }
   return mesh(marketGeos[key], '#ffffff', {vertexColors:true}); }
+
+// ---- P112: port pieces: a wooden crane with a crate on its rope, a lighthouse, a small beacon. One piece each. ----
+const at3 = (x, y, z, sx, sy, sz, rz = 0, ry = 0) => new T.Matrix4().compose(new T.Vector3(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(0, ry, rz)), new T.Vector3(sx, sy, sz));
+const towerGeo = new T.CylinderGeometry(.36, .5, 1, 12), coneGeo = new T.CylinderGeometry(0, .5, 1, 10);
+export function crane(){ if (!marketGeos.crane){ const wood = '#6e4a26', P = [[boxGeo, '#8a6238', at(0, 1.5, 0, 10, 3, 10)], [boxGeo, wood, at(0, 19, 0, 2.2, 34, 2.2)]];
+    P.push([boxGeo, wood, at3(8, 33, 0, 34, 1.8, 1.8, .45)], [boxGeo, wood, at3(-4, 12, 0, 16, 1.4, 1.4, -.9)], [boxGeo, '#3b2c1c', at(23.3, 31, 0, .5, 19, .5)], [boxGeo, '#9b6b3a', at(23.3, 19, 0, 7.5, 6.5, 7.5)]);
+    marketGeos.crane = mergeParts(P); }
+  return mesh(marketGeos.crane, '#ffffff', {vertexColors:true}); }
+// the fire itself is a torch the caller adds at LIGHT_Y (so it burns at night like every other torch)
+export const LIGHT_Y = 84;
+export function lighthouse(){ if (!marketGeos.light){ const stone = '#f1ebdc', P = [[drumGeo, '#cfc3a4', at(0, 1, 0, 50, 18, 50)], [drumGeo, '#d9cfb6', at(0, 11, 0, 44, 2.4, 44)]];
+    P.push([towerGeo, stone, at(0, 43, 0, 30, 62, 30)], [drumGeo, '#b5562f', at(0, 40, 0, 26.4, 5, 26.4)], [drumGeo, '#d9cfb6', at(0, 75.5, 0, 28, 3, 28)]);
+    for (let k=0;k<6;k++){ const a = k/6*Math.PI*2; P.push([boxGeo, stone, at(Math.cos(a)*9.5, 83, Math.sin(a)*9.5, 1.6, 12, 1.6)]); }
+    P.push([coneGeo, '#b5562f', at(0, 95, 0, 27, 12, 27)]);
+    marketGeos.light = mergeParts(P); }
+  return mesh(marketGeos.light, '#ffffff', {vertexColors:true}); }
 
 // ---- boats (wreck hulls; the player's ships come from ships.js) ----
 function hullShape(L, B, scale=1){ const s = new T.Shape(), l = L*scale, b = B*scale;

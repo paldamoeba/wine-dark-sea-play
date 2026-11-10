@@ -4,10 +4,12 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear} from './world.js?v=b709147';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa} from './models.js?v=b709147';
-import {statue} from './ships.js?v=b709147';
-import {addTown} from './town.js?v=b709147';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=7839b26';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=7839b26';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=7839b26';
+import {addTown} from './town.js?v=7839b26';
+import {mergeStatic} from './merge.js?v=7839b26';
+const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;
 // How far inside an outline a point is (0 or less = outside).
@@ -25,7 +27,6 @@ export function spotIn(R, pts, margin, cx = 0, cz = 0, rad = Infinity){
 
 // The great cities (Sparta's three and Athens's three strongholds, and the two capitals) are big; the other city islands
 // with a fortress are middling; the free harbors near Kallisto, and Kallisto itself, stay the size they were.
-export const GREAT_CITIES = ['Crete', 'Rhodes', 'Milos', 'Chios', 'Lesbos', 'Euboea'];
 export const TOWN_SIZES = {
   great: {houses:96, len:640, side:300, branches:7, reach:520, trees:26, farms:7, people:16, agora:50, temple:1.2, stalls:8, stoa:7},
   medium:{houses:46, len:420, side:220, branches:4, reach:360, trees:16, farms:5, people:10, agora:40, temple:1, stalls:5, stoa:5},
@@ -157,22 +158,59 @@ export function buildTown(is, g, PIER, ctx){
   { let mx = ax, mz = az; if (placed.length){ mx = placed.reduce((q, p) => q + p.x, 0)/placed.length; mz = placed.reduce((q, p) => q + p.z, 0)/placed.length; }
     addTown(is, g, top, keep, Z.people, {cx:(mx + ax)/2, cz:(mz + az)/2, R:Math.max(110, Z.reach*.5), ok:(x, z) => depthIn(ground, x, z) > 8 && !off(x, z) && blocks.every(([bx, bz, br], i) => i === 0 || Math.hypot(bx - x, bz - z) > br)}); }
   const onRoad = (x, z, m) => laneGap(x, z) < m;
+  // P112: steps from the pier up onto the town's ground, a paved way across the sand to them, and on to the square
+  { let e = 0; while (e < 260 && !inPoly(ground, px + ux*e, pz + uz*e)) e += 2; const n = Math.max(2, Math.ceil((top - 4.6)/2.6)), run = 3.2, e0 = e + 7 - n*run;
+    if (e < 260){ for (let k = 0; k < n; k++){ const d = e0 + (k + .5)*run, hgt = (top - 4)*(k + 1)/n + .9, st = mesh(new T.BoxGeometry(run + .3, hgt, 22), '#d8ccb0'); st.position.set(px + ux*d, 4 + hgt/2 - .4, pz + uz*d); st.rotation.y = -hu; g.add(st); }
+      if (e0 > 10){ const w = mesh(new T.BoxGeometry(e0 + 4, 1, 18), STONE, {}, false); w.position.set(px + ux*(e0/2 - 2), 4.2, pz + uz*(e0/2 - 2)); w.rotation.y = -hu; g.add(w); }
+      const to = hasAgora ? [ax, az] : [fx, fz], from = [px + ux*(e + 6), pz + uz*(e + 6)]; if (Math.hypot(to[0] - from[0], to[1] - from[1]) > 8) paved(ribbon([from, to], 18, top + .95)); } }
   // the pier: starts a little inland and runs out over the water
   const pier = new T.Group(); pier.position.set(px, 0, pz); pier.rotation.y = -ang; g.add(pier);
   const deck = mesh(new T.BoxGeometry(PIER_LEN + 30, 3, 18), '#9b6b3a'); deck.position.set(PIER_LEN/2 - 15, 6, 0); pier.add(deck);
   for (let k=0;k<=5;k++) for (const z of [-8, 8]){ const post = mesh(new T.CylinderGeometry(1.4, 1.4, 16, 5), '#6e4a26'); post.position.set(k*PIER_LEN/5, 1, z); pier.add(post); }
   // P110: a big harbor (Crete): two side piers with cargo on them, a stone quay joining the three at the shore, and warehouses behind
-  for (const xp of (is.harbor && is.harbor.extra) || []){ const q = new T.Group(), qx = xp.x - is.x, qz = xp.y - is.y; q.position.set(qx, 0, qz); q.rotation.y = -Math.atan2(xp.dy, xp.dx); g.add(q);
+  for (const xp of (is.portx && is.portx.piers) || []){ const q = new T.Group(), qx = xp.x - is.x, qz = xp.y - is.y; q.position.set(qx, 0, qz); q.rotation.y = -Math.atan2(xp.dy, xp.dx); g.add(q);
     const d2 = mesh(new T.BoxGeometry(PIER_LEN + 30, 3, 18), '#9b6b3a'); d2.position.set(PIER_LEN/2 - 15, 6, 0); q.add(d2);
     for (let k=0;k<=5;k++) for (const z of [-8, 8]){ const post = mesh(new T.CylinderGeometry(1.4, 1.4, 16, 5), '#6e4a26'); post.position.set(k*PIER_LEN/5, 1, z); q.add(post); }
     for (let k=0;k<5;k++){ const a = mesh(amphoraGeo, ['#b8693a', '#c98a4b', '#a85c34'][k % 3], {flatShading:false}); a.scale.setScalar(.7); a.position.set(20 + k*7 + R()*3, 7.5, -4 + (k % 2)*8); q.add(a); }
     for (let k=0;k<3;k++){ const c = mesh(new T.BoxGeometry(9, 8, 9), '#8a6238'); c.position.set(PIER_LEN*.55 + k*11, 11.5, (k % 2 ? 3 : -3)); c.rotation.y = R()*.5; q.add(c); }
     keep.push([qx, qz], [qx - xp.dx*30, qz - xp.dy*30]); }
-  if (is.harbor && (is.harbor.extra || []).length){ const ex = is.harbor.extra, nx = -PIER.dy, nz = PIER.dx;
-    const span = Math.max(...ex.map(p => Math.abs((p.x - PIER.x)*nx + (p.y - PIER.y)*nz))) + 12;
-    const quay = mesh(new T.BoxGeometry(span*2, 6, 26), '#d9c9a2'); quay.position.set(px - PIER.dx*6, 3, pz - PIER.dy*6); quay.rotation.y = -Math.atan2(nz, nx); quay.receiveShadow = true; g.add(quay);
-    for (const sg of [1, -1]){ const wx = px - PIER.dx*70 + nx*sg*(span - 40), wz = pz - PIER.dy*70 + nz*sg*(span - 40);
-      if (!flat([wx, wz], 16) || onRoad(wx, wz, 12) || keep.some(([hx, hz]) => Math.hypot(hx - wx, hz - wz) < 40)) continue; const w = house(2, is.city === 'sparta' ? 'sparta' : null, true); w.position.set(wx, top, wz); w.rotation.y = -Math.atan2(-PIER.dy, -PIER.dx); w.scale.set(1.7, 1.25, 1.5); g.add(w); keep.push([wx, wz]); } }
   // where a tree may stand: off the lanes, away from houses, the square, the temple and the pier
   return (x, z) => laneGap(x, z) > 8 && keep.every(([hx, hz]) => Math.hypot(hx - x, hz - z) > 22) && Math.hypot(x - px, z - pz) > 50 && blocks.every(([bx, bz, br]) => Math.hypot(bx - x, bz - z) > br + 6);
+}
+
+// P112: a port's stone: the quay along the shore, the harbor walls with boulders on their sea side, a lighthouse or beacon on
+// the long wall's end, cargo and cranes, merchant ships at berth. Built the first time you come near (entities.js), then glued
+// into the island's pieces like the rest of the town. Collision is world.js PORT_SOLIDS.
+const BOX = new T.BoxGeometry(1, 1, 1), ROCK = new T.DodecahedronGeometry(1, 0), POST = new T.CylinderGeometry(1, 1.2, 1, 6);
+export function buildPort(is, g, port, R){
+  const torches = g.userData.torches || (g.userData.torches = []), QUAY = '#d9c9a2', CORE = '#b9ad94';
+  const box = (w, h, d, col, x, y, z, ry = 0, shadow = true) => { const m = mesh(BOX, col, {}, shadow); m.scale.set(w, h, d); m.position.set(x, y, z); m.rotation.y = ry; g.add(m); return m; };
+  const rock = (x, y, z, sc) => { const m = mesh(ROCK, ['#8f8a80', '#9a9483', '#857f73'][Math.floor(R()*3)]); m.position.set(x, y, z); m.scale.set(sc*(1 + R()*.5), sc*(.55 + R()*.3), sc*(1 + R()*.4)); m.rotation.y = R()*6; g.add(m); };
+  const pots = (x, y, z, n) => { for (let k = 0; k < n; k++){ const a = mesh(amphoraGeo, ['#b8693a', '#c98a4b', '#a85c34'][k % 3], {flatShading:false}); a.scale.setScalar(.62 + R()*.14); a.position.set(x + (k % 3)*6 - 6 + R()*2, y, z + Math.floor(k/3)*6 - 3 + R()*2); g.add(a); } };
+  const crates = (x, y, z, n) => { for (let k = 0; k < n; k++){ const up = k > 2 ? 1 : 0, c = box(9, 8, 9, k % 2 ? '#8a6238' : '#9b6b3a', x + (up ? 5 : k*10 - 10), y + 4 + up*8, z + (up ? 1 : (k % 2)*3), R()*.6); } };
+  const post = (x, y, z, h, r = 1.6) => { const m = mesh(POST, '#5a4630'); m.scale.set(r, h, r); m.position.set(x, y + h/2, z); g.add(m); };
+  const P = port.pier, dx = P.dx, dy = P.dy, L = p => [p.x - is.x, p.y - is.y];
+  // the quay
+  for (let i = 0; i + 1 < port.quay.length; i++){ const [x0, z0] = L(port.quay[i]), [x1, z1] = L(port.quay[i + 1]), len = Math.hypot(x1 - x0, z1 - z0), a = Math.atan2(z1 - z0, x1 - x0), mx = (x0 + x1)/2, mz = (z0 + z1)/2, far = Math.hypot(mx + is.x - P.x, mz + is.y - P.y);
+    box(len + 10, 14, 32, QUAY, mx, 0, mz, -a); box(len + 10, 1.2, 4, '#c4b48c', mx + dx*14, 6.6, mz + dy*14, -a, false); post(mx + dx*12, 7, mz + dy*12, 4, 1.8);
+    if (far > 50){ const k = i % 4; if (k === 0) pots(mx - dx*6, 7, mz - dy*6, 5 + Math.floor(R()*4)); else if (k === 2) crates(mx - dx*6, 7, mz - dy*6, 3 + Math.floor(R()*3));
+      else if (k === 1 && (port.kind === 'great' || i === 1)){ const c = crane(); c.position.set(mx - dx*4, 7, mz - dy*4); c.rotation.y = -Math.atan2(dy, dx); g.add(c); } } }
+  // the harbor walls
+  for (const arm of port.arms){ const n = arm.pts.length;
+    for (let i = 0; i + 1 < n; i++){ const [x0, z0] = L(arm.pts[i]), [x1, z1] = L(arm.pts[i + 1]), len = Math.hypot(x1 - x0, z1 - z0), h = Math.atan2(z1 - z0, x1 - x0), mx = (x0 + x1)/2, mz = (z0 + z1)/2, ox = -Math.sin(h)*arm.sg, oz = Math.cos(h)*arm.sg; // (ox, oz) = the sea side
+      box(len + 7, 18, port.w, CORE, mx, -2, mz, -h); box(len + 7, 1.2, port.w - 8, QUAY, mx, 7.2, mz, -h, false);
+      for (let b = 0; b < 3; b++) rock(mx + ox*(port.w/2 + 5 + R()*7) + Math.cos(h)*(R() - .5)*len, -1 + R()*3, mz + oz*(port.w/2 + 5 + R()*7) + Math.sin(h)*(R() - .5)*len, 8 + R()*7);
+      if (i % 2) rock(mx - ox*(port.w/2 + 3), -2, mz - oz*(port.w/2 + 3), 6 + R()*4);
+      post(mx - ox*(port.w/2 - 4), 7.6, mz - oz*(port.w/2 - 4), 4, 1.8);
+      if (arm.main && port.kind === 'great' && i > 0 && i < 8 && i % 3 === 1) (i % 2 ? pots : crates)(mx + ox*4, 7.8, mz + oz*4, 4); } }
+  // the light on the end of the long wall
+  if (port.light){ const [x, z] = L(port.light);
+    for (let k = 0; k < 9; k++){ const a = k/9*6.283 + R(), r = (port.light.big ? 27 : 18) + R()*8; rock(x + Math.cos(a)*r, -2, z + Math.sin(a)*r, 9 + R()*7); }
+    const t = torch(); t.children.forEach(o => { if (o !== t.userData.flame && !o.isSprite) o.visible = false; });
+    if (port.light.big){ const lh = lighthouse(); lh.position.set(x, 0, z); lh.scale.setScalar(1.35); g.add(lh); t.scale.setScalar(2.4); t.position.set(x, LIGHT_Y*1.35 - 34, z); }
+    else { box(14, 14, 14, CORE, x, 3, z, R()); box(10, 12, 10, '#f1ebdc', x, 13, z, .4); box(12, 1.6, 12, '#b5562f', x, 19.6, z, .4); t.scale.setScalar(1.3); t.position.set(x, 4, z); }
+    g.add(t); torches.push(t); TORCH_ROOTS.add(g); }
+  // merchant ships at berth: sails stowed, nobody aboard
+  for (const b of port.berths){ const sh = buildShip(b.model, {flag:'none', paint:b.model === 'merchant' ? 'white' : 'oak'}, false); for (const sl of sh.userData.sails || []) sl.visible = false;
+    sh.position.set(b.x - is.x, 0, b.y - is.y); sh.rotation.y = -b.a; sh.userData.noMerge = true; mergeShip(sh); g.add(sh); }
 }

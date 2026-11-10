@@ -1,17 +1,17 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {omen} from './omens.js?v=b709147';
-import {OMENS} from './config.js?v=b709147';
-import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt} from './world.js?v=b709147';
-import {G, isExplored} from './state.js?v=b709147';
-import {fogLayer, islandPath} from './map.js?v=b709147';
-import {view, project, screenToSea} from './scene.js?v=b709147';
-import {JOY_RADIUS} from './input.js?v=b709147';
-import {enemies, combatState, capture, aimLeads, planSources, towerPos, towersUp} from './combat.js?v=b709147';
-import {drawFish} from './fishing.js?v=b709147';
-import {whale} from './wildlife.js?v=b709147';
-import {W as WIND} from './weather.js?v=b709147';
-import {bottle} from './quests.js?v=b709147';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=b709147';
+import {omen} from './omens.js?v=7839b26';
+import {OMENS} from './config.js?v=7839b26';
+import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt, PORTS} from './world.js?v=7839b26';
+import {G, isExplored} from './state.js?v=7839b26';
+import {fogLayer, islandPath} from './map.js?v=7839b26';
+import {view, project, screenToSea} from './scene.js?v=7839b26';
+import {JOY_RADIUS} from './input.js?v=7839b26';
+import {enemies, combatState, capture, aimLeads, planSources, towerPos, towersUp} from './combat.js?v=7839b26';
+import {drawFish} from './fishing.js?v=7839b26';
+import {whale} from './wildlife.js?v=7839b26';
+import {W as WIND} from './weather.js?v=7839b26';
+import {bottle} from './quests.js?v=7839b26';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=7839b26';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -274,6 +274,8 @@ function drawMini(c, cx, cy, ms, S){
   for (const i of ISLANDS){ if (Math.abs(i.x - S.x) > MINI_RANGE + i.r || Math.abs(i.y - S.y) > MINI_RANGE + i.r) continue;
     islandPath(c, i, 0, k); c.fillStyle = '#efdcaa'; c.fill(); c.strokeStyle = '#6b5236'; c.lineWidth = 1; c.stroke();
     if (i.tiers[1]){ islandPath(c, i, 1, k); c.fillStyle = '#9fbe62'; c.fill(); } if (i.tiers[2]){ islandPath(c, i, 2, k); c.fillStyle = '#b4a888'; c.fill(); } }
+  c.strokeStyle = '#8a775a'; c.lineWidth = 2; c.lineCap = 'round'; c.lineJoin = 'round'; /* P112: harbor walls */
+  for (const pt of PORTS){ if (Math.abs(pt.pier.x - S.x) > MINI_RANGE + 700 || Math.abs(pt.pier.y - S.y) > MINI_RANGE + 700) continue; c.beginPath(); for (const run of [pt.quay, ...pt.arms.map(q => q.pts)]) run.forEach((q, i) => i ? c.lineTo(q.x*k, q.y*k) : c.moveTo(q.x*k, q.y*k)); c.stroke(); }
   c.drawImage(fogLayer('#dccaa2'), 0, 0, WORLD*k, WORLD*k);
   for (const i of ISLANDS) if (i.mine && isExplored(i.mine.x, i.mine.y)){ c.fillStyle = '#4a525c'; c.strokeStyle = '#efe6cf'; c.lineWidth = 1; c.beginPath(); c.rect(i.mine.x*k - 3, i.mine.y*k - 3, 6, 6); c.fill(); c.stroke(); }
   c.strokeStyle = '#3e2b1c'; c.lineWidth = 1;

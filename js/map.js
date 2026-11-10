@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=b709147';
-import {OMENS} from './config.js?v=b709147';
-import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut} from './world.js?v=b709147';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=b709147';
-import {GOODS} from './config.js?v=b709147';
-import {sfx} from './audio.js?v=b709147';
-import {playVideo, toast} from './ui.js?v=b709147';
-import {ARENA} from './arena.js?v=b709147';
-import {enemies, planReward, planSources, combatState, noGoZones} from './combat.js?v=b709147';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=b709147';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=b709147';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=b709147';
+import {omen} from './omens.js?v=7839b26';
+import {OMENS} from './config.js?v=7839b26';
+import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut, PORTS} from './world.js?v=7839b26';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=7839b26';
+import {GOODS} from './config.js?v=7839b26';
+import {sfx} from './audio.js?v=7839b26';
+import {playVideo, toast} from './ui.js?v=7839b26';
+import {ARENA} from './arena.js?v=7839b26';
+import {enemies, planReward, planSources, combatState, noGoZones} from './combat.js?v=7839b26';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=7839b26';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=7839b26';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=7839b26';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), main = cv.getContext('2d');
@@ -233,6 +233,11 @@ function drawMarks(pinned){
   if (G.S.treasure && on('treasure')){ const [x, y] = toScreen(G.S.treasure.x, G.S.treasure.y); badge(x, y, 17, 'x', '#d9a23a', {k:1.3}); }
   for (const r of G.S.reqs || []){ const is = (r.t === 'visit' || r.t === 'deliver') && ISLANDS.find(i => i.name === r.to); if (!is) continue;
     const [x, y] = toScreen(is.x, is.y); c.save(); c.setLineDash([6, 6]); c.strokeStyle = COURSE; c.lineWidth = 2; c.beginPath(); c.arc(x, y, Math.max(16, is.r*view.z + 12), 0, Math.PI*2); c.stroke(); c.restore(); }
+  // P112: the harbor walls and quays of the ports
+  { c.strokeStyle = '#cbbd9a'; c.lineCap = 'round'; c.lineJoin = 'round';
+    for (const pt of PORTS){ if (!isExplored(pt.pier.x, pt.pier.y)) continue; c.lineWidth = Math.max(1.5, pt.w*view.z); c.beginPath();
+      for (const run of [pt.quay, ...pt.arms.map(q => q.pts)]) run.forEach((q, i) => { const [x, y] = toScreen(q.x, q.y); i ? c.lineTo(x, y) : c.moveTo(x, y); });
+      c.stroke(); } }
   // the Arena of Rhodes: its breakwaters, with the gate open in the front one
   if (ARENA && isExplored(ARENA.x, ARENA.y)){ const [ax, ay] = toScreen(ARENA.x, ARENA.y);
     c.strokeStyle = '#cbbd9a'; c.lineWidth = Math.max(2, 22*view.z); c.lineCap = 'butt'; c.beginPath();

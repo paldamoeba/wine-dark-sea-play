@@ -1,27 +1,27 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=b709147';
-import {SHIPS, IRON} from './config.js?v=b709147';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=b709147';
-import {G, ship, lvl} from './state.js?v=b709147';
-import {men} from './crew.js?v=b709147';
-import {scene} from './scene.js?v=b709147';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=b709147';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=b709147';
-import {figure} from './town.js?v=b709147';
-import {buildTown, depthIn, spotIn} from './townbuild.js?v=b709147';
-import {makeFire, updateFire, burn} from './fire.js?v=b709147';
-import {addGrass} from './grass.js?v=b709147';
-import {sinkPose} from './sinking.js?v=b709147';
-import {moored} from './fleet.js?v=b709147';
-import {sailCount} from './upgrades.js?v=b709147';
-import {hasSail} from './crew.js?v=b709147';
-import {placeOnWaves} from './combat.js?v=b709147';
+import {mergeStatic} from './merge.js?v=7839b26';
+import {SHIPS, IRON} from './config.js?v=7839b26';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=7839b26';
+import {G, ship, lvl} from './state.js?v=7839b26';
+import {men} from './crew.js?v=7839b26';
+import {scene} from './scene.js?v=7839b26';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=7839b26';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=7839b26';
+import {figure} from './town.js?v=7839b26';
+import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=7839b26';
+import {makeFire, updateFire, burn} from './fire.js?v=7839b26';
+import {addGrass} from './grass.js?v=7839b26';
+import {sinkPose} from './sinking.js?v=7839b26';
+import {moored} from './fleet.js?v=7839b26';
+import {sailCount} from './upgrades.js?v=7839b26';
+import {hasSail} from './crew.js?v=7839b26';
+import {placeOnWaves} from './combat.js?v=7839b26';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
 const ISLE_GROUPS = [];
 // one island per frame, nearest first
-export function mergeNearIslands(reach = 3600, all = false){ let best = null, bd = reach; for (let i = ISLE_GROUPS.length - 1; i >= 0; i--){ const g = ISLE_GROUPS[i], d = Math.hypot(g.position.x - G.cam.x, g.position.z - G.cam.y); if (all){ if (d < reach){ mergeStatic(g); ISLE_GROUPS.splice(i, 1); } } else if (d < bd){ bd = d; best = i; } } if (best != null){ mergeStatic(ISLE_GROUPS[best]); ISLE_GROUPS.splice(best, 1); } }
+export function mergeNearIslands(reach = 3600, all = false){ let best = null, bd = reach; for (let i = ISLE_GROUPS.length - 1; i >= 0; i--){ const g = ISLE_GROUPS[i], d = Math.hypot(g.position.x - G.cam.x, g.position.z - G.cam.y); if (all){ if (d < reach){ if (g.userData.lazy){ g.userData.lazy(); delete g.userData.lazy; } mergeStatic(g); ISLE_GROUPS.splice(i, 1); } } else if (d < bd){ bd = d; best = i; } } if (best != null){ const g = ISLE_GROUPS[best]; if (g.userData.lazy){ g.userData.lazy(); delete g.userData.lazy; } mergeStatic(g); ISLE_GROUPS.splice(best, 1); } }
 const POPS = [], POP_R = 1300, popEase = t => { const c = 1.9; return 1 + (c + 1)*Math.pow(t - 1, 3) + c*Math.pow(t - 1, 2); };
 function popIn(o){ o.userData.keep = true; Object.assign(o.userData, {s0:o.scale.x, y0:o.position.y, on:false, pop:0}); o.scale.setScalar(.001); POPS.push(o); }
 const popV = new T.Vector3();
@@ -89,6 +89,7 @@ ISLANDS.forEach((is, i) => {
   // grass on the green islands (High graphics)
   if (grass && !cold && (is.trees || is.port || is.harbor || is.frame)) addGrass(g, grass, hill, top, rng(i*131 + 7), is.free, '#f2f7e4');
   // P74: the houses, walls and rocks that never move are glued together when you first come near (see updatePops)
+  if (is.portx) g.userData.lazy = () => buildPort(is, g, is.portx, rng(i*389 + 5)); /* P112: the port's stone is built when you first come near */
   for (const o of [...is.treeObjs]) o.userData.keep = true; g.userData.mergeLater = true; ISLE_GROUPS.push(g);
   scene.add(g);
 });
