@@ -1,6 +1,6 @@
 // P81: ship ideas for the Showroom only (nothing in the game uses them yet). Real ancient Greek and Mediterranean ship types,
 // built from the game's own ship builder so they look like they belong. Pick the ones you like and they can become ships to build.
-import {SPECS} from './ships.js?v=2e023d0';
+import {SPECS} from './ships.js?v=1810eda';
 export const IDEAS = {
   hemiolia:      {name:'Hemiolia', desc:'The pirates\' favourite: a fast, low ship with one and a half rows of oars. The rowers at the back fold the sail away and row hard to catch a merchant. Idea: a quick raider for the player between the skiff and the bireme.',
     spec:{L:120, B:24, H:13, rise:20, oarRows:1, oarCount:12, mast:true, sailW:46, sailH:38, sailMax:10, ram:true, fans:true, eyes:true, raider:true, crew:[['stand', 1], ['archer', 4]], look:{paint:'green', sail:'sea', flag:'hermes'}}},

@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=2e023d0';
-import {MAPDATA} from './mapdata.js?v=2e023d0';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=1810eda';
+import {MAPDATA} from './mapdata.js?v=1810eda';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -35,8 +35,9 @@ export const ZONES = [
 
 // Each island: x, y = center; r = farthest shore point; tiers = outlines [beach, grass, hilltop] around the center as [[x, y], ...].
 let WORLD_, HOME_, ZC, ZR, WOB, islands, pier;
+const ATTICA_K = 1.8; // P115: Athens's capital was a small empty island (r 441, under the 500 a town needs); now about the size of the Peloponnese
 { // map D
-  const M = MAPDATA[MAP.id], kp = UNIT*MAP.spread, GROW = {Rhodes:1.25, Thasos:1.25, Syros:2.4, Milos:1.6, Ikaria:1.4, Tinos:1.4, Ios:1.3, Donousa:2.6, Amorgos:1.9, Sikinos:1.75}; // P69: bigger than their real size, for room around the camp and the fortress; P92 the camp islands too (Nicholas)
+  const M = MAPDATA[MAP.id], kp = UNIT*MAP.spread, GROW = {Attica:ATTICA_K, Rhodes:1.25, Thasos:1.25, Syros:2.4, Milos:1.6, Ikaria:1.4, Tinos:1.4, Ios:1.3, Donousa:2.6, Amorgos:1.9, Sikinos:1.75}; // P69: bigger than their real size, for room around the camp and the fortress; P92 the camp islands too (Nicholas)
   islands = M.feats.map(f => {
     const ks = (f.frame ? kp : f.home ? UNIT : UNIT*MAP.isle)*(GROW[f.n] || 1);
     const tiers = f.t.map(t => { const out = []; for (let i=0;i<t.length;i+=2) out.push([t[i]*ks, t[i+1]*ks]); return out; });
@@ -64,7 +65,15 @@ let WORLD_, HOME_, ZC, ZR, WOB, islands, pier;
     if (is.name === 'Amorgos'){ let cx = 0, cy = 0; for (const [x, y] of beach){ cx += x/beach.length; cy += y/beach.length; }
       is.tiers[1] = beach.map(([x, y]) => { const d = Math.hypot(x - cx, y - cy) || 1, k = Math.max(.3, 1 - 70/d); return [cx + (x - cx)*k, cy + (y - cy)*k]; }); } } }
 const area = pts => { let a = 0; for (let i=0;i<pts.length;i++){ const [x0, y0] = pts[i], [x1, y1] = pts[(i+1) % pts.length]; a += x0*y1 - x1*y0; } return Math.abs(a)/2; };
+// P115: how far inside its outline a hilltop's deepest point lies. A thin ridge of rock stood as tall as a broad hill and read as a
+// cut bar (Milos, Imbros, Ios, Kea, Sifnos): a hilltop is now no taller than about three quarters of that depth (islandHeights).
+const polyDepth = P => { const xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), st = Math.max(4, Math.max(x1 - x0, y1 - y0)/48); let best = 0;
+  for (let x = x0; x <= x1; x += st) for (let y = y0; y <= y1; y += st){ if (!inPoly(P, x, y)) continue; let d = Infinity;
+    for (let i=0;i<P.length;i++){ const [ax, ay] = P[i], [bx, by] = P[(i+1) % P.length], ex = bx - ax, ey = by - ay, t = Math.max(0, Math.min(1, ((x - ax)*ex + (y - ay)*ey)/(ex*ex + ey*ey || 1))); d = Math.min(d, Math.hypot(x - ax - ex*t, y - ay - ey*t)); if (d <= best) break; }
+    if (d > best) best = d; }
+  return best; };
 for (const is of islands){
+  if (is.tiers[2]) is.hillD = polyDepth(is.tiers[2]);
   is.r = Math.max(...is.tiers[0].map(([x, y]) => Math.hypot(x, y)));
   is.area = area(is.tiers[0]);
   if (!is.frame && !is.port) is.trees = Math.max(is.wild ? 4 : 2, Math.min(6, Math.round(Math.sqrt(is.area)/110)));
@@ -246,12 +255,13 @@ for (const h of HARBORS){ const B = BIG_HARBORS[h.is.name]; if (!B) continue; h.
 export const TOWN_PIERS = [];
 // The town's pier goes on the side with the most flat grass behind it (room for the main street), away from hills.
 function townPier(is){
-  const [, grass, hill] = is.tiers; if (!grass) return null; let best = null, bl = 120;
+  const [, grass, hill] = is.tiers; if (!grass) return null; let best = null, bl = is.capital ? 40 : 120; /* P115: a capital always gets its town (Attica had none) */
   for (let k=0;k<16;k++){ const a = k/16*Math.PI*2, dx = Math.cos(a), dy = Math.sin(a);
     let t = is.r + 60; while (t > 0 && landDist(is.x + dx*t, is.y + dy*t) > 0) t -= 6;
     const p = {x:is.x + dx*(t - 12), y:is.y + dy*(t - 12), dx, dy};
     if (landDist(p.x + dx*(PIER_LEN + 60), p.y + dy*(PIER_LEN + 60)) <= 70) continue; // the pier needs open water
-    let l = 0; for (; l < 320; l += 10){ const x = p.x - is.x - dx*(l + 40), z = p.y - is.y - dy*(l + 40); if (!inPoly(grass, x, z) || (hill && inPoly(hill, x, z))) break; }
+    let s0 = 40; if (is.capital) while (s0 < 300 && !inPoly(grass, p.x - is.x - dx*s0, p.y - is.y - dy*s0)) s0 += 10; /* P115: Attica's beach is wide: the run of grass is counted from where the grass starts */
+    let l = 0; for (; l < 320; l += 10){ const x = p.x - is.x - dx*(l + s0), z = p.y - is.y - dy*(l + s0); if (!inPoly(grass, x, z) || (hill && inPoly(hill, x, z))) break; }
     if (l > bl){ bl = l; best = p; } }
   return best;
 }
@@ -266,7 +276,7 @@ for (const is of named){ if (is.harbor || !is.city || is.r < 500) continue; cons
 for (const h of HARBORS) for (const p of h.extra || []) TOWN_PIERS.push(p); // P110: the big harbor's side piers are solid too
 // P68: where a fortress or camp stands. Like a real kastro: wholly on land, on the high ground if the island has any, on a point that
 // looks over the most open sea, well away from the town, with a stone stair down to its own little jetty. Small islands get a smaller one.
-export function islandHeights(is){ const size = Math.sqrt(is.area), top = 4 + (is.port ? 12 : Math.min(26, 9 + size*.02)); return {top, hillTop:top + Math.min(46, 12 + size*.03)}; }
+export function islandHeights(is){ const size = Math.sqrt(is.area), top = 4 + (is.port ? 12 : Math.min(26, 9 + size*.02)); return {top, hillTop:top + Math.min(46, 12 + size*.03, 5 + (is.hillD ?? 99)*.75)}; }
 const FORT_FOOT = 168, CAMP_FOOT = 92;
 // P92: a camp's model reaches 95 back from its middle (the cabins) and 25 toward the sea (the bandits), 72 and 52 to the sides,
 // times its size (bigger camps for higher levels). Its back half must stand on grass, clear of the sand; the bandits on firm ground.

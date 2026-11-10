@@ -2,17 +2,17 @@
 // Blender picture; it was a stone ring before). The marble Colossus stands astride the gate in the front breakwater, facing
 // the open sea, and you sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round
 // won. The crowd on the walkways cheers.
-import {ISLANDS, landDist, ARENA_SPOT} from './world.js?v=2e023d0';
-import {G, save, ship} from './state.js?v=2e023d0';
-import {scene} from './scene.js?v=2e023d0';
-import {TORCH_ROOTS} from './ships.js?v=2e023d0';
-import {mergeStatic} from './merge.js?v=2e023d0';
-import {award, TROPHIES} from './trophies.js?v=2e023d0';
-import {spawnArena, clearArena, enemies, lobStone} from './combat.js?v=2e023d0';
-import {ENEMIES} from './config.js?v=2e023d0';
-import {toast} from './ui.js?v=2e023d0';
-import {sfx} from './audio.js?v=2e023d0';
-import {buildArena, frame, H, BW, BACK} from './arenabuild.js?v=2e023d0';
+import {ISLANDS, landDist, ARENA_SPOT} from './world.js?v=1810eda';
+import {G, save, ship} from './state.js?v=1810eda';
+import {scene} from './scene.js?v=1810eda';
+import {TORCH_ROOTS} from './ships.js?v=1810eda';
+import {mergeStatic} from './merge.js?v=1810eda';
+import {award, TROPHIES} from './trophies.js?v=1810eda';
+import {spawnArena, clearArena, enemies, lobStone} from './combat.js?v=1810eda';
+import {ENEMIES} from './config.js?v=1810eda';
+import {toast} from './ui.js?v=1810eda';
+import {sfx} from './audio.js?v=1810eda';
+import {buildArena, frame, H, BW, BACK} from './arenabuild.js?v=1810eda';
 
 const T = window.THREE;
 const R = 780; // only picks the spot
