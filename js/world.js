@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=ed3e210';
-import {MAPDATA} from './mapdata.js?v=ed3e210';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=08be8f7';
+import {MAPDATA} from './mapdata.js?v=08be8f7';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -225,6 +225,13 @@ for (const is of named.filter(i => HARBOR_AT[i.name])){
   const h = {is, pier, dock:dockOf(pier), prices:HARBOR_AT[is.name] || {}}; is.harbor = h; HARBORS.push(h);
 }
 home.harbor = HARBORS[0];
+// P110 (Nicholas: make Crete's city and harbor bigger): a big harbor gets two more piers beside the main one (solid, like every pier;
+// you still dock at the middle one) and a stone quay along the shore between them (entities.js).
+export const BIG_HARBORS = {Crete:{side:95}};
+for (const h of HARBORS){ const B = BIG_HARBORS[h.is.name]; if (!B) continue; h.extra = [];
+  for (const sg of [1, -1]){ const nx = -h.pier.dy*sg, ny = h.pier.dx*sg, dx = h.pier.dx, dy = h.pier.dy; let p = null;
+    for (let t = -120; t <= 80 && !p; t += 6){ const x = h.pier.x + nx*B.side + dx*t, y = h.pier.y + ny*B.side + dy*t; if (landDist(x, y) > -8 && landDist(x - dx*14, y - dy*14) < -8) p = {x, y, dx, dy, extra:true}; }
+    if (p && landDist(p.x + dx*(PIER_LEN + 40), p.y + dy*(PIER_LEN + 40)) > 50) h.extra.push(p); } }
 // The other big city islands get a town too (streets, houses, temple, a pier), just for looks: you can't dock there.
 export const TOWN_PIERS = [];
 // The town's pier goes on the side with the most flat grass behind it (room for the main street), away from hills.
@@ -239,6 +246,7 @@ function townPier(is){
   return best;
 }
 for (const is of named){ if (is.harbor || !is.city || is.r < 500) continue; const pier = townPier(is); if (pier){ is.town = {pier}; TOWN_PIERS.push(pier); } }
+for (const h of HARBORS) for (const p of h.extra || []) TOWN_PIERS.push(p); // P110: the big harbor's side piers are solid too
 // P68: where a fortress or camp stands. Like a real kastro: wholly on land, on the high ground if the island has any, on a point that
 // looks over the most open sea, well away from the town, with a stone stair down to its own little jetty. Small islands get a smaller one.
 export function islandHeights(is){ const size = Math.sqrt(is.area), top = 4 + (is.port ? 12 : Math.min(26, 9 + size*.02)); return {top, hillTop:top + Math.min(46, 12 + size*.03)}; }

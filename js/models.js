@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=ed3e210';
+import {hash} from './world.js?v=08be8f7';
 
-import {smokeColumn} from './smoke.js?v=ed3e210';
+import {smokeColumn} from './smoke.js?v=08be8f7';
 const T = window.THREE;
-import {mat} from './ships.js?v=ed3e210';
+import {mat} from './ships.js?v=08be8f7';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -80,7 +80,8 @@ function panes(kind){ if (paneGeos[kind]) return paneGeos[kind];
   return paneGeos[kind] = mergeParts(P); }
 // style: 'athens' = whitewashed walls, blue shutters and blue domes; 'sparta' = warm sandstone walls, dark red shutters and
 // terracotta tile roofs (no domes); anything else = Kallisto's island mix.
-export function house(kind = 0, style = null){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
+// P110: quiet = no smoke (a big town keeps to the usual number of smoke columns)
+export function house(kind = 0, style = null, quiet = false){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
   if (style === 'sparta' && kind === 1) kind = 2; if (style === 'athens' && kind === 2) kind = 1;
   const wall = style === 'sparta' ? (kind === 3 ? '#e2c592' : '#ead3a6') : style === 'athens' ? '#f7f5ee' : kind === 2 ? '#efe2c4' : '#f4f1e8';
   const trim = style === 'sparta' ? '#8e2a22' : style === 'athens' ? '#2c5fa8' : kind === 2 ? '#3f7a52' : '#2c5fa8';
@@ -97,7 +98,7 @@ export function house(kind = 0, style = null){ if (kind === true) kind = 1; if (
   // a chimney on most houses, and on about one in four of those a column of white smoke from the cooking fire
   const ch = {0:[-6, 16, 5], 2:[-5, 19, -4.5], 3:[-7.5, 26, 4]}[kind];
   if (ch){ const c = mesh(new T.BoxGeometry(3.4, kind === 2 ? 9 : 6, 3.4), kind === 2 ? '#d8ccb0' : wall); c.position.set(ch[0], ch[1] + (kind === 2 ? 4.5 : 3), ch[2]); g.add(c);
-    if (Math.random() < .25){ const sm = smokeColumn({h:56 + Math.random()*24, r0:2.2, r1:8 + Math.random()*4, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); } }
+    if (!quiet && Math.random() < .25){ const sm = smokeColumn({h:56 + Math.random()*24, r0:2.2, r1:8 + Math.random()*4, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); } }
   return g; }
 export function temple(){ const g = new T.Group();
   const base = mesh(new T.BoxGeometry(44, 4, 30), '#e9e2cf'); base.position.y = 2; g.add(base);
