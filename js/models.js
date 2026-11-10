@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=08be8f7';
+import {hash} from './world.js?v=b709147';
 
-import {smokeColumn} from './smoke.js?v=08be8f7';
+import {smokeColumn} from './smoke.js?v=b709147';
 const T = window.THREE;
-import {mat} from './ships.js?v=08be8f7';
+import {mat} from './ships.js?v=b709147';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -81,24 +81,28 @@ function panes(kind){ if (paneGeos[kind]) return paneGeos[kind];
 // style: 'athens' = whitewashed walls, blue shutters and blue domes; 'sparta' = warm sandstone walls, dark red shutters and
 // terracotta tile roofs (no domes); anything else = Kallisto's island mix.
 // P110: quiet = no smoke (a big town keeps to the usual number of smoke columns)
-export function house(kind = 0, style = null, quiet = false){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
-  if (style === 'sparta' && kind === 1) kind = 2; if (style === 'athens' && kind === 2) kind = 1;
+// P111: a house's walls, door, shutters, roof and chimney are one shared shape per kind and style (colors per corner), so a
+// city of a hundred houses costs two pieces a house instead of nine
+const houseGeos = {};
+function houseGeo(kind, style){ const key = kind + '|' + style; if (houseGeos[key]) return houseGeos[key];
   const wall = style === 'sparta' ? (kind === 3 ? '#e2c592' : '#ead3a6') : style === 'athens' ? '#f7f5ee' : kind === 2 ? '#efe2c4' : '#f4f1e8';
   const trim = style === 'sparta' ? '#8e2a22' : style === 'athens' ? '#2c5fa8' : kind === 2 ? '#3f7a52' : '#2c5fa8';
-  const b = mesh(new T.BoxGeometry(22, 16, 20), wall); b.position.y = 8; g.add(b);
-  const door = mesh(new T.BoxGeometry(.6, 8, 5), trim, {}, false); door.position.set(11.2, 4, 0); g.add(door);
-  for (const z of [-6.5, 6.5]){ const w = mesh(new T.BoxGeometry(.6, 3.6, 3.2), trim, {}, false); w.position.set(11.2, 10, z); g.add(w); }
+  const P = [[boxGeo, wall, at(0, 8, 0, 22, 16, 20)], [boxGeo, trim, at(11.2, 4, 0, .6, 8, 5)]];
+  for (const z of [-6.5, 6.5]) P.push([boxGeo, trim, at(11.2, 10, z, .6, 3.6, 3.2)]);
+  if (kind === 1) P.push([domeGeo, '#2c5fa8', at(0, 16, 0, 1, 1, 1)]);
+  if (style === 'sparta' && kind !== 2) P.push([roofGeo6, '#b5562f', kind === 3 ? at(-4, 29, 0, .6, 1, .7, Math.PI/4) : at(0, 19, 0, 1, 1, .9, Math.PI/4)]);
+  if (kind === 2) P.push([roofGeo7, '#c4643a', at(0, 19.5, 0, 1, 1, .9, Math.PI/4)]);
+  if (kind === 3){ P.push([boxGeo, wall, at(-4, 21, 0, 12, 10, 14)], [boxGeo, '#e4dccb', at(6.5, 17, 0, 9, 2, 20)], [boxGeo, trim, at(2.2, 22, 0, .6, 4, 3.4)]); }
+  const ch = HOUSE_CHIMNEY[kind]; if (ch) P.push([boxGeo, kind === 2 ? '#d8ccb0' : wall, at(ch[0], ch[1] + (kind === 2 ? 4.5 : 3), ch[2], 3.4, kind === 2 ? 9 : 6, 3.4)]);
+  return houseGeos[key] = mergeParts(P); }
+const HOUSE_CHIMNEY = {0:[-6, 16, 5], 2:[-5, 19, -4.5], 3:[-7.5, 26, 4]};
+export function house(kind = 0, style = null, quiet = false){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
+  if (style === 'sparta' && kind === 1) kind = 2; if (style === 'athens' && kind === 2) kind = 1;
+  g.add(mesh(houseGeo(kind, style), '#ffffff', {vertexColors:true}));
   g.add(new T.Mesh(panes(kind), WIN_MAT));
-  if (kind === 1){ const d = mesh(new T.SphereGeometry(8, 10, 5, 0, Math.PI*2, 0, Math.PI/2), '#2c5fa8'); d.position.y = 16; g.add(d); }
-  if (style === 'sparta' && kind !== 2){ const r = mesh(new T.CylinderGeometry(.01, 15.5, 6, 4, 1), '#b5562f'); r.rotation.y = Math.PI/4; r.scale.set(1, 1, .9); r.position.y = (kind === 3 ? 29 : 19); if (kind === 3){ r.scale.set(.6, 1, .7); r.position.x = -4; } g.add(r); }
-  if (kind === 2){ const r = mesh(new T.CylinderGeometry(.01, 15.5, 7, 4, 1), '#c4643a'); r.rotation.y = Math.PI/4; r.scale.set(1, 1, .9); r.position.y = 19.5; g.add(r); }
-  if (kind === 3){ const up = mesh(new T.BoxGeometry(12, 10, 14), wall); up.position.set(-4, 21, 0); g.add(up);
-    const rail = mesh(new T.BoxGeometry(9, 2, 20), '#e4dccb'); rail.position.set(6.5, 17, 0); g.add(rail);
-    const w2 = mesh(new T.BoxGeometry(.6, 4, 3.4), trim, {}, false); w2.position.set(2.2, 22, 0); g.add(w2); }
   // a chimney on most houses, and on about one in four of those a column of white smoke from the cooking fire
-  const ch = {0:[-6, 16, 5], 2:[-5, 19, -4.5], 3:[-7.5, 26, 4]}[kind];
-  if (ch){ const c = mesh(new T.BoxGeometry(3.4, kind === 2 ? 9 : 6, 3.4), kind === 2 ? '#d8ccb0' : wall); c.position.set(ch[0], ch[1] + (kind === 2 ? 4.5 : 3), ch[2]); g.add(c);
-    if (!quiet && Math.random() < .25){ const sm = smokeColumn({h:56 + Math.random()*24, r0:2.2, r1:8 + Math.random()*4, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); } }
+  const ch = HOUSE_CHIMNEY[kind];
+  if (ch && !quiet && Math.random() < .25){ const sm = smokeColumn({h:56 + Math.random()*24, r0:2.2, r1:8 + Math.random()*4, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); }
   return g; }
 export function temple(){ const g = new T.Group();
   const base = mesh(new T.BoxGeometry(44, 4, 30), '#e9e2cf'); base.position.y = 2; g.add(base);
@@ -112,6 +116,7 @@ export function temple(){ const g = new T.Group();
 const FARM_KINDS = ['vines', 'olives', 'wheat', 'garden'];
 const farmGeos = {};
 const blobGeo = new T.IcosahedronGeometry(1, 2), boxGeo = new T.BoxGeometry(1, 1, 1), stemGeo = new T.CylinderGeometry(.5, .7, 1, 8);
+const domeGeo = new T.SphereGeometry(8, 10, 5, 0, Math.PI*2, 0, Math.PI/2), roofGeo6 = new T.CylinderGeometry(.01, 15.5, 6, 4, 1), roofGeo7 = new T.CylinderGeometry(.01, 15.5, 7, 4, 1), drumGeo = new T.CylinderGeometry(.5, .5, 1, 12);
 function mergeParts(parts){
   const gs = parts.map(([geo, c, m]) => { const g = geo.index ? geo.toNonIndexed() : geo.clone(); g.applyMatrix4(m); return [g, new T.Color(c)]; });
   const n = gs.reduce((a, [g]) => a + g.attributes.position.count, 0), pos = new Float32Array(n*3), nor = new Float32Array(n*3), col = new Float32Array(n*3);
@@ -134,6 +139,30 @@ function farmGeo(kind){ if (farmGeos[kind]) return farmGeos[kind];
   return farmGeos[kind] = mergeParts(P); }
 export function farm(kind = 'vines'){ if (typeof kind === 'number') kind = FARM_KINDS[kind % FARM_KINDS.length];
   const m = mesh(farmGeo(kind), '#ffffff', {vertexColors:true, flatShading:false}); m.userData.kind = kind; return m; }
+
+// ---- P111: the market square (agora): stalls under striped awnings, a well, a long colonnade (stoa). One piece each. ----
+const marketGeos = {};
+export function stall(k = 0){ const cols = ['#c64a3c', '#3f6c94', '#d9a441', '#71873f', '#8a4a8a'], key = 'stall' + (k % cols.length);
+  if (!marketGeos[key]){ const P = [], c = cols[k % cols.length];
+    for (const x of [-7.5, 7.5]) for (const z of [-5.5, 5.5]) P.push([boxGeo, '#6e4a26', at(x, 6.5, z, 1.1, 13, 1.1)]);
+    for (let i=0;i<5;i++) P.push([boxGeo, i % 2 ? '#f4efe0' : c, at(0, 13.4, -5.2 + i*2.6, 18, 1, 2.6)]); /* striped awning */
+    P.push([boxGeo, '#9b6b3a', at(0, 3, 0, 14, 6, 8)]);
+    for (let i=0;i<5;i++) P.push([blobGeo, ['#e09a3a', '#7fb04a', '#b8693a', '#d8b350', '#c64a3c'][(i + k) % 5], at(-5 + i*2.5, 6.8, i % 2 ? 1.6 : -1.6, 1.5, 1.3, 1.5)]);
+    marketGeos[key] = mergeParts(P); }
+  return mesh(marketGeos[key], '#ffffff', {vertexColors:true}); }
+export function well(){ if (!marketGeos.well){ const P = [[drumGeo, '#d8ccb0', at(0, 3, 0, 13, 6, 13)], [drumGeo, '#3d6f8f', at(0, 5.8, 0, 9.5, .8, 9.5)]];
+    for (const z of [-6, 6]) P.push([boxGeo, '#6e4a26', at(0, 10, z, 1.2, 14, 1.2)]);
+    P.push([boxGeo, '#b5562f', at(0, 17.6, 0, 9, 1.4, 15)]);
+    marketGeos.well = mergeParts(P); }
+  return mesh(marketGeos.well, '#ffffff', {vertexColors:true}); }
+// a stoa: a long roofed walk with a row of columns along its open front (+x side), n columns long
+export function stoa(n = 6, style = null){ const key = 'stoa' + n + style;
+  if (!marketGeos[key]){ const L = n*11, roof = style === 'athens' ? '#d9cfb6' : '#c4643a', wall = style === 'sparta' ? '#ead3a6' : '#f4f1e8', P = [];
+    P.push([boxGeo, '#e2d3ae', at(0, 1.2, 0, 20, 2.4, L + 4)], [boxGeo, wall, at(-8, 9.5, 0, 2.4, 15, L)]);
+    for (let i=0;i<=n;i++) P.push([drumGeo, '#f4f1e8', at(7.5, 9.5, -L/2 + i*11, 2.6, 15, 2.6)]);
+    P.push([boxGeo, '#e9e2cf', at(0, 17.6, 0, 20, 1.6, L + 2)], [boxGeo, roof, at(-.5, 19.6, 0, 21.5, 2.6, L + 5)]);
+    marketGeos[key] = mergeParts(P); }
+  return mesh(marketGeos[key], '#ffffff', {vertexColors:true}); }
 
 // ---- boats (wreck hulls; the player's ships come from ships.js) ----
 function hullShape(L, B, scale=1){ const s = new T.Shape(), l = L*scale, b = B*scale;

@@ -1,20 +1,21 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=08be8f7';
-import {SHIPS, IRON} from './config.js?v=08be8f7';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=08be8f7';
-import {G, ship, lvl} from './state.js?v=08be8f7';
-import {men} from './crew.js?v=08be8f7';
-import {scene} from './scene.js?v=08be8f7';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=08be8f7';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=08be8f7';
-import {addTown, figure} from './town.js?v=08be8f7';
-import {makeFire, updateFire, burn} from './fire.js?v=08be8f7';
-import {addGrass} from './grass.js?v=08be8f7';
-import {sinkPose} from './sinking.js?v=08be8f7';
-import {moored} from './fleet.js?v=08be8f7';
-import {sailCount} from './upgrades.js?v=08be8f7';
-import {hasSail} from './crew.js?v=08be8f7';
-import {placeOnWaves} from './combat.js?v=08be8f7';
+import {mergeStatic} from './merge.js?v=b709147';
+import {SHIPS, IRON} from './config.js?v=b709147';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=b709147';
+import {G, ship, lvl} from './state.js?v=b709147';
+import {men} from './crew.js?v=b709147';
+import {scene} from './scene.js?v=b709147';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=b709147';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=b709147';
+import {figure} from './town.js?v=b709147';
+import {buildTown, depthIn, spotIn} from './townbuild.js?v=b709147';
+import {makeFire, updateFire, burn} from './fire.js?v=b709147';
+import {addGrass} from './grass.js?v=b709147';
+import {sinkPose} from './sinking.js?v=b709147';
+import {moored} from './fleet.js?v=b709147';
+import {sailCount} from './upgrades.js?v=b709147';
+import {hasSail} from './crew.js?v=b709147';
+import {placeOnWaves} from './combat.js?v=b709147';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -41,20 +42,6 @@ function updatePops(dt){
 // ---- islands ----
 // Each island is stacked flat layers of its real outline: sand, grass, and a rocky hilltop on the bigger ones.
 // The edges are bevelled so every layer has a soft rounded rim.
-// How far inside an outline a point is (0 or less = outside).
-function depthIn(pts, x, z){ if (!inPoly(pts, x, z)) return 0; let best = Infinity;
-  for (let i=0;i<pts.length;i++){ const [ax, az] = pts[i], [bx, bz] = pts[(i+1) % pts.length], dx = bx-ax, dz = bz-az;
-    const t = Math.max(0, Math.min(1, ((x-ax)*dx + (z-az)*dz)/(dx*dx + dz*dz || 1))); best = Math.min(best, Math.hypot(x - ax - dx*t, z - az - dz*t)); }
-  return best; }
-// A random spot at least `margin` inside the outline, near (cx, cz) if given.
-function spotIn(R, pts, margin, cx = 0, cz = 0, rad = Infinity){
-  const xs = pts.map(p => p[0]), zs = pts.map(p => p[1]);
-  const x0 = Math.max(Math.min(...xs), cx - rad), x1 = Math.min(Math.max(...xs), cx + rad), z0 = Math.max(Math.min(...zs), cz - rad), z1 = Math.min(Math.max(...zs), cz + rad);
-  for (let k=0;k<200;k++){ const x = x0 + R()*(x1 - x0), z = z0 + R()*(z1 - z0); if (Math.hypot(x - cx, z - cz) <= rad && depthIn(pts, x, z) >= margin) return [x, z]; }
-  return null;
-}
-// P110 (Nicholas): Crete is a great city: longer streets, more of them, more houses, people, trees and farms (used by buildTown)
-const BIG_TOWNS = {Crete:{len:560, side:260, step:62, houses:84, trees:22, farms:6, people:14, reach:420}};
 const flags = []; // city harbor flags, recolored when an island changes hands
 ISLANDS.forEach((is, i) => {
   const R = rng(i*977+13), g = new T.Group(); g.position.set(is.x, 0, is.y);
@@ -90,7 +77,7 @@ ISLANDS.forEach((is, i) => {
   if (!is.trees && !is.port && !is.harbor && !is.frame){ const c = tree(); c.position.set(0, treeAt([0, 0]), 0); c.scale.setScalar(.7); g.add(c); popIn(c); }
   // the mainland gets scattered trees too, just for looks
   if (is.frame) for (let k=0;k<Math.min(60, is.area/90000);k++){ const p = spotIn(R, ground, 20); if (!p) break; const c = tree(); c.position.set(p[0], treeAt(p), p[1]); g.add(c); popIn(c); }
-  if (is.harbor || is.town){ const free = buildTown(is, g, top, R, ground, (is.harbor || is.town).pier, hill);
+  if (is.harbor || is.town){ const free = buildTown(is, g, (is.harbor || is.town).pier, {top, hillTop, R, ground, hill, popIn, flags});
     // trees that landed in the streets or on houses move elsewhere on the island
     for (const c of is.treeObjs){ if (free(c.position.x, c.position.z)) continue;
       for (let k=0;k<40;k++){ const p = spotIn(R, ground, 10); if (p && free(...p)){ c.position.set(p[0], treeAt(p), p[1]); c.userData.y0 = c.position.y; break; } } }
@@ -106,79 +93,6 @@ ISLANDS.forEach((is, i) => {
   scene.add(g);
 });
 
-// A harbor town: the pier, houses, temple and townspeople. Kallisto also gets Poseidon's statue; city harbors fly their owner's flag.
-function buildTown(is, g, top, R, groundAll, PIER, hill){
-  const BIG = BIG_TOWNS[is.name] || {len:300, side:140, step:75, houses:is.port ? 22 : 16, trees:is.port ? 14 : 10, farms:is.port ? 4 : 3, people:is.port ? 9 : 6, reach:260};
-  const px = PIER.x - is.x, pz = PIER.y - is.y, ang = Math.atan2(PIER.dy, PIER.dx);
-  // houses stay on the flat grass, off the hilltop
-  const ground = groundAll, off = hill ? (x, z) => inPoly(hill, x, z) : () => false, flat = (p, m) => p && !off(p[0], p[1]) && siteClear(is, p[0], p[1]) && depthIn(ground, p[0], p[1]) >= m;
-  // the town sits on the widest ground near the pier
-  let cx = px - PIER.dx*60, cz = pz - PIER.dy*60, best = 0;
-  for (let k=0;k<300;k++){ const p = spotIn(R, ground, 1, px, pz, BIG.reach); if (!p) continue; const d = depthIn(ground, p[0], p[1]); if (d > best){ best = d; cx = p[0]; cz = p[1]; } }
-  // ---- streets: a main street runs inland from the pier, with side streets across it. Houses line both sides, facing the
-  // street; trees fill the gaps; the temple and the city's god stand on a little square at the top of the main street ----
-  const ux = -PIER.dx, uz = -PIER.dy, vx = -uz, vz = ux, stone = '#e2d3ae', houses = [], keep = [];
-  // P107 (Nicholas: Peloponnese is big and empty): on 8 town islands the beach in front of the pier is wide, so the street, which
-  // started 24 from the pier, began on sand and never got going: no houses at all. Now it starts where the grass does.
-  let s0 = 24; while (s0 < 220 && !flat([px + ux*(s0 + 20), pz + uz*(s0 + 20)], 10)) s0 += 10;
-  const x0 = px + ux*s0, z0 = pz + uz*s0;
-  let len = 0; while (len < BIG.len && flat([x0 + ux*(len + 20), z0 + uz*(len + 20)], 10)) len += 20;
-  const roads = [], road = (x, z, l, w, a2) => { roads.push({x, z, l, w, c:Math.cos(a2), s:Math.sin(a2)}); const r = mesh(new T.BoxGeometry(l, 1, w), stone, {}, false); r.position.set(x, top + .4, z); r.rotation.y = -a2; r.receiveShadow = true; g.add(r); };
-  if (len > 40){ road(x0 + ux*len/2, z0 + uz*len/2, len, 16, Math.atan2(uz, ux));
-    for (let d = 50; d < len - 20; d += BIG.step) for (const sg of [1, -1]){ let l = 0; const sx = x0 + ux*d, sz = z0 + uz*d;
-      while (l < BIG.side && flat([sx + vx*sg*(l + 20), sz + vz*sg*(l + 20)], 10)) l += 20;
-      if (l > 30){ road(sx + vx*sg*l/2, sz + vz*sg*l/2, l, 12, Math.atan2(vz*sg, vx*sg)); for (let e = 30; e < l; e += 30) for (const side of [1, -1]) houses.push({x:sx + vx*sg*e + ux*side*22, z:sz + vz*sg*e + uz*side*22, face:Math.atan2(-uz*side, -ux*side)}); } }
-    for (let d = 30; d < len - 10; d += 30) for (const side of [1, -1]) houses.push({x:x0 + ux*d + vx*side*24, z:z0 + uz*d + vz*side*24, face:Math.atan2(-vz*side, -vx*side)}); }
-  const placed = [];
-  for (const h of houses){ if (!flat([h.x, h.z], 12) || placed.some(([hx, hz]) => Math.hypot(hx - h.x, hz - h.z) < 26) || Math.hypot(h.x - px, h.z - pz) < 40) continue;
-    if (placed.length >= BIG.houses) break;
-    const k = placed.length, o = house([0, 1, 0, 2, 3, 0, 1, 2][Math.floor(R()*8)], is.port ? null : is.city === 'sparta' ? 'sparta' : is.city === 'athens' ? 'athens' : null, k >= 24); o.position.set(h.x, top, h.z); o.rotation.y = -h.face; o.scale.set(1, .9 + R()*.25, 1); g.add(o); popIn(o); placed.push([h.x, h.z]); }
-  keep.push(...placed);
-  // the square, temple and god at the top of the main street
-  const tp0 = [x0 + ux*(len + 30), z0 + uz*(len + 30)];
-  let tp = flat(tp0, 24) && placed.every(([hx, hz]) => Math.hypot(hx - tp0[0], hz - tp0[1]) > 40) ? tp0 : null;
-  for (let k=0;k<80 && !tp;k++){ const p = spotIn(R, ground, 24, cx, cz, 230); if (flat(p, 24) && placed.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 46)) tp = p; }
-  if (tp){ const sq = mesh(new T.CylinderGeometry(40, 40, 1, 20), stone, {}, false); sq.position.set(tp[0], top + .5, tp[1]); g.add(sq);
-    const t = temple(); t.position.set(tp[0], top, tp[1]); t.scale.setScalar(.8); t.rotation.y = -ang; g.add(t); keep.push(tp, [tp[0] + 18, tp[1]], [tp[0] - 18, tp[1]]);
-    // the city's god in front of its temple: Athena for Athens, Apollo for Sparta, Poseidon at Kallisto
-    const gd = statue(is.port ? 'poseidon' : is.city === 'sparta' ? 'apollo' : 'athena', !is.port && R() < .5 ? 'marble' : 'painted'), sx = tp[0] - ux*34, sz = tp[1] - uz*34; gd.position.set(sx, top, sz); gd.scale.setScalar(.45); gd.rotation.y = -ang; g.add(gd); keep.push([sx, sz]); popIn(gd); }
-  // trees in the gaps between houses and along the edge of town
-  const tree = () => R() < .5 ? cypress(CYPRESS_TINTS[Math.floor(R()*CYPRESS_TINTS.length)]) : roundTree(ROUND_TINTS[Math.floor(R()*ROUND_TINTS.length)], Math.floor(R()*9));
-  for (let k=0, n=0;k<BIG.trees*12 && n<BIG.trees;k++){ const p = spotIn(R, ground, 10, cx, cz, BIG.reach*.8);
-    if (!flat(p, 10) || keep.some(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) < 20) || Math.abs((p[0] - x0)*vx + (p[1] - z0)*vz) < 12) continue;
-    const c = tree(); c.position.set(p[0], top, p[1]); c.scale.setScalar(.7 + R()*.3); g.add(c); popIn(c); keep.push(p); n++; }
-  // little farms just outside town: vineyards, olive groves, wheat and vegetables, turned to face the town
-  const onRoad = (x, z, m) => roads.some(r => { const dx = x - r.x, dz = z - r.z; return Math.abs(dx*r.c + dz*r.s) < r.l/2 + m && Math.abs(-dx*r.s + dz*r.c) < r.w/2 + m; });
-  for (let k=0, n=0, kind=Math.floor(R()*4); k<300 && n<BIG.farms; k++){ const p = spotIn(R, ground, 26, cx, cz, BIG.reach + 80);
-    if (!flat(p, 26) || [[30, 0], [-30, 0], [0, 30], [0, -30], [22, 22], [-22, 22], [22, -22], [-22, -22]].some(([a, b]) => off(p[0] + a, p[1] + b)) || Math.hypot(p[0] - cx, p[1] - cz) < (is.port ? 60 : 90) || keep.some(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) < (is.port ? 34 : 42)) || onRoad(p[0], p[1], 30) || Math.hypot(p[0] - px, p[1] - pz) < 70) continue;
-    const f = farm(kind++); f.position.set(p[0], top, p[1]); f.rotation.y = -Math.atan2(cz - p[1], cx - p[0]); g.add(f); popIn(f); keep.push(p, [p[0] + 16, p[1]], [p[0] - 16, p[1]], [p[0], p[1] + 16], [p[0], p[1] - 16]); n++; }
-  let sp = null; for (let k=0;k<60 && !sp;k++){ const p = spotIn(R, ground, 8, px - PIER.dx*30, pz - PIER.dy*30, 60); if (p && keep.every(([hx, hz]) => Math.hypot(hx - p[0], hz - p[1]) > 24)) sp = p; }
-  if (!is.port && sp){ // a flagpole by the pier with the owner's colors
-    const pole = mesh(new T.CylinderGeometry(1, 1.2, 46, 5), '#6e4a26'); pole.position.set(sp[0], top + 23, sp[1]); g.add(pole);
-    const flag = new T.Mesh(new T.PlaneGeometry(22, 14), new T.MeshBasicMaterial({color:CITIES[is.city || 'athens'].color, side:T.DoubleSide}));
-    flag.position.set(sp[0] + 11, top + 39, sp[1]); g.add(flag); flags.push({is, flag, c:is.city}); sp = null; }
-  if (sp){ const st = statue('poseidon', 'painted'); st.position.set(sp[0], top, sp[1]); st.scale.setScalar(.55); st.rotation.y = -ang + Math.PI/2; g.add(st); keep.push(sp); }
-  addTown(is, g, top, keep, BIG.people, {cx, cz, R:BIG.len > 300 ? 230 : 130, ok:(x, z) => depthIn(ground, x, z) > 8 && !off(x, z)});
-  // the pier: starts a little inland and runs out over the water
-  const pier = new T.Group(); pier.position.set(px, 0, pz); pier.rotation.y = -ang; g.add(pier);
-  const deck = mesh(new T.BoxGeometry(PIER_LEN + 30, 3, 18), '#9b6b3a'); deck.position.set(PIER_LEN/2 - 15, 6, 0); pier.add(deck);
-  for (let k=0;k<=5;k++) for (const z of [-8, 8]){ const post = mesh(new T.CylinderGeometry(1.4, 1.4, 16, 5), '#6e4a26'); post.position.set(k*PIER_LEN/5, 1, z); pier.add(post); }
-  // P110: a big harbor (Crete): two side piers with cargo on them, a stone quay joining the three at the shore, and warehouses behind
-  for (const xp of (is.harbor && is.harbor.extra) || []){ const q = new T.Group(), qx = xp.x - is.x, qz = xp.y - is.y; q.position.set(qx, 0, qz); q.rotation.y = -Math.atan2(xp.dy, xp.dx); g.add(q);
-    const d2 = mesh(new T.BoxGeometry(PIER_LEN + 30, 3, 18), '#9b6b3a'); d2.position.set(PIER_LEN/2 - 15, 6, 0); q.add(d2);
-    for (let k=0;k<=5;k++) for (const z of [-8, 8]){ const post = mesh(new T.CylinderGeometry(1.4, 1.4, 16, 5), '#6e4a26'); post.position.set(k*PIER_LEN/5, 1, z); q.add(post); }
-    for (let k=0;k<5;k++){ const a = mesh(amphoraGeo, ['#b8693a', '#c98a4b', '#a85c34'][k % 3], {flatShading:false}); a.scale.setScalar(.7); a.position.set(20 + k*7 + R()*3, 7.5, -4 + (k % 2)*8); q.add(a); }
-    for (let k=0;k<3;k++){ const c = mesh(new T.BoxGeometry(9, 8, 9), '#8a6238'); c.position.set(PIER_LEN*.55 + k*11, 11.5, (k % 2 ? 3 : -3)); c.rotation.y = R()*.5; q.add(c); }
-    keep.push([qx, qz], [qx - xp.dx*30, qz - xp.dy*30]); }
-  if (is.harbor && (is.harbor.extra || []).length){ const ex = is.harbor.extra, nx = -PIER.dy, nz = PIER.dx;
-    const span = Math.max(...ex.map(p => Math.abs((p.x - PIER.x)*nx + (p.y - PIER.y)*nz))) + 12;
-    const quay = mesh(new T.BoxGeometry(span*2, 6, 26), '#d9c9a2'); quay.position.set(px - PIER.dx*6, 3, pz - PIER.dy*6); quay.rotation.y = -Math.atan2(nz, nx); quay.receiveShadow = true; g.add(quay);
-    for (const sg of [1, -1]){ const wx = px - PIER.dx*70 + nx*sg*(span - 40), wz = pz - PIER.dy*70 + nz*sg*(span - 40);
-      if (!flat([wx, wz], 16) || onRoad(wx, wz, 20) || keep.some(([hx, hz]) => Math.hypot(hx - wx, hz - wz) < 40)) continue; const w = house(2, is.city === 'sparta' ? 'sparta' : null, true); w.position.set(wx, top, wz); w.rotation.y = -Math.atan2(-PIER.dy, -PIER.dx); w.scale.set(1.7, 1.25, 1.5); g.add(w); keep.push([wx, wz]); } }
-  // where a tree may stand: off the streets, away from houses, the square and the pier
-  return (x, z) => roads.every(r => { const dx = x - r.x, dz = z - r.z, a = Math.abs(dx*r.c + dz*r.s), b = Math.abs(-dx*r.s + dz*r.c); return a > r.l/2 + 8 || b > r.w/2 + 8; })
-    && keep.every(([hx, hz]) => Math.hypot(hx - x, hz - z) > 22) && Math.hypot(x - px, z - pz) > 50;
-}
 export function refreshTrees(is){ is.treeObjs.forEach((c, k) => { const alive = k < is.stock; c.userData.live.forEach(m => m.visible = alive); c.userData.stump.visible = !alive; }); }
 export function refreshAllTrees(){ ISLANDS.forEach(i => i.trees && refreshTrees(i)); }
 
