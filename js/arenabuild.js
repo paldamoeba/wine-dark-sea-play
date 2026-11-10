@@ -2,12 +2,13 @@
 // basin around ARENA = {x, y, gate} (gate = the angle out through the gate) and leaves out pieces that would stand on land
 // (landD(x, y) < 0 on land). It sets ARENA.fort and returns the group (placed at ARENA.x, 0, ARENA.y, not added to a scene)
 // with what arena.js needs to run the games: the wall pieces and posts ships bump into, the crowd, the torches, the Colossus.
-import {mat, torch} from './ships.js?v=7839b26';
-import {figure} from './town.js?v=7839b26';
-import {buildGladiator, marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=7839b26';
+import {mat, torch} from './ships.js?v=e95989f';
+import {figure} from './town.js?v=e95989f';
+import {buildGladiator, marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=e95989f';
 
 const T = window.THREE;
-export const H = 700, GW = 150, SEG = 64, BW = 34, DECK_Y = 7.2, FORT_R = 96; // half the basin's side, half the gate (his stance), piece length, walkway width and top, fort radius
+export const BACK = 2300; // how far behind the middle a side wall may run to reach the shore
+export const H = 950, GW = 150, SEG = 64, BW = 34, DECK_Y = 7.2, FORT_R = 96; // half the basin's side, half the gate (his stance), piece length, walkway width and top, fort radius
 export const frame = gate => { const ux = Math.cos(gate), uy = Math.sin(gate); return {ux, uy, at:(u, v) => [ux*u - uy*v, uy*u + ux*v]}; }; // basin frame (u out through the gate, v across it) to offsets from the centre
 
 export function buildArena(ARENA, landD = () => 1e9){
@@ -27,12 +28,15 @@ export function buildArena(ARENA, landD = () => 1e9){
   // the fort on the west front corner
   const west = [-1, 1].sort((p, q) => at(H, p*H)[0] - at(H, q*H)[0])[0], [fx, fz] = at(H, west*H); ARENA.fort = {x:ARENA.x + fx, y:ARENA.y + fz}; posts.push({x:ARENA.fort.x, y:ARENA.fort.y, r:FORT_R + 16});
   // the breakwaters, side by side as pieces about SEG long; pieces on the island are left out
-  const SIDES = [[[H, -H], [H, -GW]], [[H, GW], [H, H]], [[H, H], [-H, H]], [[-H, H], [-H, -H]], [[-H, -H], [H, -H]]];
+  // P113 (Nicholas: "the walls should be just a U, and use the city as wall already"): the front wall with the gate and the two side
+  // walls running back to the shore; no back wall: the city's waterfront closes the basin
+  // each side wall runs back from its front corner until it meets the shore (up to BACK behind the middle), so the basin is closed
+  const SIDES = [[[H, -H], [H, -GW]], [[H, GW], [H, H]], [[H, H], [-BACK, H]], [[H, -H], [-BACK, -H]]];
   let i = 0;
   for (const [[u0, v0], [u1, v1]] of SIDES){
     const len = Math.hypot(u1 - u0, v1 - v0), n = Math.max(1, Math.round(len/SEG)), L = len/n, [tx, tz] = at((u1 - u0)/len, (v1 - v0)/len);
     for (let k = 0; k < n; k++, i++){
-      const f = (k + .5)/n, [x, z] = at(u0 + (u1 - u0)*f, v0 + (v1 - v0)*f); if (landD(ARENA.x + x, ARENA.y + z) < -30) continue;
+      const f = (k + .5)/n, [x, z] = at(u0 + (u1 - u0)*f, v0 + (v1 - v0)*f); if (landD(ARENA.x + x, ARENA.y + z) < -30){ if (u1 === -BACK) break; continue; }
       pieces.push({x:ARENA.x + x, y:ARENA.y + z, tx, ty:tz, L}); if (Math.hypot(x - fx, z - fz) < FORT_R - 10) continue;
       const p = new T.Group(); p.position.set(x, 0, z); p.rotation.y = -Math.atan2(tz, tx); g.add(p);
       box(L + 2, 16, BW + 12, core, 0, -3, 0, p); box(L + 3, 2.4, BW, deck, 0, 6, 0, p);
@@ -45,6 +49,19 @@ export function buildArena(ARENA, landD = () => 1e9){
     }
   }
   ARENA.walls = pieces;
+  // the city's waterfront along the back of the basin: a stone quay following the shore from side wall to side wall, where the
+  // crowd of Rhodes stands to watch, with torches and the banners of the games
+  { const shoreU = v => { for (let u = H*.5; u > -BACK; u -= 6){ const [x, z] = at(u, v); if (landD(ARENA.x + x, ARENA.y + z) <= 0) return u + 6; } return null; };
+    const rows = []; for (let v = -H + 30; v <= H - 30; v += 58){ const u = shoreU(v); if (u != null) rows.push([u, v]); }
+    const sm = rows.map((r, k) => [(rows[Math.max(0, k - 1)][0] + 2*r[0] + rows[Math.min(rows.length - 1, k + 1)][0])/4 - 4, r[1]]);
+    for (let k = 0; k + 1 < sm.length; k++, i++){ if (Math.abs(sm[k + 1][0] - sm[k][0]) > 150) continue; const [x0, z0] = at(...sm[k]), [x1, z1] = at(...sm[k + 1]), L = Math.hypot(x1 - x0, z1 - z0), mid = Math.abs((sm[k][1] + sm[k + 1][1])/2) < 46;
+      const p = new T.Group(); p.position.set((x0 + x1)/2, 0, (z0 + z1)/2); p.rotation.y = -Math.atan2(z1 - z0, x1 - x0); g.add(p);
+      box(L + 8, 16, 40, stone, 0, -1, 0, p); box(L + 8, 1.4, 5, ledge, 0, 7.2, 0, p).position.z = (at(1, 0)[0]*(-(z1 - z0)) + at(1, 0)[1]*(x1 - x0) > 0 ? 17 : -17);
+      if (mid) continue; /* the town's pier and its steps land here */
+      if (k % 5 === 2){ const t = torch(); t.position.set(0, 7, 12); t.scale.setScalar(1.2); p.add(t); torches.push(t); }
+      if (k % 6 === 4){ box(1.8, 46, 1.8, mat('#6e3d1e'), 0, 30, -12, p); box(1, 22, 20, BANNERS[(k/6 | 0) % 3], 0, 41, -2, p); }
+      else for (let c = 0; c < 4; c++){ const fg = figure(['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f'][(k + c) % 5]); fg.scale.setScalar(1.1); fg.visible = true;
+        fg.position.set((c - 1.5)*L*.24, DECK_Y, (c % 2 ? 8 : -6)); fg.userData.ph = Math.random()*6; fg.userData.h = DECK_Y + 1.5; fg.userData.noMerge = true; p.add(fg); crowd.push(fg); } } }
   // a white plinth at each side of the gate, for his feet
   const plinths = [-1, 1].map(s => { const [x, z] = at(H, s*GW);
     const pl = box(80, 34, 80, white, x, 5, z); pl.rotation.y = -ARENA.gate; box(88, 4, 88, ledge, x, 23, z).rotation.y = -ARENA.gate;

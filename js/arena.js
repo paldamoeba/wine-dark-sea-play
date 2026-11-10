@@ -2,17 +2,17 @@
 // Blender picture; it was a stone ring before). The marble Colossus stands astride the gate in the front breakwater, facing
 // the open sea, and you sail in between his legs. Inside, start the games: rounds of pirate champions, a prize for each round
 // won. The crowd on the walkways cheers.
-import {ISLANDS, landDist} from './world.js?v=7839b26';
-import {G, save, ship} from './state.js?v=7839b26';
-import {scene} from './scene.js?v=7839b26';
-import {TORCH_ROOTS} from './ships.js?v=7839b26';
-import {mergeStatic} from './merge.js?v=7839b26';
-import {award, TROPHIES} from './trophies.js?v=7839b26';
-import {spawnArena, clearArena, enemies, lobStone} from './combat.js?v=7839b26';
-import {ENEMIES} from './config.js?v=7839b26';
-import {toast} from './ui.js?v=7839b26';
-import {sfx} from './audio.js?v=7839b26';
-import {buildArena, frame, H, BW} from './arenabuild.js?v=7839b26';
+import {ISLANDS, landDist, ARENA_SPOT} from './world.js?v=e95989f';
+import {G, save, ship} from './state.js?v=e95989f';
+import {scene} from './scene.js?v=e95989f';
+import {TORCH_ROOTS} from './ships.js?v=e95989f';
+import {mergeStatic} from './merge.js?v=e95989f';
+import {award, TROPHIES} from './trophies.js?v=e95989f';
+import {spawnArena, clearArena, enemies, lobStone} from './combat.js?v=e95989f';
+import {ENEMIES} from './config.js?v=e95989f';
+import {toast} from './ui.js?v=e95989f';
+import {sfx} from './audio.js?v=e95989f';
+import {buildArena, frame, H, BW, BACK} from './arenabuild.js?v=e95989f';
 
 const T = window.THREE;
 const R = 780; // only picks the spot
@@ -28,15 +28,7 @@ const hardness = n => ({k:1 + .75*n, kd:1 + .42*n, pay:1 + .6*n});
 
 // ---- where: walk out from Rhodes to the south-east until most of the ring is in the sea, with its back on the coast ----
 const rhodes = ISLANDS.find(i => i.name === 'Rhodes');
-export const ARENA = (() => {
-  if (!rhodes) return null;
-  const dx = Math.SQRT1_2, dy = Math.SQRT1_2;
-  for (let t = 0; t < rhodes.r + 4000; t += 20){
-    const x = rhodes.x + dx*t, y = rhodes.y + dy*t;
-    if (landDist(x, y) > R*.8) return {x, y, gate:Math.atan2(dy, dx), R:H};
-  }
-  return null;
-})();
+export const ARENA = ARENA_SPOT; // P113: the spot is picked in world.js, so the city can stand behind it
 
 // ---- the build (P80): straight breakwaters of boulders with red walkways, like the Blender picture, not a ring ----
 // A square basin: the front breakwater faces the open sea with the gate in its middle, where the marble Colossus stands
@@ -63,7 +55,7 @@ function wallPush(p, rad){
 }
 if (ARENA) G.arenaZone = {x:ARENA.x, y:ARENA.y, r:ARENA.R*2.2}; // P107: no-go waters stop short of the arena (combat.js)
 const local = p => { const dx = p.x - ARENA.x, dy = p.y - ARENA.y; return [dx*ux + dy*uy, -dx*uy + dy*ux]; };
-export const inArena = (p, m = 0) => { if (!ARENA) return false; const [u, v] = local(p); return Math.abs(u) < H - m && Math.abs(v) < H - m; };
+export const inArena = (p, m = 0) => { if (!ARENA) return false; const [u, v] = local(p); return u < H - m && u > -BACK && Math.abs(v) < H - m; }; // P113: the basin runs back to the city's shore
 
 // ---- the games ----
 const A = {round:0, on:false, foes:[]};
@@ -92,8 +84,8 @@ btn && btn.addEventListener('click', () => { if (!A.on) startRound(); });
 
 export function updateArena(dt){
   if (!ARENA) return;
-  const S = G.S, near = Math.hypot(S.x - ARENA.x, S.y - ARENA.y) < H*1.42 + 900;
-  if (near){ wallPush(S, 14); for (const e of enemies) if (!e.dead && Math.abs(e.x - ARENA.x) < H*1.42 + 200 && Math.abs(e.y - ARENA.y) < H*1.42 + 200) e.wallHit = wallPush(e, e.spec.beam*.5); }
+  const S = G.S, near = Math.hypot(S.x - ARENA.x, S.y - ARENA.y) < BACK + H + 500;
+  if (near){ wallPush(S, 14); for (const e of enemies) if (!e.dead && Math.abs(e.x - ARENA.x) < BACK + H && Math.abs(e.y - ARENA.y) < BACK + H) e.wallHit = wallPush(e, e.spec.beam*.5); }
   // the Colossus fades while you sail between and behind his legs, so he never hides your ship
   const [gx, gy] = at(H, 0), under = Math.hypot(S.x - ARENA.x - gx, S.y - ARENA.y - gy) < 330, ko = under ? .3 : 1;
   for (const m of colossus ? colossus.userData.mats : []){ m.opacity += (ko - m.opacity)*Math.min(1, dt*3); m.depthWrite = m.opacity > .9; }

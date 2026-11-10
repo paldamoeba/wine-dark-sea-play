@@ -4,11 +4,11 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=7839b26';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=7839b26';
-import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=7839b26';
-import {addTown} from './town.js?v=7839b26';
-import {mergeStatic} from './merge.js?v=7839b26';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=e95989f';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=e95989f';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=e95989f';
+import {addTown} from './town.js?v=e95989f';
+import {mergeStatic} from './merge.js?v=e95989f';
 const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;
@@ -29,10 +29,12 @@ export function spotIn(R, pts, margin, cx = 0, cz = 0, rad = Infinity){
 // with a fortress are middling; the free harbors near Kallisto, and Kallisto itself, stay the size they were.
 export const TOWN_SIZES = {
   great: {houses:96, len:640, side:300, branches:7, reach:520, trees:26, farms:7, people:16, agora:50, temple:1.2, stalls:8, stoa:7},
+  // Rhodes: a long coastal city lining the shore behind the Arena (the waterfront lanes run the whole width of the basin)
+  rhodes:{coast:.3, houses:150, len:520, side:300, branches:8, reach:880, trees:30, farms:7, people:18, agora:54, temple:1.25, stalls:9, stoa:7},
   medium:{houses:46, len:420, side:220, branches:4, reach:360, trees:16, farms:5, people:10, agora:40, temple:1, stalls:5, stoa:5},
   small: {houses:16, len:300, side:150, branches:3, reach:260, trees:10, farms:3, people:6, agora:30, temple:.8, stalls:3, stoa:0},
   port:  {houses:22, len:300, side:150, branches:3, reach:260, trees:14, farms:4, people:9, agora:32, temple:.8, stalls:4, stoa:0}};
-export const townSize = is => is.port ? 'port' : GREAT_CITIES.includes(is.name) || is.capital ? 'great' : is.city && is.site ? 'medium' : 'small';
+export const townSize = is => is.port ? 'port' : is.name === 'Rhodes' ? 'rhodes' : GREAT_CITIES.includes(is.name) || is.capital ? 'great' : is.city && is.site ? 'medium' : 'small';
 
 const STEP = 22, STONE = '#e2d3ae', LANE = '#d6c59c';
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
@@ -125,7 +127,7 @@ export function buildTown(is, g, PIER, ctx){
       for (const sd of [1, -1]){ const sc = .8 + R()*R()*.62, o1 = L.w/2 + 11.5*sc + 1 + R()*5, j = (R() - .5)*8, x = mx - tz*sd*o1 + tx*j, z = mz + tx*sd*o1 + tz*j;
         cands.push({x, z, sc, face:Math.atan2(-tx*sd, tz*sd) + (R() - .5)*.4, li, i});
         if (R() < .34){ const s2 = .8 + R()*.4, o2 = o1 + 12*sc + 12*s2 + 3 + R()*8; cands.push({x:mx - tz*sd*o2 + tx*j, z:mz + tx*sd*o2 + tz*j, sc:s2, face:Math.atan2(-tx*sd, tz*sd) + (R() - .5)*1.3, li, i, back:true}); } } } });
-  for (const c of cands){ c.d = Math.hypot(c.x - fx, c.z - fz); c.key = c.d + R()*90 + (c.back ? 40 : 0); }
+  for (const c of cands){ const du = (c.x - fx)*ux + (c.z - fz)*uz, dv = (c.x - fx)*vx + (c.z - fz)*vz; c.d = Math.hypot(du, dv*(Z.coast || 1)); /* coast: a city strung along its shore fills sideways first */ c.key = c.d + R()*90 + (c.back ? 40 : 0); }
   cands.sort((a, b) => a.key - b.key);
   const placed = [];
   for (const h of cands){ if (placed.length >= Z.houses) break; const rad = 12.5*h.sc;
