@@ -1,20 +1,20 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON, FORTS} from './config.js?v=d936dd9';
-import {SPECS} from './ships.js?v=d936dd9';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=d936dd9';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=d936dd9';
-import {W} from './weather.js?v=d936dd9';
-import {steering} from './input.js?v=d936dd9';
-import {toast, showZone} from './ui.js?v=d936dd9';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=d936dd9';
-import {LAIR_ROCKS} from './lair.js?v=d936dd9';
-import {startFish, stopFish} from './fishing.js?v=d936dd9';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=d936dd9';
-import {progress} from './quests.js?v=d936dd9';
-import {startSink} from './sinking.js?v=d936dd9';
-import {sfx} from './audio.js?v=d936dd9';
-import {ARENA} from './arena.js?v=d936dd9';
-import {ads, note} from './ads.js?v=d936dd9';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON, FORTS} from './config.js?v=d74ace6';
+import {SPECS} from './ships.js?v=d74ace6';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=d74ace6';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=d74ace6';
+import {W} from './weather.js?v=d74ace6';
+import {steering} from './input.js?v=d74ace6';
+import {toast, showZone} from './ui.js?v=d74ace6';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=d74ace6';
+import {LAIR_ROCKS} from './lair.js?v=d74ace6';
+import {startFish, stopFish} from './fishing.js?v=d74ace6';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=d74ace6';
+import {progress} from './quests.js?v=d74ace6';
+import {startSink} from './sinking.js?v=d74ace6';
+import {sfx} from './audio.js?v=d74ace6';
+import {ARENA} from './arena.js?v=d74ace6';
+import {ads, note} from './ads.js?v=d74ace6';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -48,7 +48,10 @@ function windBoost(){
   // P65: no message: you hear it. The sail catches the wind with a whoosh of air and the cloth snapping taut.
   if (G.sailFull && G.windFill < .22) G.sailFull = false;
   else if (!G.sailFull && G.windFill > .42 && G.v > 25 && !G.sheetOpen){ G.sailFull = true; if (G.t - (G.sailT ?? -99) > 14){ G.sailT = G.t; sfx('sailfill'); } }
-  return 1 + k*(along > 0 ? .2*along : .08*along);
+  // P122 ride the storm: a storm wind from behind drives the ship up to 55% faster, so a storm is a choice and not only a danger
+  const st = Math.max(0, Math.min(1, ((G.stormK || 0) - .35)/.5)); G.stormRide = st*Math.max(0, along - .35)/.65;
+  if (G.stormRide > .5 && G.v > 40 && !S.rideTip && !G.sheetOpen){ S.rideTip = true; toast('The storm wind is behind you: ride it!', 5); }
+  return 1 + k*(along > 0 ? (.2 + .35*st)*along : .08*along);
 }
 // ---- Row! (P56): a 5-second burst of everyone rowing, to catch a ship or ram it at full speed; then a rest ----
 export const ROW = {secs:5, cd:14};

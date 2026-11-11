@@ -1,21 +1,21 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=d936dd9';
-import {SHIPS, IRON} from './config.js?v=d936dd9';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=d936dd9';
-import {G, ship, lvl} from './state.js?v=d936dd9';
-import {men} from './crew.js?v=d936dd9';
-import {scene} from './scene.js?v=d936dd9';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=d936dd9';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=d936dd9';
-import {figure} from './town.js?v=d936dd9';
-import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=d936dd9';
-import {makeFire, updateFire, burn} from './fire.js?v=d936dd9';
-import {addGrass} from './grass.js?v=d936dd9';
-import {sinkPose} from './sinking.js?v=d936dd9';
-import {moored} from './fleet.js?v=d936dd9';
-import {sailCount} from './upgrades.js?v=d936dd9';
-import {hasSail} from './crew.js?v=d936dd9';
-import {placeOnWaves} from './combat.js?v=d936dd9';
+import {mergeStatic} from './merge.js?v=d74ace6';
+import {SHIPS, IRON} from './config.js?v=d74ace6';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=d74ace6';
+import {G, ship, lvl} from './state.js?v=d74ace6';
+import {men} from './crew.js?v=d74ace6';
+import {scene} from './scene.js?v=d74ace6';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=d74ace6';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=d74ace6';
+import {figure} from './town.js?v=d74ace6';
+import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=d74ace6';
+import {makeFire, updateFire, burn} from './fire.js?v=d74ace6';
+import {addGrass} from './grass.js?v=d74ace6';
+import {sinkPose} from './sinking.js?v=d74ace6';
+import {moored} from './fleet.js?v=d74ace6';
+import {sailCount} from './upgrades.js?v=d74ace6';
+import {hasSail} from './crew.js?v=d74ace6';
+import {placeOnWaves} from './combat.js?v=d74ace6';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -284,7 +284,7 @@ export function animateEntities(dt){
   boat.position.set(S.x, wh + sh.len*.05 - sp.depth, S.y);
   boat.rotation.order = 'YXZ'; boat.rotation.y = -S.a; boat.rotation.z = sea.pitch + sp.pitch; boat.rotation.x = sea.roll + sp.roll + Math.sin(G.kick*50)*G.kick + G.heel;
   boat.userData.firing = !!G.firing;
-  boat.userData.windFill = G.windFill || 0; boat.userData.stow = !G.rowing && !G.dock; boat.userData.burst = G.rowT > 0; animateShip(boat, t, G.v);
+  boat.userData.windFill = Math.min(1, (G.windFill || 0) + .4*(G.stormRide || 0)); boat.userData.stow = !G.rowing && !G.dock; boat.userData.burst = G.rowT > 0; animateShip(boat, t, G.v);
   updateFire(boat.userData.fire, Math.max(burn(S.hull, ship().hull), G.burnT > 0 ? .6 : 0), t); // also while burning from a flaming volley
   for (const f of fleet) animateShip(f, t, 0);
   showHomeFleet();

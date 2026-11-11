@@ -107,9 +107,6 @@ export const GOALS = [
   {t:'piece', kind:3, n:3, gold:300, text:'Win the 3 pieces of the trireme\'s plans: the Ios bandit camp, the pirate fortress of Kos, and Nikandros the Scourge, who sails off Skyros', chapter:true},
   {t:'build', kind:'trireme', n:1, gold:200, text:'Study the plans and build the trireme, the greatest warship of the Aegean', chapter:true},
   {t:'boss', n:1, gold:1500, text:'Find the pirate king: every fortress keeps a piece of the chart to his lair. Win 12 of them, then defeat Polycrates', chapter:true},
-  // P121: chapter two, so there is something left to do after the pirate king (new goals go on the end: saves keep the goal's place in this list)
-  {t:'piece', kind:12, n:2, gold:800, text:'Polycrates held one piece of the Hexeres\'s plans. Take 2 of the strongest fortresses (level 3) to win the rest', chapter:true},
-  {t:'build', kind:'hexeres', n:1, gold:1000, text:'Study the plans and build the Hexeres, the biggest warship ever launched at Kallisto', chapter:true},
 ];
 // P85 (Nicholas): the pirate king hides until you hold the chart to his lair. P86 (Nicholas: fighting him should need about 90% of the game
 // cleared): every fortress keeps one piece (14 of them), and you need 12, so two hard ones can be left.
