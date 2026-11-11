@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=d74ace6';
-import {OMENS} from './config.js?v=d74ace6';
-import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut, PORTS} from './world.js?v=d74ace6';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=d74ace6';
-import {GOODS} from './config.js?v=d74ace6';
-import {sfx} from './audio.js?v=d74ace6';
-import {playVideo, toast} from './ui.js?v=d74ace6';
-import {ARENA} from './arena.js?v=d74ace6';
-import {enemies, planReward, planSources, combatState, noGoZones} from './combat.js?v=d74ace6';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=d74ace6';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=d74ace6';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=d74ace6';
+import {omen} from './omens.js?v=9039537';
+import {OMENS} from './config.js?v=9039537';
+import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut, PORTS} from './world.js?v=9039537';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=9039537';
+import {GOODS} from './config.js?v=9039537';
+import {sfx} from './audio.js?v=9039537';
+import {playVideo, toast} from './ui.js?v=9039537';
+import {ARENA} from './arena.js?v=9039537';
+import {enemies, planReward, planSources, combatState, noGoZones, wanted} from './combat.js?v=9039537';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=9039537';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=9039537';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=9039537';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), main = cv.getContext('2d');
@@ -251,6 +251,7 @@ function drawMarks(pinned){
   // forts: a little tower in the owner's color (a dark one for pirates), crossed out while it lies in ruins
   for (const e of enemies){ if (!e.named || e.dead || !on('named')) continue; const pinOn = G.S.pin && planReward(e) === G.S.pin; if (!pinOn && !isExplored(e.home.x, e.home.y)) continue; if (pinOn && !isExplored(e.home.x, e.home.y)) reveal(e.home.x, e.home.y, 500);
     const [nx, ny] = toScreen(e.home.x, e.home.y); badge(nx, ny, 15, 'named', '#7a2426', {k:1.3}); levelTag(nx, ny - 22, siteLevel(e)); label(e.named.name, nx, ny + 28, '700 12px Nunito, sans-serif', '#5a1e14'); }
+  { const e = wanted(); if (e && on('named')){ const [nx, ny] = toScreen(e.x, e.y); badge(nx, ny, 13, 'named', '#b8862c', {k:1.15}); label('Wanted: ' + e.wanted.name, nx, ny + 26, '700 12px Nunito, sans-serif', '#5a1e14'); } } /* P123: the wanted ship, where it sails right now */
   for (const e of enemies){ if (!e.fort || !on(e.camp ? 'camps' : 'forts') || !isExplored(e.x, e.y)) continue; const [fx, fy] = toScreen(e.x, e.y);
     if (e.camp){ badge(fx, fy, 15, 'camp', '#b5552c', {dim:e.dead}); if (e.dead) crossOut(fx, fy, 15); else levelTag(fx, fy - 22, siteLevel(e)); continue; }
     const col = e.owner === 'you' ? OCHRE : e.city ? CITIES[e.city].color : '#3a2e2a'; badge(fx, fy, 15, null, col); c.save(); c.translate(fx, fy); c.scale(.92, .92); towerGlyph(0, 0, col, false); c.restore();

@@ -1,17 +1,17 @@
 // The flat 2D layer over the 3D view: rain, lightning, labels, progress ring, joystick, minimap, frame rate.
-import {omen} from './omens.js?v=d74ace6';
-import {OMENS} from './config.js?v=d74ace6';
-import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt, PORTS} from './world.js?v=d74ace6';
-import {G, isExplored} from './state.js?v=d74ace6';
-import {fogLayer, islandPath} from './map.js?v=d74ace6';
-import {view, project, screenToSea} from './scene.js?v=d74ace6';
-import {JOY_RADIUS} from './input.js?v=d74ace6';
-import {enemies, combatState, capture, aimLeads, planSources, towerPos, towersUp} from './combat.js?v=d74ace6';
-import {drawFish} from './fishing.js?v=d74ace6';
-import {whale} from './wildlife.js?v=d74ace6';
-import {W as WIND} from './weather.js?v=d74ace6';
-import {bottle} from './quests.js?v=d74ace6';
-import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=d74ace6';
+import {omen} from './omens.js?v=9039537';
+import {OMENS} from './config.js?v=9039537';
+import {WORLD, ISLANDS, WRECKS, HARBORS, STADION, CITIES, zoneAt, PORTS} from './world.js?v=9039537';
+import {G, isExplored} from './state.js?v=9039537';
+import {fogLayer, islandPath} from './map.js?v=9039537';
+import {view, project, screenToSea} from './scene.js?v=9039537';
+import {JOY_RADIUS} from './input.js?v=9039537';
+import {enemies, combatState, capture, aimLeads, planSources, towerPos, towersUp} from './combat.js?v=9039537';
+import {drawFish} from './fishing.js?v=9039537';
+import {whale} from './wildlife.js?v=9039537';
+import {W as WIND} from './weather.js?v=9039537';
+import {bottle} from './quests.js?v=9039537';
+import {IC, GOOD_IC, FISH_COLOR} from './menus.js?v=9039537';
 // A pick-up: pops up from the boat with a bounce, floats a moment, then drops back into the boat and shrinks away.
 function drawGain(c, p, t, S){
   const k = (t - p.t)/1.5; if (k > 1) return false; if (k < 0) return true;
@@ -155,7 +155,7 @@ export function drawOverlay(fps){
     const w = e.spec.len > 100 ? 64 : 46, pct = Math.max(0, e.hull/e.spec.hull);
     c.fillStyle = 'rgba(34,40,58,.6)'; c.fillRect(ex - w/2 - 2, ey - 2, w + 4, 9);
     c.fillStyle = e.hitT ? '#f7eed6' : shipColor(e); c.fillRect(ex - w/2, ey, w*pct, 5);
-    if (e.named){ c.save(); c.font = '400 15px Marcellus, Georgia, serif'; c.textAlign = 'center'; c.lineJoin = 'round'; c.lineWidth = 3.5; c.strokeStyle = 'rgba(34,20,14,.85)'; c.strokeText(e.named.name, ex, ey - 9); c.fillStyle = '#ffd98a'; c.fillText(e.named.name, ex, ey - 9); c.restore(); }
+    if (e.named || e.wanted){ const nm = e.named ? e.named.name : e.wanted.name; c.save(); c.font = '400 15px Marcellus, Georgia, serif'; c.textAlign = 'center'; c.lineJoin = 'round'; c.lineWidth = 3.5; c.strokeStyle = 'rgba(34,20,14,.85)'; c.strokeText(nm, ex, ey - 9); c.fillStyle = '#ffd98a'; c.fillText(nm, ex, ey - 9); c.restore(); }
     else if (e.angry){ c.fillStyle = '#c4473b'; c.font = '800 14px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.fillText('!', ex, ey - 6); }
     if (e === combatState.target){ c.strokeStyle = 'rgba(247,238,214,.9)'; c.lineWidth = 1.5; c.strokeRect(ex - w/2 - 2, ey - 2, w + 4, 9); }
   }

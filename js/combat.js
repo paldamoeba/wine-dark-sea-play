@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=d74ace6';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=d74ace6';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=d74ace6';
-import {scene, screenToSea, setLair} from './scene.js?v=d74ace6';
-import {wreckModel} from './models.js?v=d74ace6';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=d74ace6';
-import {mergeStatic, freeModel} from './merge.js?v=d74ace6';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=d74ace6';
-import {award} from './trophies.js?v=d74ace6';
-import {makeFire, updateFire, burn} from './fire.js?v=d74ace6';
-import {blessing, fighters, hasSail} from './crew.js?v=d74ace6';
-import {progress, goal} from './quests.js?v=d74ace6';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=d74ace6';
-import {rollColor, unlockColor, colorName} from './colors.js?v=d74ace6';
-import {toast, popLater} from './ui.js?v=d74ace6';
-import {sink, rowNow, ROW} from './player.js?v=d74ace6';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=d74ace6';
-import {TOD} from './daynight.js?v=d74ace6';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=d74ace6';
-import {sfx} from './audio.js?v=d74ace6';
-import {myLevel} from './levels.js?v=d74ace6';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=9039537';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=9039537';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=9039537';
+import {scene, screenToSea, setLair} from './scene.js?v=9039537';
+import {wreckModel} from './models.js?v=9039537';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=9039537';
+import {mergeStatic, freeModel} from './merge.js?v=9039537';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=9039537';
+import {award} from './trophies.js?v=9039537';
+import {makeFire, updateFire, burn} from './fire.js?v=9039537';
+import {blessing, fighters, hasSail} from './crew.js?v=9039537';
+import {progress, goal} from './quests.js?v=9039537';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=9039537';
+import {rollColor, unlockColor, colorName} from './colors.js?v=9039537';
+import {toast, popLater} from './ui.js?v=9039537';
+import {sink, rowNow, ROW} from './player.js?v=9039537';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=9039537';
+import {TOD} from './daynight.js?v=9039537';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=9039537';
+import {sfx} from './audio.js?v=9039537';
+import {myLevel} from './levels.js?v=9039537';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -576,13 +576,13 @@ const fxGeo = new T.IcosahedronGeometry(1, 1), chipGeo = new T.BoxGeometry(2.4, 
 const FX = Array.from({length:60}, (_, i) => { const chip = i % 2 === 0, m = new T.Mesh(chip ? chipGeo : fxGeo, new T.MeshBasicMaterial({color:chip ? '#8a5d3e' : '#f4fbff', transparent:true, depthWrite:false}));
   m.visible = false; scene.add(m); return {m, chip, life:0}; });
 let fxI = 0;
-function puff(x, y, chip, n){ for (let k=0;k<n;k++){ let f; for (let j=0;j<FX.length;j++){ const c = FX[(fxI + j) % FX.length]; if (c.chip === chip){ f = c; fxI = (fxI + j + 1) % FX.length; break; } }
-  const a = Math.random()*6.28, sp = 20 + Math.random()*30; Object.assign(f, {life:.7, x, y, h:6, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, vh:30 + Math.random()*40}); f.m.visible = true; } }
+function puff(x, y, chip, n, h0 = 0, big = 1){ for (let k=0;k<n;k++){ let f; for (let j=0;j<FX.length;j++){ const c = FX[(fxI + j) % FX.length]; if (c.chip === chip){ f = c; fxI = (fxI + j + 1) % FX.length; break; } }
+  const a = Math.random()*6.28, sp = 20 + Math.random()*30; Object.assign(f, {life:.7*(big > 1 ? 1.6 : 1), x, y, h:6 + h0, h0, big, vx:Math.cos(a)*sp*big, vy:Math.sin(a)*sp*big, vh:30 + Math.random()*40}); f.m.visible = true; } }
 function splash(x, y){ puff(x, y, false, 5); }
 function spark(x, y){ puff(x, y, true, 4); }
 function updateFx(dt){ for (const f of FX){ if (f.life <= 0) continue; f.life -= dt; if (f.life <= 0){ f.m.visible = false; continue; }
-  f.vh -= 140*dt; f.x += f.vx*dt; f.y += f.vy*dt; f.h = Math.max(0, f.h + f.vh*dt);
-  f.m.position.set(f.x, waveAt(f.x, f.y, G.t) + f.h, f.y); f.m.rotation.x += dt*9; f.m.scale.setScalar(f.chip ? 1.4 : 2 + (1 - f.life)*2); f.m.material.opacity = Math.min(1, f.life*2); } }
+  f.vh -= 140*dt; f.x += f.vx*dt; f.y += f.vy*dt; f.h = Math.max(f.h0 || 0, f.h + f.vh*dt);
+  f.m.position.set(f.x, waveAt(f.x, f.y, G.t) + f.h, f.y); f.m.rotation.x += dt*9; f.m.scale.setScalar((f.chip ? 1.4 : 2 + (1 - f.life)*2)*(f.big || 1)); f.m.material.opacity = Math.min(1, f.life*2); } }
 
 // ---- arrows ----
 const arrowGeo = new T.CylinderGeometry(.9, .9, 20, 4); arrowGeo.rotateZ(Math.PI/2);
@@ -697,9 +697,23 @@ function givePiece(t, from){
 }
 
 // ---- loot ----
+// ---- P123 wanted posters: one pirate ship at a time has a name and a price on its head. The poster is on the Quests page and the chart.
+// It changes when you sink the ship, never by the clock (Nicholas's rule: no daily rewards). Only for warships (bireme and up).
+const WANTED = {names:['Drakon the Red', 'Lykos One-Eye', 'Timon the Cruel', 'Phokas Blackbeard', 'Karpos the Rat', 'Myron Ironhand', 'Sosias the Viper', 'Agis the Wolf of Naxos', 'Theron Nine-Lives', 'Bion the Butcher'], gold:200, more:40, most:440, wait:90};
+export const wanted = () => enemies.find(e => e.wanted && !e.dead) || null;
+export const wantedGold = () => Math.min(WANTED.most, WANTED.gold + WANTED.more*(G.S.wantedN || 0));
+let wantT = 12;
+function wantedTick(dt){ wantT -= dt; if (wantT > 0) return; wantT = 4; const S = G.S, now = wanted(); if (now && S.wantedSeen !== (S.wantedN || 0) && !G.dock && !G.sheetOpen && !G.mapOpen){ S.wantedSeen = S.wantedN || 0; toast(`Wanted: ${now.wanted.name}. See the chart`, 4.5); } if (rank() < 2 || now) return;
+  const ok = e => !e.dead && !e.fort && !e.named && !e.boss && !e.guard && !e.ally && !e.arena && !e.temp && !e.mother && !e.night && side(e) === 'pirate' && e.spec.len >= 70, far = e => Math.hypot(e.x - S.x, e.y - S.y);
+  let list = enemies.filter(e => ok(e) && e.spec.len >= 130 && far(e) > 1200); if (!list.length) list = enemies.filter(e => ok(e) && far(e) > 1200); if (!list.length) return;
+  list.sort((a, b) => far(a) - far(b)); const e = list[Math.floor(Math.random()*Math.min(5, list.length))], n = S.wantedN || 0;
+  e.wanted = {name:WANTED.names[n % WANTED.names.length], gold:wantedGold()}; }
+function wantedSunk(e, byPlayer){ const w = e.wanted; e.wanted = null; if (!byPlayer) return; wantT = WANTED.wait;
+  G.S.gold += w.gold; G.S.wantedN = (G.S.wantedN || 0) + 1; stat('wanted'); G.hitStop = Math.max(G.hitStop || 0, .32); setTimeout(() => { toast(`${w.name} is sunk. Bounty +${w.gold}`, 4.5); sfx('coin'); }, 2600); }
 const LOOT = [];
 function sinkEnemy(e, byPlayer){
   if (e.ally){ allyHome(e); return; }
+  if (e.wanted) wantedSunk(e, byPlayer);
   if (byPlayer) progress('sink', e.kind);
   if (byPlayer && (e.fort || e.named || (e.spec && e.spec.len >= 135))){ G.hitStop = e.fort && !e.camp ? .5 : .32; G.shake = Math.max(G.shake || 0, e.fort ? .8 : .55); } /* P121 */
   // P65: the voyage log, and a won fortress or camp uncovers the land around it (you stepped ashore and looked around)
@@ -733,7 +747,10 @@ function sinkEnemy(e, byPlayer){
   const goods = side(e) === 'merchant' ? {k:['wine', 'oil', 'pottery', 'obsidian'][Math.floor(Math.random()*4)], n:4 + Math.floor(Math.random()*7)} : null;
   LOOT.push({x:at.x, y:at.y, gold, wood:e.spec.wood, bronze:e.spec.bronze || 0, iron:e.spec.iron || 0, linen:e.spec.linen || 0, fill:e.fort ? FILL[e.camp ? 'camp' : 'fort'] : null, color, goods, life:COMBAT.lootLife*(e.fort ? 2 : 1), obj:crate});
   if (e.camp){ toast('Camp burned!', 4.5); e.angry = false; return; }
-  if (e.fort){ toast('The fortress falls!', 5.5); e.angry = false; return; }
+  if (e.fort){ toast('The fortress falls!', 5.5); e.angry = false;
+    /* P123: the fall is a show: dust and stone chips burst along the walls for two seconds, the wall crashes twice more, then your crew cheers */
+    const r = 70*(e.site ? e.site.s : 1); for (let k = 0; k < 9; k++) setTimeout(() => { const a = Math.random()*6.28, d = Math.random()*r; puff(e.x + Math.cos(a)*d, e.y + Math.sin(a)*d, k % 3 === 0, 10, (e.baseY || 0) + 25 + Math.random()*50, 5.5); if (k === 2 || k === 5){ sfx('crash', e); G.shake = Math.max(G.shake || 0, .45); } }, 200 + k*230);
+    if (byPlayer) setTimeout(() => sfx('crowd'), 2300); return; }
 }
 function updateLoot(dt){
   const S = G.S;
@@ -1012,7 +1029,7 @@ function nightRaiders(){
 }
 const bossOn = () => enemies.some(e => e.boss && !e.dead && dist(e, G.S) < 3000);
 export function updateCombat(dt){
-  nightRaiders(); growFar(dt); waters(dt);
+  nightRaiders(); growFar(dt); waters(dt); wantedTick(dt);
   realizeNear();
   updateAbilities(dt); syncAllies(); updateScrolls(); updateLair(dt);
   for (const e of enemies){

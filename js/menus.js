@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=d74ace6';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=d74ace6';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=d74ace6';
-import {fleetBody, pinCard} from './fleetpage.js?v=d74ace6';
-import {myLevel} from './levels.js?v=d74ace6';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=d74ace6';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=d74ace6';
-import {planClues} from './combat.js?v=d74ace6';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=d74ace6';
-import {board, active, canDeliver, goal, claims} from './quests.js?v=d74ace6';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=d74ace6';
-import {colorHeld, colorInfo} from './colors.js?v=d74ace6';
-import {shipPortrait} from './portrait.js?v=d74ace6';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=d74ace6';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=9039537';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=9039537';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=9039537';
+import {fleetBody, pinCard} from './fleetpage.js?v=9039537';
+import {myLevel} from './levels.js?v=9039537';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=9039537';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=9039537';
+import {planClues, wanted} from './combat.js?v=9039537';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=9039537';
+import {board, active, canDeliver, goal, claims} from './quests.js?v=9039537';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=9039537';
+import {colorHeld, colorInfo} from './colors.js?v=9039537';
+import {shipPortrait} from './portrait.js?v=9039537';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=9039537';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -507,10 +507,13 @@ function plansCard(){ const list = planClues(); if (!list.length) return '';
 const TICK = '<svg viewBox="0 0 24 24"><path d="M5 13 L10 18 L19 7" fill="none" stroke="#3f9a4b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function claimCard(){ const list = claims(); if (!list.length) return '';
   return card('Rewards to collect', list.map((c, i) => `<div class="job ready"><span class="jic">${TICK}</span><div><b>${c.text}</b><small>Done</small></div><button class="btn gold" data-act="claim" data-i="${i}">Collect ${chip(IC.coin, '+' + c.gold)}</button></div>`).join(''), 'donecard'); }
+function wantedCard(){ const e = wanted(); if (!e) return ''; const is = ISLANDS.reduce((b, i) => Math.hypot(i.x - e.x, i.y - e.y) < Math.hypot(b.x - e.x, b.y - e.y) ? i : b);
+  return card('Wanted', `<div class="job"><span class="jic">${IC.star}</span><div><b>${e.wanted.name}</b><small>A pirate in a ${e.spec.name.toLowerCase()}, last seen near ${is.name}. Marked on the chart.</small></div><span class="reward">${chip(IC.coin, '+' + e.wanted.gold)}</span></div>`); }
 function bagJobs(){
   const S = G.S, g = goal(), tr = S.treasure;
   return claimCard() + pinCard() + (g ? card(g.chapter ? `The voyage · goal ${(S.goal || 0) + 1 - STARTER_GOALS} of ${GOALS.length - STARTER_GOALS}` : `First voyage · goal ${(S.goal || 0) + 1} of ${STARTER_GOALS}`, `<div class="job"><span class="jic">${IC.star}</span><div><b>${g.text}</b>${g.n > 1 ? bar((S.goalN || 0)/g.n) : ''}<small>${g.n > 1 ? `${S.goalN || 0} of ${g.n} · ` : ''}reward</small></div><span class="reward">${chip(IC.coin, '+' + g.gold)}</span></div>`) : '')
     + card(`Your jobs · ${active().length} of ${REQUESTS.max}`, myJobs() + (active().some(r => r.to) ? '<p class="note">The islands they send you to have a dashed red ring on the chart.</p>' : ''))
+    + wantedCard()
     + (S.war ? card('War contract', `<div class="job"><span class="jic">${cityFlag(S.war.city)}</span><div><b>${warText(S.war)}</b><small>For ${CITIES[S.war.city].name} · ${Math.min(S.war.got, S.war.n)} of ${S.war.n}</small>${bar(S.war.got/S.war.n)}</div><span class="reward">${chip(IC.coin, '+' + S.war.gold)}</span></div>`) : '')
     + (tr ? card('Treasure map', `<div class="line">${IC.map}<div><b>${tr.land ? `Buried on a beach${tr.name ? ` of ${tr.name}` : ''}` : 'Floating out at sea'}</b><small>The red X on your chart. ${tr.land ? 'Sail up close to the beach to dig it out.' : 'Sail over it.'}</small></div></div>`) : '');
 }
