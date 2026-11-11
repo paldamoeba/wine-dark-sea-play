@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=11d7486';
-import {MAPDATA} from './mapdata.js?v=11d7486';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=b74cf2e';
+import {MAPDATA} from './mapdata.js?v=b74cf2e';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -343,8 +343,8 @@ for (const c of CAMPS){ const is = islands.find(i => i.name === c.isle); if (is 
 // fortress sites, so no site moves. is.portx = {kind, w, quay:[{x, y}], arms:[{pts:[{x, y, h}], main}], piers, berths, light}.
 export const GREAT_CITIES = ['Crete', 'Rhodes', 'Milos', 'Chios', 'Lesbos', 'Euboea'];
 export const portKind = is => is.name === 'Rhodes' || is.port ? null : GREAT_CITIES.includes(is.name) || is.capital ? 'great' : is.city && is.site ? 'medium' : null;
-const PORT_GAP = 400; /* P117 (Nicholas: "leave more space for the ships to get in"): the clear water between the two walls' ends */
-const PORT_Z = {great:{span:290, long:560, short:330, w:32, turn:1.2, side:0, pierW:38}, medium:{span:150, long:270, short:0, w:26, turn:1, side:0}};
+const PORT_GAP = 600; /* P119: 400 was still tight for the biggest ships */ const PORT_GAP_OLD = 400; /* P117 (Nicholas: "leave more space for the ships to get in"): the clear water between the two walls' ends */
+const PORT_Z = {great:{span:380, long:940, short:420, w:42, turn:1.25, side:0, pierW:38}, medium:{span:150, long:270, short:0, w:26, turn:1, side:0}};
 export const PORTS = [];
 function makePort(is, P, kind){ const Z = PORT_Z[kind], dx = P.dx, dy = P.dy, nx = -dy, ny = dx, at = (s, t) => ({x:P.x + nx*s + dx*t, y:P.y + ny*s + dy*t});
   const shore = s => { for (let t = 300; t > -260; t -= 5){ const q = at(s, t); if (landDist(q.x, q.y) <= 0) return t + 5; } return null; };
@@ -355,10 +355,11 @@ function makePort(is, P, kind){ const Z = PORT_Z[kind], dx = P.dx, dy = P.dy, nx
   const sm = rows.map((r, i) => ({s:r.s, t:(rows[Math.max(0, i - 1)].t + 2*r.t + rows[Math.min(rows.length - 1, i + 1)].t)/4 + 2})), quay = sm.map(r => at(r.s, r.t));
   // a wall: out to sea from the end of the quay, then bending in toward the pier's line. It stops short of other land, the
   // fortress's own jetty, and the water ships need in front of the pier.
-  const arm = (sg, len, turn) => { const r = sg < 0 ? sm[0] : sm[sm.length - 1]; if (Math.abs(r.s) < 90) return null;
+  const arm = (sg, len, turn) => arm1(sg, len, turn, 1e9) || arm1(sg, len, turn, 290) || arm1(sg, len, turn, 200); /* P119: if the wall can't start from the quay's far end (Milos), start it nearer the pier */
+  const arm1 = (sg, len, turn, lim) => { const side = sm.filter(q => q.s*sg > 0 && Math.abs(q.s) <= lim), r = sg < 0 ? side[0] : side[side.length - 1]; if (!r || Math.abs(r.s) < 90) return null;
     let p = at(r.s, r.t - 6), h = Math.atan2(dy, dx); const pts = [{...p, h}], n = Math.round(len/30);
     for (let i = 1; i <= n; i++){ if (i/n > .4) h -= sg*turn/(n*.6); const q = {x:p.x + Math.cos(h)*30, y:p.y + Math.sin(h)*30, h}, l = (q.x - P.x)*nx + (q.y - P.y)*ny, tt = (q.x - P.x)*dx + (q.y - P.y)*dy;
-      if (gridDist(q.x, q.y) < Math.min(70, i*30 - 25)) break; if (Math.abs(l) < (is.harbor ? 120 : 80) && tt < PIER_LEN + (is.harbor ? 260 : 90)) break;
+      if (gridDist(q.x, q.y) < Math.min(70, i*30 - 25)) break; if (Math.abs(l) < (kind === 'great' ? 250 : is.harbor ? 120 : 80) && tt < PIER_LEN + (kind === 'great' ? 600 : is.harbor ? 260 : 90)) break; /* P119 (Nicholas: the biggest ship left the harbor straight through the wall): a great port keeps a wide lane clear well out past the pier */
       if (is.site && Math.hypot(q.x - is.site.shore.x, q.y - is.site.shore.y) < 260) break;
       pts.push(q); p = q; }
     return pts.length > 3 ? {pts, sg} : null; };
@@ -379,8 +380,8 @@ function makePort(is, P, kind){ const Z = PORT_Z[kind], dx = P.dx, dy = P.dy, nx
   return {is, kind, w:Z.w, pier:P, quay, arms, piers, berths, light:tip ? {x:tip.x, y:tip.y, big:kind === 'great'} : null}; }
 for (const is of named){ const kind = portKind(is), t = is.harbor || is.town; if (!kind || !t) continue; const port = makePort(is, t.pier, kind); if (!port) continue;
   if (is.harbor && is.harbor.extra) port.piers = is.harbor.extra; else { for (const q of port.piers) TOWN_PIERS.push(q); if (is.harbor) is.harbor.extra = port.piers; }
-  const segs = []; for (const a of port.arms){ for (let i = 0; i + 1 < a.pts.length; i++) segs.push([a.pts[i].x, a.pts[i].y, a.pts[i+1].x, a.pts[i+1].y, port.w/2 + 5]); }
-  if (port.light) segs.push([port.light.x, port.light.y, port.light.x, port.light.y, port.light.big ? 30 : port.w/2 + 9]);
+  const segs = []; for (const a of port.arms){ for (let i = 0; i + 1 < a.pts.length; i++) segs.push([a.pts[i].x, a.pts[i].y, a.pts[i+1].x, a.pts[i+1].y, port.w/2 + 15]); /* P119: the boulders are solid too */ }
+  if (port.light) segs.push([port.light.x, port.light.y, port.light.x, port.light.y, port.light.big ? 58 : port.w/2 + 20]);
   for (const b of port.berths){ const c = Math.cos(b.a), n = Math.sin(b.a), l = (b.L - b.B)/2; segs.push([b.x - c*l, b.y - n*l, b.x + c*l, b.y + n*l, b.B/2 + 2]); }
   if (segs.length){ const xs = segs.flatMap(g => [g[0], g[2]]), ys = segs.flatMap(g => [g[1], g[3]]); PORT_SOLIDS.push({x0:Math.min(...xs) - 320, x1:Math.max(...xs) + 320, y0:Math.min(...ys) - 320, y1:Math.max(...ys) + 320, segs}); }
   is.portx = port; PORTS.push(port); }

@@ -4,11 +4,11 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=11d7486';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=11d7486';
-import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=11d7486';
-import {addTown} from './town.js?v=11d7486';
-import {mergeStatic} from './merge.js?v=11d7486';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=b74cf2e';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=b74cf2e';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=b74cf2e';
+import {addTown} from './town.js?v=b74cf2e';
+import {mergeStatic} from './merge.js?v=b74cf2e';
 const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;
@@ -231,13 +231,13 @@ export function buildPort(is, g, port, R){
   for (const arm of port.arms){ const n = arm.pts.length;
     for (let i = 0; i + 1 < n; i++){ const [x0, z0] = L(arm.pts[i]), [x1, z1] = L(arm.pts[i + 1]), len = Math.hypot(x1 - x0, z1 - z0), h = Math.atan2(z1 - z0, x1 - x0), mx = (x0 + x1)/2, mz = (z0 + z1)/2, ox = -Math.sin(h)*arm.sg, oz = Math.cos(h)*arm.sg; // (ox, oz) = the sea side
       box(len + 7, 18, port.w, CORE, mx, -2, mz, -h); box(len + 7, 1.2, port.w - 8, QUAY, mx, 7.2, mz, -h, false);
-      for (let b = 0; b < 3; b++) rock(mx + ox*(port.w/2 + 5 + R()*7) + Math.cos(h)*(R() - .5)*len, -1 + R()*3, mz + oz*(port.w/2 + 5 + R()*7) + Math.sin(h)*(R() - .5)*len, 8 + R()*7);
+      { const K = port.kind === 'great' ? 1.7 : 1.15; for (let b = 0; b < 3; b++) rock(mx + ox*(port.w/2 + 3 + R()*6) + Math.cos(h)*(R() - .5)*len, -1 + R()*4, mz + oz*(port.w/2 + 3 + R()*6) + Math.sin(h)*(R() - .5)*len, (8 + R()*7)*K); } /* P119 (Nicholas: the rocks are too tiny): bigger boulders */
       if (i % 2) rock(mx - ox*(port.w/2 + 3), -2, mz - oz*(port.w/2 + 3), 6 + R()*4);
       post(mx - ox*(port.w/2 - 4), 7.6, mz - oz*(port.w/2 - 4), 4, 1.8);
       if (arm.main && port.kind === 'great' && i > 0 && i < 8 && i % 3 === 1) (i % 2 ? pots : crates)(mx + ox*4, 7.8, mz + oz*4, 4); } }
   // the light on the end of the long wall
   if (port.light){ const [x, z] = L(port.light);
-    for (let k = 0; k < 9; k++){ const a = k/9*6.283 + R(), r = (port.light.big ? 27 : 18) + R()*8; rock(x + Math.cos(a)*r, -2, z + Math.sin(a)*r, 9 + R()*7); }
+    for (let k = 0; k < 9; k++){ const a = k/9*6.283 + R(), r = (port.light.big ? 30 : 18) + R()*8; rock(x + Math.cos(a)*r, -2, z + Math.sin(a)*r, (9 + R()*7)*(port.light.big ? 1.7 : 1.1)); }
     const t = torch(); t.children.forEach(o => { if (o !== t.userData.flame && !o.isSprite) o.visible = false; });
     if (port.light.big){ const lh = lighthouse(); lh.position.set(x, 0, z); lh.scale.setScalar(1.35); g.add(lh); t.scale.setScalar(2.4); t.position.set(x, LIGHT_Y*1.35 - 34, z); const bm = beam(); bm.position.set(x, LIGHT_Y*1.35, z); g.add(bm); }
     else { box(14, 14, 14, CORE, x, 3, z, R()); box(10, 12, 10, '#f1ebdc', x, 13, z, .4); box(12, 1.6, 12, '#b5562f', x, 19.6, z, .4); t.scale.setScalar(1.3); t.position.set(x, 4, z); }

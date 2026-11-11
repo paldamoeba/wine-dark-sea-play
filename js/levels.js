@@ -1,11 +1,11 @@
 // P70: your level. No points to earn and nothing to grind: it is simply how strong the ship you sail is right now, from its size,
 // its upgrades and your powers. Bandit camps and fortresses get a level from the same sum, so "level 8" means the same on both sides.
 // The sum: hull you can lose x damage you deal in a second (and the same for all the ships and walls of a target).
-import {SHIPS, COMBAT, ABILITIES, FIRE_ARROWS, UPGRADES, FORTS} from './config.js?v=11d7486';
-import {G} from './state.js?v=11d7486';
-import {SPECS, crewLayout} from './ships.js?v=11d7486';
-import {men} from './crew.js?v=11d7486';
-import {arrowK, showerK, ramDmg, fireSecs, powerCd} from './upgrades.js?v=11d7486';
+import {SHIPS, COMBAT, ABILITIES, FIRE_ARROWS, UPGRADES, FORTS} from './config.js?v=b74cf2e';
+import {G} from './state.js?v=b74cf2e';
+import {SPECS, crewLayout} from './ships.js?v=b74cf2e';
+import {men} from './crew.js?v=b74cf2e';
+import {arrowK, showerK, ramDmg, fireSecs, powerCd} from './upgrades.js?v=b74cf2e';
 
 const up = (t, k) => ((G.S.ups || {})[t] || {})[k] || 0, s = k => G.S[k] || 0;
 const P0 = 6.5, toLevel = p => Math.max(1, Math.round(1 + 6*Math.log(Math.max(p, P0)/P0)));
