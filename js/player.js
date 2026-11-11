@@ -1,20 +1,20 @@
 // The player's boat: sailing, big waves, fishing, wood, salvage, and regrowth of the world.
-import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON, FORTS} from './config.js?v=910e0aa';
-import {SPECS} from './ships.js?v=910e0aa';
-import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=910e0aa';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=910e0aa';
-import {W} from './weather.js?v=910e0aa';
-import {steering} from './input.js?v=910e0aa';
-import {toast, showZone} from './ui.js?v=910e0aa';
-import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=910e0aa';
-import {LAIR_ROCKS} from './lair.js?v=910e0aa';
-import {startFish, stopFish} from './fishing.js?v=910e0aa';
-import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=910e0aa';
-import {progress} from './quests.js?v=910e0aa';
-import {startSink} from './sinking.js?v=910e0aa';
-import {sfx} from './audio.js?v=910e0aa';
-import {ARENA} from './arena.js?v=910e0aa';
-import {ads, note} from './ads.js?v=910e0aa';
+import {FISH, TUNING, SHORE_FISH, WILDLIFE, COMBAT, WRECK_SIZES, IRON, FORTS} from './config.js?v=32e89d7';
+import {SPECS} from './ships.js?v=32e89d7';
+import {WORLD, ISLANDS, SPOTS, WRECKS, SHOALS, shoalOn, START, HARBORS, TOWN_PIERS, PIER_LEN, zoneAt, stormDepth, pushOut, shoreDist, landDist, hullAground as hullAgroundW} from './world.js?v=32e89d7';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, stat, shipTime, unload} from './state.js?v=32e89d7';
+import {W} from './weather.js?v=32e89d7';
+import {steering} from './input.js?v=32e89d7';
+import {toast, showZone} from './ui.js?v=32e89d7';
+import {refreshTrees, spawnWake, ICEBERGS} from './entities.js?v=32e89d7';
+import {LAIR_ROCKS} from './lair.js?v=32e89d7';
+import {startFish, stopFish} from './fishing.js?v=32e89d7';
+import {blessing, rowBoost, rowBurst, hasSail, catchRoll} from './crew.js?v=32e89d7';
+import {progress} from './quests.js?v=32e89d7';
+import {startSink} from './sinking.js?v=32e89d7';
+import {sfx} from './audio.js?v=32e89d7';
+import {ARENA} from './arena.js?v=32e89d7';
+import {ads, note} from './ads.js?v=32e89d7';
 
 // Hull gone: the boat goes down first (see sinking.js), then you wash up at Kallisto.
 export function sink(){
@@ -177,7 +177,7 @@ const turnTo = (a, b, k) => a + wrap(b - a)*k;
 function berth(sh, P){
   const S = G.S, nx = -P.dy, ny = P.dx, along = Math.max(sh.len/2 - 10, Math.min(PIER_LEN*.55, PIER_LEN + 40 - sh.len/2));
   const px = P.x + P.dx*along, py = P.y + P.dy*along;
-  const side = (S.x - px)*nx + (S.y - py)*ny >= 0 ? 1 : -1, off = 13 + sh.beam/2 + (SPECS[sh.model].oarCount > 1 ? 40 : 0); // oars stay clear of the pier
+  const side = (S.x - px)*nx + (S.y - py)*ny >= 0 ? 1 : -1, off = 4 + (P.w || 18)/2 + sh.beam/2 + (SPECS[sh.model].oarCount > 1 ? 40 : 0); // oars stay clear of the pier
   // P92 (Nicholas: sometimes she didn't turn round): the dockhands always bring her in bow out to sea, turning her as they pull
   const pa = Math.atan2(P.dy, P.dx), a = S.a + wrap(pa - S.a);
   return {x:px + nx*side*off, y:py + ny*side*off, a, side, along};
@@ -188,7 +188,7 @@ function berth(sh, P){
 const hullAground = (S, sh) => hullAgroundW(S, sh.len, sh.beam); // (world.js; the enemies use it too since P99)
 // Piers are solid: the ship slides along them instead of sailing through.
 function pierPush(S, rad){ let hit = false;
-  for (const P of [...HARBORS.map(h => h.pier), ...TOWN_PIERS]){ const nx = -P.dy, ny = P.dx, rx = S.x - P.x, ry = S.y - P.y, t = rx*P.dx + ry*P.dy, s = rx*nx + ry*ny, w = 9 + rad;
+  for (const P of [...HARBORS.map(h => h.pier), ...TOWN_PIERS]){ const nx = -P.dy, ny = P.dx, rx = S.x - P.x, ry = S.y - P.y, t = rx*P.dx + ry*P.dy, s = rx*nx + ry*ny, w = (P.w || 18)/2 + rad;
     if (t < -5 || t > PIER_LEN + 6 || Math.abs(s) > w) continue;
     const side = s < 0 ? -1 : 1; S.x += nx*(side*w - s); S.y += ny*(side*w - s); hit = true; }
   return hit;

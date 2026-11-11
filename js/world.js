@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=910e0aa';
-import {MAPDATA} from './mapdata.js?v=910e0aa';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=32e89d7';
+import {MAPDATA} from './mapdata.js?v=32e89d7';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -246,7 +246,7 @@ for (const is of named.filter(i => HARBOR_AT[i.name])){
 home.harbor = HARBORS[0];
 // P110 (Nicholas: make Crete's city and harbor bigger): a big harbor gets two more piers beside the main one (solid, like every pier;
 // you still dock at the middle one) and a stone quay along the shore between them (entities.js).
-export const BIG_HARBORS = {Crete:{side:95}};
+export const BIG_HARBORS = {}; /* P117 (Nicholas: "too many, make one big"): no side piers any more; a great port has one broad pier (pier.w) */
 for (const h of HARBORS){ const B = BIG_HARBORS[h.is.name]; if (!B) continue; h.extra = [];
   for (const sg of [1, -1]){ const nx = -h.pier.dy*sg, ny = h.pier.dx*sg, dx = h.pier.dx, dy = h.pier.dy; let p = null;
     for (let t = -120; t <= 80 && !p; t += 6){ const x = h.pier.x + nx*B.side + dx*t, y = h.pier.y + ny*B.side + dy*t; if (landDist(x, y) > -8 && landDist(x - dx*14, y - dy*14) < -8) p = {x, y, dx, dy, extra:true}; }
@@ -343,7 +343,8 @@ for (const c of CAMPS){ const is = islands.find(i => i.name === c.isle); if (is 
 // fortress sites, so no site moves. is.portx = {kind, w, quay:[{x, y}], arms:[{pts:[{x, y, h}], main}], piers, berths, light}.
 export const GREAT_CITIES = ['Crete', 'Rhodes', 'Milos', 'Chios', 'Lesbos', 'Euboea'];
 export const portKind = is => is.name === 'Rhodes' || is.port ? null : GREAT_CITIES.includes(is.name) || is.capital ? 'great' : is.city && is.site ? 'medium' : null;
-const PORT_Z = {great:{span:290, long:560, short:330, w:32, turn:1.2, side:95}, medium:{span:150, long:270, short:0, w:26, turn:1, side:0}};
+const PORT_GAP = 400; /* P117 (Nicholas: "leave more space for the ships to get in"): the clear water between the two walls' ends */
+const PORT_Z = {great:{span:290, long:560, short:330, w:32, turn:1.2, side:0, pierW:38}, medium:{span:150, long:270, short:0, w:26, turn:1, side:0}};
 export const PORTS = [];
 function makePort(is, P, kind){ const Z = PORT_Z[kind], dx = P.dx, dy = P.dy, nx = -dy, ny = dx, at = (s, t) => ({x:P.x + nx*s + dx*t, y:P.y + ny*s + dy*t});
   const shore = s => { for (let t = 300; t > -260; t -= 5){ const q = at(s, t); if (landDist(q.x, q.y) <= 0) return t + 5; } return null; };
@@ -363,7 +364,10 @@ function makePort(is, P, kind){ const Z = PORT_Z[kind], dx = P.dx, dy = P.dy, nx
     return pts.length > 3 ? {pts, sg} : null; };
   const a1 = arm(1, Z.long, Z.turn), a2 = arm(-1, Z.long, Z.turn), away = is.site ? ((is.site.x - P.x)*nx + (is.site.y - P.y)*ny > 0 ? -1 : 1) : 1;
   let main = !a1 ? a2 : !a2 ? a1 : a1.pts.length !== a2.pts.length ? (a1.pts.length > a2.pts.length ? a1 : a2) : (away > 0 ? a1 : a2);
-  const arms = []; if (main){ main.main = true; arms.push(main); if (Z.short){ const o = arm(-main.sg, Z.short, .7); if (o) arms.push(o); } }
+  const arms = []; if (main){ main.main = true; arms.push(main); if (Z.short){ const o = arm(-main.sg, Z.short, .7);
+      if (o){ const gap = () => { const e = o.pts[o.pts.length - 1]; return Math.min(...main.pts.map(q => Math.hypot(q.x - e.x, q.y - e.y))); };
+        while (o.pts.length > 4 && gap() < PORT_GAP) o.pts.pop(); while (main.pts.length > 8 && gap() < PORT_GAP) main.pts.pop(); arms.push(o); } } }
+  if (Z.pierW) P.w = Z.pierW;
   // side piers (the great ports), solid like every pier; Crete's are the ones it had in P110
   const piers = []; if (Z.side) for (const sg of [1, -1]){ let q = null;
     for (let t = -120; t <= 80 && !q; t += 6){ const c = at(sg*Z.side, t); if (landDist(c.x, c.y) > -8 && landDist(c.x - dx*14, c.y - dy*14) < -8) q = {x:c.x, y:c.y, dx, dy, extra:true}; }

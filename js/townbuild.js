@@ -4,11 +4,11 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=910e0aa';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=910e0aa';
-import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=910e0aa';
-import {addTown} from './town.js?v=910e0aa';
-import {mergeStatic} from './merge.js?v=910e0aa';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=32e89d7';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=32e89d7';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=32e89d7';
+import {addTown} from './town.js?v=32e89d7';
+import {mergeStatic} from './merge.js?v=32e89d7';
 const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;
@@ -167,8 +167,17 @@ export function buildTown(is, g, PIER, ctx){
       const to = hasAgora ? [ax, az] : [fx, fz], from = [px + ux*(e + 6), pz + uz*(e + 6)]; if (Math.hypot(to[0] - from[0], to[1] - from[1]) > 8) paved(ribbon([from, to], 18, top + .95)); } }
   // the pier: starts a little inland and runs out over the water
   const pier = new T.Group(); pier.position.set(px, 0, pz); pier.rotation.y = -ang; g.add(pier);
+  if ((PIER.w || 18) > 18){ /* P117 (Nicholas: "too many, make one big"): a great port's one broad pier: stone below, planks on top, cargo down the middle */
+    const W = PIER.w, Lp = PIER_LEN + 30, stone = mesh(new T.BoxGeometry(Lp, 12, W), '#d9c9a2'); stone.position.set(PIER_LEN/2 - 15, .6, 0); pier.add(stone);
+    const planks = mesh(new T.BoxGeometry(Lp - 4, 1.2, W - 10), '#9b6b3a', {}, false); planks.position.set(PIER_LEN/2 - 15, 7.1, 0); pier.add(planks);
+    const head = mesh(new T.BoxGeometry(26, 12, W + 16), '#d9c9a2'); head.position.set(PIER_LEN + 2, .6, 0); pier.add(head);
+    for (let k=0;k<=5;k++) for (const z of [-W/2 + 3, W/2 - 3]){ const post = mesh(new T.CylinderGeometry(1.8, 2.1, 5, 6), '#5a4630'); post.position.set(8 + k*(PIER_LEN - 10)/5, 9, z); pier.add(post); }
+    for (let k=0;k<6;k++){ const a = mesh(amphoraGeo, ['#b8693a', '#c98a4b', '#a85c34'][k % 3], {flatShading:false}); a.scale.setScalar(.7); a.position.set(22 + (k % 3)*7, 8.2, -4 + Math.floor(k/3)*8); pier.add(a); }
+    for (let k=0;k<4;k++){ const up = k === 3, c = mesh(new T.BoxGeometry(9, 8, 9), k % 2 ? '#8a6238' : '#9b6b3a'); c.position.set(62 + (up ? 5 : k*10), 11.7 + (up ? 8 : 0), up ? 1 : (k % 2)*4 - 2); c.rotation.y = k*.4; pier.add(c); }
+    const cr = crane(); cr.position.set(PIER_LEN - 4, 6.6, 0); cr.rotation.y = Math.PI/2; pier.add(cr);
+  } else {
   const deck = mesh(new T.BoxGeometry(PIER_LEN + 30, 3, 18), '#9b6b3a'); deck.position.set(PIER_LEN/2 - 15, 6, 0); pier.add(deck);
-  for (let k=0;k<=5;k++) for (const z of [-8, 8]){ const post = mesh(new T.CylinderGeometry(1.4, 1.4, 16, 5), '#6e4a26'); post.position.set(k*PIER_LEN/5, 1, z); pier.add(post); }
+  for (let k=0;k<=5;k++) for (const z of [-8, 8]){ const post = mesh(new T.CylinderGeometry(1.4, 1.4, 16, 5), '#6e4a26'); post.position.set(k*PIER_LEN/5, 1, z); pier.add(post); } }
   // P110: a big harbor (Crete): two side piers with cargo on them, a stone quay joining the three at the shore, and warehouses behind
   for (const xp of (is.portx && is.portx.piers) || []){ const q = new T.Group(), qx = xp.x - is.x, qz = xp.y - is.y; q.position.set(qx, 0, qz); q.rotation.y = -Math.atan2(xp.dy, xp.dx); g.add(q);
     const d2 = mesh(new T.BoxGeometry(PIER_LEN + 30, 3, 18), '#9b6b3a'); d2.position.set(PIER_LEN/2 - 15, 6, 0); q.add(d2);
