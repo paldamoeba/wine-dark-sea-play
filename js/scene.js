@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=3370c69';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=3370c69';
-import {G} from './state.js?v=3370c69';
-import {TOD, updateDayNight} from './daynight.js?v=3370c69';
-import {showGrass} from './grass.js?v=3370c69';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=3370c69';
+import {QUALITY, SHIPS} from './config.js?v=f93f7d2';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=f93f7d2';
+import {G} from './state.js?v=f93f7d2';
+import {TOD, updateDayNight} from './daynight.js?v=f93f7d2';
+import {showGrass} from './grass.js?v=f93f7d2';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=f93f7d2';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -29,7 +29,7 @@ let quality = QUALITY.high;
 
 // P84 (Nicholas: the phone gets hot after 10 to 20 minutes): Battery saver, on by default on phones. Fewer pixels (main.js also caps the frame rate).
 const COARSE = matchMedia('(pointer: coarse)').matches;
-export const saverOn = () => G.settings.saver ?? COARSE;
+export const saverOn = () => G.settings.saver ?? false; /* P132 (Nicholas): off unless the player turns it on (it used to start on for phones) */
 export function resize(){
   view.W = innerWidth; view.H = innerHeight; view.DPR = Math.min(quality.dpr, devicePixelRatio || 1, Math.sqrt(quality.pix/(view.W*view.H)))*(saverOn() ? .8 : 1); // P67: sharp, up to a limit of pixels
   renderer.setPixelRatio(view.DPR); renderer.setSize(view.W, view.H, false);

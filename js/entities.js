@@ -1,21 +1,21 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=3370c69';
-import {SHIPS, IRON} from './config.js?v=3370c69';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=3370c69';
-import {G, ship, lvl} from './state.js?v=3370c69';
-import {men} from './crew.js?v=3370c69';
-import {scene} from './scene.js?v=3370c69';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=3370c69';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=3370c69';
-import {figure} from './town.js?v=3370c69';
-import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=3370c69';
-import {makeFire, updateFire, burn} from './fire.js?v=3370c69';
-import {addGrass} from './grass.js?v=3370c69';
-import {sinkPose} from './sinking.js?v=3370c69';
-import {moored} from './fleet.js?v=3370c69';
-import {sailCount} from './upgrades.js?v=3370c69';
-import {hasSail} from './crew.js?v=3370c69';
-import {placeOnWaves} from './combat.js?v=3370c69';
+import {mergeStatic} from './merge.js?v=f93f7d2';
+import {SHIPS, IRON} from './config.js?v=f93f7d2';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=f93f7d2';
+import {G, ship, lvl} from './state.js?v=f93f7d2';
+import {men} from './crew.js?v=f93f7d2';
+import {scene} from './scene.js?v=f93f7d2';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=f93f7d2';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=f93f7d2';
+import {figure} from './town.js?v=f93f7d2';
+import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=f93f7d2';
+import {makeFire, updateFire, burn} from './fire.js?v=f93f7d2';
+import {addGrass} from './grass.js?v=f93f7d2';
+import {sinkPose} from './sinking.js?v=f93f7d2';
+import {moored} from './fleet.js?v=f93f7d2';
+import {sailCount} from './upgrades.js?v=f93f7d2';
+import {hasSail} from './crew.js?v=f93f7d2';
+import {placeOnWaves} from './combat.js?v=f93f7d2';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -123,10 +123,12 @@ export function refreshAllTrees(){ ISLANDS.forEach(i => i.trees && refreshTrees(
 
 // ---- fishing spots ----
 const ringGeo = new T.RingGeometry(10, 13.5, 20); ringGeo.rotateX(-Math.PI/2);
+// P132 (loading time): every fishing spot used to build its three fish from scratch. One fish of each kind is built and the rest are copies that share its shape.
+const fishProto = {}, fishOf = kind => (fishProto[kind] || (fishProto[kind] = fishModel(kind))).clone();
 SPOTS.forEach((s, i) => {
   const g = new T.Group(); g.position.set(s.x, 0, s.y);
   s.rings = [0,1].map(() => { const m = new T.Mesh(ringGeo, new T.MeshBasicMaterial({color:0xf4fbff, transparent:true, opacity:.5, depthWrite:false})); g.add(m); return m; });
-  s.fish = [0,1,2].map(k => { const f = fishModel(s.kind); f.userData.ph = hash(i,k); f.userData.ang = hash(k,i)*6.28; g.add(f); return f; });
+  s.fish = [0,1,2].map(k => { const f = fishOf(s.kind); f.userData.ph = hash(i,k); f.userData.ang = hash(k,i)*6.28; g.add(f); return f; });
   s.g = g; scene.add(g);
 });
 
