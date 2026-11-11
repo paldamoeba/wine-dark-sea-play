@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=6efbd22';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=6efbd22';
-import {G} from './state.js?v=6efbd22';
-import {TOD, updateDayNight} from './daynight.js?v=6efbd22';
-import {showGrass} from './grass.js?v=6efbd22';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=6efbd22';
+import {QUALITY, SHIPS} from './config.js?v=d936dd9';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=d936dd9';
+import {G} from './state.js?v=d936dd9';
+import {TOD, updateDayNight} from './daynight.js?v=d936dd9';
+import {showGrass} from './grass.js?v=d936dd9';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=d936dd9';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -150,18 +150,18 @@ export const MOOD = {on:true, sh:0, deep:0, cold:0, shSea:new T.Color(1.03, 1.09
 const moodC = new T.Color(), ONE = new T.Color(1, 1, 1);
 function updateMood(dt){ const z = G.curZone, e = Math.min(1, dt*.35), on = MOOD.on ? 1 : 0, cold = Math.max(0, Math.min(1, (WORLD*.36 - G.cam.y)/(WORLD*.1)))*(1 - (G.lairK || 0));
   MOOD.sh += ((z === 0 ? on : 0) - MOOD.sh)*e; MOOD.deep += ((z === 2 ? on : 0) - MOOD.deep)*e; MOOD.cold += (cold*on - MOOD.cold)*e; }
-const LAIRSUN = new T.Color('#ff9a6a'), LAIRFOG = new T.Color('#3d1a28'), NIGHTSTORM = new T.Color('#1d2533'), stormC = new T.Color();
+const LAIRGLOW = new T.Color('#a02a2e'), LAIRSUN = new T.Color('#ff9a6a'), LAIRFOG = new T.Color('#3d1a28'), NIGHTSTORM = new T.Color('#1d2533'), stormC = new T.Color();
 export function updateWeather(dt = 1/60){
   updateDayNight(dt, SKY);
   const k = G.stormK, n = TOD.night; updateMood(dt); const day = 1 - n;
   const m = (G.mistK || 0)*(1 - n*.6); // mist: a soft warm-white fog that closes in, with the sun glowing through it
   stormC.copy(STORMSKY).lerp(NIGHTSTORM, n);
-  scene.fog.color.copy(TOD.sky).lerp(MOOD.coldSky, MOOD.cold*.5*day).lerp(MIST, m*.5*(1 - n)).lerp(stormC, k).lerp(LAIRFOG, (G.lairK || 0)*.86); scene.background.copy(scene.fog.color);
+  scene.fog.color.copy(TOD.sky).lerp(MOOD.coldSky, MOOD.cold*.5*day).lerp(MIST, m*.5*(1 - n)).lerp(stormC, k).lerp(LAIRFOG, (G.lairK || 0)*.86); { const lk = G.lairK || 0; if (lk > .05){ const pulse = Math.max(0, Math.sin(G.t*.55))**8 + .5*Math.max(0, Math.sin(G.t*.83 + 2))**10; scene.fog.color.lerp(LAIRGLOW, Math.min(.3, pulse*.3)*lk); G.lairPulse = pulse*lk; } else G.lairPulse = 0; } /* P121: slow red glows in the lair's fog, like fires behind it */ scene.background.copy(scene.fog.color);
   const z = viewZoom();
   const lf = G.lairK || 0; // P107 (Nicholas: fog at the pirate king's for drama): the wine-red haze closes in around you there
   scene.fog.near = Math.max(120, 1000 - k*550 - m*420 - n*150 - lf*210)*z; scene.fog.far = Math.max(700, 2300 - k*1000 - m*750 - n*250 - lf*270)*z;
   sun.color.copy(TOD.sun); hemi.color.copy(TOD.hemiS); hemi.groundColor.copy(TOD.hemiG); waterMat.color.copy(TOD.water).multiply(moodC.copy(ONE).lerp(MOOD.shSea, MOOD.sh).lerp(MOOD.deepSea, MOOD.deep).lerp(MOOD.coldSea, MOOD.cold)); sun.color.lerp(MOOD.warmSun, MOOD.sh*.5*day).lerp(MOOD.coldSun, MOOD.cold*.6*day);
-  sun.intensity = Math.max(.05, TOD.sunI - k*.42*TOD.sunI/.64 + m*.08) + G.flash*.8; hemi.intensity = Math.max(.15, TOD.hemiI - k*.22 + m*.1) + G.flash*.6; { const lk = G.lairK || 0; if (lk > .01){ sun.intensity *= 1 - .35*lk; sun.color.lerp(LAIRSUN, .7*lk); hemi.color.lerp(LAIRSUN, .35*lk); hemi.intensity *= 1 - .22*lk; scene.fog.near *= 1 - .3*lk; scene.fog.far *= 1 - .18*lk; } }
+  sun.intensity = Math.max(.05, TOD.sunI - k*.42*TOD.sunI/.64 + m*.08) + G.flash*.8; hemi.intensity = Math.max(.15, TOD.hemiI - k*.22 + m*.1) + G.flash*.6; { const lk = G.lairK || 0; if (lk > .01){ sun.intensity *= 1 - .35*lk; sun.color.lerp(LAIRSUN, .7*lk); hemi.color.lerp(LAIRSUN, .35*lk); hemi.intensity *= 1 - .22*lk + .3*(G.lairPulse || 0); scene.fog.near *= 1 - .3*lk; scene.fog.far *= 1 - .18*lk; } }
   foamU.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); foamU.uGlint.value = TOD.glint*(1 - k*.8 - m*.5); foamU.uStorm.value = Math.min(1, k + m*.4); foamU.uSky.value.copy(scene.fog.color);
   foamU.uNight.value = n;
   post.uniforms.vig.value = Math.max(k*.6, (G.lairK || 0)*.7, n*.3); /* P118: the edges of the picture close in a little in a storm, at night and in the lair */

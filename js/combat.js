@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=6efbd22';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=6efbd22';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=6efbd22';
-import {scene, screenToSea, setLair} from './scene.js?v=6efbd22';
-import {wreckModel} from './models.js?v=6efbd22';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=6efbd22';
-import {mergeStatic, freeModel} from './merge.js?v=6efbd22';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=6efbd22';
-import {award} from './trophies.js?v=6efbd22';
-import {makeFire, updateFire, burn} from './fire.js?v=6efbd22';
-import {blessing, fighters, hasSail} from './crew.js?v=6efbd22';
-import {progress, goal} from './quests.js?v=6efbd22';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=6efbd22';
-import {rollColor, unlockColor, colorName} from './colors.js?v=6efbd22';
-import {toast, popLater} from './ui.js?v=6efbd22';
-import {sink, rowNow, ROW} from './player.js?v=6efbd22';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=6efbd22';
-import {TOD} from './daynight.js?v=6efbd22';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=6efbd22';
-import {sfx} from './audio.js?v=6efbd22';
-import {myLevel} from './levels.js?v=6efbd22';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=d936dd9';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=d936dd9';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=d936dd9';
+import {scene, screenToSea, setLair} from './scene.js?v=d936dd9';
+import {wreckModel} from './models.js?v=d936dd9';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=d936dd9';
+import {mergeStatic, freeModel} from './merge.js?v=d936dd9';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=d936dd9';
+import {award} from './trophies.js?v=d936dd9';
+import {makeFire, updateFire, burn} from './fire.js?v=d936dd9';
+import {blessing, fighters, hasSail} from './crew.js?v=d936dd9';
+import {progress, goal} from './quests.js?v=d936dd9';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=d936dd9';
+import {rollColor, unlockColor, colorName} from './colors.js?v=d936dd9';
+import {toast, popLater} from './ui.js?v=d936dd9';
+import {sink, rowNow, ROW} from './player.js?v=d936dd9';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=d936dd9';
+import {TOD} from './daynight.js?v=d936dd9';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=d936dd9';
+import {sfx} from './audio.js?v=d936dd9';
+import {myLevel} from './levels.js?v=d936dd9';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -701,6 +701,7 @@ const LOOT = [];
 function sinkEnemy(e, byPlayer){
   if (e.ally){ allyHome(e); return; }
   if (byPlayer) progress('sink', e.kind);
+  if (byPlayer && (e.fort || e.named || (e.spec && e.spec.len >= 135))){ G.hitStop = e.fort && !e.camp ? .5 : .32; G.shake = Math.max(G.shake || 0, e.fort ? .8 : .55); } /* P121 */
   // P65: the voyage log, and a won fortress or camp uncovers the land around it (you stepped ashore and looked around)
   if (byPlayer){ if (e.camp) stat('camps'); else if (e.fort) stat('forts'); else { stat('sunk'); stat(side(e) === 'navy' ? 'navy' : side(e) === 'merchant' ? 'merchants' : 'pirates'); } if (e.fort) reveal(e.x, e.y, e.camp ? REVEAL.camp : REVEAL.fort); }
   const color = byPlayer && !e.fort ? rollColor() : null;

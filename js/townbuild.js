@@ -4,11 +4,11 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=6efbd22';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=6efbd22';
-import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=6efbd22';
-import {addTown} from './town.js?v=6efbd22';
-import {mergeStatic} from './merge.js?v=6efbd22';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=d936dd9';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=d936dd9';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=d936dd9';
+import {addTown} from './town.js?v=d936dd9';
+import {mergeStatic} from './merge.js?v=d936dd9';
 const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;
@@ -185,6 +185,7 @@ export function buildTown(is, g, PIER, ctx){
     for (let k=0;k<5;k++){ const a = mesh(amphoraGeo, ['#b8693a', '#c98a4b', '#a85c34'][k % 3], {flatShading:false}); a.scale.setScalar(.7); a.position.set(20 + k*7 + R()*3, 7.5, -4 + (k % 2)*8); q.add(a); }
     for (let k=0;k<3;k++){ const c = mesh(new T.BoxGeometry(9, 8, 9), '#8a6238'); c.position.set(PIER_LEN*.55 + k*11, 11.5, (k % 2 ? 3 : -3)); c.rotation.y = R()*.5; q.add(c); }
     keep.push([qx, qz], [qx - xp.dx*30, qz - xp.dy*30]); }
+  /* P121: a glow over the houses for lit windows was tried (addLamps(..., true)) and dropped: it doesn't show on pale walls */
   // P118: street lamps: a post with a lantern, and at night a soft warm glow around each (addLamps: one drawing for the whole town)
   { const L = [], cap = Math.max(3, Math.round(Z.houses/6)); if (hasAgora) for (let k = 0; k < 4; k++){ const a2 = hu + .78 + k*Math.PI/2; L.push([ax + Math.cos(a2)*agR*.92, top, az + Math.sin(a2)*agR*.92]); }
     for (const ln of lanes){ let acc = 70; for (let i = 1; i < ln.pts.length && L.length < cap; i++){ const [x0, z0] = ln.pts[i - 1], [x1, z1] = ln.pts[i], d = Math.hypot(x1 - x0, z1 - z0); acc += d;
@@ -199,14 +200,15 @@ export function buildTown(is, g, PIER, ctx){
 // the long wall's end, cargo and cranes, merchant ships at berth. Built the first time you come near (entities.js), then glued
 // into the island's pieces like the rest of the town. Collision is world.js PORT_SOLIDS.
 // P118: lamps. The posts are ordinary town pieces; the glow is one set of points per town, shown only at night (daynight.js fades LAMP_MAT).
+export const WIN_GLOW = new T.PointsMaterial({size:74, sizeAttenuation:true, transparent:true, depthWrite:false, blending:T.AdditiveBlending, fog:true, opacity:0, color:'#ffd9a0'}); /* P121: lamplight spilling from windows: a soft glow over two houses in three */
 export const LAMPS = [], LAMP_MAT = new T.PointsMaterial({size:120, sizeAttenuation:true, transparent:true, depthWrite:false, blending:T.AdditiveBlending, fog:true, opacity:0});
 const lampPost = new T.CylinderGeometry(.7, .9, 10, 5), lampHead = new T.BoxGeometry(2.6, 2.8, 2.6);
-export function addLamps(g, list){ if (!list.length) return;
+export function addLamps(g, list, win = false){ if (!list.length) return;
   if (!LAMP_MAT.map){ const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
     gr.addColorStop(0, 'rgba(255,224,160,.95)'); gr.addColorStop(.2, 'rgba(255,190,105,.5)'); gr.addColorStop(.5, 'rgba(255,160,70,.16)'); gr.addColorStop(1, 'rgba(255,140,50,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); LAMP_MAT.map = new T.CanvasTexture(c); }
-  const pos = new Float32Array(list.length*3); list.forEach(([x, y, z], i) => { pos.set([x, y + 11, z], i*3);
+  const pos = new Float32Array(list.length*3); list.forEach(([x, y, z], i) => { pos.set([x, y + (win ? 19 : 11), z], i*3); if (win) return;
     const a = mesh(lampPost, '#4a3a2a', {}, false); a.position.set(x, y + 5, z); g.add(a); const b = mesh(lampHead, '#f6dc9a', {}, false); b.position.set(x, y + 11, z); g.add(b); });
-  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); const pts = new T.Points(geo, LAMP_MAT); pts.visible = false; pts.renderOrder = 6; g.add(pts); LAMPS.push(pts); }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); if (win && !WIN_GLOW.map) WIN_GLOW.map = LAMP_MAT.map; const pts = new T.Points(geo, win ? WIN_GLOW : LAMP_MAT); pts.visible = false; pts.renderOrder = 6; g.add(pts); LAMPS.push(pts); }
 // P118: a lighthouse's beam: two long soft wedges of light that sweep round at night (one flat drawing each lighthouse).
 export const BEAMS = [], BEAM_MAT = new T.MeshBasicMaterial({color:'#ffe9b8', transparent:true, opacity:0, depthWrite:false, blending:T.AdditiveBlending, side:T.DoubleSide, vertexColors:true, fog:true});
 function beam(){ const L = 520, W = 95, p = [], c = [], tri = (sg) => { p.push(0, 0, 0, sg*L, 0, -W, sg*L, 0, W); c.push(1, 1, 1, 0, 0, 0, 0, 0, 0); }; tri(1); tri(-1);
