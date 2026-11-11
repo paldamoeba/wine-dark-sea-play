@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=9ed43c1';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=9ed43c1';
-import {G, save, stat} from './state.js?v=9ed43c1';
-import {scene} from './scene.js?v=9ed43c1';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=9ed43c1';
-import {toast} from './ui.js?v=9ed43c1';
-import {combatState} from './combat.js?v=9ed43c1';
-import {sfx} from './audio.js?v=9ed43c1';
+import {WILDLIFE} from './config.js?v=2c85ea6';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=2c85ea6';
+import {G, save, stat} from './state.js?v=2c85ea6';
+import {scene} from './scene.js?v=2c85ea6';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=2c85ea6';
+import {toast} from './ui.js?v=2c85ea6';
+import {combatState} from './combat.js?v=2c85ea6';
+import {sfx} from './audio.js?v=2c85ea6';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -15,8 +15,12 @@ const openSea = (x, y, gap) => x > 200 && y > 200 && x < WORLD - 200 && y < WORL
 // ---- the whale ----
 // state: 'gone' (waiting), 'rise' (coming up), 'swim' (at the surface, spouting), 'dive' (tail up, going down)
 export const WHALE = {up:false};
+// P126 (Nicholas: "take a look at the whale"): it was hard to see: the swell washed over its low back, the spout was a faint
+// wisp and it sank flat when it left. Now it is a little bigger, rides higher on the swell, blows a tall white spout, and
+// goes down the way a humpback does: back arched, then the flukes lifted clear of the water before they slide under.
+const WHALE_K = 1.3, ease = k => k*k*(3 - 2*k);
 const W = {obj:whaleModel(), state:'gone', wait:rand(WILDLIFE.whaleFirst), x:0, y:0, a:0, t:0, blessed:false, puff:0};
-W.obj.visible = false; scene.add(W.obj);
+W.obj.visible = false; W.obj.scale.setScalar(WHALE_K); scene.add(W.obj);
 function spawnWhale(){
   const S = G.S;
   for (let k=0;k<20;k++){
@@ -43,22 +47,22 @@ function updateWhale(dt){
   const nx = W.x + Math.cos(W.a)*swim*dt, ny = W.y + Math.sin(W.a)*swim*dt;
   if (openSea(nx, ny, 500)){ W.x = nx; W.y = ny; } else W.a += 1.2*dt;
   let y = 0, pitch = 0;
-  if (W.state === 'rise'){ const k = Math.min(1, W.t/2.5); y = -40 + 40*k; pitch = (1 - k)*.25; if (k >= 1){ W.state = 'swim'; W.t = 0; } }
+  if (W.state === 'rise'){ const k = Math.min(1, W.t/2.5); y = -46 + 46*ease(k) + Math.sin(k*Math.PI)*7; pitch = (1 - k)*.32; if (k >= 1){ W.state = 'swim'; W.t = 0; } }
   else if (W.state === 'swim'){
-    y = Math.sin(G.t*.8)*1.5; pitch = Math.sin(G.t*.6)*.03;
-    W.puff -= dt; if (W.puff <= 0){ W.puff = 5; ud.spoutT = 0; sfx('spout', W); if (Math.random() < .35) setTimeout(() => sfx('whale', W), 1500); }
+    y = Math.sin(G.t*.8)*2.5; pitch = Math.sin(G.t*.6)*.04;
+    W.puff -= dt; if (W.puff <= 0){ W.puff = 4.5; ud.spoutT = 0; sfx('spout', W); if (Math.random() < .35) setTimeout(() => sfx('whale', W), 1500); }
     if (W.t > 24){ W.state = 'dive'; W.t = 0; }
   } else if (W.state === 'dive'){
-    const k = Math.min(1, W.t/3.5); pitch = -.5*Math.sin(k*Math.PI*.9); y = -k*80;
+    const k = Math.min(1, W.t/4.6), up = ease(Math.min(1, k/.42)), down = ease(Math.max(0, (k - .42)/.58)); pitch = -1.02*up; y = 5*up - 118*down; // head down, flukes up, then under
     if (k >= 1){ W.state = 'gone'; W.obj.visible = false; W.wait = rand(WILDLIFE.whaleEvery); }
   }
-  W.obj.position.set(W.x, waveAt(W.x, W.y, G.t) + y - 8, W.y); // only the back shows above the water
+  W.obj.position.set(W.x, Math.max(waveAt(W.x, W.y, G.t), waveAt(W.x + Math.cos(W.a)*40, W.y + Math.sin(W.a)*40, G.t)) + y - 2.5*WHALE_K, W.y); // the back and the top of the head ride above the swell
   W.obj.rotation.set(0, -W.a, 0); ud.body.rotation.z = pitch;
-  ud.tail.rotation.z = Math.sin(G.t*1.6)*.18 + (W.state === 'dive' ? .5 : 0);
+  ud.tail.rotation.z = Math.sin(G.t*1.6)*.18 + (W.state === 'dive' ? .45*Math.min(1, W.t/1.6) : 0);
   // spout
   if (ud.spoutT !== undefined){ ud.spoutT += dt;
-    ud.spout.forEach((p, i) => { const k = ud.spoutT*1.4 - i*.06; p.visible = k > 0 && k < 1;
-      if (p.visible){ p.position.set(38 + Math.sin(i*2.1)*k*8, 18 + k*55, Math.cos(i*1.7)*k*8); p.scale.setScalar(.6 + k*1.6); p.material.opacity = .8*(1 - k); } }); }
+    ud.spout.forEach((p, i) => { const k = ud.spoutT*.95 - i*.07; p.visible = k > 0 && k < 1;
+      if (p.visible){ const r = k*k*16; p.position.set(40 + Math.sin(i*2.1)*r, 18 + (1 - (1 - k)*(1 - k))*78, Math.cos(i*1.7)*r); p.scale.setScalar(.7 + k*2.4); p.material.opacity = .95*(1 - k*k); } }); }
   // the blessing
   if (!W.blessed && W.state !== 'dive' && Math.hypot(S.x - W.x, S.y - W.y) < WILDLIFE.whaleNear){
     W.blessed = true; S.bless = WILDLIFE.blessSeconds; stat('whales'); save(); sfx('blessing');

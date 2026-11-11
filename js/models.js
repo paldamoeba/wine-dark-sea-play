@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=9ed43c1';
+import {hash} from './world.js?v=2c85ea6';
 
-import {smokeColumn} from './smoke.js?v=9ed43c1';
+import {smokeColumn} from './smoke.js?v=2c85ea6';
 const T = window.THREE;
-import {mat} from './ships.js?v=9ed43c1';
+import {mat} from './ships.js?v=2c85ea6';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -309,21 +309,53 @@ export function gullV(key){
 // out of the body without seams.
 // P53: a friendly humpback: a big blunt head, a body that narrows into a slim tail stalk, wide swept-back flukes,
 // long pale-edged flippers, a little hump of a fin, a pale belly with throat grooves, an eye with a highlight, and a blowhole.
+// P126 (Nicholas: the whale's looks): the body is no longer a plain turned shape (it read as a blimp). The head is broad and
+// flat on top with knobs on the snout, the throat is full and striped with grooves, the body narrows into a tall thin tail
+// stalk, and the long flippers are pale so they show from above against the sea.
+const WH_PROF = smooth([[-74, 1.4], [-70, 3.2], [-60, 4.8], [-46, 7.8], [-30, 12.2], [-12, 16.6], [8, 19.5], [26, 20.5], [42, 19.6], [54, 16.8], [62, 12.4], [67, 7.2], [69.5, 2.6], [70, .01]], 72);
+const whStep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a)/(b - a))); return k*k*(3 - 2*k); };
+function whShape(x){ let r = 0; for (let i=1;i<WH_PROF.length;i++) if (x <= WH_PROF[i][0]){ const [x0, r0] = WH_PROF[i-1], [x1, r1] = WH_PROF[i]; r = r0 + (r1 - r0)*(x - x0)/((x1 - x0) || 1); break; }
+  const head = whStep(10, 55, x), stalk = whStep(-20, -62, x), throat = Math.exp(-Math.pow((x - 34)/26, 2));
+  return {r, sz:1.04 + .12*head - .46*stalk, syT:.8 - .1*head + .22*stalk, syB:.84 + .16*throat + .14*stalk}; }
+// a point on the whale's skin: x along the body, a = angle round it (0 = its left side, PI/2 = the top of its back)
+function whSurf(x, a, out = 1){ const h = whShape(x), s = Math.sin(a); return [x, h.r*(s > 0 ? h.syT : h.syB)*s*out, h.r*h.sz*Math.cos(a)*out]; }
+function whaleBody(){
+  const N = WH_PROF.length, M = 64, pos = new Float32Array(N*M*3), col = new Float32Array(N*M*3), idx = [];
+  const top = new T.Color('#3b5870'), spine = new T.Color('#2f4a60'), belly = new T.Color('#eef1ec'), groove = new T.Color('#9fb0b3'), c = new T.Color();
+  for (let i=0;i<N;i++){ const x = WH_PROF[i][0];
+    for (let j=0;j<M;j++){ const a = j/M*Math.PI*2, s = Math.sin(a), cz = Math.cos(a), q = whSurf(x, a), o = (i*M + j)*3; pos.set(q, o);
+      const line = -.16 + .1*Math.sin(x*.085) - .22*whStep(-10, -60, x), k = Math.min(1, Math.max(0, (line - s)/.3)); // the pale belly ends in a soft wavy edge, and fades out along the tail
+      c.copy(top).lerp(spine, whStep(.55, 1, s)).lerp(belly, k*k*(3 - 2*k));
+      if (s < -.3 && x > 0 && x < 62){ const st = Math.cos(cz*16); if (st > .55) c.lerp(groove, .75*whStep(0, 12, x)*whStep(62, 52, x)*whStep(-.3, -.5, s)); } // throat grooves
+      col.set([c.r, c.g, c.b], o); }
+    if (i) for (let j=0;j<M;j++){ const a0 = (i - 1)*M + j, a1 = (i - 1)*M + (j + 1) % M, b0 = i*M + j, b1 = i*M + (j + 1) % M; idx.push(a0, b0, a1, a1, b0, b1); } }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  const m = new T.Mesh(geo, softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; return m;
+}
 export function whaleModel(){
   const g = new T.Group(), body = new T.Group(); g.add(body);
-  body.add(latheBody([[-72, 0], [-70, 2.4], [-62, 3.8], [-50, 6.5], [-36, 11], [-18, 16], [2, 19.5], [22, 20.5], [38, 19], [50, 16], [59, 11.5], [65, 6], [67.5, 0]], '#46657d', '#e2e6e2', .8, 1.05, 32, -.05));
-  // throat grooves: pale stripes under the chin
-  for (let k=-2;k<=2;k++){ const z = k*3.6, gr = soft(new T.CylinderGeometry(.45, .45, 13, 6), '#b9c2c0'); gr.rotation.z = Math.PI/2; gr.position.set(42, -15.4*Math.sqrt(1 - Math.pow(z/20, 2)) + .25, z*1.02); body.add(gr); } // hug the belly
-  for (const sd of [-1, 1]){
-    const f = blade(48, 7.5, 1.6, .65, .5, 0, '#4f7189'); // long humpback flipper, swept back and down
-    f.rotation.set(sd*.3, -sd*(Math.PI/2 + .6), 0); f.position.set(30, -7, sd*15); body.add(f); // out to the sides, so they show from above
-    const eye = soft(new T.SphereGeometry(1.7, 12, 10), '#16202b'); eye.position.set(50, -3, sd*14.6); body.add(eye);
-    const hi = soft(new T.SphereGeometry(.55, 8, 6), '#ffffff'); hi.position.set(50.6, -2.3, sd*15.6); body.add(hi);
+  body.add(whaleBody());
+  const DARK = '#3b5870', put = (o, q) => { o.position.set(q[0], q[1], q[2]); body.add(o); return o; };
+  // knobs on the snout (a humpback's mark): one row down the middle, one on each side
+  for (let k=0;k<5;k++) put(soft(new T.SphereGeometry(1.25 - k*.08, 10, 8), '#4a6880'), whSurf(47 + k*4.6, Math.PI/2, .99));
+  for (const sd of [-1, 1]) for (let k=0;k<4;k++) put(soft(new T.SphereGeometry(1.1, 10, 8), '#4a6880'), whSurf(45 + k*5, Math.PI/2 + sd*.55, .99));
+  for (const sd of [-1, 1]){ const side = a => sd > 0 ? a : Math.PI - a;
+    // the long mouth line, curving down toward the eye
+    const pts = []; for (let k=0;k<=14;k++){ const t = k/14, q = whSurf(68.5 - t*38, side(-(.1 + .34*Math.pow(t, 1.5))), 1.004); pts.push(new T.Vector3(q[0], q[1], q[2])); }
+    body.add(soft(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 28, .42, 6, false), '#22323f'));
+    put(soft(new T.SphereGeometry(1.5, 12, 10), '#131c26'), whSurf(33, side(-.2), .985));
+    put(soft(new T.SphereGeometry(.45, 8, 6), '#ffffff'), whSurf(33.7, side(-.15), 1.035));
+    put(soft(new T.SphereGeometry(1, 10, 8), '#22323f'), whSurf(38, Math.PI/2 + sd*.13, .995)).scale.set(1.8, .5, .7); // twin blowholes
+    // long humpback flipper: pale, dark only where it leaves the body, swept back and a little down
+    const A = new T.Color(DARK), B = new T.Color('#e9eeec');
+    const f = blade(60, 9.5, 1.9, .62, .42, 0, null, (c, u) => c.copy(A).lerp(B, whStep(.06, .3, u)));
+    f.rotation.set(sd*.34, -sd*(Math.PI/2 + .62), 0); put(f, whSurf(27, side(-.5), .8));
   }
-  const blow = soft(new T.SphereGeometry(2.2, 12, 8), '#3d5a70'); blow.scale.set(1.4, .5, 1); blow.position.set(40, 15.5, 0); body.add(blow);
-  const hump = blade(10, 4, 1.6, .8, -.4, 0, '#405e75'); hump.rotation.z = Math.PI/2 + 1.05; hump.position.set(-30, 9, 0); body.add(hump); // a small fin on a hump near the tail
-  const tail = new T.Group(); tail.position.set(-69, 0, 0); body.add(tail);
-  for (const sd of [-1, 1]){ const fl = blade(40, 14, 1.8, .75, -.55*sd, 0, '#3e5c72'); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*1.05); fl.position.x = 1; tail.add(fl); }
+  const hump = blade(11, 5, 1.7, .8, -.4, 0, '#33506a'); hump.rotation.z = Math.PI/2 + 1.05; put(hump, whSurf(-28, Math.PI/2, .82)); // a small fin on a hump near the tail
+  for (let k=0;k<4;k++) put(soft(new T.SphereGeometry(1.5 - k*.2, 8, 6), '#33506a'), whSurf(-41 - k*6.5, Math.PI/2, .93)).scale.set(1.9, 1, .8); // knuckles down the tail stalk
+  const tail = new T.Group(); tail.position.set(-70, 0, 0); body.add(tail);
+  { const A = new T.Color('#33506a'), B = new T.Color('#5d7c92');
+    for (const sd of [-1, 1]){ const fl = blade(46, 16, 1.9, .72, -.6*sd, 0, null, (c, u, y) => c.copy(A).lerp(B, whStep(.55, 1, u))); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*1.02); fl.position.x = 3; tail.add(fl); } }
   const spout = []; for (let k=0;k<7;k++){ const p = mesh(new T.SphereGeometry(5, 10, 8), '#f4fbff', {transparent:true, opacity:.8, flatShading:false}, false); p.material = p.material.clone(); p.visible = false; g.add(p); spout.push(p); }
   g.userData = {body, tail, spout};
   return g;
