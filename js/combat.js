@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=b74cf2e';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=b74cf2e';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=b74cf2e';
-import {scene, screenToSea, setLair} from './scene.js?v=b74cf2e';
-import {wreckModel} from './models.js?v=b74cf2e';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=b74cf2e';
-import {mergeStatic, freeModel} from './merge.js?v=b74cf2e';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=b74cf2e';
-import {award} from './trophies.js?v=b74cf2e';
-import {makeFire, updateFire, burn} from './fire.js?v=b74cf2e';
-import {blessing, fighters, hasSail} from './crew.js?v=b74cf2e';
-import {progress, goal} from './quests.js?v=b74cf2e';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=b74cf2e';
-import {rollColor, unlockColor, colorName} from './colors.js?v=b74cf2e';
-import {toast, popLater} from './ui.js?v=b74cf2e';
-import {sink, rowNow, ROW} from './player.js?v=b74cf2e';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=b74cf2e';
-import {TOD} from './daynight.js?v=b74cf2e';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=b74cf2e';
-import {sfx} from './audio.js?v=b74cf2e';
-import {myLevel} from './levels.js?v=b74cf2e';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=6efbd22';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=6efbd22';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=6efbd22';
+import {scene, screenToSea, setLair} from './scene.js?v=6efbd22';
+import {wreckModel} from './models.js?v=6efbd22';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=6efbd22';
+import {mergeStatic, freeModel} from './merge.js?v=6efbd22';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=6efbd22';
+import {award} from './trophies.js?v=6efbd22';
+import {makeFire, updateFire, burn} from './fire.js?v=6efbd22';
+import {blessing, fighters, hasSail} from './crew.js?v=6efbd22';
+import {progress, goal} from './quests.js?v=6efbd22';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=6efbd22';
+import {rollColor, unlockColor, colorName} from './colors.js?v=6efbd22';
+import {toast, popLater} from './ui.js?v=6efbd22';
+import {sink, rowNow, ROW} from './player.js?v=6efbd22';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=6efbd22';
+import {TOD} from './daynight.js?v=6efbd22';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=6efbd22';
+import {sfx} from './audio.js?v=6efbd22';
+import {myLevel} from './levels.js?v=6efbd22';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -290,7 +290,7 @@ export function spawnBoss(){
   for (let i=0;i<BOSS.escorts;i++) bossShip('skiff', {x:at.x + Math.cos(i*3.1 + 1)*260, y:at.y + Math.sin(i*3.1 + 1)*260});
 }
 function bossDown(e){
-  if (e.rushLine) e.rushLine.visible = false; givePiece(11, 'king'); /* P71: his flagship's plans */ boss.e = null; progress('boss'); G.S.chapter = Math.max(G.S.chapter || 0, 1); award('king'); save(); G.shake = 1;
+  if (e.rushLine) e.rushLine.visible = false; givePiece(11, 'king'); /* P71: his flagship's plans */ givePiece(13, 'king:paralos'); givePiece(12, 'king:hexeres'); /* P120 */ boss.e = null; progress('boss'); G.S.chapter = Math.max(G.S.chapter || 0, 1); award('king'); save(); G.shake = 1;
   toast('Polycrates\' flagship breaks apart! The pirate king is beaten.', 5); sfx('fanfare');
   setTimeout(() => document.dispatchEvent(new Event('chapterdone')), 4500);
 }
@@ -648,10 +648,13 @@ const fortPlan = f => f.owner === 'pirate' ? (f.tier >= 3 ? 7 : PIRATE_PLANS) : 
 // What a camp or fortress still holds for you: the ship whose plan piece you'd win there, or 0
 export function planReward(f){
   if (!f || !(f.fort || f.named)) return 0; const S = G.S;
-  const t = f.named ? f.named.plans : f.camp ? f.camp.plans || 0 : fortPlan(f); if (!t) return 0;
-  const from = f.named ? 'ship:' + f.named.name : (f.camp ? 'camp:' : 'fort:') + f.isle.name, held = (S.plans || []).includes(t) || (S.owned || []).includes(t) || ((S.pieces || {})[t] || 0) >= PLANS[t].pieces;
-  return held || (S.pieceFrom || []).includes(from) ? 0 : t;
+  const t = f.named ? f.named.plans : f.camp ? f.camp.plans || 0 : fortPlan(f); if (!t && !hexFort(f)) return 0;
+  const from = f.named ? 'ship:' + f.named.name : (f.camp ? 'camp:' : 'fort:') + f.isle.name, held = !t || (S.plans || []).includes(t) || (S.owned || []).includes(t) || ((S.pieces || {})[t] || 0) >= PLANS[t].pieces;
+  if (!(held || (S.pieceFrom || []).includes(from))) return t;
+  return hexFort(f) && !(S.pieceFrom || []).includes('hex:' + f.isle.name) && !((S.plans || []).includes(12) || (S.owned || []).includes(12) || ((S.pieces || {})[12] || 0) >= PLANS[12].pieces) ? 12 : 0;
 }
+// P120: once the pirate king is beaten, each of the strongest fortresses holds a piece of the Hexeres's plans
+const hexFort = f => !!(f && f.fort && !f.camp && !f.named && f.tier >= 3 && (G.S.chapter || 0) >= 1);
 // A golden scroll of plans floating over every camp and fortress that still holds a piece, so you can spot it from afar
 const scrollMat = new T.MeshBasicMaterial({color:'#f3d27a'}), scrollEnd = new T.MeshBasicMaterial({color:'#b5552c'});
 function scrollModel(){ const g = new T.Group(), roll = new T.Mesh(new T.CylinderGeometry(7, 7, 34, 14), scrollMat); roll.rotation.z = Math.PI/2; g.add(roll);
@@ -703,6 +706,7 @@ function sinkEnemy(e, byPlayer){
   const color = byPlayer && !e.fort ? rollColor() : null;
   if (byPlayer && e.fort && e.owner === 'pirate') progress('fort');
   if (byPlayer && e.fort && !e.camp && fortPlan(e)) givePiece(fortPlan(e), 'fort:' + e.isle.name);
+  if (byPlayer && hexFort(e)) givePiece(12, 'hex:' + e.isle.name);
   if (byPlayer && e.fort && !e.camp && e.isle) setTimeout(() => chartPiece(e.isle.name), 2500);
   if (byPlayer && e.named){ givePiece(e.named.plans, 'ship:' + e.named.name); shipDeed(e.named.name); }
   if (e.camp){ const S = G.S; if (!e.camp.back) S.camps = [...new Set([...(S.camps || []), e.isle.name])]; if (byPlayer) progress('camp', e.isle.name); if (e.camp.plans) givePiece(e.camp.plans, 'camp:' + e.isle.name); }

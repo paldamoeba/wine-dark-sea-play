@@ -1,7 +1,7 @@
 // Everything that changes while playing, plus saving and loading.
-import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=b74cf2e';
-import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=b74cf2e';
-import {sfx} from './audio.js?v=b74cf2e';
+import {SHIPS, TUNING, SAVE_VERSION, SAVE_KEY, OLD_SAVE_KEYS, SETTINGS_KEY, UPGRADES, FISH, GOODS, WAREHOUSE, REVEAL} from './config.js?v=6efbd22';
+import {START, HOME, MAP, ISLANDS, SPOTS, WRECKS, EXP_N, EXP_CELL} from './world.js?v=6efbd22';
+import {sfx} from './audio.js?v=6efbd22';
 
 // G = the live game. G.S is the part that gets saved.
 export const G = {
@@ -125,6 +125,8 @@ function migrate(o){
   // and the hired sailors became each ship's own crew (old crew quarters levels count as Crew levels; hires are refunded)
   // P65: hull and sail colors are found now; whatever this save already used stays unlocked
   if (!o.p65){ o.p65 = true; const looks = [o.look || {}, ...Object.values(o.looks || {})]; o.colors = {paint:[...new Set(looks.map(l => l.paint).filter(Boolean))], sail:[...new Set(looks.map(l => l.sail).filter(Boolean))]}; }
+  // P120: a save that already beat the pirate king gets what beating him gives now: the Paralos's plans and the first piece of the Hexeres
+  if ((o.chapter || 0) >= 1 && !(o.pieceFrom || []).includes('king:paralos')){ o.pieces = {...(o.pieces || {}), 13:1, 12:Math.max(1, (o.pieces || {})[12] || 0)}; o.pieceFrom = [...(o.pieceFrom || []), 'king:paralos', 'king:hexeres']; }
   if (!o.ram15){ o.ram15 = true; o.ram = Math.ceil((o.ram || 0)/2); } // P64: the ram went from 30 levels to 15
   if (!o.p49){ o.p49 = true; const g = o.goal || 0; o.goal = g < 7 ? g : g === 7 ? 8 : g + 2;
     const own = o.owned || Array.from({length:(o.tier || 0) + 1}, (_, i) => i); o.plans = [...new Set([0, ...own])];

@@ -1,20 +1,22 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=b74cf2e';
-import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=b74cf2e';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=b74cf2e';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=b74cf2e';
-import {men} from './crew.js?v=b74cf2e';
-import {SPECS, crewLayout} from './ships.js?v=b74cf2e';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=b74cf2e';
-import {HARBORS} from './world.js?v=b74cf2e';
-import {planSources} from './combat.js?v=b74cf2e';
-import {ranksBody} from './records.js?v=b74cf2e';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=b74cf2e';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=6efbd22';
+import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=6efbd22';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=6efbd22';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=6efbd22';
+import {men} from './crew.js?v=6efbd22';
+import {SPECS, crewLayout} from './ships.js?v=6efbd22';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=6efbd22';
+import {HARBORS} from './world.js?v=6efbd22';
+import {planSources} from './combat.js?v=6efbd22';
+import {ranksBody} from './records.js?v=6efbd22';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=6efbd22';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
 const KING = 11;
+// P120: ships whose plans don't lie in a place you can sail to yet: a line of words instead of a list of fortresses
+const lateNote = t => t === KING ? 'Only the pirate king has them. Beat Polycrates and they are yours.' : t === 13 ? 'A gift from the cities of the Aegean. Beat the pirate king and the plans are yours.' : t === 12 && !((G.S.chapter || 0) >= 1) ? 'Polycrates holds the first piece. After he falls, the strongest fortresses hold the rest.' : '';
 const buildable = () => SHIPS.map((sh, t) => t).filter(t => PLANS[t]);
 // real numbers for a ship: with its upgrades if it's yours, as it comes from the yard if it isn't
 function numbers(t){ const b = SHIPS[t], u = ((G.S.ups || {})[t] || {}), m = men(t), c = crewLayout(SPECS[b.model], m);
@@ -57,9 +59,9 @@ function getCard(t){
       <small>Plans: ${got} of ${P.pieces}${studied(t) ? ' · studied' : ''}</small>${t === KING ? '' : `<button class="btn ${pin ? 'gold' : 'ghostdark'} small pinbtn" data-act="pin" data-t="${t}">${PIN}${pin ? 'Pinned' : 'Pin this ship'}</button>`}</div></div>
     <p class="note">${sh.desc}</p>
     <h4>Compared with your ${ship().name.toLowerCase()}</h4>${statRows(n, numbers(S.tier))}
-    ${done ? '' : t === KING ? '<h4>Where the plans are</h4><p class="note">Only the pirate king has them. Beat Polycrates and they are yours.</p>' : `<h4>Where the plans are</h4>${sourceRows(t, 3)}`}${act}</section>`;
+    ${done ? '' : lateNote(t) ? `<h4>Where the plans are</h4><p class="note">${lateNote(t)}</p>` : `<h4>Where the plans are</h4>${sourceRows(t, 3)}`}${act}</section>`;
 }
-const need = t => t === KING ? 99 : allPieces(t) || studied(t) ? 0 : Math.min(50, ...planSources(t).map(siteLevel));
+const need = t => lateNote(t) ? 99 : allPieces(t) || studied(t) ? 0 : Math.min(50, ...planSources(t).map(siteLevel));
 export function fleetBody(){
   const S = G.S, list = [['mine', 'Your ships', IC.ship], ['get', 'Ships to get', IC.map], ['ranks', 'Leaderboard', IC.star]];
   if (!list.some(([k]) => k === tabs.fleet)) tabs.fleet = 'mine';

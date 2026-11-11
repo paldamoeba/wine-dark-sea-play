@@ -40,6 +40,11 @@ export const SHIPS = [
     desc:'Long, narrow and fast, with benches for 22 rowers and a ram. Thin planks and almost no hold'},
   {name:'Pirate King\'s Flagship', model:'flagship', rank:4, speed:190, hull:800, hold:30, cap:{wood:300, bronze:110, iron:70, linen:50, goods:60}, heavy:8, fishTime:3, woodTime:3, storm:0, len:280, beam:96, fighters:14, men:[14, 24], turn:.42, plans:true, cost:{wood:1500, bronze:300, iron:200, linen:150, gold:3000},
     desc:'Polycrates\' floating fortress: towers, statues and a golden stern. There is only one, and you have to beat him for it'},
+  // P120: after the pirate king (new ships go on the end of this list: saves keep ships by their place in it)
+  {name:'Hexeres', model:'hexeres', rank:4, speed:200, hull:560, hold:28, cap:{wood:290, bronze:100, iron:66, linen:46, goods:46}, heavy:7.2, fishTime:3, woodTime:3, storm:0, len:240, beam:70, fighters:12, men:[12, 64], turn:.46, plans:true, cost:{wood:1400, bronze:280, iron:190, linen:130, gold:2600},
+    desc:'A six: bigger than the quinquereme, with twelve archers on a wide fighting deck. One piece of its plans comes from Polycrates, the rest from the strongest fortresses after he falls'},
+  {name:'Paralos', model:'paralos', rank:3, speed:215, hull:300, hold:18, cap:{wood:200, bronze:60, iron:36, linen:30, goods:32}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0, len:170, beam:49, fighters:6, men:[6, 39], turn:.66, plans:true, cost:{wood:500, bronze:120, iron:40, linen:60, gold:2000},
+    desc:'The sacred ship of Athens: a gilded trireme with a canopy, the fastest warship afloat. Its plans are the cities\' thanks for beating the pirate king'},
 ];
 
 // spin = needle speed (radians per second), green = size of the green part (degrees). Bigger fish: faster, smaller.
@@ -198,7 +203,7 @@ export const PIRATE_PLANS = 3; // a pirate fortress gives a piece of the trireme
 // P54: ship plans come in pieces won from camps and fortresses. With every piece, the Kallisto shipwrights study them,
 // then build the ship. Both take real time (seconds, running even while the game is closed); a video makes it faster.
 // P65: the fishing boat's plans take 25 minutes, so you really live with the rowboat first; the later ships stay longer than that.
-export const PLANS = {1:{pieces:1, study:1500, build:120}, 2:{pieces:2, study:2100, build:900}, 3:{pieces:3, study:3000, build:1500}, 7:{pieces:3, study:4200, build:2400}, 4:{pieces:1, study:600, build:120}, 8:{pieces:1, study:900, build:180}, 5:{pieces:1, study:1200, build:300}, 9:{pieces:1, study:1800, build:600}, 10:{pieces:2, study:1800, build:600}, 6:{pieces:1, study:2100, build:900}, 11:{pieces:1, study:900, build:900}};
+export const PLANS = {1:{pieces:1, study:1500, build:120}, 2:{pieces:2, study:2100, build:900}, 3:{pieces:3, study:3000, build:1500}, 7:{pieces:3, study:4200, build:2400}, 4:{pieces:1, study:600, build:120}, 8:{pieces:1, study:900, build:180}, 5:{pieces:1, study:1200, build:300}, 9:{pieces:1, study:1800, build:600}, 10:{pieces:2, study:1800, build:600}, 6:{pieces:1, study:2100, build:900}, 11:{pieces:1, study:900, build:900}, 12:{pieces:3, study:3600, build:2400}, 13:{pieces:1, study:900, build:900}};
 // P71: named pirates, each sailing near one island and holding the plans of a ship. Sink one and the piece is yours. Numbers set their level (levels.js).
 export const NAMED = [
   {name:'Mikros the Rat', near:'Donousa', kind:'dinghy', plans:4, hull:90, fighters:3, dmg:2, gold:[40, 60], paint:'raider', sail:'blood'},

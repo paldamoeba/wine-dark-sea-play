@@ -75,6 +75,9 @@ export const SPECS = {
   // square sails, oars low down, a great curled stern and a ram. A ghost ship: nobody aboard.
   // P62: the quinquereme, the biggest warship: two rows of oars, a raised fighting deck with a railing over the rowers,
   // a mainsail and a foresail, a big ram. Archers fight from the top deck.
+  // P120 (Nicholas: "I love the paralos and hexeres"): two of the Showroom's ship ideas are real ships now, won after the pirate king
+  hexeres:    {L:240, B:70, H:34, rise:40, oarRows:2, oarCount:20, mast:true, sailW:92, sailH:76, sailMax:20, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, twoDeck:true, crew:[['stand', 1], ['archer', 12]], look:{paint:'black', sail:'blood', flag:'poseidon'}},
+  paralos:    {L:170, B:49, H:23, rise:34, oarRows:1, oarCount:16, mast:true, sailW:74, sailH:60, sailMax:15, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, outrigger:true, canopy:true, crew:[['stand', 1], ['archer', 6]], look:{paint:'gold', sail:'plain', flag:'zeus'}},
   quinquereme:{L:215, B:62, H:30, rise:36, oarRows:2, oarCount:18, mast:true, sailW:84, sailH:70, sailMax:20, ram:true, bigRam:true, fans:true, bowFans:true, eyes:true, twoDeck:true, crew:[['stand', 1], ['archer', 10]], look:{paint:'aegean', sail:'bwr', flag:'zeus'}},
   flagship:   {L:280, B:96, H:44, rise:30, oarRows:2, oarCount:20, mast:true, sailW:70, sailH:58, sailMax:15, flagship:true, ghost:true, eyes:true, raider:true, crew:[], look:{paint:'drowned', sail:'rot', flag:'none'}},
 };
@@ -661,12 +664,17 @@ export function buildShip(key, look = {}, crew = true){
   if (s.flagship) body.add(flagshipDeck(s, info, pc, sailKey));
   // the two-deck ship: a fighting deck on posts over the rowers, a railing all round it, and a foresail leaning over the bow
   if (s.twoDeck){ const dy = info.deckLevel + s.H*.38, dl = s.L*.66, dw = s.B*.84;
-    const deck = mesh(new T.BoxGeometry(dl, 1.6, dw), pc.deck); deck.position.set(-s.L*.02, dy, 0); body.add(deck);
-    const n = 16; for (let k=0;k<=n;k++){ const x = -s.L*.02 - dl/2 + k*dl/n;
-      for (const sg of [1, -1]){ const post = mesh(new T.CylinderGeometry(.5, .5, s.H*.38, 5), pc.wale); post.position.set(x, info.deckLevel + s.H*.19, sg*dw*.48); body.add(post);
-        const rp = mesh(new T.BoxGeometry(.8, 5, .8), pc.wale); rp.position.set(x, dy + 3.2, sg*dw*.5); body.add(rp); } }
-    for (const sg of [1, -1]){ const rail = mesh(new T.BoxGeometry(dl, 1, 1.2), pc.wale); rail.position.set(-s.L*.02, dy + 5.6, sg*dw*.5); body.add(rail);
-      const mid = mesh(new T.BoxGeometry(dl, .6, .8), pc.wale); mid.position.set(-s.L*.02, dy + 3, sg*dw*.5); body.add(mid); }
+    /* P120 (Nicholas: "there's wood coming out of the ship on the hexeres"): the fighting deck was a plain rectangle, so its corners and
+       rails poked out through the hull where it narrows toward bow and stern. It now follows the hull's own width. */
+    const n = 16, xs = Array.from({length:n + 1}, (_, k) => -s.L*.02 - dl/2 + k*dl/n), hw = x => Math.min(dw/2, info.W(Math.min(1, Math.abs(x)/(s.L/2)))*.86);
+    { const sh = new T.Shape(); xs.forEach((x, k) => k ? sh.lineTo(x, hw(x)) : sh.moveTo(x, hw(x))); for (let k = n; k >= 0; k--) sh.lineTo(xs[k], -hw(xs[k]));
+      const dg = new T.ExtrudeGeometry(sh, {depth:1.6, bevelEnabled:false}); dg.rotateX(Math.PI/2); const deck = mesh(dg, pc.deck); deck.position.y = dy + .8; body.add(deck); }
+    for (let k=0;k<=n;k++){ const x = xs[k], z = hw(x);
+      for (const sg of [1, -1]){ const post = mesh(new T.CylinderGeometry(.5, .5, s.H*.38, 5), pc.wale); post.position.set(x, info.deckLevel + s.H*.19, sg*z*.96); body.add(post);
+        const rp = mesh(new T.BoxGeometry(.8, 5, .8), pc.wale); rp.position.set(x, dy + 3.2, sg*z); body.add(rp);
+        if (k < n){ const x1 = xs[k + 1], z1 = hw(x1), len = Math.hypot(x1 - x, z1 - z), ry = -Math.atan2(sg*(z1 - z), x1 - x);
+          const rail = mesh(new T.BoxGeometry(len + .6, 1, 1.2), pc.wale); rail.position.set((x + x1)/2, dy + 5.6, sg*(z + z1)/2); rail.rotation.y = ry; body.add(rail);
+          const mid = mesh(new T.BoxGeometry(len + .4, .6, .8), pc.wale); mid.position.set((x + x1)/2, dy + 3, sg*(z + z1)/2); mid.rotation.y = ry; body.add(mid); } } }
     if (lk.sailLv === undefined){ const fm = new T.Group(); fm.position.set(s.L*.3, dy, 0); body.add(fm); // upright (your own ship gets its sails from the Sail upgrade)
     const m2 = mesh(new T.CylinderGeometry(1.1, 1.6, s.sailH*.7 + 12, 6), 'mast'); m2.position.y = (s.sailH*.7 + 12)/2; fm.add(m2);
     const y2 = mesh(new T.CylinderGeometry(.8, .8, s.sailW*.55 + 8, 6), 'mast'); y2.rotation.x = Math.PI/2; y2.position.set(1.2, s.sailH*.7 + 9, 0); fm.add(y2);
