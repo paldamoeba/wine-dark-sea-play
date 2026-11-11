@@ -1181,3 +1181,50 @@ select{pointer-events:none}
 .lifebar,.loads,.hudbar{transition:opacity .6s}
 body.hudquiet .lifebar,body.hudquiet .loads,body.hudquiet .hudbar{opacity:0}
 .job small b.bad{color:#b8402f} /* P93: sold out */
+
+/* ---- P129: the pause menu and Settings as one small cozy card over the dimmed sea (Fable's draft A, picked by Nicholas).
+   The sheet becomes a see-through layer that centres the card; tapping the dim sea around it closes it. ---- */
+body .sheet.menu.pop{inset:0!important;top:0!important;bottom:0!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;
+  background:rgba(20,40,48,.45)!important;box-shadow:none!important;display:flex;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box}
+.pz{margin:auto;width:min(354px,100%);box-sizing:border-box;background:#f6efe0;border:3px solid #e2cfa6;border-radius:24px;box-shadow:0 10px 0 rgba(58,42,28,.35),0 24px 40px rgba(0,0,0,.35);
+  padding:16px 16px 18px;display:flex;flex-direction:column;gap:14px;color:#3a2a1c;font-family:var(--body)}
+.pzhead{display:flex;align-items:center;justify-content:space-between}.pzhead>span{width:44px}
+.pz .pzhead h1{margin:0;font:400 26px/1.1 var(--display);letter-spacing:.5px;color:#3a2a1c;text-shadow:none}
+.pzx{width:44px;height:44px;flex:none;border-radius:50%;border:0;background:#3a2a1c;color:#f6efe0;display:grid;place-items:center;box-shadow:0 3px 0 #1d140c;cursor:pointer}
+.pzx:active{transform:translateY(2px);box-shadow:0 1px 0 #1d140c}
+.pzship{background:#fffaf0;border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:12px}
+.pzlv{width:48px;height:48px;flex:none;border-radius:50%;background:#3a2a1c;border:3px solid #c9963c;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f6efe0}
+.pzlv small{font:800 10px/1 var(--body)}.pzlv b{font:800 18px/1 var(--body)}
+.pzship>div:last-child{display:flex;flex-direction:column;min-width:0}
+.pzship>div:last-child b{font:400 19px/1.2 var(--display);overflow-wrap:anywhere}.pzship>div:last-child small{font:700 13px/1.3 var(--body);color:#7a5a36}
+.pzgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 6px}
+.pztile{border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;color:#3a2a1c;cursor:pointer}
+.pztile span{width:68px;height:68px;border-radius:50%;background:#3a2a1c;border:3px solid #c9963c;box-sizing:border-box;display:grid;place-items:center;color:#f6efe0;box-shadow:0 4px 0 rgba(58,42,28,.45)}
+.pztile:active span{transform:translateY(3px);box-shadow:0 1px 0 rgba(58,42,28,.45)}
+.pztile b{font:800 13px/1.15 var(--body);text-align:center}
+.pzgo{height:58px;border-radius:16px;border:0;background:#2f6b66;box-shadow:0 5px 0 #1c4744;font:400 22px var(--display);color:#fff;cursor:pointer}
+.pzgo:active{transform:translateY(3px);box-shadow:0 2px 0 #1c4744}
+.pzmenu{height:48px;border-radius:14px;border:0;background:#efe2c6;font:800 15px var(--body);color:#3a2a1c;cursor:pointer}
+.pzmenu:active{background:#e3d2ae}
+/* Settings: volume sliders, picks, switches, links */
+.stbox{background:#fffaf0;border-radius:16px;padding:6px 12px;display:flex;flex-direction:column}
+.stbox h4{margin:8px 0 6px;font:800 13px var(--body);letter-spacing:.6px;text-transform:uppercase;color:#7a5a36}
+.stvol{display:flex;align-items:center;gap:10px;min-height:46px}
+.stic{width:34px;height:34px;flex:none;border-radius:10px;background:#efe2c6;display:grid;place-items:center;color:#7a5a36}
+.stvol b{width:72px;flex:none;font:800 15px var(--body)}
+body .sheet.menu .stvol input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:0;width:auto;height:28px;margin:0;padding:0;background:transparent!important;border:0!important;box-shadow:none!important;cursor:pointer}
+.stvol input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:6px;background:linear-gradient(90deg,#2f6b66 var(--v,50%),#e3d5b8 var(--v,50%))}
+.stvol input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-7px;border-radius:50%;background:#d9a441;border:3px solid #fffaf0;box-sizing:border-box;box-shadow:0 2px 0 rgba(58,42,28,.35)}
+.stvol input[type=range]::-moz-range-track{height:12px;border-radius:6px;background:#e3d5b8}
+.stvol input[type=range]::-moz-range-progress{height:12px;border-radius:6px;background:#2f6b66}
+.stvol input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#d9a441;border:3px solid #fffaf0;box-sizing:border-box;box-shadow:0 2px 0 rgba(58,42,28,.35)}
+.stsegs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:6px}.stsegs.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.stseg{height:44px;border-radius:12px;border:0;background:#efe2c6;font:800 14px var(--body);color:#3a2a1c;cursor:pointer;padding:0}
+.stseg.on{background:#2f6b66;color:#fff;box-shadow:0 3px 0 #1c4744}
+.stsw{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;font:800 15px var(--body)}
+.stbtn{height:38px;padding:0 16px;border-radius:12px;border:0;background:#c9963c;box-shadow:0 3px 0 #8a6220;font:800 14px var(--body);color:#2a1c0e;cursor:pointer}
+.stlinks{display:flex;justify-content:center;flex-wrap:wrap;gap:0 18px;margin-top:-4px}
+.stlinks a,.stlinks button{min-height:44px;display:flex;align-items:center;padding:0;border:0;background:none;font:700 13px var(--body);color:#7a5a36;text-decoration:underline;cursor:pointer}
+.stver{margin:-12px 0 0;text-align:center;font:700 12px var(--body);color:#7a5a36}
+.stcred{padding:8px 14px}.stcred p{margin:6px 0;font:700 14px/1.35 var(--body);color:#3a2a1c}
+.stcred p b{display:block;font:800 12px var(--body);letter-spacing:.6px;text-transform:uppercase;color:#7a5a36}

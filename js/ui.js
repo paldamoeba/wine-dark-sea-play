@@ -1,36 +1,36 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=788f7d6';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=788f7d6';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=788f7d6';
-import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=788f7d6';
-import {showRewarded, ads, adPrivacy, CONSENT_TEST, consentTest} from './ads.js?v=788f7d6';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat, gain} from './state.js?v=788f7d6';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=788f7d6';
-import {CYCLE} from './daynight.js?v=788f7d6';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=788f7d6';
-import {swapBoat, refreshAllTrees} from './entities.js?v=788f7d6';
-import {setZoom} from './input.js?v=788f7d6';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=788f7d6';
-import {tutHTML} from './tutorial.js?v=788f7d6';
-import {founded, blessing} from './crew.js?v=788f7d6';
-import {WHALE} from './wildlife.js?v=788f7d6';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=788f7d6';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=788f7d6';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=788f7d6';
-import {effectText, buy} from './upgrades.js?v=788f7d6';
-import {fleetHTML} from './fleetpage.js?v=788f7d6';
-import {myLevel} from './levels.js?v=788f7d6';
-import {askName} from './naming.js?v=788f7d6';
-import {FLAG_COST, RENAME_COST, flagHeld, stockLeft, takeStock, restock} from './menus.js?v=788f7d6';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=788f7d6';
-import {GOODS, WAR} from './config.js?v=788f7d6';
-import {fly} from './fly.js?v=788f7d6';
-import {combatState} from './combat.js?v=788f7d6';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=788f7d6';
-import {RANKS} from './records.js?v=788f7d6';
-import {W, KINDS} from './weather.js?v=788f7d6';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=788f7d6';
-import {setTimeOfDay} from './daynight.js?v=788f7d6';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=2e38722';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=2e38722';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=2e38722';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=2e38722';
+import {showRewarded, ads, adPrivacy, CONSENT_TEST, consentTest} from './ads.js?v=2e38722';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat, gain} from './state.js?v=2e38722';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=2e38722';
+import {CYCLE} from './daynight.js?v=2e38722';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=2e38722';
+import {swapBoat, refreshAllTrees} from './entities.js?v=2e38722';
+import {setZoom} from './input.js?v=2e38722';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=2e38722';
+import {tutHTML} from './tutorial.js?v=2e38722';
+import {founded, blessing} from './crew.js?v=2e38722';
+import {WHALE} from './wildlife.js?v=2e38722';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=2e38722';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=2e38722';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=2e38722';
+import {effectText, buy} from './upgrades.js?v=2e38722';
+import {fleetHTML} from './fleetpage.js?v=2e38722';
+import {myLevel} from './levels.js?v=2e38722';
+import {askName} from './naming.js?v=2e38722';
+import {FLAG_COST, RENAME_COST, flagHeld, stockLeft, takeStock, restock} from './menus.js?v=2e38722';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=2e38722';
+import {GOODS, WAR} from './config.js?v=2e38722';
+import {fly} from './fly.js?v=2e38722';
+import {combatState} from './combat.js?v=2e38722';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=2e38722';
+import {RANKS} from './records.js?v=2e38722';
+import {W, KINDS} from './weather.js?v=2e38722';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=2e38722';
+import {setTimeOfDay} from './daynight.js?v=2e38722';
 
 const $ = id => document.getElementById(id);
 
@@ -154,19 +154,46 @@ function placeNearBoat(){
     el.classList.add('near'); el.style.left = x/z + 'px'; el.style.top = (below + (id === 'councilBtn' || id === 'arenaBtn' ? 54*z : 0))/z + 'px'; }
 }
 // ---- sheets (harbor, settings) ----
-const sheetEl = $('sheet'); let sheet = null, resetArmed = false;
+const sheetEl = $('sheet'); let sheet = null, resetArmed = false, fromPause = false;
 // the end of the voyage: a page with it in numbers
 document.addEventListener('chapterdone', () => openSheet('end'));
-export function openSheet(name){ if (!sheet) sfx('open'); sheet = name; if (name === 'inv' && tabs.inv === 'jobs') G.S.questNew = false; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
-function closeSheet(){ if (sheet) sfx('close'); sheet = null; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); document.dispatchEvent(new Event('sheetclosed')); }
+export function openSheet(name){ if (!sheet) sfx('open'); sheet = name; fromPause = false; if (name === 'settings') tabs.set = 'game'; if (name === 'inv' && tabs.inv === 'jobs') G.S.questNew = false; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
+function closeSheet(){ if (sheet) sfx('close'); sheet = null; fromPause = false; G.paused = false; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); document.dispatchEvent(new Event('sheetclosed')); }
 export function openPort(){
   G.v = 0; tabs.port = (G.dock && G.dock.h && !G.dock.h.is.port) ? 'market' : 'yard'; // every visit opens on the first tab
   openSheet('port'); save();
 }
 
 function render(){ const st = sheetEl.scrollTop;
-  sheetEl.innerHTML = sheet === 'port' ? harborHTML(G.dock ? G.dock.h : HARBORS[0]) : sheet === 'tut' ? tutHTML(tutPage) : sheet === 'inv' ? bagHTML() : sheet === 'fleet' ? fleetHTML() : sheet === 'council' && G.council ? councilHTML(G.council) : sheet === 'end' ? endHTML() : sheet === 'log' ? `<div class="mtop">${top('Voyage log')}</div><div class="mbody">${logHTML()}</div>` : settingsHTML();
-  sheetEl.classList.add('menu'); sheetEl.scrollTop = st; }
+  G.paused = sheet === 'pause' || fromPause;
+  sheetEl.innerHTML = sheet === 'pause' ? pauseHTML() : sheet === 'port' ? harborHTML(G.dock ? G.dock.h : HARBORS[0]) : sheet === 'tut' ? tutHTML(tutPage) : sheet === 'inv' ? bagHTML() : sheet === 'fleet' ? fleetHTML() : sheet === 'council' && G.council ? councilHTML(G.council) : sheet === 'end' ? endHTML() : sheet === 'log' ? `<div class="mtop">${top('Voyage log')}</div><div class="mbody">${logHTML()}</div>` : sheet === 'cups' ? `<div class="mtop">${top('Trophies')}</div><div class="mbody">${cupsHTML()}</div>` : settingsHTML();
+  // P129: the pause menu and Settings are small cards over the sea (the Builder page stays a full page)
+  sheetEl.classList.add('menu'); sheetEl.classList.toggle('pop', sheet === 'pause' || (sheet === 'settings' && tabs.set !== 'dev')); sheetEl.scrollTop = st; }
+
+// P129 (Nicholas picked it from Fable's drafts): the gear opens a pause menu. The game holds still while it is up.
+const PAUSE_IC = {
+  settings:'M12 9a3 3 0 1 0 0 6a3 3 0 0 0 0-6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1',
+  tut:'M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z',
+  log:'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V4zM5 18a2 2 0 0 1 2-2h12M9 8h6',
+  cups:'M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4',
+  ranks:'M5 20V11M12 20V5M19 20v-6',
+  respawn:'M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11zM12 8a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5z'};
+const pzSvg = (d, w = 30) => `<svg viewBox="0 0 24 24" width="${w}" height="${w}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+const pzX = `<button class="pzx" data-act="close" aria-label="Close">${pzSvg('M6 6l12 12M18 6L6 18', 20)}</button>`;
+const pzHead = title => `<div class="pzhead"><span></span><h1>${title}</h1>${pzX}</div>`;
+function pauseHTML(){
+  const S = G.S, secs = S.playSeconds || 0, time = secs >= 3600 ? `${Math.floor(secs/3600)} h ${Math.floor(secs/60) % 60} min` : `${Math.floor(secs/60)} min`, sunk = (S.stats || {}).sunk || 0;
+  const name = shipName(), kind = ship().name, tiles = [['settings', 'Settings'], ['tut', 'How to play'], ['log', 'Voyage log'], ['cups', 'Trophies'], ['ranks', 'Leaderboard'], ['respawn', 'Stuck?']];
+  return `<div class="pz">${pzHead('Paused')}
+    <div class="pzship"><div class="pzlv"><small>LV</small><b>${myLevel()}</b></div><div><b>${name === kind ? name : `${name}, the ${kind.toLowerCase()}`}</b><small>${time} at sea · ${sunk} ${sunk === 1 ? 'ship' : 'ships'} sunk</small></div></div>
+    <div class="pzgrid">${tiles.map(([k, label]) => `<button class="pztile" data-act="pz" data-v="${k}"><span>${pzSvg(PAUSE_IC[k])}</span><b>${label}</b></button>`).join('')}</div>
+    <button class="pzgo" data-act="close">Back to the sea</button>
+    <button class="pzmenu" data-act="mainmenu">Main menu</button></div>`;
+}
+// the trophies alone (the Voyage log shows them too)
+function cupsHTML(){
+  return card(`Trophies <small class="cupn">${trophyCount()} of ${Object.keys(TROPHIES).length}</small>`, `<div class="cups">${Object.entries(TROPHIES).map(([k, t]) => `<div class="cupb ${hasTrophy(k) ? 'on' : ''}">${cupSVG(t.c, hasTrophy(k))}<b>${t.name}</b><small>${t.how}</small></div>`).join('')}</div>`);
+}
 
 // P65: fun numbers to look at after hours of playing
 function logHTML(){
@@ -206,11 +233,6 @@ function mapHTML(){
       <button class="btn gold" data-act="applymap">Apply</button></div>`;
 }
 
-// Settings: the same Greek menu as the harbor, with a close button, and three tabs.
-// sound volumes: Off, Quiet, Medium, Loud
-const VOLS = [[0, 'Off'], [.3, 'Quiet'], [.6, 'Medium'], [1, 'Loud']];
-// P92 (Nicholas): the songs were too loud. Music has its own steps: the old Quiet is now Medium (and the default), the old Medium is Loud, plus a quieter Quiet.
-const MUSIC_VOLS = [[0, 'Off'], [.15, 'Quiet'], [.3, 'Medium'], [.6, 'Loud']];
 // full screen (Android browsers and computers; iPhones only through "Add to Home Screen")
 const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
 function toggleFull(){
@@ -224,34 +246,41 @@ document.addEventListener('fullscreenchange', () => { if (sheet === 'settings') 
 function saveSound(){ const {on, music, sfx: fx, sea, style, battle, rest} = SND; G.settings.sound = {on, music, sfx:fx, sea, style, battle, rest}; saveSettings(); applyVolumes(); }
 const tog = (act, on, label) => `<button class="tog ${on ? 'on' : ''}" data-act="${act}" role="switch" aria-checked="${on}" aria-label="${label}"><i></i></button>`;
 const row = (title, small, ctl) => `<div class="row"><div>${title}${small ? `<small>${small}</small>` : ''}</div>${ctl}</div>`;
+// P129 (Nicholas picked card A from Fable's drafts): Settings is one small card over the sea. Icon, name, control; no explaining lines.
+// The volumes are sliders (Music tops out at the old Loud). Privacy, Credits and Contact sit at the bottom, as Google Play asks.
+const VOL_MAX = {music:.6, sfx:1, sea:1};
+const VOL_IC = {music:'M9 18V5l10-2v13M9 18a3 3 0 1 1-6 0a3 3 0 0 1 6 0zM19 16a3 3 0 1 1-6 0a3 3 0 0 1 6 0z', sfx:'M4 9v6h4l5 4V5L8 9H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11', sea:'M2 9c2-2 4-2 6 0s4 2 6 0s4-2 6 0M2 15c2-2 4-2 6 0s4 2 6 0s4-2 6 0'};
+const PRIVACY_URL = 'https://paldagames.com/privacy', CONTACT = 'support@paldagames.com';
+const volOf = k => SND.on ? Math.round(Math.min(1, SND[k]/VOL_MAX[k])*100) : 0;
+const swRow = (label, ctl) => `<div class="stsw"><span>${label}</span>${ctl}</div>`;
 function settingsHTML(){
-  const s = G.settings, q = s.quality, t = tabs.set;
-  const opt = (v, label) => `<button class="seg ${q === v ? 'on' : ''}" data-act="quality" data-v="${v}" aria-pressed="${q === v}">${label}</button>`;
-  const auto = s.detected ? ` (using ${QUALITY[s.detected].label})` : '';
-  const mins = Math.floor((G.S.playSeconds || 0)/60);
-  // the Builder tab only shows for the builder: tap the version line five times to bring it up on a new device
-  // P88 (Nicholas): no music style, rests, battle music, day and night or Start over here (erase a voyage on the main menu)
-  const list = [['game', 'Game', IC.ship], ['gfx', 'Graphics', IC.star], ...(s.builder || s.showBuilder ? [['dev', 'Builder', IC.gear]] : [])];
-  if (t === 'dev' && !list.some(([k]) => k === 'dev')) tabs.set = 'game';
-  const game = card('Your voyage', `<div class="stats big">${IC.ship} ${shipName()} · ${mins} min at sea</div>${row('Voyage log', 'Ships sunk, days at sea and other fun numbers.', '<button class="btn" data-act="log">Open</button>')}${row('Leaderboard', 'Your ships ranked, and what each one has done.', '<button class="btn" data-act="openfleet" data-to="ranks">Open</button>')}${row('Stuck?', 'Puts your ship on clear water close to where you are.', '<button class="btn" data-act="respawn">Respawn</button>')}${row('How to play', 'The pages from the start of the game.', '<button class="btn" data-act="tut">Show</button>')}${row('Main menu', 'Your three voyages. This one is saved first. Erase a voyage there to start over.', '<button class="btn" data-act="mainmenu">Go</button>')}`)
-    + card('Sound', row('Sound', 'The sea, gulls, oars, coins, arrows and soft music.', tog('sound', SND.on, 'Sound'))
-      + `<div class="looks">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea and wind']].map(([k, label]) => `<label><span>${label}</span><select data-snd="${k}" ${SND.on ? '' : 'disabled'}>${(k === 'music' ? MUSIC_VOLS : VOLS).map(([v, n], _, L) => `<option value="${v}" ${L.reduce((b, o) => Math.abs(o[0] - SND[k]) < Math.abs(b[0] - SND[k]) ? o : b)[0] === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`).join('')}</div>`
-      )
-    + (APP ? '' : card('Screen', row('Full screen', 'Hides the browser bars. On a phone you can also add the game to your home screen (browser menu, then "Add to Home screen") and it always opens full screen.', `<button class="btn" data-act="full">${isFull() ? 'Exit' : 'Go'}</button>`)))
-    + (APP ? '' : card('Ships and statues', row('Showroom', 'Every ship, fortress, statue and tree in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')
-      + (location.hostname.endsWith('github.io') ? row('Older builds', 'Every prototype of the game so far, to see how it grew.', '<a class="btn" href="builds/" target="_blank" rel="noopener">Open</a>') : '')))
-    + `<p class="note ver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 128'}</p>`;
-  const gfx = card('Graphics', `<div class="segs four">${opt('auto', 'Auto')}${opt('low', 'Low')}${opt('mid', 'Medium')}${opt('high', 'High')}</div>
-      <p class="note">Auto checks how smooth the game runs and picks for you${auto}. High is the sharpest. Low turns off shadows and draws fewer waves.</p>
-      ${row('Camera angle', 'High looks down on your ship. Low sees further, toward the horizon.', '')}
-      <div class="segs">${Object.entries(CAM_ANGLES).map(([k, v]) => `<button class="seg ${(s.angle || 'low') === k ? 'on' : ''}" data-act="angle" data-v="${k}" aria-pressed="${(s.angle || 'low') === k}">${v.label}</button>`).join('')}</div>
-      ${row('Battery saver', 'Keeps the phone cooler: 30 frames a second while you sail and fewer pixels, 60 frames again in a fight. On by default on phones.', tog('saver', saverOn(), 'Battery saver'))}
-      ${row('Tiny world look', 'Soft blur at the top and bottom of the screen and warmer colors, so the sea looks like a little model. Turn off if the game feels slow.', tog('tiny', s.tiny !== false, 'Tiny world look'))}
-      ${row('Show frame rate', 'Frames per second, bottom left. 50 or more feels smooth.', tog('fps', s.showFps, 'Show frame rate'))}
-      ${ads.privacy ? row('Privacy settings', 'Change what you agreed to about ads and your data.', '<button class="btn small" data-act="adprivacy">Open</button>') : ''}
-      ${CONSENT_TEST ? row('Consent form test (test app only)', 'Shows the ad consent form as in Europe. Paste this phone\'s test device code from the log, then tap Show.', '<input id="consentHash" class="jobsel" placeholder="Test device code" value="' + (localStorage.getItem('wds-consent-hash') || '') + '" aria-label="Test device code"> <button class="btn small" data-act="consenttest">Show</button>') : ''}
-      ${CONSENT_TEST ? row('Ad log (test app only)', ads.log.length ? ads.log.slice(-8).join(' · ') : 'Nothing yet. Watch a video, then come back here.', '') : ''}`);
-  const dev = card('Builder tools · removed before release', `${row('Builder tools', s.builder ? 'Off plays the game the way a player would.' : 'Off: normal speed, no teleport, no hidden marks, raiders on. Your builder settings come back when you turn them on.', tog('builder', s.builder, 'Builder tools'))}
+  const s = G.settings, q = s.quality;
+  if (tabs.set === 'dev') return devHTML();
+  if (tabs.set === 'credits') return `<div class="pz">${pzHead('Credits')}<div class="stbox stcred">
+      <p><b>Wine-Dark Sea</b>Made by Palda Games</p>
+      <p><b>Music</b>Six songs written for the game, played on the FluidR3 GM instruments (MIT)</p>
+      <p><b>3D</b>three.js (MIT)</p>
+      <p><b>Letters</b>Marcellus and Nunito (SIL Open Font License)</p>
+      <p>Thank you for sailing.</p></div>
+    <button class="pzmenu" data-act="setback">Back</button></div>`;
+  const seg = (act, v, label, on) => `<button class="stseg ${on ? 'on' : ''}" data-act="${act}" data-v="${v}" aria-pressed="${on}">${label}</button>`;
+  return `<div class="pz">${pzHead('Settings')}
+    <div class="stbox">${[['music', 'Music'], ['sfx', 'Effects'], ['sea', 'Sea, wind']].map(([k, label]) => `<label class="stvol"><span class="stic">${pzSvg(VOL_IC[k], 20)}</span><b>${label}</b><input type="range" min="0" max="100" step="5" value="${volOf(k)}" data-vol="${k}" aria-label="${label} volume" style="--v:${volOf(k)}%"></label>`).join('')}</div>
+    <div class="stbox">
+      <h4>Graphics</h4><div class="stsegs four">${[['auto', 'Auto'], ['low', 'Low'], ['mid', 'Medium'], ['high', 'High']].map(([v, l]) => seg('quality', v, l, q === v)).join('')}</div>
+      <h4>Camera</h4><div class="stsegs">${Object.entries(CAM_ANGLES).map(([k, v]) => seg('angle', k, v.label, (s.angle || 'low') === k)).join('')}</div>
+      ${swRow('Battery saver', tog('saver', saverOn(), 'Battery saver'))}${swRow('Tiny world look', tog('tiny', s.tiny !== false, 'Tiny world look'))}${swRow('Show frame rate', tog('fps', s.showFps, 'Show frame rate'))}
+      ${APP ? '' : swRow('Full screen', tog('full', isFull(), 'Full screen'))}
+      ${ads.privacy ? swRow('Ad choices', '<button class="stbtn" data-act="adprivacy">Open</button>') : ''}
+      ${CONSENT_TEST ? swRow('Consent form test', '<button class="stbtn" data-act="devpage">Builder page</button>') : ''}
+    </div>
+    <nav class="stlinks"><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy</a><button data-act="credits">Credits</button><a href="mailto:${CONTACT}">Contact</a>${s.builder || s.showBuilder ? '<button data-act="devpage">Builder</button>' : ''}</nav>
+    <p class="stver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 129'}</p></div>`;
+}
+// the builder's page (and the test app's consent tools): the old full page, back to the card with the X
+function devHTML(){
+  const s = G.settings;
+  const dev = card('Builder tools · removed before release', `${CONSENT_TEST ? row('Consent form test (test app only)', 'Shows the ad consent form as in Europe. Paste this phone\'s test device code from the log, then tap Show.', '<input id="consentHash" class="jobsel" placeholder="Test device code" value="' + (localStorage.getItem('wds-consent-hash') || '') + '" aria-label="Test device code"> <button class="btn small" data-act="consenttest">Show</button>') + row('Ad log (test app only)', ads.log.length ? ads.log.slice(-8).join(' · ') : 'Nothing yet. Watch a video, then come back here.', '') : ''}${s.builder || s.showBuilder ? row('Builder tools', s.builder ? 'Off plays the game the way a player would.' : 'Off: normal speed, no teleport, no hidden marks, raiders on. Your builder settings come back when you turn them on.', tog('builder', s.builder, 'Builder tools')) : ''}
       ${s.builder ? `${mapHTML()}
       ${row('Camera zoom', 'Also pinch with two fingers, or scroll the mouse wheel.', `<b id="zoomVal">${s.dev.zoom.toFixed(1)}×</b>`)}
       <input type="range" id="zoomRange" min="0.4" max="3.5" step="0.1" value="${s.dev.zoom}" aria-label="Camera zoom">
@@ -278,18 +307,29 @@ function settingsHTML(){
       ${row('Reveal the whole chart', '', '<button class="btn" data-act="revealall">Reveal</button>')}
       ${row('Add drachmae and materials', '100 drachmae, 200 wood, 20 bronze, 20 iron, 20 linen.', '<button class="btn" data-act="givestuff">Add</button>')}` : ''}
       ${row('Model showroom', 'Every ship, fortress and statue in 3D, to turn around and look at.', '<a class="btn" href="showroom.html" target="_blank" rel="noopener">Open</a>')}`, 'dev');
-  return `<div class="mtop">${top('Settings')}${tabBar(list, tabs.set, 'set')}</div><div class="mbody">${tabs.set === 'gfx' ? gfx : tabs.set === 'dev' ? dev : game}</div>`;
+  return `<div class="mtop">${top('Builder tools')}</div><div class="mbody">${dev}</div>`;
 }
 
 // every button gives a soft tap
 document.addEventListener('click', e => { if (e.target.closest('button, a.btn')) sfx('click'); });
 let verTaps = 0;
 sheetEl.addEventListener('click', e => { if (!PUBLIC && e.target.closest('[data-act=ver]') && ++verTaps >= 5){ G.settings.showBuilder = true; saveSettings(); verTaps = 0; toast('Builder tab unlocked'); render(); } });
+// P129: a tap on the dim sea around a card works like its X
+sheetEl.addEventListener('click', e => { if (e.target === sheetEl && sheetEl.classList.contains('pop')){ const x = sheetEl.querySelector('.pzx'); if (x) x.click(); } });
 sheetEl.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const a = b.dataset.act, S = G.S, sh = ship();
   if (a !== 'reset') resetArmed = false;
-  if (a === 'close'){ closeSheet(); return; }
+  if (a === 'close'){
+    if (sheet === 'settings' && tabs.set !== 'game'){ tabs.set = 'game'; render(); sheetEl.scrollTop = 0; return; } // Builder page and Credits go back to the card
+    if (fromPause && sheet !== 'pause'){ sheet = 'pause'; render(); sheetEl.scrollTop = 0; return; } // pages opened from the pause menu go back to it
+    closeSheet(); return; }
+  if (a === 'pz'){ const v = b.dataset.v;
+    if (v === 'tut'){ openTutorial(); return; }
+    if (v === 'respawn'){ closeSheet(); reviveDone(); document.dispatchEvent(new Event('respawn')); return; }
+    fromPause = true; if (v === 'ranks'){ tabs.rec = null; tabs.fleet = 'ranks'; sheet = 'fleet'; } else { sheet = v; if (v === 'settings') tabs.set = 'game'; }
+    render(); sheetEl.scrollTop = 0; return; }
+  if (a === 'credits' || a === 'setback' || a === 'devpage'){ tabs.set = a === 'credits' ? 'credits' : a === 'devpage' ? 'dev' : 'game'; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'tut'){ openTutorial(); return; }
   if (a === 'log'){ sheet = 'log'; render(); sheetEl.scrollTop = 0; return; }
   if (a === 'respawn'){ closeSheet(); reviveDone(); document.dispatchEvent(new Event('respawn')); return; }
@@ -400,11 +440,16 @@ sheetEl.addEventListener('change', e => {
   if (e.target.dataset && e.target.dataset.set === 'captain'){ const n = e.target.dataset.n, t = +e.target.value; if (assignCaptain(n, t)){ sfx('dock'); toast(t < 0 ? `${n} rests at Kallisto` : `${n} sets out`, 2.6); save(); document.dispatchEvent(new Event('fleetmoved')); } render(); return; }
   if (e.target.id === 'rankBy'){ tabs.rankBy = e.target.value; render(); return; }
   if (e.target.id === 'rankWhere'){ tabs.rankWhere = e.target.value; netState.by = null; render(); return; }
+  if (e.target.dataset && e.target.dataset.vol){ sfx(e.target.dataset.vol === 'sea' ? 'gull' : 'coin'); return; } // a taste of the new loudness
   const sk = e.target.dataset && e.target.dataset.snd; if (sk){ SND[sk] = +e.target.value; saveSound(); sfx(sk === 'sea' ? 'gull' : 'coin'); return; }
   const k = e.target.dataset && e.target.dataset.look; if (!k) return;
   G.S.look = {...G.S.look, [k]:e.target.value}; swapBoat(); save();
 });
 sheetEl.addEventListener('input', e => {
+  const vk = e.target.dataset && e.target.dataset.vol;
+  if (vk){ const v = +e.target.value;
+    if (!SND.on && v > 0){ SND.on = true; for (const k in VOL_MAX) if (k !== vk){ SND[k] = 0; const o = sheetEl.querySelector(`[data-vol=${k}]`); if (o){ o.value = 0; o.style.setProperty('--v', '0%'); } } } // sound was off: only this one comes up
+    SND[vk] = v/100*VOL_MAX[vk]; e.target.style.setProperty('--v', v + '%'); saveSound(); return; }
   if (e.target.id === 'spreadRange' || e.target.id === 'isleRange'){ $(e.target.id === 'spreadRange' ? 'spreadVal' : 'isleVal').textContent = (+e.target.value).toFixed(1) + '×'; return; }
   if (e.target.id !== 'zoomRange') return;
   setZoom(+e.target.value);
@@ -432,7 +477,7 @@ document.addEventListener('sailship', e => { const t = e.detail; if (switchTo(t)
 document.addEventListener('docked', () => { if (unload().some(Boolean)) save(); openPort(); }); // unloaded quietly: the warehouse numbers in the menu show it
 $('goalPill').addEventListener('click', () => { G.S.questNew = false; if (sheet === 'inv' && tabs.inv === 'jobs') closeSheet(); else { tabs.inv = 'jobs'; openSheet('inv'); } });
 $('bagBtn').addEventListener('click', () => sheet === 'inv' ? closeSheet() : openSheet('inv'));
-$('gearBtn').addEventListener('click', () => sheet === 'settings' ? closeSheet() : openSheet('settings'));
+$('gearBtn').addEventListener('click', () => sheet === 'pause' || sheet === 'settings' || fromPause ? closeSheet() : openSheet('pause'));
 $('councilBtn').addEventListener('click', () => { if (G.council) openSheet('council'); });
 $('chartBtn').addEventListener('click', () => { if (sheet) closeSheet(); $('mapBtn').click(); });
 // HUD and toolbar icons are the same drawings as the menus
