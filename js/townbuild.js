@@ -4,11 +4,11 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=247e690';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=247e690';
-import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=247e690';
-import {addTown} from './town.js?v=247e690';
-import {mergeStatic} from './merge.js?v=247e690';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=9ed43c1';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=9ed43c1';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=9ed43c1';
+import {addTown} from './town.js?v=9ed43c1';
+import {mergeStatic} from './merge.js?v=9ed43c1';
 const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;
@@ -36,6 +36,8 @@ export const TOWN_SIZES = {
   port:  {houses:22, len:300, side:150, branches:3, reach:260, trees:14, farms:4, people:9, agora:32, temple:.8, stalls:4, stoa:0}};
 export const townSize = is => is.port ? 'port' : is.name === 'Rhodes' ? 'rhodes' : GREAT_CITIES.includes(is.name) || is.capital ? 'great' : is.city && is.site ? 'medium' : 'small';
 
+const FIT_SHARE = .3, FIT_HOUSE = 2600;
+const polyArea = pts => { let a = 0; for (let i=0;i<pts.length;i++){ const [x0, y0] = pts[i], [x1, y1] = pts[(i+1) % pts.length]; a += x0*y1 - x1*y0; } return Math.abs(a)/2; };
 const STEP = 22, STONE = '#e2d3ae', LANE = '#d6c59c';
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 // a flat paved strip along a bent line (one piece), w wide
@@ -51,7 +53,14 @@ function patch(R, r, y, n = 14){ const pos = [0, y, 0], nor = [0, 1, 0], idx = [
 
 // ctx: {top, hillTop, R, ground, hill, popIn, flags}. Returns where a tree may stand (off the lanes, away from houses and the square).
 export function buildTown(is, g, PIER, ctx){
-  const {top, hillTop, R, ground, hill, popIn, flags} = ctx, Z = TOWN_SIZES[townSize(is)];
+  const {top, hillTop, R, ground, hill, popIn, flags} = ctx, Z0 = TOWN_SIZES[townSize(is)];
+  // P125 (Nicholas: "some that the city cover like 80% of the island ... less houses in those small islands"): the town is
+  // fitted to the grass it has. Free grass = the grass outline less the hilltop and the fortress yard; a house with its share
+  // of lane takes about FIT_HOUSE of it and the town may take FIT_SHARE of the island. Big islands are untouched (k = 1).
+  const freeA = Math.max(1, polyArea(ground) - (hill ? polyArea(hill) : 0) - (is.site ? 30000 : 0)), fitK = Math.min(1, Math.max(.25, freeA*FIT_SHARE/FIT_HOUSE/Z0.houses)), fitL = Math.sqrt(fitK);
+  const Z = fitK > .93 ? Z0 : {...Z0, houses:Math.max(6, Math.round(Z0.houses*fitK)), len:Z0.len*fitL, side:Z0.side*fitL, reach:Z0.reach*fitL, branches:Math.max(2, Math.round(Z0.branches*fitL)),
+    farms:Math.max(2, Math.round(Z0.farms*fitL)), stalls:Math.max(2, Math.round(Z0.stalls*fitL)), people:Math.max(5, Math.round(Z0.people*fitL)), agora:Z0.agora*Math.max(.75, fitL), stoa:fitK < .5 ? 0 : Z0.stoa};
+  (window.__townFit ||= {})[is.name] = {freeA:Math.round(freeA), k:+fitK.toFixed(2), want:Z0.houses, cap:Z.houses};
   const style = is.port ? null : is.city === 'sparta' ? 'sparta' : is.city === 'athens' ? 'athens' : null;
   const px = PIER.x - is.x, pz = PIER.y - is.y, ang = Math.atan2(PIER.dy, PIER.dx);
   const paved = (geo, y, col = STONE) => { const m = mesh(geo, col, {side:T.DoubleSide}, false); m.position.y = y || 0; g.add(m); return m; };
@@ -135,7 +144,7 @@ export function buildTown(is, g, PIER, ctx){
     if (!flat([h.x, h.z], rad + 1) || laneGap(h.x, h.z) < rad*.82 || Math.hypot(h.x - px, h.z - pz) < 40 || blocks.some(([bx, bz, br]) => Math.hypot(bx - h.x, bz - h.z) < br + rad) || placed.some(q => Math.hypot(q.x - h.x, q.z - h.z) < q.rad + rad + 1.5)) continue;
     const k = placed.length, kinds = h.d < 170 ? [3, 0, 3, 1, 2, 0, 3, 1] : [0, 1, 0, 2, 3, 0, 1, 2], o = house(kinds[Math.floor(R()*8)], style, k >= 24);
     o.position.set(h.x, top, h.z); o.rotation.y = -h.face; o.scale.set(h.sc*(.92 + R()*.16), (.85 + R()*.4)*(h.d < 170 ? 1.12 : 1)*Math.sqrt(h.sc), h.sc*(.92 + R()*.2)); g.add(o); popIn(o); placed.push({x:h.x, z:h.z, rad}); }
-  keep.push(...placed.map(q => [q.x, q.z]));
+  keep.push(...placed.map(q => [q.x, q.z])); window.__townFit[is.name].placed = placed.length;
   // a lane ends a little past its last house (no long empty lanes running off into the fields), then all are paved
   for (const L of [...lanes]){ let last = -1; L.pts.forEach(([x, z], i) => { if (placed.some(q => Math.abs(q.x - x) < 46 && Math.abs(q.z - z) < 46)) last = i; });
     const n = Math.max(L.min || 0, last + 2); if (n < 3 && !L.min){ lanes.splice(lanes.indexOf(L), 1); continue; } L.pts.length = Math.min(L.pts.length, n); }

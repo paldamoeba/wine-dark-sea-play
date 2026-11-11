@@ -1,6 +1,6 @@
 // P74: the loading screen's little scene: one ship on her own sea. It runs on a background thread when the device allows it (bootworker.js),
 // so it stays smooth while the game is busy loading. Otherwise it runs on the page (bootship.js).
-import {buildShip, animateShip} from './ships.js?v=247e690';
+import {buildShip, animateShip} from './ships.js?v=9ed43c1';
 const T = self.THREE;
 const SEA_V = `uniform float uT, uHalf, uBeam; varying vec2 vP; varying vec3 vW;
 float wave(vec2 p, float t){ return sin(p.x*.052 + p.y*.021 + t*1.1)*1.5 + sin(p.x*.031 - p.y*.058 + t*.8)*1.1 + sin(p.x*.11 + p.y*.07 + t*1.7)*.4; }
