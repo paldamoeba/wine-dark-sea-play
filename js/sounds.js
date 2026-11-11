@@ -1,10 +1,10 @@
 // Tells the sound engine what is going on around the ship each frame: speed, weather, land, wrecks, fights, harbors.
-import {G, ship, lvl, PUBLIC} from './state.js?v=2e38722';
-import {SHIPS} from './config.js?v=2e38722';
-import {landDist, WRECKS} from './world.js?v=2e38722';
-import {W, KINDS} from './weather.js?v=2e38722';
-import {combatState} from './combat.js?v=2e38722';
-import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=2e38722';
+import {G, ship, lvl, PUBLIC} from './state.js?v=3370c69';
+import {SHIPS} from './config.js?v=3370c69';
+import {landDist, WRECKS} from './world.js?v=3370c69';
+import {W, KINDS} from './weather.js?v=3370c69';
+import {combatState} from './combat.js?v=3370c69';
+import {SND, applyVolumes, updateAudio, setListener, musicMood} from './audio.js?v=3370c69';
 
 Object.assign(SND, G.settings.sound || {});
 // P92: music one step quieter for everyone (old Quiet .3 -> Medium .3 is the new middle; Medium .6 -> .3, Loud 1 -> .6, Quiet .3 -> .15)
@@ -26,12 +26,12 @@ export function updateSounds(dt){
   if ((scanT -= dt) <= 0){ scanT = .5; scan(); }
   const S = G.S, sh = SHIPS[S.tier], k = KINDS[W.kind] || KINDS.fair;
   setListener(G.cam.x, G.cam.y, 1500*(G.settings.dev.zoom || 1));
-  const night = G.night || 0;
+  const night = G.night || 0, still = !!(G.paused || G.menuOpen); /* P131: paused or on the main menu: no rowing or bow-wave sound from a ship that stands still */
   updateAudio(dt, {
-    speed: G.sinking || G.dock ? 0 : Math.min(1, Math.abs(G.v)/(ship().speed || 1)),
+    speed: G.sinking || G.dock || still ? 0 : Math.min(1, Math.abs(G.v)/(ship().speed || 1)),
     waves: k.wave*(G.dock ? .5 : 1), storm: G.stormK || 0, rain: Math.max(0, (G.stormK - .35)/.65),
     wind: Math.min(1, (k.wave - .5)*.6 + G.stormK*.5 + .15), night, land: near.land, gulls: near.gulls,
-    fire: G.fireNear || 0, rowing: !!G.rowing && !G.dock, burst: G.rowT > 0, sail: !ROWED[sh.model] || lvl('sail') > 0, docked: !!G.dock,
+    fire: G.fireNear || 0, rowing: !!G.rowing && !G.dock && !still, burst: G.rowT > 0 && !still, sail: !ROWED[sh.model] || lvl('sail') > 0, docked: !!G.dock,
   });
   musicMood(combatState.threat || combatState.target ? 'battle' : G.dock ? 'harbor' : night > .6 ? 'night' : 'day');
 }

@@ -1,43 +1,44 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=2e38722';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=2e38722';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=2e38722';
-import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=2e38722';
-import {showRewarded, ads, adPrivacy, CONSENT_TEST, consentTest} from './ads.js?v=2e38722';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat, gain} from './state.js?v=2e38722';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=2e38722';
-import {CYCLE} from './daynight.js?v=2e38722';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=2e38722';
-import {swapBoat, refreshAllTrees} from './entities.js?v=2e38722';
-import {setZoom} from './input.js?v=2e38722';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=2e38722';
-import {tutHTML} from './tutorial.js?v=2e38722';
-import {founded, blessing} from './crew.js?v=2e38722';
-import {WHALE} from './wildlife.js?v=2e38722';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=2e38722';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=2e38722';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=2e38722';
-import {effectText, buy} from './upgrades.js?v=2e38722';
-import {fleetHTML} from './fleetpage.js?v=2e38722';
-import {myLevel} from './levels.js?v=2e38722';
-import {askName} from './naming.js?v=2e38722';
-import {FLAG_COST, RENAME_COST, flagHeld, stockLeft, takeStock, restock} from './menus.js?v=2e38722';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=2e38722';
-import {GOODS, WAR} from './config.js?v=2e38722';
-import {fly} from './fly.js?v=2e38722';
-import {combatState} from './combat.js?v=2e38722';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=2e38722';
-import {RANKS} from './records.js?v=2e38722';
-import {W, KINDS} from './weather.js?v=2e38722';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=2e38722';
-import {setTimeOfDay} from './daynight.js?v=2e38722';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=3370c69';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=3370c69';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=3370c69';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=3370c69';
+import {showRewarded, ads, adPrivacy, CONSENT_TEST, consentTest} from './ads.js?v=3370c69';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat, gain} from './state.js?v=3370c69';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=3370c69';
+import {CYCLE} from './daynight.js?v=3370c69';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=3370c69';
+import {swapBoat, refreshAllTrees} from './entities.js?v=3370c69';
+import {setZoom} from './input.js?v=3370c69';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=3370c69';
+import {tutHTML} from './tutorial.js?v=3370c69';
+import {founded, blessing} from './crew.js?v=3370c69';
+import {WHALE} from './wildlife.js?v=3370c69';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=3370c69';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=3370c69';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=3370c69';
+import {effectText, buy} from './upgrades.js?v=3370c69';
+import {fleetHTML} from './fleetpage.js?v=3370c69';
+import {myLevel} from './levels.js?v=3370c69';
+import {askName} from './naming.js?v=3370c69';
+import {FLAG_COST, RENAME_COST, flagHeld, stockLeft, takeStock, restock} from './menus.js?v=3370c69';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=3370c69';
+import {GOODS, WAR} from './config.js?v=3370c69';
+import {fly} from './fly.js?v=3370c69';
+import {combatState} from './combat.js?v=3370c69';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=3370c69';
+import {RANKS} from './records.js?v=3370c69';
+import {W, KINDS} from './weather.js?v=3370c69';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=3370c69';
+import {setTimeOfDay} from './daynight.js?v=3370c69';
 
 const $ = id => document.getElementById(id);
 
 // ---- messages ----
-const toastEl = $('toast'); let toastT = 0;
+const toastEl = $('toast'); let toastT = 0, toastTO = 0;
 export const toastBusy = () => toastT > 0;
-export function toast(msg, dur=1.8){ toastEl.textContent = msg; toastEl.hidden = false; toastT = dur; }
+export function toast(msg, dur=1.8){ toastEl.textContent = msg; toastEl.hidden = false; toastT = dur;
+  clearTimeout(toastTO); toastTO = setTimeout(() => { toastEl.hidden = true; toastT = 0; }, dur*1000 + 250); } /* P131: the game's own clock stands still behind the pause menu and the main menu, so a message used to freeze on screen there; a real clock takes it away too */
 let zoneT = 0;
 export function showZone(z){
   $('zoneName').textContent = ZONES[z].name;
@@ -158,7 +159,7 @@ const sheetEl = $('sheet'); let sheet = null, resetArmed = false, fromPause = fa
 // the end of the voyage: a page with it in numbers
 document.addEventListener('chapterdone', () => openSheet('end'));
 export function openSheet(name){ if (!sheet) sfx('open'); sheet = name; fromPause = false; if (name === 'settings') tabs.set = 'game'; if (name === 'inv' && tabs.inv === 'jobs') G.S.questNew = false; G.sheetOpen = true; G.portOpen = name === 'port'; G.dest = null; resetArmed = false; render(); sheetEl.hidden = false; }
-function closeSheet(){ if (sheet) sfx('close'); sheet = null; fromPause = false; G.paused = false; G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); document.dispatchEvent(new Event('sheetclosed')); }
+function closeSheet(){ if (sheet) sfx('close'); sheet = null; fromPause = false; G.paused = false; document.body.classList.remove('sheeton'); G.sheetOpen = false; G.portOpen = false; sheetEl.hidden = true; save(); document.dispatchEvent(new Event('sheetclosed')); }
 export function openPort(){
   G.v = 0; tabs.port = (G.dock && G.dock.h && !G.dock.h.is.port) ? 'market' : 'yard'; // every visit opens on the first tab
   openSheet('port'); save();
@@ -168,7 +169,9 @@ function render(){ const st = sheetEl.scrollTop;
   G.paused = sheet === 'pause' || fromPause;
   sheetEl.innerHTML = sheet === 'pause' ? pauseHTML() : sheet === 'port' ? harborHTML(G.dock ? G.dock.h : HARBORS[0]) : sheet === 'tut' ? tutHTML(tutPage) : sheet === 'inv' ? bagHTML() : sheet === 'fleet' ? fleetHTML() : sheet === 'council' && G.council ? councilHTML(G.council) : sheet === 'end' ? endHTML() : sheet === 'log' ? `<div class="mtop">${top('Voyage log')}</div><div class="mbody">${logHTML()}</div>` : sheet === 'cups' ? `<div class="mtop">${top('Trophies')}</div><div class="mbody">${cupsHTML()}</div>` : settingsHTML();
   // P129: the pause menu and Settings are small cards over the sea (the Builder page stays a full page)
-  sheetEl.classList.add('menu'); sheetEl.classList.toggle('pop', sheet === 'pause' || (sheet === 'settings' && tabs.set !== 'dev')); sheetEl.scrollTop = st; }
+  sheetEl.classList.add('menu'); sheetEl.classList.toggle('pop', sheet === 'pause' || (sheet === 'settings' && tabs.set !== 'dev'));
+  if (G.paused) document.body.classList.toggle('sheeton', !sheetEl.classList.contains('pop')); /* P131: while paused nothing else hides the HUD, so the level medal sat on top of the Voyage log, Trophies and Leaderboard pages */
+  sheetEl.scrollTop = st; }
 
 // P129 (Nicholas picked it from Fable's drafts): the gear opens a pause menu. The game holds still while it is up.
 const PAUSE_IC = {
@@ -275,7 +278,7 @@ function settingsHTML(){
       ${CONSENT_TEST ? swRow('Consent form test', '<button class="stbtn" data-act="devpage">Builder page</button>') : ''}
     </div>
     <nav class="stlinks"><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy</a><button data-act="credits">Credits</button><a href="mailto:${CONTACT}">Contact</a>${s.builder || s.showBuilder ? '<button data-act="devpage">Builder</button>' : ''}</nav>
-    <p class="stver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 129'}</p></div>`;
+    <p class="stver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 131'}</p></div>`;
 }
 // the builder's page (and the test app's consent tools): the old full page, back to the card with the X
 function devHTML(){
@@ -325,7 +328,7 @@ sheetEl.addEventListener('click', e => {
     if (fromPause && sheet !== 'pause'){ sheet = 'pause'; render(); sheetEl.scrollTop = 0; return; } // pages opened from the pause menu go back to it
     closeSheet(); return; }
   if (a === 'pz'){ const v = b.dataset.v;
-    if (v === 'tut'){ openTutorial(); return; }
+    if (v === 'tut'){ fromPause = true; tutPage = 0; hideHint(); sheet = 'tut'; render(); sheetEl.scrollTop = 0; return; } /* P131: it used to un-pause the game */
     if (v === 'respawn'){ closeSheet(); reviveDone(); document.dispatchEvent(new Event('respawn')); return; }
     fromPause = true; if (v === 'ranks'){ tabs.rec = null; tabs.fleet = 'ranks'; sheet = 'fleet'; } else { sheet = v; if (v === 'settings') tabs.set = 'game'; }
     render(); sheetEl.scrollTop = 0; return; }
@@ -347,7 +350,7 @@ sheetEl.addEventListener('click', e => {
   }
   if (a === 'toss'){ const k = b.dataset.k; if (S.cargo[k] > 0){ S.cargo[k]--; toast('Thrown overboard'); } }
   if (a === 'tutnext' || a === 'tutback'){ tutPage += a === 'tutnext' ? 1 : -1; render(); sheetEl.scrollTop = 0; return; }
-  if (a === 'tutdone'){ closeSheet(); toast('Fair winds!', 2); return; }
+  if (a === 'tutdone'){ if (fromPause){ sheet = 'pause'; render(); sheetEl.scrollTop = 0; return; } closeSheet(); toast('Fair winds!', 2); return; }
   if (a === 'sail'){ closeSheet(); document.dispatchEvent(new Event('undock')); return; }
   if (a === 'upgrade'){ const k = b.dataset.k; if (buy(k)){ sfx('hammer'); progress('upgrade', k); if (k === 'ram' || k === 'hull' || k === 'sail' || k === 'seats') swapBoat(); toast(`${UPGRADES[k].label}: ${effectText(k)}`, 2.4); save(); } }
   // P93 (Nicholas: +20 linen did nothing): when the warehouse can't take the whole amount, buy as much as fits (in whole steps)

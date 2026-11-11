@@ -874,7 +874,7 @@ body.sheeton #miniEl,body.menuon #miniEl{visibility:hidden}
 .boot.gone{opacity:0;pointer-events:none}.boot h1,.boot p,.boot i{position:relative}.boot p{margin:0;font:800 16px/1.2 var(--body);color:#fff;text-shadow:0 1px 8px rgba(10,40,70,.65)}
 .boot i{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom,0px));width:30px;height:30px;border-radius:50%;border:4px solid rgba(255,255,255,.35);border-top-color:#fff;animation:bootspin 1s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}
 /* the main menu */
-body.menuon .hud,body.menuon .toolbar,body.menuon .mapbtn,body.menuon #ov,body.menuon .bossbar,body.menuon .mission,body.menuon .caution,body.menuon .abilities,body.menuon .dockbar,body.menuon .raid,body.menuon .toast,body.menuon .hint,body.menuon .zone{visibility:hidden!important}
+body.menuon .hud,body.menuon .toolbar,body.menuon .mapbtn,body.menuon #ov,body.menuon .bossbar,body.menuon .mission,body.menuon .caution,body.menuon .abilities,body.menuon .dockbar,body.menuon .raid,body.menuon .hint,body.menuon .zone{visibility:hidden!important}
 .mainmenu{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:12px;padding:calc(26px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px));overflow:auto;background:linear-gradient(rgba(20,50,80,.34),rgba(20,50,80,0) 28%,rgba(20,30,40,0) 55%,rgba(20,30,40,.35))}
 .mainmenu[hidden]{display:none}
 .mtitle{margin:0;font:400 clamp(36px,11vw,64px)/1.05 var(--display);color:#fff;letter-spacing:.015em;text-align:center;text-shadow:0 2px 0 rgba(20,50,80,.45),0 5px 22px rgba(10,40,70,.6)}
@@ -1228,3 +1228,8 @@ body .sheet.menu .stvol input[type=range]{-webkit-appearance:none;appearance:non
 .stver{margin:-12px 0 0;text-align:center;font:700 12px var(--body);color:#7a5a36}
 .stcred{padding:8px 14px}.stcred p{margin:6px 0;font:700 14px/1.35 var(--body);color:#3a2a1c}
 .stcred p b{display:block;font:800 12px var(--body);letter-spacing:.6px;text-transform:uppercase;color:#7a5a36}
+/* P130: a closed sheet always hides (the P129 card style set display:flex, which beat the hidden attribute, so the pause menu and Settings never went away) */
+.sheet[hidden]{display:none!important}
+
+/* P131: bug hunt. A long ship name wraps inside its Fleet card instead of running off it. */
+.fhead .fname{min-width:0}.fcard h3{overflow-wrap:anywhere}

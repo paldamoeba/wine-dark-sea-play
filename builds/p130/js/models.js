@@ -1,0 +1,513 @@
+// Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
+import {hash} from './world.js';
+
+import {smokeColumn} from './smoke.js';
+const T = window.THREE;
+import {mat} from './ships.js';
+export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
+// smooth = rounded shading for round things (trees, pots) instead of flat facets
+// P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
+export function mineModel(){
+  const g = new T.Group(), rock = '#6c6a66', dark = '#191613', wood = '#6e4a26', ore = '#8a4b32';
+  const mound = mesh(new T.DodecahedronGeometry(30, 1), rock); mound.scale.set(1.25, .85, 1); mound.position.set(-10, 8, 0); g.add(mound);
+  const hole = mesh(new T.BoxGeometry(4, 21, 18), dark); hole.position.set(25, 10, 0); g.add(hole);
+  for (const z of [-11, 11]){ const post = mesh(new T.CylinderGeometry(1.8, 2.1, 25, 6), wood); post.position.set(27, 12, z); g.add(post); }
+  const lintel = mesh(new T.BoxGeometry(4.5, 4, 28), wood); lintel.position.set(27, 25, 0); g.add(lintel);
+  let sd = 4242; const R = () => (sd = (sd*16807) % 2147483647)/2147483647;
+  for (let k=0;k<9;k++){ const s = 3 + R()*3.5, o = mesh(new T.DodecahedronGeometry(s, 0), k % 3 ? ore : '#4a4744'); o.position.set(40 + R()*20, s*.55, -22 + R()*20); o.rotation.set(R()*3, R()*3, 0); g.add(o); }
+  const cart = mesh(new T.BoxGeometry(14, 7, 10), wood); cart.position.set(44, 6, 15); g.add(cart);
+  const load = mesh(new T.DodecahedronGeometry(5.5, 0), ore); load.scale.y = .6; load.position.set(44, 10, 15); g.add(load);
+  for (const x of [38, 50]) for (const z of [9.5, 20.5]){ const w = mesh(new T.CylinderGeometry(2.4, 2.4, 1.2, 10), '#3a2e26'); w.rotation.x = Math.PI/2; w.position.set(x, 2.4, z); g.add(w); }
+  return g;
+}
+export function mesh(geo, color, o={}, shadow=true){ const m = new T.Mesh(geo, M(color, o)); m.castShadow = shadow; m.receiveShadow = true; return m; }
+export function jitter(geo, amt, seed){
+  const p = geo.attributes.position;
+  for (let i=0;i<p.count;i++){ const x = p.getX(i), z = p.getZ(i); if (!x && !z) continue;
+    const k = 1 + (hash(Math.round(Math.atan2(z,x)*100), seed + Math.round(p.getY(i))) - .5)*amt; p.setX(i, x*k); p.setZ(i, z*k); }
+  geo.computeVertexNormals(); return geo;
+}
+
+// ---- island pieces ----
+// Tree colors: cypress greens, and round trees in spring and autumn colors (blossom pink, orange, gold, lilac, lime).
+export const CYPRESS_TINTS = [['#3f5524', '#4b6429'], ['#35603a', '#447546'], ['#56682a', '#667a33'], ['#2f4d3a', '#3d6048']];
+export const ROUND_TINTS = [['#e9a3bd', '#f3c2d3'], ['#e39a3a', '#efb85a'], ['#d8c24a', '#e8d870'], ['#a88cc9', '#c2abdd'], ['#86ad4a', '#a2c45e'], ['#5f8f3a', '#77a748'], ['#d66a4a', '#e78a62']];
+// A Mediterranean cypress: a tall slim flame of leaves, widest low down, with soft tufts all over it and a darker inside.
+// Snowy cypresses (tint[1] white) have snow lying on the tops of the tufts. One shared shape per tint and variant.
+const cypGeos = {};
+function cypressGeo(tint, v){ const key = tint.join() + v; if (cypGeos[key]) return cypGeos[key];
+  const prof = new T.SplineCurve([[0, 0], [4.6, 1.5], [6.6, 6], [7.2, 12], [6.8, 20], [5.6, 30], [3.9, 40], [2, 48], [0, 54]].map(([r, y]) => new T.Vector2(r, y))).getPoints(40);
+  const geo = new T.LatheGeometry(prof, 22), p = geo.attributes.position, col = new Float32Array(p.count*3);
+  const snow = tint[1] === '#f4f8fa', D = new T.Color(tint[0]).multiplyScalar(.72), L = new T.Color(snow ? tint[0] : tint[1]), S = new T.Color('#f4f8fa'), c = new T.Color();
+  const tuft = (a, y) => Math.sin(a*4 + y*.4 + v)*Math.sin(y*.46 - a*2 + v*2) + .35*Math.sin(a*7 - y*.8 + v*3); // leafy lumps
+  for (let i=0;i<p.count;i++){ const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(x, z), r = Math.hypot(x, z);
+    const k = 1 + tuft(a, y)*.14*Math.min(1, y/6), lean = Math.sin(y*.08 + v)*.6;
+    p.setX(i, x*k + lean); p.setZ(i, z*k); }
+  geo.computeVertexNormals();
+  const n = geo.attributes.normal;
+  for (let i=0;i<p.count;i++){ const y = p.getY(i), x = p.getX(i), z = p.getZ(i), t = tuft(Math.atan2(x, z), y);
+    c.copy(D).lerp(L, Math.min(1, Math.max(0, .45 + t*.35 + y/110))); // the tufts catch the light, the hollows stay dark
+    if (snow && n.getY(i) > .12 && t > -.3) c.lerp(S, Math.min(1, (n.getY(i) - .12)*3.5)); // snow on the tops of the tufts
+    col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  return cypGeos[key] = geo; }
+const trunkGeo = new T.CylinderGeometry(1.3, 2, 7, 8);
+let cypN = 0;
+export function cypress(tint = CYPRESS_TINTS[0]){ const g = new T.Group();
+  const tr = mesh(trunkGeo, '#6b4a2b', {flatShading:false}); tr.position.y = 3.5; g.add(tr);
+  const c = mesh(cypressGeo(tint, cypN++ % 3), '#ffffff', {vertexColors:true, flatShading:false}); c.position.y = 4.5; c.rotation.y = cypN*1.7; g.add(c);
+  const stump = mesh(new T.CylinderGeometry(2.4, 2.8, 4, 8), '#8a6a3c'); stump.position.y = 2; stump.visible = false; g.add(stump);
+  g.userData = {live:[tr, c], stump}; return g; }
+// A round, fluffy tree (olive, almond, fig): a short trunk and a cluster of balls.
+const ballGeo = new T.IcosahedronGeometry(1, 3);
+export function roundTree(tint = ROUND_TINTS[0], seed = 0){ const g = new T.Group();
+  const tr = mesh(new T.CylinderGeometry(1.6, 2.4, 14, 5), '#6b4a2b'); tr.position.y = 7; g.add(tr);
+  const live = [tr];
+  [[0, 22, 0, 10], [6, 18, 3, 7], [-5, 19, -3, 7.5], [1, 28, -2, 6.5]].forEach(([x, y, z, r], i) => { const b = mesh(ballGeo, tint[i % 2], {flatShading:false}); b.position.set(x, y, z); b.scale.setScalar(r*(.9 + ((seed*7 + i*3) % 5)*.05)); g.add(b); live.push(b); });
+  const stump = mesh(new T.CylinderGeometry(2.4, 2.8, 4, 6), '#8a6a3c'); stump.position.y = 2; stump.visible = false; g.add(stump);
+  g.userData = {live, stump}; return g; }
+// Houses: kind 0 white with a flat roof, 1 with a blue dome, 2 cream with a red tile roof, 3 two floors with a terrace.
+// Doors and shutters in blue or green; a little window either side of the door.
+// Window panes: dark glass by day, warm lamplight at night (daynight.js changes this one shared material).
+export const WIN_MAT = new T.MeshBasicMaterial({color:'#33414f'});
+// All of a house's windows are one mesh (front, back and sides), so a town full of houses stays cheap to draw.
+const paneGeos = {};
+function panes(kind){ if (paneGeos[kind]) return paneGeos[kind];
+  const P = [], win = (x, y, z, ry, s = 1) => P.push([boxGeo, '#fff', at(x, y, z, .2, 2.6*s, 2.2*s, ry)]);
+  for (const z of [-6.5, 6.5]){ win(11.55, 10, z, 0); win(-11.1, 10, z, 0); }
+  for (const sg of [1, -1]){ win(-3, 10, sg*10.1, Math.PI/2); win(4, 10, sg*10.1, Math.PI/2); }
+  if (kind === 3){ win(2.55, 22, 0, 0, 1.15); for (const sg of [1, -1]) win(-4, 22, sg*7.1, Math.PI/2, 1.15); }
+  return paneGeos[kind] = mergeParts(P); }
+// style: 'athens' = whitewashed walls, blue shutters and blue domes; 'sparta' = warm sandstone walls, dark red shutters and
+// terracotta tile roofs (no domes); anything else = Kallisto's island mix.
+// P110: quiet = no smoke (a big town keeps to the usual number of smoke columns)
+// P111: a house's walls, door, shutters, roof and chimney are one shared shape per kind and style (colors per corner), so a
+// city of a hundred houses costs two pieces a house instead of nine
+const houseGeos = {};
+function houseGeo(kind, style){ const key = kind + '|' + style; if (houseGeos[key]) return houseGeos[key];
+  const wall = style === 'sparta' ? (kind === 3 ? '#e2c592' : '#ead3a6') : style === 'athens' ? '#f7f5ee' : kind === 2 ? '#efe2c4' : '#f4f1e8';
+  const trim = style === 'sparta' ? '#8e2a22' : style === 'athens' ? '#2c5fa8' : kind === 2 ? '#3f7a52' : '#2c5fa8';
+  const P = [[boxGeo, wall, at(0, 8, 0, 22, 16, 20)], [boxGeo, trim, at(11.2, 4, 0, .6, 8, 5)]];
+  for (const z of [-6.5, 6.5]) P.push([boxGeo, trim, at(11.2, 10, z, .6, 3.6, 3.2)]);
+  if (kind === 1) P.push([domeGeo, '#2c5fa8', at(0, 16, 0, 1, 1, 1)]);
+  if (style === 'sparta' && kind !== 2) P.push([roofGeo6, '#b5562f', kind === 3 ? at(-4, 29, 0, .6, 1, .7, Math.PI/4) : at(0, 19, 0, 1, 1, .9, Math.PI/4)]);
+  if (kind === 2) P.push([roofGeo7, '#c4643a', at(0, 19.5, 0, 1, 1, .9, Math.PI/4)]);
+  if (kind === 3){ P.push([boxGeo, wall, at(-4, 21, 0, 12, 10, 14)], [boxGeo, '#e4dccb', at(6.5, 17, 0, 9, 2, 20)], [boxGeo, trim, at(2.2, 22, 0, .6, 4, 3.4)]); }
+  const ch = HOUSE_CHIMNEY[kind]; if (ch) P.push([boxGeo, kind === 2 ? '#d8ccb0' : wall, at(ch[0], ch[1] + (kind === 2 ? 4.5 : 3), ch[2], 3.4, kind === 2 ? 9 : 6, 3.4)]);
+  return houseGeos[key] = mergeParts(P); }
+const HOUSE_CHIMNEY = {0:[-6, 16, 5], 2:[-5, 19, -4.5], 3:[-7.5, 26, 4]};
+export function house(kind = 0, style = null, quiet = false){ if (kind === true) kind = 1; if (kind === false) kind = 0; const g = new T.Group();
+  if (style === 'sparta' && kind === 1) kind = 2; if (style === 'athens' && kind === 2) kind = 1;
+  g.add(mesh(houseGeo(kind, style), '#ffffff', {vertexColors:true}));
+  g.add(new T.Mesh(panes(kind), WIN_MAT));
+  // a chimney on most houses, and on about one in four of those a column of white smoke from the cooking fire
+  const ch = HOUSE_CHIMNEY[kind];
+  if (ch && !quiet && Math.random() < .25){ const sm = smokeColumn({h:56 + Math.random()*24, r0:2.2, r1:8 + Math.random()*4, sway:6.5}); sm.position.set(ch[0], ch[1] + (kind === 2 ? 9 : 6), ch[2]); g.add(sm); }
+  return g; }
+export function temple(){ const g = new T.Group();
+  const base = mesh(new T.BoxGeometry(44, 4, 30), '#e9e2cf'); base.position.y = 2; g.add(base);
+  for (let i=0;i<4;i++) for (const z of [-11, 11]){ const c = mesh(new T.CylinderGeometry(1.8, 2, 22, 7), '#f4f1e8'); c.position.set(-16 + i*10.7, 15, z); g.add(c); }
+  const roof = mesh(new T.CylinderGeometry(0, 26, 10, 4, 1), '#d9cfb6'); roof.rotation.y = Math.PI/4; roof.scale.set(1, 1, .72); roof.position.y = 31; g.add(roof);
+  const lint = mesh(new T.BoxGeometry(44, 3, 28), '#e9e2cf'); lint.position.y = 27; g.add(lint);
+  return g; }
+
+// ---- little farms around the towns: a vineyard, an olive grove, a wheat field or a vegetable garden inside a low stone wall ----
+// Each farm is one merged mesh (colors per vertex), so a town full of them stays cheap to draw.
+const FARM_KINDS = ['vines', 'olives', 'wheat', 'garden'];
+const farmGeos = {};
+const blobGeo = new T.IcosahedronGeometry(1, 2), boxGeo = new T.BoxGeometry(1, 1, 1), stemGeo = new T.CylinderGeometry(.5, .7, 1, 8);
+const domeGeo = new T.SphereGeometry(8, 10, 5, 0, Math.PI*2, 0, Math.PI/2), roofGeo6 = new T.CylinderGeometry(.01, 15.5, 6, 4, 1), roofGeo7 = new T.CylinderGeometry(.01, 15.5, 7, 4, 1), drumGeo = new T.CylinderGeometry(.5, .5, 1, 12);
+function mergeParts(parts){
+  const gs = parts.map(([geo, c, m]) => { const g = geo.index ? geo.toNonIndexed() : geo.clone(); g.applyMatrix4(m); return [g, new T.Color(c)]; });
+  const n = gs.reduce((a, [g]) => a + g.attributes.position.count, 0), pos = new Float32Array(n*3), nor = new Float32Array(n*3), col = new Float32Array(n*3);
+  let o = 0; for (const [g, c] of gs){ const k = g.attributes.position.count; pos.set(g.attributes.position.array, o*3); nor.set(g.attributes.normal.array, o*3);
+    for (let i=0;i<k;i++) col.set([c.r, c.g, c.b], (o + i)*3); o += k; }
+  const out = new T.BufferGeometry(); out.setAttribute('position', new T.BufferAttribute(pos, 3)); out.setAttribute('normal', new T.BufferAttribute(nor, 3)); out.setAttribute('color', new T.BufferAttribute(col, 3)); return out; }
+const at = (x, y, z, sx, sy, sz, ry = 0) => new T.Matrix4().compose(new T.Vector3(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(0, ry, 0)), new T.Vector3(sx, sy, sz));
+function farmGeo(kind){ if (farmGeos[kind]) return farmGeos[kind];
+  const P = [], L = 46, W = 34;
+  P.push([boxGeo, {vines:'#9a7650', olives:'#b0925e', wheat:'#b8913f', garden:'#8a6544'}[kind], at(0, .6, 0, L, 1.2, W)]);
+  for (const sg of [1, -1]){ P.push([boxGeo, '#d8ccb0', at(0, 1.6, sg*(W/2 + .8), L + 3.2, 3, 1.6)]); P.push([boxGeo, '#d1c4a6', at(sg*(L/2 + .8), 1.6, sg > 0 ? -5 : 0, 1.6, 3, sg > 0 ? W - 10 : W)]); } // a gap in one wall, the gate
+  if (kind === 'vines') for (let r=0;r<5;r++){ const z = -12 + r*6;
+    P.push([blobGeo, r % 2 ? '#5f8a35' : '#557f30', at(0, 3.4, z, 19, 2.4, 1.7)]);
+    for (let k=0;k<5;k++) P.push([blobGeo, '#6b3a74', at(-14 + k*7 + (r % 2)*3, 2.6, z + (k % 2 ? 1.4 : -1.4), .9, 1.2, .9)]); }
+  if (kind === 'olives') for (let i=0;i<3;i++) for (let j=0;j<2;j++){ const x = -14 + i*14 + j*3, z = -7 + j*14;
+    P.push([stemGeo, '#7a5a3a', at(x, 4, z, 1.2, 6, 1.2)]); P.push([blobGeo, (i + j) % 2 ? '#8fa060' : '#9cab6c', at(x, 9.5, z, 5.4, 4.2, 5.4)]); }
+  if (kind === 'wheat') for (let r=0;r<6;r++) P.push([boxGeo, r % 2 ? '#d8b350' : '#cca646', at(0, 2.2, -12.5 + r*5, 42, 2.2 + (r % 3)*.3, 3.6)]);
+  if (kind === 'garden') for (let r=0;r<4;r++) for (let k=0;k<7;k++){ const melon = r === 3 && k % 2 === 0;
+    P.push([blobGeo, melon ? '#e09a3a' : r % 2 ? '#7fb04a' : '#6aa040', at(-18 + k*6, 2.4, -10.5 + r*7, melon ? 2 : 1.8, melon ? 1.6 : 1.5, melon ? 2 : 1.8)]); }
+  return farmGeos[kind] = mergeParts(P); }
+export function farm(kind = 'vines'){ if (typeof kind === 'number') kind = FARM_KINDS[kind % FARM_KINDS.length];
+  const m = mesh(farmGeo(kind), '#ffffff', {vertexColors:true, flatShading:false}); m.userData.kind = kind; return m; }
+
+// ---- P111: the market square (agora): stalls under striped awnings, a well, a long colonnade (stoa). One piece each. ----
+const marketGeos = {};
+export function stall(k = 0){ const cols = ['#c64a3c', '#3f6c94', '#d9a441', '#71873f', '#8a4a8a'], key = 'stall' + (k % cols.length);
+  if (!marketGeos[key]){ const P = [], c = cols[k % cols.length];
+    for (const x of [-7.5, 7.5]) for (const z of [-5.5, 5.5]) P.push([boxGeo, '#6e4a26', at(x, 6.5, z, 1.1, 13, 1.1)]);
+    for (let i=0;i<5;i++) P.push([boxGeo, i % 2 ? '#f4efe0' : c, at(0, 13.4, -5.2 + i*2.6, 18, 1, 2.6)]); /* striped awning */
+    P.push([boxGeo, '#9b6b3a', at(0, 3, 0, 14, 6, 8)]);
+    for (let i=0;i<5;i++) P.push([blobGeo, ['#e09a3a', '#7fb04a', '#b8693a', '#d8b350', '#c64a3c'][(i + k) % 5], at(-5 + i*2.5, 6.8, i % 2 ? 1.6 : -1.6, 1.5, 1.3, 1.5)]);
+    marketGeos[key] = mergeParts(P); }
+  return mesh(marketGeos[key], '#ffffff', {vertexColors:true}); }
+export function well(){ if (!marketGeos.well){ const P = [[drumGeo, '#d8ccb0', at(0, 3, 0, 13, 6, 13)], [drumGeo, '#3d6f8f', at(0, 5.8, 0, 9.5, .8, 9.5)]];
+    for (const z of [-6, 6]) P.push([boxGeo, '#6e4a26', at(0, 10, z, 1.2, 14, 1.2)]);
+    P.push([boxGeo, '#b5562f', at(0, 17.6, 0, 9, 1.4, 15)]);
+    marketGeos.well = mergeParts(P); }
+  return mesh(marketGeos.well, '#ffffff', {vertexColors:true}); }
+// a stoa: a long roofed walk with a row of columns along its open front (+x side), n columns long
+export function stoa(n = 6, style = null){ const key = 'stoa' + n + style;
+  if (!marketGeos[key]){ const L = n*11, roof = style === 'athens' ? '#d9cfb6' : '#c4643a', wall = style === 'sparta' ? '#ead3a6' : '#f4f1e8', P = [];
+    P.push([boxGeo, '#e2d3ae', at(0, 1.2, 0, 20, 2.4, L + 4)], [boxGeo, wall, at(-8, 9.5, 0, 2.4, 15, L)]);
+    for (let i=0;i<=n;i++) P.push([drumGeo, '#f4f1e8', at(7.5, 9.5, -L/2 + i*11, 2.6, 15, 2.6)]);
+    P.push([boxGeo, '#e9e2cf', at(0, 17.6, 0, 20, 1.6, L + 2)], [boxGeo, roof, at(-.5, 19.6, 0, 21.5, 2.6, L + 5)]);
+    marketGeos[key] = mergeParts(P); }
+  return mesh(marketGeos[key], '#ffffff', {vertexColors:true}); }
+
+// ---- P112: port pieces: a wooden crane with a crate on its rope, a lighthouse, a small beacon. One piece each. ----
+const at3 = (x, y, z, sx, sy, sz, rz = 0, ry = 0) => new T.Matrix4().compose(new T.Vector3(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(0, ry, rz)), new T.Vector3(sx, sy, sz));
+const towerGeo = new T.CylinderGeometry(.36, .5, 1, 12), coneGeo = new T.CylinderGeometry(0, .5, 1, 10);
+export function crane(){ if (!marketGeos.crane){ const wood = '#6e4a26', P = [[boxGeo, '#8a6238', at(0, 1.5, 0, 10, 3, 10)], [boxGeo, wood, at(0, 19, 0, 2.2, 34, 2.2)]];
+    P.push([boxGeo, wood, at3(8, 33, 0, 34, 1.8, 1.8, .45)], [boxGeo, wood, at3(-4, 12, 0, 16, 1.4, 1.4, -.9)], [boxGeo, '#3b2c1c', at(23.3, 31, 0, .5, 19, .5)], [boxGeo, '#9b6b3a', at(23.3, 19, 0, 7.5, 6.5, 7.5)]);
+    marketGeos.crane = mergeParts(P); }
+  return mesh(marketGeos.crane, '#ffffff', {vertexColors:true}); }
+// the fire itself is a torch the caller adds at LIGHT_Y (so it burns at night like every other torch)
+export const LIGHT_Y = 84;
+export function lighthouse(){ if (!marketGeos.light){ const stone = '#f1ebdc', P = [[drumGeo, '#cfc3a4', at(0, 1, 0, 50, 18, 50)], [drumGeo, '#d9cfb6', at(0, 11, 0, 44, 2.4, 44)]];
+    P.push([towerGeo, stone, at(0, 43, 0, 30, 62, 30)], [drumGeo, '#b5562f', at(0, 40, 0, 26.4, 5, 26.4)], [drumGeo, '#d9cfb6', at(0, 75.5, 0, 28, 3, 28)]);
+    for (let k=0;k<6;k++){ const a = k/6*Math.PI*2; P.push([boxGeo, stone, at(Math.cos(a)*9.5, 83, Math.sin(a)*9.5, 1.6, 12, 1.6)]); }
+    P.push([coneGeo, '#b5562f', at(0, 95, 0, 27, 12, 27)]);
+    marketGeos.light = mergeParts(P); }
+  return mesh(marketGeos.light, '#ffffff', {vertexColors:true}); }
+
+// ---- boats (wreck hulls; the player's ships come from ships.js) ----
+function hullShape(L, B, scale=1){ const s = new T.Shape(), l = L*scale, b = B*scale;
+  s.moveTo(l/2, 0); s.quadraticCurveTo(l*.1, b/2, -l*.42, b*.38); s.lineTo(-l*.46, 0); s.lineTo(-l*.42, -b*.38); s.quadraticCurveTo(l*.1, -b/2, l/2, 0); return s; }
+function extrude(shape, depth){ const g = new T.ExtrudeGeometry(shape, {depth, bevelEnabled:false, curveSegments:5}); g.rotateX(-Math.PI/2); return g; }
+export function makeHull(L, B, H, dark, light){
+  const g = new T.Group();
+  const hull = mesh(extrude(hullShape(L, B), H), dark); hull.position.y = -H*.55; g.add(hull);
+  const deck = mesh(extrude(hullShape(L, B, .9), 1), light); deck.position.y = H*.45; g.add(deck);
+  const rim = hullShape(L, B); rim.holes.push(hullShape(L*.86, B*.8)); const r = mesh(extrude(rim, 3.5), dark); r.position.y = H*.45; g.add(r);
+  for (const s of [1, -1]){ // painted eyes on the bow, like real Greek ships
+    const e = mesh(new T.CircleGeometry(2.4, 10), '#f4f1e8', {side:T.DoubleSide}, false); e.position.set(L*.3, H*.15, s*(B*.21+.6)); e.rotation.y = s > 0 ? .5 : Math.PI - .5; g.add(e);
+    const pu = mesh(new T.CircleGeometry(1.2, 8), '#1a1a1a', {side:T.DoubleSide}, false); pu.position.copy(e.position); pu.position.z += s*.15; pu.position.x += .4; pu.rotation.y = e.rotation.y; g.add(pu);
+  }
+  return g;
+}
+// ---- wreck props ----
+export const amphoraGeo = new T.LatheGeometry([[0,0],[3,1],[5,4],[5.5,8],[4,12],[2,14],[2,17],[3.2,18]].map(([x,y]) => new T.Vector2(x,y)), 14);
+// ---- sea life: smooth bodies turned on a lathe (nose along +x), dark on top and pale underneath, with soft fins ----
+// prof = [[x, radius], ...] from tail to nose. ys/zs squash the body up-down and side to side (applied as mesh scale so the
+// shading stays smooth). top/belly = colors, blended along the sides.
+const smooth = (pts, n = 16) => new T.SplineCurve(pts.map(([x, y]) => new T.Vector2(x, y))).getPoints(n).map(v => [v.x, v.y]);
+// Animals get smooth, slightly glossy shading instead of the banded look of boats and houses, so they read as soft and wet.
+const softs = {};
+const softMat = (color, vc = false) => softs[color + vc] || (softs[color + vc] = new T.MeshPhongMaterial({color:vc ? '#ffffff' : color, vertexColors:vc, shininess:18, specular:new T.Color('#2a3036')}));
+const soft = (geo, color) => { const m = new T.Mesh(geo, softMat(color)); m.castShadow = m.receiveShadow = true; return m; };
+function latheBody(prof, top, belly, ys = 1, zs = 1, seg = 24, line = -.15){
+  prof = smooth(prof, 48); // a smooth outline from tail to nose, so the body has no corners along its length
+  const geo = new T.LatheGeometry(prof.map(([x, r]) => new T.Vector2(Math.max(r, .001), x)), seg); geo.rotateZ(-Math.PI/2);
+  const pos = geo.attributes.position, col = new Float32Array(pos.count*3), A = new T.Color(top), B = new T.Color(belly), c = new T.Color();
+  const rAt = x => { for (let i=1;i<prof.length;i++) if (x <= prof[i][0]){ const [x0, r0] = prof[i-1], [x1, r1] = prof[i]; return r0 + (r1 - r0)*(x - x0)/((x1 - x0) || 1); } return 0; };
+  for (let i=0;i<pos.count;i++){ const r = rAt(pos.getX(i)) || 1, k = Math.min(1, Math.max(0, (line - pos.getY(i)/r)/.5)); c.copy(A).lerp(B, k*k*(3 - 2*k)); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  const m = new T.Mesh(geo, softMat('#ffffff', true)); m.scale.set(1, ys, zs); m.castShadow = m.receiveShadow = true; return m;
+}
+// a soft flat fin from an outline (points in its own x/y), thickness d, rounded edges
+function fin(pts, d, color){
+  const sh = new T.Shape(pts.map(([x, y]) => new T.Vector2(x, y)));
+  const geo = new T.ExtrudeGeometry(sh, {depth:d, bevelEnabled:true, bevelThickness:d*.45, bevelSize:d*.45, bevelSegments:3, curveSegments:10}); geo.translate(0, 0, -d/2);
+  return soft(geo, color);
+}
+// A soft blade for fins, flippers, flukes and wings: a squashed egg shape stretched out and tapered, so it has no hard edges
+// and its root can sink into the body without a seam. It points along +x from x = 0 (the root) to x = len.
+// w, th = width and thickness at the root; taper = how much thinner at the tip (0 to 1); sweep = bends the tip back (-y);
+// lift = bends the tip up (+z).
+function blade(len, w, th, taper = .6, sweep = 0, lift = 0, color = '#ffffff', vc = null){
+  const geo = new T.SphereGeometry(1, 28, 16), p = geo.attributes.position;
+  for (let i=0;i<p.count;i++){ const x = p.getX(i), u = (x + 1)/2, k = 1 - taper*Math.pow(u, 1.2);
+    p.setXYZ(i, u*len, p.getY(i)*w*k - sweep*u*u*len, p.getZ(i)*th*(1 - taper*.6*u) + lift*u*u*len); }
+  geo.computeVertexNormals();
+  if (vc){ const col = new Float32Array(p.count*3), c = new T.Color(); for (let i=0;i<p.count;i++){ vc(c, p.getX(i)/len, p.getY(i), p.getZ(i)); col.set([c.r, c.g, c.b], i*3); } geo.setAttribute('color', new T.BufferAttribute(col, 3)); }
+  const m = new T.Mesh(geo, softMat(vc ? '#ffffff' : color, !!vc)); m.castShadow = m.receiveShadow = true; return m;
+}
+// A gull in one smooth piece, like the birds in Spirited Away: the body swells out into the wings with no seam, broad at the
+// root and tapering to swept-back tips, white with grey ends and a small yellow beak. The wingbeat is a shape blend
+// (morph target): userData.flap(v) with v from -1 (down) to 1 (up).
+let gullGeo = null;
+function makeGullGeo(){
+  const geo = new T.SphereGeometry(1, 64, 32), p = geo.attributes.position, up = new Float32Array(p.count*3), col = new Float32Array(p.count*3);
+  const W = new T.Color('#f3f2ee'), M = new T.Color('#9ba6b0'), G = new T.Color('#2f3338'), c = new T.Color(); // white body, grey back and wings, dark tips
+  for (let i=0;i<p.count;i++){ const u = p.getX(i), y = p.getY(i), w = p.getZ(i), aw = Math.abs(w);
+    const chord = 7.5*(1 - .72*Math.pow(aw, 1.15)) + .6;        // long body in the middle, narrow wing tips
+    let X = u*chord - 5.5*Math.pow(aw, 2) + Math.max(0, u - .4)*2.2*Math.max(0, 1 - aw*5); // tips swept back, a little head in front
+    const Z = w*16;
+    const th = 2.5*Math.pow(Math.max(0, 1 - aw*1.6), 1.6) + .32*(1 - aw*.6); // a plump body that thins into the wings
+    let Y = y*th + 2.4*Math.sin(Math.min(aw/.42, 1)*Math.PI/2) - 3.2*Math.pow(Math.max(0, aw - .42), 1.3); // bent like an M
+    p.setXYZ(i, X, Y, Z);
+    const fl = 7*Math.pow(aw, 1.4); up[i*3] = X - 1.2*aw; up[i*3 + 1] = Y + fl; up[i*3 + 2] = Z*(1 - .12*aw); // wings raised
+    const back = Math.min(1, Math.max(0, (aw - .12)/.18))*Math.min(1, Math.max(0, y*3 + .4)); // the grey reaches over the top of the wings
+    c.copy(W).lerp(M, back*.9).lerp(G, Math.min(1, Math.max(0, (aw - .8)/.12))); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  geo.morphAttributes.position = [new T.BufferAttribute(up, 3)];
+  geo.computeVertexNormals(); return geo;
+}
+const gullMat = new T.MeshPhongMaterial({color:'#e8e8e8', vertexColors:true, shininess:12, specular:new T.Color('#2a3036'), morphTargets:true, morphNormals:false});
+export let GULL_PICK = 'white'; // P95: which of the five looks the game's gulls use (Nicholas picks)
+export function gull(){ return gullV(GULL_PICK); }
+export function gullOld(){ const g = new T.Group();
+  gullGeo = gullGeo || makeGullGeo();
+  const m = new T.Mesh(gullGeo, gullMat); m.castShadow = m.receiveShadow = true; m.morphTargetInfluences = [0]; g.add(m);
+  const beak = soft(new T.ConeGeometry(.42, 2, 14), '#e0a030'); beak.rotation.z = -Math.PI/2 - .12; beak.position.set(9.4, .7, 0); g.add(beak);
+  g.userData.flap = v => { m.morphTargetInfluences[0] = Math.max(-.5, v); };
+  g.userData.wings = []; return g; }
+// P95 (Nicholas: birds like his picture): crisp low-poly gulls, faceted like paper, with separate wings that bend at the
+// shoulder and the elbow. Five looks to choose from (GULL_LOOKS); gullV(key) builds one. Faces +x like gull(); flap(v) -1..1.
+export const GULL_LOOKS = {
+  white:    {name:'White glider', body:'#f4f3ef', wing:'#f4f3ef', under:'#d9dde2', tip:'#f4f3ef', beak:'#f0a531', feet:'#f0a531', span:16, chord:6.2, sweep:.55, droop:.18},
+  herring:  {name:'Grey-backed gull', body:'#f6f5f1', wing:'#a7b3bf', under:'#e4e7ea', tip:'#24282d', beak:'#f2c23a', feet:'#e8a39a', span:16, chord:6, sweep:.6, droop:.14, spots:true},
+  albatross:{name:'Albatross', body:'#f6f5f1', wing:'#5b5650', under:'#f0eee8', tip:'#3e3a36', beak:'#f0c7a0', feet:'#c9b7a8', span:22, chord:4.6, sweep:.35, droop:.1},
+  puffy:    {name:'Round little gull', body:'#ffffff', wing:'#ffffff', under:'#dfe7ee', tip:'#9fb3c6', beak:'#ff9a3c', feet:'#ff9a3c', span:12, chord:6.8, sweep:.3, droop:.22, round:1.35, smooth:true},
+  tern:     {name:'Tern', body:'#f7f7f4', wing:'#dfe5ea', under:'#f2f4f5', tip:'#7d8892', beak:'#e2442c', feet:'#e2442c', span:17, chord:4.4, sweep:.75, droop:.08, cap:'#1c1d20', fork:true, slim:.75},
+};
+const flatMats = {};
+const flatMat = (c, smooth) => flatMats[c + smooth] || (flatMats[c + smooth] = new T.MeshLambertMaterial({color:c, flatShading:!smooth, side:T.DoubleSide}));
+const fm = (geo, c, smooth) => { const m = new T.Mesh(geo, flatMat(c, smooth)); m.castShadow = true; return m; };
+// a flat plate from an outline in (x, z), with a little thickness, lying in the bird's wing plane
+function plate(pts, th, c, smooth){ const sh = new T.Shape(); pts.forEach(([x, z], i) => i ? sh.lineTo(x, -z) : sh.moveTo(x, -z));
+  const g = new T.ExtrudeGeometry(sh, {depth:th, bevelEnabled:false}); g.rotateX(-Math.PI/2); g.translate(0, -th/2, 0); return fm(g, c, smooth); }
+export function gullV(key){
+  const L = GULL_LOOKS[key] || GULL_LOOKS.white, g = new T.Group(), sm = !!L.smooth, k = L.round || 1, sl = L.slim || 1;
+  // body: a faceted spindle from tail to head, along x
+  const prof = [[-8.5, 0], [-7, .55], [-3.5, 1.5], [0, 2.1], [3, 2.05], [5, 1.7], [6.6, 1.15], [7.4, 0]].map(([x, r]) => new T.Vector2(r*k*sl, x*(sm ? .9 : 1)));
+  const bg = new T.LatheGeometry(prof, sm ? 16 : 6); bg.rotateZ(-Math.PI/2); const body = fm(bg, L.body, sm); body.scale.set(1, .9, 1); g.add(body);
+  const head = fm(new T.IcosahedronGeometry(1.75*k*sl, sm ? 2 : 0), L.body, sm); head.position.set(6.4*(sm ? .92 : 1), .9, 0); g.add(head);
+  if (L.cap){ const cap = fm(new T.IcosahedronGeometry(1.8*sl, 0), L.cap); cap.scale.set(1.05, .55, 1); cap.position.set(6.2, 1.75, 0); g.add(cap); }
+  const beak = fm(new T.ConeGeometry(.55*k, 2.6, sm ? 10 : 4), L.beak, sm); beak.rotation.z = -Math.PI/2 - .1; beak.position.set(head.position.x + 2.6*k*sl, .7, 0); g.add(beak);
+  // tail: a short fan, or a deep fork for the tern
+  const tail = L.fork ? plate([[-6, 0], [-11.5, 2.4], [-9, .5], [-9, -.5], [-11.5, -2.4]], .35, L.wing) : plate([[-6, -1.1], [-6, 1.1], [-9.6, 2], [-10.2, 0], [-9.6, -2]], .35, L.body, sm);
+  tail.position.y = .2; g.add(tail);
+  for (const sz of [1, -1]){ const ft = fm(new T.ConeGeometry(.35, 2.2, 4), L.feet); ft.rotation.z = Math.PI/2 + .25; ft.position.set(-7.2, -1.2, sz*.6); g.add(ft); }
+  // wings: shoulder pivot -> inner panel (broad, the leading edge straight, the trailing edge tapering), elbow pivot -> the
+  // outer panel sweeping back to a pointed tip (in the tip colour)
+  const S = L.span, C = L.chord, sw = L.sweep, wings = [];
+  for (const sz of [1, -1]){
+    const sh = new T.Group(); sh.position.set(1.6, .9, sz*1.1); g.add(sh);
+    const ie = S*.4, c1 = C*.82, inner = plate([[C*.42, 0], [C*.4, sz*ie], [C*.4 - c1, sz*ie], [C*.42 - C, sz*.2], [C*.42 - C*.95, 0]], .5, L.wing, sm); sh.add(inner);
+    const under = plate([[C*.36, 0], [C*.34, sz*ie], [C*.34 - c1*.9, sz*ie], [C*.36 - C*.9, 0]], .12, L.under, sm); under.position.y = -.34; sh.add(under);
+    const el = new T.Group(); el.position.set(C*.4, 0, sz*ie); sh.add(el);
+    const oe = S*.62, tipAt = oe*.55, back = sw*S*.5, c2 = c1*.72;
+    el.add(plate([[0, 0], [-back*.45, sz*tipAt], [-back*.45 - c2, sz*tipAt], [-c1, 0]], .42, L.wing, sm));
+    el.add(plate([[-back*.45, sz*tipAt], [-back*1.05 - c2*.2, sz*oe], [-back*.75 - c2*.55, sz*oe*.93], [-back*.45 - c2, sz*tipAt]], .38, L.tip, sm));
+    if (L.spots){ const sp = fm(new T.CircleGeometry(.5, 6), '#ffffff'); sp.rotation.x = -Math.PI/2; sp.position.set(-back*.95, .25, sz*oe*.86); el.add(sp); }
+    wings.push({sh, el, sz}); }
+  const pose = v => { for (const w of wings){ w.sh.rotation.x = -w.sz*(v*.55 - .06); w.sh.rotation.y = -w.sz*.12; w.el.rotation.x = -w.sz*(-v*.35 + L.droop); w.el.rotation.y = -w.sz*(.32 + sw*.35 - v*.12); } }; // the hand sweeps back, a little less on the upstroke
+  pose(0); g.userData.flap = v => pose(Math.max(-1, Math.min(1, v))); g.userData.wings = [];
+  g.scale.setScalar(.9); return g; }
+// The whale: one long smooth body, dark blue-grey on top and pale underneath, long soft flippers and wide flukes that grow
+// out of the body without seams.
+// P53: a friendly humpback: a big blunt head, a body that narrows into a slim tail stalk, wide swept-back flukes,
+// long pale-edged flippers, a little hump of a fin, a pale belly with throat grooves, an eye with a highlight, and a blowhole.
+// P126 (Nicholas: the whale's looks): the body is no longer a plain turned shape (it read as a blimp). The head is broad and
+// flat on top with knobs on the snout, the throat is full and striped with grooves, the body narrows into a tall thin tail
+// stalk, and the long flippers are pale so they show from above against the sea.
+const WH_PROF = smooth([[-74, 1.4], [-70, 3.2], [-60, 4.8], [-46, 7.8], [-30, 12.2], [-12, 16.6], [8, 19.5], [26, 20.5], [42, 19.6], [54, 16.8], [62, 12.4], [67, 7.2], [69.5, 2.6], [70, .01]], 72);
+const whStep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a)/(b - a))); return k*k*(3 - 2*k); };
+function whShape(x){ let r = 0; for (let i=1;i<WH_PROF.length;i++) if (x <= WH_PROF[i][0]){ const [x0, r0] = WH_PROF[i-1], [x1, r1] = WH_PROF[i]; r = r0 + (r1 - r0)*(x - x0)/((x1 - x0) || 1); break; }
+  const head = whStep(10, 55, x), stalk = whStep(-20, -62, x), throat = Math.exp(-Math.pow((x - 34)/26, 2));
+  return {r, sz:1.04 + .12*head - .46*stalk, syT:.8 - .1*head + .22*stalk, syB:.84 + .16*throat + .14*stalk}; }
+// a point on the whale's skin: x along the body, a = angle round it (0 = its left side, PI/2 = the top of its back)
+function whSurf(x, a, out = 1){ const h = whShape(x), s = Math.sin(a); return [x, h.r*(s > 0 ? h.syT : h.syB)*s*out, h.r*h.sz*Math.cos(a)*out]; }
+function whaleBody(){
+  const N = WH_PROF.length, M = 64, pos = new Float32Array(N*M*3), col = new Float32Array(N*M*3), idx = [];
+  const top = new T.Color('#3b5870'), spine = new T.Color('#2f4a60'), belly = new T.Color('#eef1ec'), groove = new T.Color('#9fb0b3'), c = new T.Color();
+  for (let i=0;i<N;i++){ const x = WH_PROF[i][0];
+    for (let j=0;j<M;j++){ const a = j/M*Math.PI*2, s = Math.sin(a), cz = Math.cos(a), q = whSurf(x, a), o = (i*M + j)*3; pos.set(q, o);
+      const line = -.16 + .1*Math.sin(x*.085) - .22*whStep(-10, -60, x), k = Math.min(1, Math.max(0, (line - s)/.3)); // the pale belly ends in a soft wavy edge, and fades out along the tail
+      c.copy(top).lerp(spine, whStep(.55, 1, s)).lerp(belly, k*k*(3 - 2*k));
+      if (s < -.3 && x > 0 && x < 62){ const st = Math.cos(cz*16); if (st > .55) c.lerp(groove, .75*whStep(0, 12, x)*whStep(62, 52, x)*whStep(-.3, -.5, s)); } // throat grooves
+      col.set([c.r, c.g, c.b], o); }
+    if (i) for (let j=0;j<M;j++){ const a0 = (i - 1)*M + j, a1 = (i - 1)*M + (j + 1) % M, b0 = i*M + j, b1 = i*M + (j + 1) % M; idx.push(a0, b0, a1, a1, b0, b1); } }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  const m = new T.Mesh(geo, softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; return m;
+}
+export function whaleModel(){
+  const g = new T.Group(), body = new T.Group(); g.add(body);
+  body.add(whaleBody());
+  const DARK = '#3b5870', put = (o, q) => { o.position.set(q[0], q[1], q[2]); body.add(o); return o; };
+  // knobs on the snout (a humpback's mark): one row down the middle, one on each side
+  for (let k=0;k<5;k++) put(soft(new T.SphereGeometry(1.25 - k*.08, 10, 8), '#4a6880'), whSurf(47 + k*4.6, Math.PI/2, .99));
+  for (const sd of [-1, 1]) for (let k=0;k<4;k++) put(soft(new T.SphereGeometry(1.1, 10, 8), '#4a6880'), whSurf(45 + k*5, Math.PI/2 + sd*.55, .99));
+  for (const sd of [-1, 1]){ const side = a => sd > 0 ? a : Math.PI - a;
+    // the long mouth line, curving down toward the eye
+    const pts = []; for (let k=0;k<=14;k++){ const t = k/14, q = whSurf(68.5 - t*38, side(-(.1 + .34*Math.pow(t, 1.5))), 1.004); pts.push(new T.Vector3(q[0], q[1], q[2])); }
+    body.add(soft(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 28, .42, 6, false), '#22323f'));
+    put(soft(new T.SphereGeometry(1.5, 12, 10), '#131c26'), whSurf(33, side(-.2), .985));
+    put(soft(new T.SphereGeometry(.45, 8, 6), '#ffffff'), whSurf(33.7, side(-.15), 1.035));
+    put(soft(new T.SphereGeometry(1, 10, 8), '#22323f'), whSurf(38, Math.PI/2 + sd*.13, .995)).scale.set(1.8, .5, .7); // twin blowholes
+    // long humpback flipper: pale, dark only where it leaves the body, swept back and a little down
+    const A = new T.Color(DARK), B = new T.Color('#e9eeec');
+    const f = blade(60, 9.5, 1.9, .62, .42, 0, null, (c, u) => c.copy(A).lerp(B, whStep(.06, .3, u)));
+    f.rotation.set(sd*.34, -sd*(Math.PI/2 + .62), 0); put(f, whSurf(27, side(-.5), .8));
+  }
+  const hump = blade(11, 5, 1.7, .8, -.4, 0, '#33506a'); hump.rotation.z = Math.PI/2 + 1.05; put(hump, whSurf(-28, Math.PI/2, .82)); // a small fin on a hump near the tail
+  for (let k=0;k<4;k++) put(soft(new T.SphereGeometry(1.5 - k*.2, 8, 6), '#33506a'), whSurf(-41 - k*6.5, Math.PI/2, .93)).scale.set(1.9, 1, .8); // knuckles down the tail stalk
+  const tail = new T.Group(); tail.position.set(-70, 0, 0); body.add(tail);
+  { const A = new T.Color('#33506a'), B = new T.Color('#5d7c92');
+    for (const sd of [-1, 1]){ const fl = blade(46, 16, 1.9, .72, -.6*sd, 0, null, (c, u, y) => c.copy(A).lerp(B, whStep(.55, 1, u))); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*1.02); fl.position.x = 3; tail.add(fl); } }
+  const spout = []; for (let k=0;k<7;k++){ const p = mesh(new T.SphereGeometry(5, 10, 8), '#f4fbff', {transparent:true, opacity:.8, flatShading:false}, false); p.material = p.material.clone(); p.visible = false; g.add(p); spout.push(p); }
+  g.userData = {body, tail, spout};
+  return g;
+}
+// The kraken: a huge plum-colored sea monster. Its curling tentacles stand far apart and the top of its head, with two
+// amber eyes, watches from the middle.
+// userData.tents = [{piv, ph, ring, delay, x, z}] so they can sway; userData.head rises and sinks; userData.shadow is its
+// dark shape, a grid that wildlife.js lays on the swell.
+// P127 (Nicholas: "do the kraken next"): the tentacles were smooth horns. Each is now one mesh with a dark mottled back, a
+// pale inner side with two rows of suckers, and its own curl (hook, S-bend or coiled tip). The head and eyes are new.
+function krAdd(acc, geo, mat, color){ const p = geo.attributes.position, v = new T.Vector3(), base = acc.pos.length/3, ix = geo.index;
+  for (let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i).applyMatrix4(mat); acc.pos.push(v.x, v.y, v.z); acc.col.push(color.r, color.g, color.b); }
+  for (let i=0;i<ix.count;i++) acc.idx.push(base + ix.getX(i)); }
+const krMesh = acc => { const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(acc.pos, 3)); geo.setAttribute('color', new T.Float32BufferAttribute(acc.col, 3)); geo.setIndex(acc.idx); geo.computeVertexNormals();
+  const m = new T.Mesh(geo, softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; return m; };
+const KR = {back:new T.Color('#6a2450'), spot:new T.Color('#8f3f6c'), inner:new T.Color('#f0c0d2'), cup:new T.Color('#fbe6ee')};
+// len = how long above the water, r0 = thickness at the water, b1 = steady bend, b2 = extra curl toward the tip (radians)
+function tentacle(len, r0, b1, b2){
+  const segs = 46, rad = 14, deep = 26, acc = {pos:[], col:[], idx:[]}, P = [], c = new T.Color(); let x = 0, y = -deep;
+  for (let i=0;i<=segs;i++){ const s = i/segs*(len + deep), u = Math.max(0, (s - deep)/len), th = b1*u + b2*u*u*u; P.push({x, y, th, u, r:Math.max(.5, r0*(1 - .9*Math.pow(u, .8)))});
+    x += Math.sin(th)*(len + deep)/segs; y += Math.cos(th)*(len + deep)/segs; }
+  P.forEach((q, i) => { const nx = Math.cos(q.th), ny = -Math.sin(q.th); // (nx, ny) points to the inside of the curl
+    for (let j=0;j<rad;j++){ const ph = j/rad*Math.PI*2, cp = Math.cos(ph), sp = Math.sin(ph), f = cp > 0 ? .78 : 1; // flatter on the sucker side
+      acc.pos.push(q.x + nx*cp*q.r*f, q.y + ny*cp*q.r*f, sp*q.r);
+      const mott = Math.sin(i*1.9 + j*2.3)*Math.sin(i*.7 - j*1.1) > .45 ? .55 : 0; c.copy(KR.back).lerp(KR.spot, mott).lerp(KR.inner, whStep(.1, .55, cp)); acc.col.push(c.r, c.g, c.b); }
+    if (i) for (let j=0;j<rad;j++){ const a0 = (i - 1)*rad + j, a1 = (i - 1)*rad + (j + 1) % rad, b0 = i*rad + j, b1 = i*rad + (j + 1) % rad; acc.idx.push(a0, a1, b0, a1, b1, b0); } });
+  // two rows of suckers down the inside, smaller toward the tip
+  const cup = new T.SphereGeometry(1, 8, 6), M = new T.Matrix4(), Q = new T.Quaternion(), Z = new T.Vector3(0, 0, 1);
+  for (let n=1;n<=11;n++){ const q = P[Math.round((deep/(len + deep) + n/12*.9*len/(len + deep))*segs)], r = q.r*.3; if (r < .35) continue;
+    for (const sd of [-1, 1]){ Q.setFromAxisAngle(Z, -q.th); M.compose(new T.Vector3(q.x + Math.cos(q.th)*q.r*.76, q.y - Math.sin(q.th)*q.r*.76, sd*q.r*.4), Q, new T.Vector3(r*.5, r, r)); krAdd(acc, cup, M, KR.cup); } }
+  return krMesh(acc);
+}
+function krakenHead(){
+  const R = 38, geo = new T.SphereGeometry(1, 44, 30), p = geo.attributes.position, col = new Float32Array(p.count*3), c = new T.Color();
+  for (let i=0;i<p.count;i++){ let x = p.getX(i), y = p.getY(i), z = p.getZ(i); const back = Math.max(0, -x), front = Math.max(0, x);
+    const mott = Math.sin(x*9 + z*7)*Math.sin(y*8 - z*5 + x*3) > .5 ? .6 : 0; c.copy(KR.back).lerp(KR.spot, mott).lerp(KR.inner, whStep(-.1, -.5, y)*.8); col.set([c.r, c.g, c.b], i*3);
+    y = y*(1.05 + .45*back) + .18*back - .12*front*front; x = x*(1 + .35*back); z = z*(.95 + .12*back); // a tall soft dome swelling to the back, a lower brow in front
+    p.setXYZ(i, x*R, y*R, z*R); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.computeVertexNormals();
+  const h = new T.Group(), m = new T.Mesh(geo, softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; h.add(m);
+  for (const sd of [-1, 1]){ const e = new T.Group(); e.position.set(R*.72, R*.3, sd*R*.55); e.rotation.y = -sd*.62; h.add(e);
+    const ball = new T.Mesh(new T.SphereGeometry(R*.24, 18, 14), new T.MeshBasicMaterial({color:'#ffc93d'})); e.add(ball); // amber, and it glows at night
+    const pup = new T.Mesh(new T.SphereGeometry(R*.2, 14, 10), new T.MeshBasicMaterial({color:'#1a0c16'})); pup.scale.set(.4, .3, .9); pup.position.set(R*.185, R*.01, 0); e.add(pup); // the flat bar of an octopus's eye
+    const lid = soft(new T.SphereGeometry(R*.3, 16, 12), '#5a1e45'); lid.scale.set(1, .4, 1.15); lid.position.set(-R*.05, R*.23, 0); lid.rotation.z = -.12; lid.rotation.x = -sd*.42; e.add(lid); } // a heavy brow
+  return h;
+}
+export function krakenModel(){
+  const g = new T.Group(), body = new T.Group(); g.add(body);
+  g.userData.tents = [];
+  const spots = [[95, 55], [110, 150], [-120, 140], [200, -30], [-190, -20], [30, -170]]; // six, far apart, round the head
+  const SHAPES = [[1.5, 1.3], [.5, 4.6], [2.0, .4], [-1.1, 3.6], [1.2, 2.6], [.7, -3.4]]; // hook, coiled tip, hook, S-bend, curl, S-bend
+  spots.forEach(([x, z], i) => { const piv = new T.Group(), len = 92 + (i*37 % 4)*13, a = Math.atan2(-z, -x) + (i % 2 ? .6 : -.6);
+    piv.position.set(x, -4, z); piv.rotation.y = a; body.add(piv);
+    piv.add(tentacle(len, 10 + (i % 3)*1.6, SHAPES[i][0], SHAPES[i][1]));
+    const ring = new T.Mesh(new T.RingGeometry(11, 21, 28), new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.7, depthWrite:false}));
+    ring.rotation.x = -Math.PI/2; ring.position.set(x, 4, z); body.add(ring);
+    g.userData.tents.push({piv, ph:i*1.7, ring, delay:(i*.37) % 1, x, z}); });
+  const head = krakenHead(); head.position.set(-6, 2, 0); body.add(head); g.userData.head = head;
+  const hring = new T.Mesh(new T.RingGeometry(40, 58, 40), new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.55, depthWrite:false})); hring.rotation.x = -Math.PI/2; hring.position.set(-14, 4, 0); hring.scale.set(1.3, 1, 1); body.add(hring); g.userData.hring = hring;
+  // the beast's dark shape just under the surface, much bigger than the ring of tentacles (a grid, so wildlife.js can lay it on the swell)
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 6, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(22,6,26,.78)'); gr.addColorStop(.55, 'rgba(14,8,26,.5)'); gr.addColorStop(1, 'rgba(8,10,24,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  const shadow = new T.Mesh(new T.PlaneGeometry(1, 1, 44, 44), new T.MeshBasicMaterial({map:new T.CanvasTexture(c), transparent:true, depthWrite:false, opacity:0}));
+  shadow.rotation.x = -Math.PI/2; shadow.scale.set(520, 440, 1); shadow.position.y = 1.5; shadow.renderOrder = 1; body.add(shadow); g.userData.shadow = shadow;
+  g.userData.body = body; return g;
+}
+// A dolphin. P128 (Nicholas: dolphins next): it was a plain grey spindle. Now it has a round forehead and a real beak, an eye
+// and a smiling mouth line, a dark back that dips under the tall curved back fin, grey sides and a white belly.
+const DL_PROF = smooth([[-17.5, .45], [-15.5, 1.1], [-11, 2.35], [-4, 4.2], [3, 4.9], [8.5, 4.5], [11.6, 3.7], [13.3, 2.3], [14.2, 1.35], [17.4, 1.0], [18.5, .55], [18.9, .01]], 56);
+function dlShape(x){ let r = 0; for (let i=1;i<DL_PROF.length;i++) if (x <= DL_PROF[i][0]){ const [x0, r0] = DL_PROF[i-1], [x1, r1] = DL_PROF[i]; r = r0 + (r1 - r0)*(x - x0)/((x1 - x0) || 1); break; }
+  const melon = Math.exp(-Math.pow((x - 10.8)/2.6, 2)), beak = whStep(13.6, 15, x), stalk = whStep(-5, -15, x);
+  return {r, sz:.9 - .42*stalk - .05*beak, syT:.92 + .2*melon + .2*stalk - .3*beak, syB:.9 + .14*stalk - .28*beak}; }
+function dlSurf(x, a, out = 1){ const h = dlShape(x), sn = Math.sin(a); return [x, h.r*(sn > 0 ? h.syT : h.syB)*sn*out, h.r*h.sz*Math.cos(a)*out]; }
+let dlGeo = null;
+function dolphinGeo(){
+  const N = DL_PROF.length, M = 36, pos = new Float32Array(N*M*3), col = new Float32Array(N*M*3), idx = [];
+  const back = new T.Color('#3f5f7c'), side = new T.Color('#9db4c6'), belly = new T.Color('#f4f6f5'), c = new T.Color();
+  for (let i=0;i<N;i++){ const x = DL_PROF[i][0];
+    for (let j=0;j<M;j++){ const a = j/M*Math.PI*2, sn = Math.sin(a), o = (i*M + j)*3; pos.set(dlSurf(x, a), o);
+      const cape = .32 - .5*Math.exp(-Math.pow((x - 1)/6.5, 2)) + .25*whStep(9, 15, x); // the dark back dips down the side under the fin
+      c.copy(belly).lerp(side, whStep(-.55, -.2, sn)).lerp(back, whStep(cape - .12, cape + .12, sn)); col.set([c.r, c.g, c.b], o); }
+    if (i) for (let j=0;j<M;j++){ const a0 = (i - 1)*M + j, a1 = (i - 1)*M + (j + 1) % M, b0 = i*M + j, b1 = i*M + (j + 1) % M; idx.push(a0, b0, a1, a1, b0, b1); } }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeVertexNormals(); return geo;
+}
+export function dolphinModel(){
+  const g = new T.Group(), C = '#3f5f7c', put = (o, q) => { o.position.set(q[0], q[1], q[2]); g.add(o); return o; };
+  const m = new T.Mesh(dlGeo || (dlGeo = dolphinGeo()), softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; g.add(m);
+  const df = blade(9.5, 4.2, .8, .85, -.62, 0, C); df.rotation.z = Math.PI/2 + .5; put(df, dlSurf(1.5, Math.PI/2, .7)); // tall and curved back
+  put(soft(new T.SphereGeometry(.3, 8, 6), '#23384b'), dlSurf(9.6, Math.PI/2, .99)).scale.set(1.6, .4, 1); // blowhole
+  for (const sd of [-1, 1]){ const sideA = a => sd > 0 ? a : Math.PI - a;
+    const pf = blade(7.2, 2.1, .5, .7, .45, 0, C); pf.rotation.set(sd*-.7, sd*(Math.PI/2 + .7), 0); put(pf, dlSurf(7.5, sideA(-.6), .75));
+    const fl = blade(7.6, 2.7, .5, .75, -.4*sd, 0, C); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*.95); fl.position.set(-16, .1, 0); g.add(fl);
+    put(soft(new T.SphereGeometry(.42, 10, 8), '#10181f'), dlSurf(11.9, sideA(-.02), .97));
+    put(soft(new T.SphereGeometry(.13, 6, 5), '#ffffff'), dlSurf(12.1, sideA(.08), 1.06));
+    const pts = []; for (let k=0;k<=8;k++){ const t = k/8, q = dlSurf(18.4 - t*6.2, sideA(-.3 - .1*t + .34*t*t*t), 1.01); pts.push(new T.Vector3(q[0], q[1], q[2])); } // the mouth, turning up at the end
+    g.add(soft(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 12, .1, 5, false), '#2a3f52')); }
+  return g;
+}
+// A fish: a small, smooth, slim body, dark on the back and silver underneath, a soft forked tail and a fin on top.
+// The swordfish has its sword.
+export function fishModel(kind = 'tuna'){
+  const g = new T.Group(), sw = kind === 'swordfish', top = kind === 'sardine' ? '#5f8fa8' : sw ? '#3f5f86' : '#33507a';
+  g.add(latheBody([[-4.6, 0], [-4, .45], [-2.2, 1.5], [0, 2.1], [2.2, 1.9], [3.8, 1.2], [4.6, 0]], top, '#e6eef2', 1, .58, 28, .05));
+  for (const sd of [-1, 1]){ const t = blade(3, 1, .22, .5, -.25*sd, 0, top); t.rotation.set(Math.PI/2, 0, Math.PI - sd*.6); t.position.x = -3.9; g.add(t); }
+  const df = blade(2.6, 1, .2, .8, -.4, 0, top); df.rotation.z = Math.PI/2 + .6; df.position.set(.6, 1.4, 0); g.add(df);
+  if (sw){ const bill = soft(new T.ConeGeometry(.35, 6, 12), '#2f3f55'); bill.rotation.z = -Math.PI/2; bill.position.x = 7.4; g.add(bill); }
+  g.scale.setScalar(.85); return g;
+}
+
+// An iceberg: chunks of ice with sharp facets, a wide flat-topped slab, a tall cracked peak and a smaller chunk at its side.
+// The tops are snowy white, the cliffs pale blue, deeper blue near the water, and a turquoise skirt shows under the sea.
+const icePos = (x, y, z, s) => Math.sin(x*1.7 + s)*Math.sin(z*1.9 - s) + .6*Math.sin(y*2.3 + x*1.1 + s*2) + .4*Math.sin(z*3.1 + y*1.7 - s);
+function iceChunk(r, h, R, top = .75){
+  const geo = new T.IcosahedronGeometry(1, 1), p = geo.attributes.position, s = R()*10, sx = .85 + R()*.3, sz = .85 + R()*.3;
+  for (let i=0;i<p.count;i++){ let x = p.getX(i), y = p.getY(i), z = p.getZ(i); const k = 1 + icePos(x, y, z, s)*.2;
+    x *= k*r*sx; z *= k*r*sz; y = y*k; y = y < -.2 ? -.35 : Math.min(y, top + icePos(z, x, y, s)*.06) ; // a flat bottom and a rough plateau on top
+    p.setXYZ(i, x, (y + .35)*h - 8, z); }
+  geo.computeVertexNormals(); // the faces stay sharp: every triangle has its own corners, so the ice looks cut
+  const n = geo.attributes.normal, col = new Float32Array(p.count*3), W = new T.Color('#f2f8fa'), C = new T.Color('#a9d6e6'), B = new T.Color('#5fa9c8'), c = new T.Color();
+  for (let i=0;i<p.count;i++){ const ny = n.getY(i), y = p.getY(i);
+    c.copy(C).lerp(W, Math.min(1, Math.max(0, (ny - .55)*3))); if (y < 8) c.lerp(B, Math.min(1, (8 - y)/14)*(1 - Math.max(0, ny))); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  return mesh(geo, '#ffffff', {vertexColors:true}); }
+export function icebergModel(r, R = Math.random){
+  const g = new T.Group();
+  const skirt = mesh(new T.CylinderGeometry(r*1.12, r*1.3, 8, 18), '#7fd0e0', {transparent:true, opacity:.55, depthWrite:false, flatShading:false}, false); skirt.position.y = -5; g.add(skirt);
+  const slab = iceChunk(r, r*.42, R); slab.rotation.y = R()*6; g.add(slab);
+  const peak = iceChunk(r*.48, r*1.25, R, .9); peak.position.set((R() - .5)*r*.5, 0, (R() - .5)*r*.5); peak.rotation.y = R()*6; g.add(peak);
+  const a = R()*6.28, side = iceChunk(r*.42, r*.5, R); side.position.set(Math.cos(a)*r*.85, 0, Math.sin(a)*r*.85); g.add(side);
+  return g;
+}
+// A shipwreck in three sizes: 'small' (a fishing boat, a snapped mast), 'medium' (a merchant ship with its amphorae
+// floating around), 'large' (a warship: long hull, its bronze ram in the air, two broken masts, lots of floating timber).
+export function wreckModel(size = 'medium'){
+  const g = new T.Group(), bob = [];
+  const L = {small:46, medium:80, large:130}[size], B = {small:18, medium:26, large:30}[size], H = {small:10, medium:14, large:18}[size], k = L/80;
+  const hull = makeHull(L, B, H, '#4f3a28', '#6d5640'); hull.rotation.set(.45, 0, .22); hull.position.y = -6*k; g.add(hull);
+  const masts = size === 'large' ? [[-18, 1], [26, .7]] : [[4, size === 'small' ? .45 : 1]];
+  for (const [x, h] of masts){ const mast = mesh(new T.CylinderGeometry(1.4*k, 1.8*k, 46*k*h, 6), '#4a3624'); mast.position.set(x, 14*k*h, -6*k); mast.rotation.set(.7, 0, -.15); g.add(mast);
+    if (h > .6){ const rag = mesh(new T.BoxGeometry(.8, 14*k, 18*k), '#cfc6ae'); rag.position.set(x, 26*k*h, -20*k*h); rag.rotation.set(.7, 0, -.15); g.add(rag); } }
+  if (size === 'large'){ const ram = mesh(new T.ConeGeometry(4, 22, 4), '#8a6a3c'); ram.rotation.set(0, 0, -1.1); ram.position.set(L*.52, 8, 4); g.add(ram); }
+  const R = (i => () => (i = (i*9301 + 49297) % 233280)/233280)(L);
+  const nA = {small:1, medium:4, large:3}[size], nP = {small:2, medium:3, large:7}[size];
+  for (let i=0;i<nA;i++){ const a = mesh(amphoraGeo, '#b8693a', {flatShading:false}), r = L*.45 + R()*20, an = R()*6.28; a.position.set(Math.cos(an)*r, 0, Math.sin(an)*r); a.rotation.z = 1.4; a.rotation.y = i; g.add(a); bob.push(a); }
+  for (let i=0;i<nP;i++){ const p = mesh(new T.BoxGeometry(14 + R()*10, 2, 5), '#7a5a3a'), r = L*.4 + R()*30, an = R()*6.28; p.position.set(Math.cos(an)*r, 0, Math.sin(an)*r); p.rotation.y = R()*3; g.add(p); bob.push(p); }
+  g.userData.bob = bob;
+  return g;
+}
+// One flat layer of an island's outline, with a soft bevelled rim.
+export function slab(pts, y0, y1, color, bev = 5){
+  const b = Math.min(bev, (y1 - y0)/3);
+  const geo = new T.ExtrudeGeometry(new T.Shape(pts.map(([x, z]) => new T.Vector2(x, -z))), {depth:y1 - y0 - 2*b, bevelEnabled:true, bevelThickness:b, bevelSize:b, bevelOffset:-b, bevelSegments:3, curveSegments:1});
+  geo.rotateX(-Math.PI/2); geo.translate(0, y0 + b, 0);
+  return mesh(geo, color);
+}
