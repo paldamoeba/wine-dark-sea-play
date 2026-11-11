@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=3b0c24f';
+import {hash} from './world.js?v=788f7d6';
 
-import {smokeColumn} from './smoke.js?v=3b0c24f';
+import {smokeColumn} from './smoke.js?v=788f7d6';
 const T = window.THREE;
-import {mat} from './ships.js?v=3b0c24f';
+import {mat} from './ships.js?v=788f7d6';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -422,14 +422,36 @@ export function krakenModel(){
   shadow.rotation.x = -Math.PI/2; shadow.scale.set(520, 440, 1); shadow.position.y = 1.5; shadow.renderOrder = 1; body.add(shadow); g.userData.shadow = shadow;
   g.userData.body = body; return g;
 }
-// A dolphin: a slim smooth body with a short beak, and soft fins that grow out of it: a curved fin on the back, two
-// flippers and the flukes.
+// A dolphin. P128 (Nicholas: dolphins next): it was a plain grey spindle. Now it has a round forehead and a real beak, an eye
+// and a smiling mouth line, a dark back that dips under the tall curved back fin, grey sides and a white belly.
+const DL_PROF = smooth([[-17.5, .45], [-15.5, 1.1], [-11, 2.35], [-4, 4.2], [3, 4.9], [8.5, 4.5], [11.6, 3.7], [13.3, 2.3], [14.2, 1.35], [17.4, 1.0], [18.5, .55], [18.9, .01]], 56);
+function dlShape(x){ let r = 0; for (let i=1;i<DL_PROF.length;i++) if (x <= DL_PROF[i][0]){ const [x0, r0] = DL_PROF[i-1], [x1, r1] = DL_PROF[i]; r = r0 + (r1 - r0)*(x - x0)/((x1 - x0) || 1); break; }
+  const melon = Math.exp(-Math.pow((x - 10.8)/2.6, 2)), beak = whStep(13.6, 15, x), stalk = whStep(-5, -15, x);
+  return {r, sz:.9 - .42*stalk - .05*beak, syT:.92 + .2*melon + .2*stalk - .3*beak, syB:.9 + .14*stalk - .28*beak}; }
+function dlSurf(x, a, out = 1){ const h = dlShape(x), sn = Math.sin(a); return [x, h.r*(sn > 0 ? h.syT : h.syB)*sn*out, h.r*h.sz*Math.cos(a)*out]; }
+let dlGeo = null;
+function dolphinGeo(){
+  const N = DL_PROF.length, M = 36, pos = new Float32Array(N*M*3), col = new Float32Array(N*M*3), idx = [];
+  const back = new T.Color('#3f5f7c'), side = new T.Color('#9db4c6'), belly = new T.Color('#f4f6f5'), c = new T.Color();
+  for (let i=0;i<N;i++){ const x = DL_PROF[i][0];
+    for (let j=0;j<M;j++){ const a = j/M*Math.PI*2, sn = Math.sin(a), o = (i*M + j)*3; pos.set(dlSurf(x, a), o);
+      const cape = .32 - .5*Math.exp(-Math.pow((x - 1)/6.5, 2)) + .25*whStep(9, 15, x); // the dark back dips down the side under the fin
+      c.copy(belly).lerp(side, whStep(-.55, -.2, sn)).lerp(back, whStep(cape - .12, cape + .12, sn)); col.set([c.r, c.g, c.b], o); }
+    if (i) for (let j=0;j<M;j++){ const a0 = (i - 1)*M + j, a1 = (i - 1)*M + (j + 1) % M, b0 = i*M + j, b1 = i*M + (j + 1) % M; idx.push(a0, b0, a1, a1, b0, b1); } }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeVertexNormals(); return geo;
+}
 export function dolphinModel(){
-  const g = new T.Group(), C = '#6b8194';
-  g.add(latheBody([[-17, 0], [-15, 1.2], [-10, 2.6], [-3, 4.3], [3, 4.8], [8, 4.2], [11.5, 3.2], [13.5, 2.1], [14.5, 1.3], [17.5, .95], [18.6, 0]], '#7f94a6', '#eef2f3', .9, .85, 28, -.05));
-  const df = blade(8, 3.4, .8, .85, -.5, 0, C); df.rotation.z = Math.PI/2 + .55; df.position.set(1, 2.6, 0); g.add(df);
-  for (const sd of [-1, 1]){ const pf = blade(6.5, 1.8, .5, .7, .4, 0, C); pf.rotation.set(sd*-.7, sd*(Math.PI/2 + .7), 0); pf.position.set(7.5, -2.2, sd*2); g.add(pf);
-    const fl = blade(7, 2.2, .5, .75, -.35*sd, 0, C); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*.95); fl.position.set(-15.5, .2, 0); g.add(fl); }
+  const g = new T.Group(), C = '#3f5f7c', put = (o, q) => { o.position.set(q[0], q[1], q[2]); g.add(o); return o; };
+  const m = new T.Mesh(dlGeo || (dlGeo = dolphinGeo()), softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; g.add(m);
+  const df = blade(9.5, 4.2, .8, .85, -.62, 0, C); df.rotation.z = Math.PI/2 + .5; put(df, dlSurf(1.5, Math.PI/2, .7)); // tall and curved back
+  put(soft(new T.SphereGeometry(.3, 8, 6), '#23384b'), dlSurf(9.6, Math.PI/2, .99)).scale.set(1.6, .4, 1); // blowhole
+  for (const sd of [-1, 1]){ const sideA = a => sd > 0 ? a : Math.PI - a;
+    const pf = blade(7.2, 2.1, .5, .7, .45, 0, C); pf.rotation.set(sd*-.7, sd*(Math.PI/2 + .7), 0); put(pf, dlSurf(7.5, sideA(-.6), .75));
+    const fl = blade(7.6, 2.7, .5, .75, -.4*sd, 0, C); fl.rotation.set(Math.PI/2, 0, Math.PI - sd*.95); fl.position.set(-16, .1, 0); g.add(fl);
+    put(soft(new T.SphereGeometry(.42, 10, 8), '#10181f'), dlSurf(11.9, sideA(-.02), .97));
+    put(soft(new T.SphereGeometry(.13, 6, 5), '#ffffff'), dlSurf(12.1, sideA(.08), 1.06));
+    const pts = []; for (let k=0;k<=8;k++){ const t = k/8, q = dlSurf(18.4 - t*6.2, sideA(-.3 - .1*t + .34*t*t*t), 1.01); pts.push(new T.Vector3(q[0], q[1], q[2])); } // the mouth, turning up at the end
+    g.add(soft(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 12, .1, 5, false), '#2a3f52')); }
   return g;
 }
 // A fish: a small, smooth, slim body, dark on the back and silver underneath, a soft forked tail and a fin on top.

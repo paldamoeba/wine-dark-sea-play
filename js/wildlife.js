@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=3b0c24f';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=3b0c24f';
-import {G, save, stat} from './state.js?v=3b0c24f';
-import {scene} from './scene.js?v=3b0c24f';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=3b0c24f';
-import {toast} from './ui.js?v=3b0c24f';
-import {combatState} from './combat.js?v=3b0c24f';
-import {sfx} from './audio.js?v=3b0c24f';
+import {WILDLIFE} from './config.js?v=788f7d6';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=788f7d6';
+import {G, save, stat} from './state.js?v=788f7d6';
+import {scene} from './scene.js?v=788f7d6';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=788f7d6';
+import {toast} from './ui.js?v=788f7d6';
+import {combatState} from './combat.js?v=788f7d6';
+import {sfx} from './audio.js?v=788f7d6';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -73,7 +73,10 @@ document.addEventListener('whale', () => { W.state = 'gone'; W.wait = 0; });
 
 // ---- dolphins: a small pod crosses the sea on its own course, leaping as it goes, then swims off ----
 // Like the whale, they don't follow you: they appear ahead, pass by and are gone.
-const pod = [0, 1, 2].map(() => { const d = dolphinModel(); d.visible = false; scene.add(d); return d; });
+// P128: beside the bigger ships the pod was three specks. They are drawn larger than life now (like the whale), spaced wider
+// and they leap higher, so you can see what they are.
+const DOLPHIN_K = 2.3;
+const pod = [0, 1, 2].map(() => { const d = dolphinModel(); d.visible = false; d.scale.setScalar(DOLPHIN_K); scene.add(d); return d; });
 const P = {on:false, wait:rand(WILDLIFE.dolphinEvery), t:0, x:0, y:0, a:0};
 const POD_SPEED = 95, POD_TIME = 16;
 function updateDolphins(dt){
@@ -94,12 +97,12 @@ function updateDolphins(dt){
   P.x += Math.cos(P.a)*POD_SPEED*dt; P.y += Math.sin(P.a)*POD_SPEED*dt;
   pod.forEach((d, i) => {
     // a loose line, each one leaping in turn
-    const back = i*38 + Math.sin(P.t*.7 + i)*8, out = (i - 1)*26;
+    const back = i*62 + Math.sin(P.t*.7 + i)*10, out = (i - 1)*44;
     const x = P.x - Math.cos(P.a)*back - Math.sin(P.a)*out, y = P.y - Math.sin(P.a)*back + Math.cos(P.a)*out;
     const ph = (P.t*.9 + i*.33) % 1, jump = ph < .45 ? Math.sin(ph/.45*Math.PI) : -Math.sin((ph - .45)/.55*Math.PI)*.4;
     d.visible = jump > -.15 && P.t < POD_TIME - 1;
     const was = d.userData.up; d.userData.up = jump > 0; if (d.visible && was !== undefined && was !== d.userData.up) sfx('splash', {x, y}, .35);
-    d.position.set(x, waveAt(x, y, G.t) + jump*26 - 3, y);
+    d.position.set(x, waveAt(x, y, G.t) + jump*44 - 7, y);
     d.rotation.set(0, -P.a, ph < .45 ? Math.cos(ph/.45*Math.PI)*.8 : -.5);
   });
   if (P.t > POD_TIME || !openSea(P.x, P.y, 40)){ P.on = false; pod.forEach(d => d.visible = false); P.wait = rand(WILDLIFE.dolphinEvery); }

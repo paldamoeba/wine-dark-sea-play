@@ -1,7 +1,7 @@
 // P75: the online Leaderboard. Every ship is counted automatically, and a player can take theirs off. What leaves this device: a random player id, ship names, types, two colors and each ship's numbers.
 // The address comes from ONLINE_URL in config.js (tools/leaderboard is the server).
-import {ONLINE_URL} from './config.js?v=3b0c24f';
-import {G} from './state.js?v=3b0c24f';
+import {ONLINE_URL} from './config.js?v=788f7d6';
+import {G} from './state.js?v=788f7d6';
 const KEY = 'wine-dark-sea-online';
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
 const write = o => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
