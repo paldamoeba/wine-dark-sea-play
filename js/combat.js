@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=9039537';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=9039537';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=9039537';
-import {scene, screenToSea, setLair} from './scene.js?v=9039537';
-import {wreckModel} from './models.js?v=9039537';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=9039537';
-import {mergeStatic, freeModel} from './merge.js?v=9039537';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=9039537';
-import {award} from './trophies.js?v=9039537';
-import {makeFire, updateFire, burn} from './fire.js?v=9039537';
-import {blessing, fighters, hasSail} from './crew.js?v=9039537';
-import {progress, goal} from './quests.js?v=9039537';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=9039537';
-import {rollColor, unlockColor, colorName} from './colors.js?v=9039537';
-import {toast, popLater} from './ui.js?v=9039537';
-import {sink, rowNow, ROW} from './player.js?v=9039537';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=9039537';
-import {TOD} from './daynight.js?v=9039537';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=9039537';
-import {sfx} from './audio.js?v=9039537';
-import {myLevel} from './levels.js?v=9039537';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=247e690';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=247e690';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=247e690';
+import {scene, screenToSea, setLair} from './scene.js?v=247e690';
+import {wreckModel} from './models.js?v=247e690';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=247e690';
+import {mergeStatic, freeModel} from './merge.js?v=247e690';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=247e690';
+import {award} from './trophies.js?v=247e690';
+import {makeFire, updateFire, burn} from './fire.js?v=247e690';
+import {blessing, fighters, hasSail} from './crew.js?v=247e690';
+import {progress, goal} from './quests.js?v=247e690';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=247e690';
+import {rollColor, unlockColor, colorName} from './colors.js?v=247e690';
+import {toast, popLater} from './ui.js?v=247e690';
+import {sink, rowNow, ROW} from './player.js?v=247e690';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=247e690';
+import {TOD} from './daynight.js?v=247e690';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=247e690';
+import {sfx} from './audio.js?v=247e690';
+import {myLevel} from './levels.js?v=247e690';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -92,8 +92,8 @@ for (const is of ISLANDS){
   const far = lv === 3 && (is.name === 'Thasos' || FORT_ISLES.indexOf(is) >= FORT_ISLES.length - 2), n = far ? FORT_LV[lv].most : FORT_LV[lv].guards;
   for (let g=0; g<n; g++){ const a0 = site.a - 1.3 + g/n*Math.PI*2, rr = 230 + (g % 3)*120, p = {x:site.sea.x + Math.cos(a0)*rr, y:site.sea.y + Math.sin(a0)*rr}; pushOut(p, 180);
     const dir = g % 2 ? -1 : 1, route = [0, 1, 2, 3, 4].map(k => { const a = a0 + dir*k*Math.PI*2/5, q = {x:site.sea.x + Math.cos(a)*rr, y:site.sea.y + Math.sin(a)*rr}; pushOut(q, 180); return q; });
-    const kind = owner === 'pirate' ? (lv === 3 ? (g < 2 ? 'pirateQ' : g < 5 ? 'galley' : 'skiff') : g < lv ? 'galley' : 'skiff') : owner + (lv === 3 && g < 2 ? 'Q' : ''); // only the first two are quinqueremes
-    const e = makeEnemy({kind, home:p, guard:true, isle:is, route}); enemies.push(e); f.guards.push(e); }
+    const kind = owner === 'pirate' ? (lv === 3 ? (g < 2 ? 'pirateQ' : g < 5 ? 'galley' : 'skiff') : g < lv ? 'galley' : 'skiff') : owner + (lv === 3 && g < 2 ? 'Q' : ''), kindH = far && g === 0 ? kind.replace(/Q$/, 'H') : kind; // only the first two are quinqueremes; P124: at the three farthest a hexeres leads them
+    const e = makeEnemy({kind:kindH, home:p, guard:true, isle:is, route}); enemies.push(e); f.guards.push(e); }
 }
 // ---- bandit camps (P49): a palisade on the wild islands near Kallisto, with a few archers and one mothership guarding it ----
 // Bandits fight in the Shallows too (everything else leaves you alone there). A burnt camp stays burnt; some hold ship plans.
@@ -201,7 +201,7 @@ function growPirate(e){
   if (side(e) !== 'pirate' || e.guard || e.arena) return;
   const b = lvBoost(); e.lvl = Math.max(lvAt(e.home || e), b);
   e.kind0 = e.kind0 || e.kind; const t = Math.max(rank(), b + 1) + ((TOD.night || 0) > .5 ? 1 : 0), r = Math.random(); // P82: at night, as if you were a size bigger
-  const k = e.kind0 === 'dinghy' && t >= 1 && r < .5 ? 'skiff' : e.kind0 === 'skiff' && t >= 2 && r < .35 ? 'galley' : e.kind0;
+  const k = e.kind0 === 'dinghy' && t >= 1 && r < .5 ? 'skiff' : e.kind0 === 'skiff' && t >= 2 && r < .35 ? 'galley' : e.kind0 === 'galley' && rank() >= 4 && r < .12 ? 'pirateH' : e.kind0; /* P124: late in the game a few pirate hexeres roam */
   if (k !== e.kind){ e.kind = k; e.spec = ENEMIES[k]; buildEnemy(e); }
 }
 // P84: every 20 s the pirates out of sight catch up with your level, so a strong player meets bigger ships without waiting for them to sink and come back
@@ -209,7 +209,7 @@ let growT = 20;
 function growFar(dt){ if ((growT -= dt) > 0) return; growT = 20; for (const e of enemies) if (!e.real && !e.dead && side(e) === 'pirate' && !e.guard && !e.night && dist(e, G.S) > 2600) growPirate(e); }
 function respawn(e){
   growPirate(e);
-  const wantK = e.isle && e.isle.city ? e.isle.city + (/Q$/.test(e.kind) ? 'Q' : '') : null; // a quinquereme guard stays a quinquereme for the new owner
+  const wantK = e.isle && e.isle.city ? e.isle.city + (/[QH]$/.test(e.kind) ? e.kind.slice(-1) : '') : null; // a quinquereme guard stays a quinquereme for the new owner
   if (!e.named && e.guard && e.isle.fort && e.isle.fort.owner !== 'pirate' && e.isle.city && e.kind !== wantK){ e.kind = wantK; e.spec = ENEMIES[e.kind]; e.city = e.isle.city; buildEnemy(e); }
   if (side(e) === 'navy' && !e.guard && e.isle.city && e.kind !== e.isle.city){ e.kind = e.isle.city; e.spec = ENEMIES[e.kind]; e.city = e.kind; buildEnemy(e); }
   if (e.towers) resetTowers(e);
@@ -654,7 +654,7 @@ export function planReward(f){
   return hexFort(f) && !(S.pieceFrom || []).includes('hex:' + f.isle.name) && !((S.plans || []).includes(12) || (S.owned || []).includes(12) || ((S.pieces || {})[12] || 0) >= PLANS[12].pieces) ? 12 : 0;
 }
 // P120: once the pirate king is beaten, each of the strongest fortresses holds a piece of the Hexeres's plans
-const hexFort = f => !!(f && f.fort && !f.camp && !f.named && f.tier >= 3 && (G.S.chapter || 0) >= 1);
+const hexFort = f => !!(f && f.fort && !f.camp && !f.named && f.tier >= 3); /* P124: before the king too, so the Hexeres can fight him */
 // A golden scroll of plans floating over every camp and fortress that still holds a piece, so you can spot it from afar
 const scrollMat = new T.MeshBasicMaterial({color:'#f3d27a'}), scrollEnd = new T.MeshBasicMaterial({color:'#b5552c'});
 function scrollModel(){ const g = new T.Group(), roll = new T.Mesh(new T.CylinderGeometry(7, 7, 34, 14), scrollMat); roll.rotation.z = Math.PI/2; g.add(roll);
@@ -699,9 +699,9 @@ function givePiece(t, from){
 // ---- loot ----
 // ---- P123 wanted posters: one pirate ship at a time has a name and a price on its head. The poster is on the Quests page and the chart.
 // It changes when you sink the ship, never by the clock (Nicholas's rule: no daily rewards). Only for warships (bireme and up).
-const WANTED = {names:['Drakon the Red', 'Lykos One-Eye', 'Timon the Cruel', 'Phokas Blackbeard', 'Karpos the Rat', 'Myron Ironhand', 'Sosias the Viper', 'Agis the Wolf of Naxos', 'Theron Nine-Lives', 'Bion the Butcher'], gold:200, more:40, most:440, wait:90};
+const WANTED = {names:['Drakon the Red', 'Lykos One-Eye', 'Timon the Cruel', 'Phokas Blackbeard', 'Karpos the Rat', 'Myron Ironhand', 'Sosias the Viper', 'Agis the Wolf of Naxos', 'Theron Nine-Lives', 'Bion the Butcher'], base:60, perLv:28, wait:90, paralos:3};
 export const wanted = () => enemies.find(e => e.wanted && !e.dead) || null;
-export const wantedGold = () => Math.min(WANTED.most, WANTED.gold + WANTED.more*(G.S.wantedN || 0));
+export const wantedGold = () => Math.round((WANTED.base + WANTED.perLv*myLevel())/10)*10; /* P124 (Nicholas): the reward grows with your ship's level */
 let wantT = 12;
 function wantedTick(dt){ wantT -= dt; if (wantT > 0) return; wantT = 4; const S = G.S, now = wanted(); if (now && S.wantedSeen !== (S.wantedN || 0) && !G.dock && !G.sheetOpen && !G.mapOpen){ S.wantedSeen = S.wantedN || 0; toast(`Wanted: ${now.wanted.name}. See the chart`, 4.5); } if (rank() < 2 || now) return;
   const ok = e => !e.dead && !e.fort && !e.named && !e.boss && !e.guard && !e.ally && !e.arena && !e.temp && !e.mother && !e.night && side(e) === 'pirate' && e.spec.len >= 70, far = e => Math.hypot(e.x - S.x, e.y - S.y);
@@ -709,7 +709,7 @@ function wantedTick(dt){ wantT -= dt; if (wantT > 0) return; wantT = 4; const S 
   list.sort((a, b) => far(a) - far(b)); const e = list[Math.floor(Math.random()*Math.min(5, list.length))], n = S.wantedN || 0;
   e.wanted = {name:WANTED.names[n % WANTED.names.length], gold:wantedGold()}; }
 function wantedSunk(e, byPlayer){ const w = e.wanted; e.wanted = null; if (!byPlayer) return; wantT = WANTED.wait;
-  G.S.gold += w.gold; G.S.wantedN = (G.S.wantedN || 0) + 1; stat('wanted'); G.hitStop = Math.max(G.hitStop || 0, .32); setTimeout(() => { toast(`${w.name} is sunk. Bounty +${w.gold}`, 4.5); sfx('coin'); }, 2600); }
+  G.S.gold += w.gold; G.S.wantedN = (G.S.wantedN || 0) + 1; stat('wanted'); if (G.S.wantedN >= WANTED.paralos) setTimeout(() => givePiece(13, 'wanted'), 5200); /* P124: the harbor masters' thanks: the Paralos's plans */ G.hitStop = Math.max(G.hitStop || 0, .32); setTimeout(() => { toast(`${w.name} is sunk. Bounty +${w.gold}`, 4.5); sfx('coin'); }, 2600); }
 const LOOT = [];
 function sinkEnemy(e, byPlayer){
   if (e.ally){ allyHome(e); return; }

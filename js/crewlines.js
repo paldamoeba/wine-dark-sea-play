@@ -1,9 +1,10 @@
 // P122 crew moments: a short line from your crew the first time something happens. Words only: each line is said once per
 // voyage (S.said), never over another message, never in a menu, and never in the rowboat (you are alone in it).
-import {G, ship, holdUsed} from './state.js?v=9039537';
-import {toast, toastBusy} from './ui.js?v=9039537';
-import {W} from './weather.js?v=9039537';
-import {zoneAt} from './world.js?v=9039537';
+import {G, ship, holdUsed} from './state.js?v=247e690';
+import {toast, toastBusy} from './ui.js?v=247e690';
+import {W} from './weather.js?v=247e690';
+import {sfx} from './audio.js?v=247e690';
+import {zoneAt} from './world.js?v=247e690';
 
 const LINES = [
   ['hurt',  S => S.hull > 0 && S.hull < ship().hull*.3, 'She is taking water, captain! Make for a harbor.'],
@@ -23,5 +24,5 @@ export function updateCrewLines(dt){
   wait -= dt; if (wait > 0) return; wait = 1.5;
   const S = G.S; if (!S || G.dock || G.sheetOpen || G.mapOpen || G.sinking || toastBusy() || (ship().rank || 0) < 1) return;
   const said = S.said || (S.said = []);
-  for (const [k, test, text] of LINES) if (!said.includes(k) && test(S)){ said.push(k); toast('“' + text + '”', 5); wait = 60; return; }
+  for (const [k, test, text] of LINES) if (!said.includes(k) && test(S)){ said.push(k); toast('“' + text + '”', 5); sfx('bell'); wait = 60; return; }
 }

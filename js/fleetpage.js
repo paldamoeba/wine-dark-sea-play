@@ -1,22 +1,22 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=9039537';
-import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=9039537';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=9039537';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=9039537';
-import {men} from './crew.js?v=9039537';
-import {SPECS, crewLayout} from './ships.js?v=9039537';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=9039537';
-import {HARBORS} from './world.js?v=9039537';
-import {planSources} from './combat.js?v=9039537';
-import {ranksBody} from './records.js?v=9039537';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=9039537';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=247e690';
+import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=247e690';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=247e690';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=247e690';
+import {men} from './crew.js?v=247e690';
+import {SPECS, crewLayout} from './ships.js?v=247e690';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=247e690';
+import {HARBORS} from './world.js?v=247e690';
+import {planSources} from './combat.js?v=247e690';
+import {ranksBody} from './records.js?v=247e690';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=247e690';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
 const KING = 11;
 // P120: ships whose plans don't lie in a place you can sail to yet: a line of words instead of a list of fortresses
-const lateNote = t => t === KING ? 'Only the pirate king has them. Beat Polycrates and they are yours.' : t === 13 ? 'A gift from the cities of the Aegean. Beat the pirate king and the plans are yours.' : t === 12 && !((G.S.chapter || 0) >= 1) ? 'Polycrates holds the first piece. After he falls, the strongest fortresses hold the rest.' : '';
+const lateNote = t => t === KING ? 'Only the pirate king has them. Beat Polycrates and they are yours.' : t === 13 ? `The harbor masters give her plans to the captain who sinks 3 wanted pirates (${Math.min(3, G.S.wantedN || 0)} of 3). See the Jobs page.` : '';
 const buildable = () => SHIPS.map((sh, t) => t).filter(t => PLANS[t]);
 // real numbers for a ship: with its upgrades if it's yours, as it comes from the yard if it isn't
 function numbers(t){ const b = SHIPS[t], u = ((G.S.ups || {})[t] || {}), m = men(t), c = crewLayout(SPECS[b.model], m);

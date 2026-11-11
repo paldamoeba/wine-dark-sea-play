@@ -42,7 +42,7 @@ export const SHIPS = [
     desc:'Polycrates\' floating fortress: towers, statues and a golden stern. There is only one, and you have to beat him for it'},
   // P120: after the pirate king (new ships go on the end of this list: saves keep ships by their place in it)
   {name:'Hexeres', model:'hexeres', rank:4, speed:200, hull:560, hold:28, cap:{wood:290, bronze:100, iron:66, linen:46, goods:46}, heavy:7.2, fishTime:3, woodTime:3, storm:0, len:240, beam:70, fighters:12, men:[12, 64], turn:.46, plans:true, cost:{wood:1400, bronze:280, iron:190, linen:130, gold:2600},
-    desc:'A six: bigger than the quinquereme, with twelve archers on a wide fighting deck. One piece of its plans comes from Polycrates, the rest from the strongest fortresses after he falls'},
+    desc:'A six: bigger than the quinquereme, with twelve archers on a wide fighting deck. Its plans are kept in three pieces by the strongest fortresses'},
   {name:'Paralos', model:'paralos', rank:3, speed:215, hull:300, hold:18, cap:{wood:200, bronze:60, iron:36, linen:30, goods:32}, heavy:5, fishTime:2.6, woodTime:2.8, storm:0, len:170, beam:49, fighters:6, men:[6, 39], turn:.66, plans:true, cost:{wood:500, bronze:120, iron:40, linen:60, gold:2000},
     desc:'The sacred ship of Athens: a gilded trireme with a canopy, the fastest warship afloat. Its plans are the cities\' thanks for beating the pirate king'},
 ];
@@ -337,6 +337,10 @@ export const ENEMIES = { // P93 (Nicholas: some ships gave only 6 gold): more co
   athensQ:  {name:'Athenian quinquereme', side:'navy', city:'athens', model:'quinquereme', look:{paint:'white', sail:'athens', flag:'athens'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[160, 220], linen:8, wood:120, bronze:20, iron:8, len:215, beam:62},
   spartaQ:  {name:'Spartan quinquereme', side:'navy', city:'sparta', model:'quinquereme', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:520, speed:125, turn:.4, fighters:8, dmg:3.4, sight:700, gold:[160, 220], linen:8, wood:120, bronze:20, iron:8, len:215, beam:62},
   pirateQ:  {name:'Pirate quinquereme', model:'quinquereme', look:{paint:'raider', sail:'blood', flag:'none', helm:'pirate'}, hull:480, speed:125, turn:.42, fighters:8, dmg:3.2, sight:650, leash:1300, gold:[180, 250], linen:8, wood:120, bronze:18, iron:8, len:215, beam:62},
+  // P124 (Nicholas: pirates and navies should sail the new ships late in the game): the Hexeres leads the guard of the three farthest fortresses, and a few pirate ones roam once you sail a quinquereme
+  athensH:  {name:'Athenian hexeres', side:'navy', city:'athens', model:'hexeres', look:{paint:'white', sail:'athens', flag:'athens'}, hull:620, speed:122, turn:.38, fighters:9, dmg:3.5, sight:700, gold:[220, 300], linen:10, wood:140, bronze:24, iron:10, len:240, beam:70},
+  spartaH:  {name:'Spartan hexeres', side:'navy', city:'sparta', model:'hexeres', look:{paint:'black', sail:'sparta', flag:'sparta'}, hull:620, speed:122, turn:.38, fighters:9, dmg:3.5, sight:700, gold:[220, 300], linen:10, wood:140, bronze:24, iron:10, len:240, beam:70},
+  pirateH:  {name:'Pirate hexeres', model:'hexeres', look:{paint:'raider', sail:'blood', flag:'none', helm:'pirate'}, hull:580, speed:122, turn:.4, fighters:9, dmg:3.3, sight:650, leash:1300, gold:[240, 320], linen:10, wood:140, bronze:22, iron:10, len:240, beam:70},
 };
 for (const k in ENEMIES) ENEMIES[k].side = ENEMIES[k].side || 'pirate';
 // P64: three levels of fortress (by how far out they stand) and of bandit camp. Level 3 fortresses are guarded by quinqueremes.
