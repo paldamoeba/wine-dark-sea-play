@@ -1,21 +1,21 @@
 // Puts the world into the 3D scene and animates it: islands, fishing spots, wrecks, gulls, wake, the player's boat.
-import {mergeStatic} from './merge.js?v=32e89d7';
-import {SHIPS, IRON} from './config.js?v=32e89d7';
-import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=32e89d7';
-import {G, ship, lvl} from './state.js?v=32e89d7';
-import {men} from './crew.js?v=32e89d7';
-import {scene} from './scene.js?v=32e89d7';
-import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=32e89d7';
-import {buildShip, animateShip, statue, SPECS} from './ships.js?v=32e89d7';
-import {figure} from './town.js?v=32e89d7';
-import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=32e89d7';
-import {makeFire, updateFire, burn} from './fire.js?v=32e89d7';
-import {addGrass} from './grass.js?v=32e89d7';
-import {sinkPose} from './sinking.js?v=32e89d7';
-import {moored} from './fleet.js?v=32e89d7';
-import {sailCount} from './upgrades.js?v=32e89d7';
-import {hasSail} from './crew.js?v=32e89d7';
-import {placeOnWaves} from './combat.js?v=32e89d7';
+import {mergeStatic} from './merge.js?v=11d7486';
+import {SHIPS, IRON} from './config.js?v=11d7486';
+import {ISLANDS, SPOTS, WRECKS, HARBORS, CITIES, PIER_LEN, PIER, DOCK, WORLD as WORLD_N, home, hash, rng, waveAt, seaPose, inPoly, landDist, islandHeights, siteClear} from './world.js?v=11d7486';
+import {G, ship, lvl} from './state.js?v=11d7486';
+import {men} from './crew.js?v=11d7486';
+import {scene} from './scene.js?v=11d7486';
+import {slab, mineModel, mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, gull, wreckModel, icebergModel, fishModel, farm, amphoraGeo} from './models.js?v=11d7486';
+import {buildShip, animateShip, statue, SPECS} from './ships.js?v=11d7486';
+import {figure} from './town.js?v=11d7486';
+import {buildTown, buildPort, depthIn, spotIn} from './townbuild.js?v=11d7486';
+import {makeFire, updateFire, burn} from './fire.js?v=11d7486';
+import {addGrass} from './grass.js?v=11d7486';
+import {sinkPose} from './sinking.js?v=11d7486';
+import {moored} from './fleet.js?v=11d7486';
+import {sailCount} from './upgrades.js?v=11d7486';
+import {hasSail} from './crew.js?v=11d7486';
+import {placeOnWaves} from './combat.js?v=11d7486';
 
 const T = window.THREE;
 // ---- pop in: trees and houses spring up with a little bounce as they come into view, and tuck away again far behind ----
@@ -47,6 +47,16 @@ function updatePops(dt){
 }
 
 // ---- islands ----
+// P118 (the visual pass): wet sand. A band of darker, damp sand runs along the water's edge of every beach and fades into the dry
+// sand further up. It is a thin strip laid on the beach (colors set at its corners, no texture), glued into the island like the rest.
+function wetSand(pts, dry, wet){ const n = pts.length, D = new T.Color(dry), Wc = new T.Color(wet), rows = [[5, Wc], [12, Wc], [30, D]], pos = [], col = [], idx = [];
+  for (let i = 0; i < n; i++){ const [x, z] = pts[i], [ax, az] = pts[(i + n - 1) % n], [bx, bz] = pts[(i + 1) % n]; let tx = bx - ax, tz = bz - az; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
+    let nx = -tz, nz = tx; if (!inPoly(pts, x + nx*3, z + nz*3)){ nx = -nx; nz = -nz; }
+    for (const [d, c] of rows){ let k = d; while (k > 5 && !inPoly(pts, x + nx*k, z + nz*k)) k -= 5; pos.push(x + nx*k, 4.35, z + nz*k); col.push(c.r, c.g, c.b); } }
+  for (let i = 0; i < n; i++){ const a = i*3, b = ((i + 1) % n)*3; for (let r = 0; r < 2; r++) idx.push(a + r, b + r, a + r + 1, b + r, b + r + 1, a + r + 1); }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new T.Float32BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  const nrm = geo.attributes.normal; let up = 0; for (let i = 0; i < nrm.count; i++) up += nrm.getY(i); if (up < 0){ for (let i = 0; i < idx.length; i += 3){ const t = idx[i]; idx[i] = idx[i + 1]; idx[i + 1] = t; } geo.setIndex(idx); } for (let i = 0; i < nrm.count; i++) nrm.setXYZ(i, 0, 1, 0);
+  const m = mesh(geo, '#ffffff', {vertexColors:true}, false); return m; }
 // Each island is stacked flat layers of its real outline: sand, grass, and a rocky hilltop on the bigger ones.
 // The edges are bevelled so every layer has a soft rounded rim.
 const HOME_X = home.x, HOME_Y = home.y;
@@ -59,6 +69,7 @@ ISLANDS.forEach((is, i) => {
   const {top, hillTop} = islandHeights(is);
   is.ht = hill ? hillTop : top;
   g.add(slab(beach, -14, 4, cold ? '#d8dfe3' : '#e6d29c'));
+  g.add(wetSand(beach, cold ? '#d8dfe3' : '#e6d29c', cold ? '#b3bfc7' : '#c9ad74'));
   if (grass) g.add(slab(grass, 4, top, cold ? '#f2f6f8' : is.trees || is.port || is.harbor || is.frame ? '#76883c' : '#8a8a74'));
   // P107 (Nicholas: the rock looks weird): the hilltop had straight walls like a cut block; now its sides slope and a few
   // boulders sit on and around it, so it reads as a rocky hill

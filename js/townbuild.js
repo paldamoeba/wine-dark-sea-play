@@ -4,11 +4,11 @@
 // heights line the lanes at loose angles, packed near the water and thinning out inland, with gaps where trees stand; the
 // temple stands on the high ground (the hilltop if the town has one near, else a stepped platform at the top of the town)
 // with the city's god in front. Used by entities.js for every town; the size comes from townSize().
-import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=32e89d7';
-import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=32e89d7';
-import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=32e89d7';
-import {addTown} from './town.js?v=32e89d7';
-import {mergeStatic} from './merge.js?v=32e89d7';
+import {CITIES, PIER_LEN, inPoly, siteClear, GREAT_CITIES} from './world.js?v=11d7486';
+import {mesh, cypress, roundTree, CYPRESS_TINTS, ROUND_TINTS, house, temple, farm, amphoraGeo, stall, well, stoa, crane, lighthouse, LIGHT_Y} from './models.js?v=11d7486';
+import {statue, torch, buildShip, TORCH_ROOTS} from './ships.js?v=11d7486';
+import {addTown} from './town.js?v=11d7486';
+import {mergeStatic} from './merge.js?v=11d7486';
 const mergeShip = sh => { try { mergeStatic(sh); } catch (e){} };
 
 const T = window.THREE;
@@ -185,6 +185,12 @@ export function buildTown(is, g, PIER, ctx){
     for (let k=0;k<5;k++){ const a = mesh(amphoraGeo, ['#b8693a', '#c98a4b', '#a85c34'][k % 3], {flatShading:false}); a.scale.setScalar(.7); a.position.set(20 + k*7 + R()*3, 7.5, -4 + (k % 2)*8); q.add(a); }
     for (let k=0;k<3;k++){ const c = mesh(new T.BoxGeometry(9, 8, 9), '#8a6238'); c.position.set(PIER_LEN*.55 + k*11, 11.5, (k % 2 ? 3 : -3)); c.rotation.y = R()*.5; q.add(c); }
     keep.push([qx, qz], [qx - xp.dx*30, qz - xp.dy*30]); }
+  // P118: street lamps: a post with a lantern, and at night a soft warm glow around each (addLamps: one drawing for the whole town)
+  { const L = [], cap = Math.max(3, Math.round(Z.houses/6)); if (hasAgora) for (let k = 0; k < 4; k++){ const a2 = hu + .78 + k*Math.PI/2; L.push([ax + Math.cos(a2)*agR*.92, top, az + Math.sin(a2)*agR*.92]); }
+    for (const ln of lanes){ let acc = 70; for (let i = 1; i < ln.pts.length && L.length < cap; i++){ const [x0, z0] = ln.pts[i - 1], [x1, z1] = ln.pts[i], d = Math.hypot(x1 - x0, z1 - z0); acc += d;
+        if (acc > 130 && d > .1){ acc = 0; const o = (ln.w || 12)/2 + 2.5; L.push([x1 - (z1 - z0)/d*o, top, z1 + (x1 - x0)/d*o]); } } }
+    L.push([px + PIER.dx*(PIER_LEN - 6) - PIER.dy*((PIER.w || 18)/2 - 2), 7, pz + PIER.dy*(PIER_LEN - 6) + PIER.dx*((PIER.w || 18)/2 - 2)]);
+    addLamps(g, L.filter(q => q[1] === 7 || (!off(q[0], q[2]) && keep.every(([hx, hz]) => Math.hypot(hx - q[0], hz - q[2]) > 9)))); }
   // where a tree may stand: off the lanes, away from houses, the square, the temple and the pier
   return (x, z) => laneGap(x, z) > 8 && keep.every(([hx, hz]) => Math.hypot(hx - x, hz - z) > 22) && Math.hypot(x - px, z - pz) > 50 && blocks.every(([bx, bz, br]) => Math.hypot(bx - x, bz - z) > br + 6);
 }
@@ -192,6 +198,20 @@ export function buildTown(is, g, PIER, ctx){
 // P112: a port's stone: the quay along the shore, the harbor walls with boulders on their sea side, a lighthouse or beacon on
 // the long wall's end, cargo and cranes, merchant ships at berth. Built the first time you come near (entities.js), then glued
 // into the island's pieces like the rest of the town. Collision is world.js PORT_SOLIDS.
+// P118: lamps. The posts are ordinary town pieces; the glow is one set of points per town, shown only at night (daynight.js fades LAMP_MAT).
+export const LAMPS = [], LAMP_MAT = new T.PointsMaterial({size:120, sizeAttenuation:true, transparent:true, depthWrite:false, blending:T.AdditiveBlending, fog:true, opacity:0});
+const lampPost = new T.CylinderGeometry(.7, .9, 10, 5), lampHead = new T.BoxGeometry(2.6, 2.8, 2.6);
+export function addLamps(g, list){ if (!list.length) return;
+  if (!LAMP_MAT.map){ const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,224,160,.95)'); gr.addColorStop(.2, 'rgba(255,190,105,.5)'); gr.addColorStop(.5, 'rgba(255,160,70,.16)'); gr.addColorStop(1, 'rgba(255,140,50,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); LAMP_MAT.map = new T.CanvasTexture(c); }
+  const pos = new Float32Array(list.length*3); list.forEach(([x, y, z], i) => { pos.set([x, y + 11, z], i*3);
+    const a = mesh(lampPost, '#4a3a2a', {}, false); a.position.set(x, y + 5, z); g.add(a); const b = mesh(lampHead, '#f6dc9a', {}, false); b.position.set(x, y + 11, z); g.add(b); });
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); const pts = new T.Points(geo, LAMP_MAT); pts.visible = false; pts.renderOrder = 6; g.add(pts); LAMPS.push(pts); }
+// P118: a lighthouse's beam: two long soft wedges of light that sweep round at night (one flat drawing each lighthouse).
+export const BEAMS = [], BEAM_MAT = new T.MeshBasicMaterial({color:'#ffe9b8', transparent:true, opacity:0, depthWrite:false, blending:T.AdditiveBlending, side:T.DoubleSide, vertexColors:true, fog:true});
+function beam(){ const L = 520, W = 95, p = [], c = [], tri = (sg) => { p.push(0, 0, 0, sg*L, 0, -W, sg*L, 0, W); c.push(1, 1, 1, 0, 0, 0, 0, 0, 0); }; tri(1); tri(-1);
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(p, 3)); geo.setAttribute('color', new T.Float32BufferAttribute(c, 3));
+  const m = new T.Mesh(geo, BEAM_MAT); m.visible = false; m.renderOrder = 5; m.userData.noMerge = true; BEAMS.push(m); return m; }
 const BOX = new T.BoxGeometry(1, 1, 1), ROCK = new T.DodecahedronGeometry(1, 0), POST = new T.CylinderGeometry(1, 1.2, 1, 6);
 export function buildPort(is, g, port, R){
   const torches = g.userData.torches || (g.userData.torches = []), QUAY = '#d9c9a2', CORE = '#b9ad94';
@@ -206,6 +226,7 @@ export function buildPort(is, g, port, R){
     box(len + 10, 14, 32, QUAY, mx, 0, mz, -a); box(len + 10, 1.2, 4, '#c4b48c', mx + dx*14, 6.6, mz + dy*14, -a, false); post(mx + dx*12, 7, mz + dy*12, 4, 1.8);
     if (far > 50){ const k = i % 4; if (k === 0) pots(mx - dx*6, 7, mz - dy*6, 5 + Math.floor(R()*4)); else if (k === 2) crates(mx - dx*6, 7, mz - dy*6, 3 + Math.floor(R()*3));
       else if (k === 1 && (port.kind === 'great' || i === 1)){ const c = crane(); c.position.set(mx - dx*4, 7, mz - dy*4); c.rotation.y = -Math.atan2(dy, dx); g.add(c); } } }
+  addLamps(g, port.quay.filter((q, i) => i % 4 === 2 && Math.hypot(q.x - P.x, q.y - P.y) > 40).map(q => [q.x - is.x - dx*9, 7, q.y - is.y - dy*9]));
   // the harbor walls
   for (const arm of port.arms){ const n = arm.pts.length;
     for (let i = 0; i + 1 < n; i++){ const [x0, z0] = L(arm.pts[i]), [x1, z1] = L(arm.pts[i + 1]), len = Math.hypot(x1 - x0, z1 - z0), h = Math.atan2(z1 - z0, x1 - x0), mx = (x0 + x1)/2, mz = (z0 + z1)/2, ox = -Math.sin(h)*arm.sg, oz = Math.cos(h)*arm.sg; // (ox, oz) = the sea side
@@ -218,7 +239,7 @@ export function buildPort(is, g, port, R){
   if (port.light){ const [x, z] = L(port.light);
     for (let k = 0; k < 9; k++){ const a = k/9*6.283 + R(), r = (port.light.big ? 27 : 18) + R()*8; rock(x + Math.cos(a)*r, -2, z + Math.sin(a)*r, 9 + R()*7); }
     const t = torch(); t.children.forEach(o => { if (o !== t.userData.flame && !o.isSprite) o.visible = false; });
-    if (port.light.big){ const lh = lighthouse(); lh.position.set(x, 0, z); lh.scale.setScalar(1.35); g.add(lh); t.scale.setScalar(2.4); t.position.set(x, LIGHT_Y*1.35 - 34, z); }
+    if (port.light.big){ const lh = lighthouse(); lh.position.set(x, 0, z); lh.scale.setScalar(1.35); g.add(lh); t.scale.setScalar(2.4); t.position.set(x, LIGHT_Y*1.35 - 34, z); const bm = beam(); bm.position.set(x, LIGHT_Y*1.35, z); g.add(bm); }
     else { box(14, 14, 14, CORE, x, 3, z, R()); box(10, 12, 10, '#f1ebdc', x, 13, z, .4); box(12, 1.6, 12, '#b5562f', x, 19.6, z, .4); t.scale.setScalar(1.3); t.position.set(x, 4, z); }
     g.add(t); torches.push(t); TORCH_ROOTS.add(g); }
   // merchant ships at berth: sails stowed, nobody aboard

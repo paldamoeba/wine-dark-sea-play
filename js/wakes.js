@@ -1,10 +1,10 @@
 // Wakes: every moving ship pushes the water aside. Two smooth bands of foam spread out from the bow in a V, and a wider,
 // softer trail stays behind the stern, widening and fading as it goes. Each band is a ribbon that follows the ship's path,
 // so turns leave curved wakes. All ships share one mesh, rebuilt every frame (a few thousand points at most).
-import {G, ship} from './state.js?v=32e89d7';
-import {scene} from './scene.js?v=32e89d7';
-import {waterY} from './world.js?v=32e89d7';
-import {enemies} from './combat.js?v=32e89d7';
+import {G, ship} from './state.js?v=11d7486';
+import {scene} from './scene.js?v=11d7486';
+import {waterY} from './world.js?v=11d7486';
+import {enemies} from './combat.js?v=11d7486';
 
 const T = window.THREE;
 const MAXV = 30000;
@@ -27,7 +27,7 @@ const mat = new T.ShaderMaterial({transparent:true, depthWrite:false, fog:true,
     void main(){
       // soft edges across the band, and the foam broken into gentle clumps so it looks like water, not paint
       float edge = 1. - smoothstep(.2, 1., abs(vU)), clump = .7 + .4*n2(vW*.07 + vec2(uTime*.3, 0.)) + .15*n2(vW*.25);
-      gl_FragColor = vec4(mix(vec3(.96, .99, 1.), vec3(.55, .66, .86), uNight*.6), clamp(vA*edge*clump, 0., 1.));
+      gl_FragColor = vec4(mix(vec3(.96, .99, 1.), vec3(.42, .9, .86), uNight*.72), clamp(vA*edge*clump*(1. + uNight*.25), 0., 1.)); /* P118: sea sparkle: at night the wake glows a soft blue-green, as it really does in warm seas */
       #include <fog_fragment>
     }`});
 const mesh = new T.Mesh(geo, mat); mesh.frustumCulled = false; mesh.renderOrder = 1; scene.add(mesh);

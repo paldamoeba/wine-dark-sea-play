@@ -79,16 +79,22 @@ waterMat.onBeforeCompile = sh => {
         vec3 nW = normalize(vec3(-vSl.x - rp.x, 1., -vSl.y - rp.y)), Rr = reflect(-Vv, nW);
         float nv = max(dot(Vv, nW), 0.), fres = .1 + 1.5*pow(1. - nv, 2.4);
         fres = min(fres, .82);
-        vec3 skyC = mix(uSky*1.08, uSky*vec3(.42, .62, .98), smoothstep(.45, 1., Rr.y));
+        vec3 zen = uSky*vec3(.42, .62, .98); float warm = clamp((uSky.r - uSky.b)*2.6, 0., 1.)*(1. - uNight);
+        zen = mix(zen, vec3(.34, .44, .66)*(.45 + .55*uSky.r), warm*.75); /* P118: under an orange evening sky the water straight below mirrored a muddy brown; overhead the sky is still blue */
+        vec3 skyC = mix(uSky*1.08, zen, smoothstep(.45, 1., Rr.y));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, skyC, fres*(1. - .5*lair));
         // the sun on the water: a wide soft sheen, and bright glitter on the finest waves
         float sp = max(dot(reflect(-uSun, nW), Vv), 0.);
         vec3 sunC = mix(vec3(1., .95, .84), vec3(.78, .86, 1.), uNight);
         gl_FragColor.rgb += sunC*(pow(sp, 10.)*.1 + pow(sp, 60.)*.3 + pow(sp, 260.)*.5)*uGlint*near; /* P70: a smooth shine with no speckle */
+        /* P118: the stars and the moon on the night sea: a wide soft moon sheen, and small points of light that twinkle slowly on calm water */
+        if (uNight > .05 && lair < .5){ vec2 sg = vWorld.xz/40., ci = floor(sg), hh = h2(mod(ci, 289.));
+          float tw = max(0., sin(uTime*(.6 + hh.x*1.3) + hh.y*40.)), dd = length(fract(sg) - .25 - hh*.5);
+          gl_FragColor.rgb += vec3(.72, .84, 1.)*(smoothstep(.075, 0., dd)*tw*tw*step(.7, hh.y)*.6 + pow(sp, 4.)*.07)*uNight*near*(1. - uStorm)*(1. - lair); }
         // foam: soft white on the highest crests, more in rough water, and a gentle lace where waves lap at the shore
         float n1 = vnoise(vWorld.xz/90. + vec2(uTime*.1, -uTime*.04)), n2 = vnoise(vWorld.xz/38. - vec2(uTime*.07, uTime*.1));
         float foamN = n1*.7 + n2*.3, rough = clamp((vAmp - 2.5)*.1, 0., 1.);
-        float cap = smoothstep(.34, .95, hk)*smoothstep(.56 - rough*.14, .78, foamN)*(.08 + rough);
+        float cap = smoothstep(.34 - .3*uStorm, .95, hk)*smoothstep(.56 - rough*.14 - uStorm*.1, .78, foamN)*(.08 + rough + uStorm*.3); /* P118: white horses in a storm */
         float lace = (1. - smoothstep(.05, .34, landF))*smoothstep(.5, .72, n2*.55 + n1*.45 + .22*sin(landF*26. - uTime*.8));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, foamC, clamp(cap*.8 + lace*.55, 0., .9)*(1. - lair)*(1. - .4*uNight)*(1. - smoothstep(1700., 3000., zd)));
       // the wine-dark sea stays deep red and doesn't wash out to lilac

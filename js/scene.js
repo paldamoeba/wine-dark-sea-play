@@ -1,10 +1,10 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=32e89d7';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=32e89d7';
-import {G} from './state.js?v=32e89d7';
-import {TOD, updateDayNight} from './daynight.js?v=32e89d7';
-import {showGrass} from './grass.js?v=32e89d7';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=32e89d7';
+import {QUALITY, SHIPS} from './config.js?v=11d7486';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=11d7486';
+import {G} from './state.js?v=11d7486';
+import {TOD, updateDayNight} from './daynight.js?v=11d7486';
+import {showGrass} from './grass.js?v=11d7486';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=11d7486';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
@@ -143,20 +143,28 @@ export function updateCamera(){
   sun.position.set(G.cam.x + TOD.dir.x, TOD.dir.y, G.cam.y + TOD.dir.z); sun.target.position.set(G.cam.x, 0, G.cam.y);
 }
 // The light: time of day first (daynight.js), then the weather on top. Storms are darker still at night.
+// P118 (the visual pass: each part of the sea has its own mood): the Shallows are warm and turquoise, the Open Sea a deeper blue,
+// the far north cold and steel grey. Only colors already worked out every frame are nudged, so it costs nothing. It eases over a
+// few seconds as you cross from one to the next.
+export const MOOD = {on:true, sh:0, deep:0, cold:0, shSea:new T.Color(1.03, 1.09, .97), deepSea:new T.Color(.84, .92, 1.05), coldSea:new T.Color(.86, .95, .97), coldSky:new T.Color('#c3d0da'), coldSun:new T.Color('#e4eeff'), warmSun:new T.Color('#fff1d6')};
+const moodC = new T.Color(), ONE = new T.Color(1, 1, 1);
+function updateMood(dt){ const z = G.curZone, e = Math.min(1, dt*.35), on = MOOD.on ? 1 : 0, cold = Math.max(0, Math.min(1, (WORLD*.36 - G.cam.y)/(WORLD*.1)))*(1 - (G.lairK || 0));
+  MOOD.sh += ((z === 0 ? on : 0) - MOOD.sh)*e; MOOD.deep += ((z === 2 ? on : 0) - MOOD.deep)*e; MOOD.cold += (cold*on - MOOD.cold)*e; }
 const LAIRSUN = new T.Color('#ff9a6a'), LAIRFOG = new T.Color('#3d1a28'), NIGHTSTORM = new T.Color('#1d2533'), stormC = new T.Color();
 export function updateWeather(dt = 1/60){
   updateDayNight(dt, SKY);
-  const k = G.stormK, n = TOD.night;
+  const k = G.stormK, n = TOD.night; updateMood(dt); const day = 1 - n;
   const m = (G.mistK || 0)*(1 - n*.6); // mist: a soft warm-white fog that closes in, with the sun glowing through it
   stormC.copy(STORMSKY).lerp(NIGHTSTORM, n);
-  scene.fog.color.copy(TOD.sky).lerp(MIST, m*.5*(1 - n)).lerp(stormC, k).lerp(LAIRFOG, (G.lairK || 0)*.86); scene.background.copy(scene.fog.color);
+  scene.fog.color.copy(TOD.sky).lerp(MOOD.coldSky, MOOD.cold*.5*day).lerp(MIST, m*.5*(1 - n)).lerp(stormC, k).lerp(LAIRFOG, (G.lairK || 0)*.86); scene.background.copy(scene.fog.color);
   const z = viewZoom();
   const lf = G.lairK || 0; // P107 (Nicholas: fog at the pirate king's for drama): the wine-red haze closes in around you there
   scene.fog.near = Math.max(120, 1000 - k*550 - m*420 - n*150 - lf*210)*z; scene.fog.far = Math.max(700, 2300 - k*1000 - m*750 - n*250 - lf*270)*z;
-  sun.color.copy(TOD.sun); hemi.color.copy(TOD.hemiS); hemi.groundColor.copy(TOD.hemiG); waterMat.color.copy(TOD.water);
+  sun.color.copy(TOD.sun); hemi.color.copy(TOD.hemiS); hemi.groundColor.copy(TOD.hemiG); waterMat.color.copy(TOD.water).multiply(moodC.copy(ONE).lerp(MOOD.shSea, MOOD.sh).lerp(MOOD.deepSea, MOOD.deep).lerp(MOOD.coldSea, MOOD.cold)); sun.color.lerp(MOOD.warmSun, MOOD.sh*.5*day).lerp(MOOD.coldSun, MOOD.cold*.6*day);
   sun.intensity = Math.max(.05, TOD.sunI - k*.42*TOD.sunI/.64 + m*.08) + G.flash*.8; hemi.intensity = Math.max(.15, TOD.hemiI - k*.22 + m*.1) + G.flash*.6; { const lk = G.lairK || 0; if (lk > .01){ sun.intensity *= 1 - .35*lk; sun.color.lerp(LAIRSUN, .7*lk); hemi.color.lerp(LAIRSUN, .35*lk); hemi.intensity *= 1 - .22*lk; scene.fog.near *= 1 - .3*lk; scene.fog.far *= 1 - .18*lk; } }
   foamU.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); foamU.uGlint.value = TOD.glint*(1 - k*.8 - m*.5); foamU.uStorm.value = Math.min(1, k + m*.4); foamU.uSky.value.copy(scene.fog.color);
   foamU.uNight.value = n;
+  post.uniforms.vig.value = Math.max(k*.6, (G.lairK || 0)*.7, n*.3); /* P118: the edges of the picture close in a little in a storm, at night and in the lair */
 }
 
 // World point -> screen pixels (for labels drawn on the 2D overlay).
@@ -172,9 +180,9 @@ export function screenToSea(sx, sy){
 // ---- the "tiny world" look (a setting): tilt-shift blur at the top and bottom of the screen, a little more color and warmth,
 // and a soft vignette, so the sea looks like a miniature model, like Tiny Glade. The middle band, where your ship is, stays sharp.
 let rt = null;
-const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.Vector2(1, 1)}, focus:{value:.5}, bloom:{value:0}, far:{value:0}}, depthTest:false, depthWrite:false,
+const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.Vector2(1, 1)}, focus:{value:.5}, bloom:{value:0}, far:{value:0}, vig:{value:0}}, depthTest:false, depthWrite:false,
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
-  fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom, far; varying vec2 vUv;
+  fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom, far, vig; varying vec2 vUv;
     void main(){
       float d = abs(vUv.y - focus), r = smoothstep(.32 - .07*far, .52 - .05*far, d)*(7. + 5.*far)*res.y/1200.; // only the outer edges blur, gently. P67: the same size on any screen, and a little more as the camera pulls back, so the tiny-world look holds
       // a soft round blur: 12 samples spread in a sunflower spiral, turned a little per pixel so no grid shows
@@ -187,7 +195,7 @@ const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.
         col += b/12.*bloom*vec3(1.25, 1.05, .8); }
       float l = dot(col, vec3(.299, .587, .114));
       col = mix(vec3(l), col, 1.15)*vec3(1.035, 1.0, .955);
-      col *= mix(.84, 1., smoothstep(.98, .45, length((vUv - .5)*vec2(1.1, 1.))));
+      col *= mix(.84 - .2*vig, 1., smoothstep(.98 - .12*vig, .45 - .1*vig, length((vUv - .5)*vec2(1.1, 1.))));
       gl_FragColor = vec4(col, 1.);
     }`});
 const quad = new T.Mesh(new T.PlaneGeometry(2, 2), post); quad.frustumCulled = false;
