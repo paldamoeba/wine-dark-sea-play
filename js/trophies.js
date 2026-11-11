@@ -1,8 +1,8 @@
 // P77: trophies. Each one lives in the save, and in the Google Play app it also unlocks the matching Play Games achievement (set PLAY_IDS once they exist in Play Console).
 // P81: twenty of them. Most are worked out from the voyage's numbers (S.stats) and checked every couple of seconds by trophyTick;
 // the arena and the pirate king award theirs when they happen. store/achievements.md lists them for Play Console, with their icons.
-import {G, save, shipDeed} from './state.js?v=2c85ea6';
-import {SHIPS, NAMED} from './config.js?v=2c85ea6';
+import {G, save, shipDeed} from './state.js?v=3b0c24f';
+import {SHIPS, NAMED} from './config.js?v=3b0c24f';
 const st = k => (G.S.stats || {})[k] || 0;
 const owns = model => (G.S.owned || [G.S.tier]).some(t => SHIPS[t] && SHIPS[t].model === model);
 const beaten = name => Object.values(G.S.shipStats || {}).some(r => (r.deeds || []).includes(name));

@@ -1,12 +1,12 @@
 // Sea life: a whale that surfaces now and then (sail close for Poseidon's blessing) and dolphins that leap past on their own course.
-import {WILDLIFE} from './config.js?v=2c85ea6';
-import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=2c85ea6';
-import {G, save, stat} from './state.js?v=2c85ea6';
-import {scene} from './scene.js?v=2c85ea6';
-import {whaleModel, dolphinModel, krakenModel} from './models.js?v=2c85ea6';
-import {toast} from './ui.js?v=2c85ea6';
-import {combatState} from './combat.js?v=2c85ea6';
-import {sfx} from './audio.js?v=2c85ea6';
+import {WILDLIFE} from './config.js?v=3b0c24f';
+import {WORLD, landDist, waveAt, zoneAt} from './world.js?v=3b0c24f';
+import {G, save, stat} from './state.js?v=3b0c24f';
+import {scene} from './scene.js?v=3b0c24f';
+import {whaleModel, dolphinModel, krakenModel} from './models.js?v=3b0c24f';
+import {toast} from './ui.js?v=3b0c24f';
+import {combatState} from './combat.js?v=3b0c24f';
+import {sfx} from './audio.js?v=3b0c24f';
 
 const T = window.THREE;
 const rand = ([a, b]) => a + Math.random()*(b - a);
@@ -109,7 +109,8 @@ document.addEventListener('dolphins', () => { P.wait = 0; });
 
 // ---- the kraken: out in the Open Sea, now and then, tentacles rise from the water ahead. Sail close and it slips away ----
 const K = {obj:krakenModel(), state:'gone', wait:rand(WILDLIFE.krakenFirst), x:0, y:0, t:0, rise:0};
-K.obj.visible = false; K.obj.scale.setScalar(2.3); scene.add(K.obj); // huge: its tentacles stand far apart, across a stretch of sea wider than a harbor
+const KR_K = 2.3, SHADOW_UP = 4.5;
+K.obj.visible = false; K.obj.scale.setScalar(KR_K); scene.add(K.obj); // huge: its tentacles stand far apart, across a stretch of sea wider than a harbor
 function updateKraken(dt){
   const S = G.S;
   if (K.state === 'gone'){
@@ -127,12 +128,24 @@ function updateKraken(dt){
     if (d < WILDLIFE.krakenNear){ S.kraken = (S.kraken || 0) + 1; S.gold += WILDLIFE.krakenGold; stat('kraken'); save();
       toast(`The kraken! +${WILDLIFE.krakenGold}`, 3); } }
   else if (K.state === 'dive'){ K.rise = Math.max(0, 1 - K.t/2); if (K.rise <= 0){ K.state = 'gone'; K.obj.visible = false; K.wait = rand(WILDLIFE.krakenEvery); } }
-  K.obj.position.set(K.x, waveAt(K.x, K.y, G.t), K.y);
+  const base = waveAt(K.x, K.y, G.t), ry = K.obj.rotation.y, cr = Math.cos(ry), sr = Math.sin(ry), ud = K.obj.userData;
+  K.obj.position.set(K.x, base, K.y);
+  // P127: the beast is wider than the swell, so each tentacle sits on the water where it stands, and the dark shape follows
+  // the swell (it used to lie flat and cut through the waves in jagged patches)
+  const lift = (lx, lz) => (waveAt(K.x + (lx*cr + lz*sr)*KR_K, K.y + (-lx*sr + lz*cr)*KR_K, G.t) - base)/KR_K;
   // each tentacle rises (and sinks) a moment after the last, and sways on its own
-  K.obj.userData.tents.forEach(tn => { const r = Math.min(1, Math.max(0, K.rise*1.6 - tn.delay*.6)), e = r*r*(3 - 2*r);
-    tn.piv.position.y = -4 - (1 - e)*230; tn.piv.rotation.z = Math.sin(G.t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(G.t*.9 + tn.ph*2)*.15;
-    tn.ring.material.opacity = .7*e*(.75 + .25*Math.sin(G.t*3 + tn.ph)); tn.ring.scale.setScalar(1 + .12*Math.sin(G.t*2 + tn.ph)); });
-  K.obj.userData.shadow.material.opacity = Math.min(1, K.rise*1.4); K.obj.userData.shadow.scale.set(520 + Math.sin(G.t*.6)*20, 440 + Math.cos(G.t*.5)*20, 1);
+  ud.tents.forEach(tn => { const r = Math.min(1, Math.max(0, K.rise*1.6 - tn.delay*.6)), e = r*r*(3 - 2*r), h = lift(tn.x, tn.z);
+    tn.piv.position.y = h - 4 - (1 - e)*230; tn.piv.rotation.z = Math.sin(G.t*1.3 + tn.ph)*.25 - .1; tn.piv.rotation.x = Math.sin(G.t*.9 + tn.ph*2)*.15;
+    tn.ring.position.y = h + 2; tn.ring.material.opacity = .7*e*(.75 + .25*Math.sin(G.t*3 + tn.ph)); tn.ring.scale.setScalar(1 + .12*Math.sin(G.t*2 + tn.ph)); });
+  // the head comes up last and goes down first, and bobs while it watches you
+  { const r = Math.min(1, Math.max(0, K.rise*2.2 - 1.2)), e = r*r*(3 - 2*r), h = lift(-6, 0);
+    ud.head.position.y = h + 2 - (1 - e)*95 + Math.sin(G.t*1.1)*2.5; ud.head.rotation.z = Math.sin(G.t*.8)*.05; ud.head.rotation.x = Math.sin(G.t*.6)*.04;
+    ud.hring.position.y = h + 2.5; ud.hring.material.opacity = .55*e*(.75 + .25*Math.sin(G.t*2.4)); }
+  // the dark shape is a grid laid on the swell, a little above it
+  const sh = ud.shadow, sx = 520 + Math.sin(G.t*.6)*20, sy = 440 + Math.cos(G.t*.5)*20, sp = sh.geometry.attributes.position;
+  sh.material.opacity = Math.min(1, K.rise*1.4); sh.scale.set(sx, sy, 1); sh.position.y = 0;
+  for (let i=0;i<sp.count;i++) sp.setZ(i, lift(sp.getX(i)*sx, -sp.getY(i)*sy) + SHADOW_UP/KR_K);
+  sp.needsUpdate = true;
 }
 document.addEventListener('kraken', () => { K.wait = 0; });
 export const kraken = K;

@@ -1,9 +1,9 @@
 // Low-poly 3D models, built from simple shapes. The art pass (roadmap step 7) replaces these.
-import {hash} from './world.js?v=2c85ea6';
+import {hash} from './world.js?v=3b0c24f';
 
-import {smokeColumn} from './smoke.js?v=2c85ea6';
+import {smokeColumn} from './smoke.js?v=3b0c24f';
 const T = window.THREE;
-import {mat} from './ships.js?v=2c85ea6';
+import {mat} from './ships.js?v=3b0c24f';
 export const M = (c, o={}) => mat(c, o); // one shared material style for the whole world
 // smooth = rounded shading for round things (trees, pots) instead of flat facets
 // P65: an iron mine on the shore: a timber frame around a dark tunnel in a rock mound, a pile of rust-red ore and a little cart.
@@ -360,34 +360,65 @@ export function whaleModel(){
   g.userData = {body, tail, spout};
   return g;
 }
-// The kraken: a huge plum-colored sea monster. Only its curling tentacles show above the water, spread far apart.
-// userData.tents = [{piv, ph}] so they can sway; the group's y is how far it has risen out of the sea.
-function tentacleGeo(len, r0){
-  const pts = []; for (let i=0;i<=10;i++){ const u = i/10; pts.push(new T.Vector3(len*.32*Math.sin(u*Math.PI*1.15), len*.9*Math.sin(u*Math.PI*.5), 0)); } // up and curling over at the tip
-  const curve = new T.CatmullRomCurve3(pts), segs = 28, rad = 10, geo = new T.TubeGeometry(curve, segs, r0, rad, false), p = geo.attributes.position, v = new T.Vector3();
-  for (let i=0;i<=segs;i++){ const c = curve.getPointAt(i/segs), k = 1 - .86*Math.pow(i/segs, .9); // thick at the base, thin at the tip
-    for (let j=0;j<=rad;j++){ const n = i*(rad + 1) + j; v.fromBufferAttribute(p, n).sub(c).multiplyScalar(k).add(c); p.setXYZ(n, v.x, v.y, v.z); } }
-  geo.computeVertexNormals(); return geo;
+// The kraken: a huge plum-colored sea monster. Its curling tentacles stand far apart and the top of its head, with two
+// amber eyes, watches from the middle.
+// userData.tents = [{piv, ph, ring, delay, x, z}] so they can sway; userData.head rises and sinks; userData.shadow is its
+// dark shape, a grid that wildlife.js lays on the swell.
+// P127 (Nicholas: "do the kraken next"): the tentacles were smooth horns. Each is now one mesh with a dark mottled back, a
+// pale inner side with two rows of suckers, and its own curl (hook, S-bend or coiled tip). The head and eyes are new.
+function krAdd(acc, geo, mat, color){ const p = geo.attributes.position, v = new T.Vector3(), base = acc.pos.length/3, ix = geo.index;
+  for (let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i).applyMatrix4(mat); acc.pos.push(v.x, v.y, v.z); acc.col.push(color.r, color.g, color.b); }
+  for (let i=0;i<ix.count;i++) acc.idx.push(base + ix.getX(i)); }
+const krMesh = acc => { const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(acc.pos, 3)); geo.setAttribute('color', new T.Float32BufferAttribute(acc.col, 3)); geo.setIndex(acc.idx); geo.computeVertexNormals();
+  const m = new T.Mesh(geo, softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; return m; };
+const KR = {back:new T.Color('#6a2450'), spot:new T.Color('#8f3f6c'), inner:new T.Color('#f0c0d2'), cup:new T.Color('#fbe6ee')};
+// len = how long above the water, r0 = thickness at the water, b1 = steady bend, b2 = extra curl toward the tip (radians)
+function tentacle(len, r0, b1, b2){
+  const segs = 46, rad = 14, deep = 26, acc = {pos:[], col:[], idx:[]}, P = [], c = new T.Color(); let x = 0, y = -deep;
+  for (let i=0;i<=segs;i++){ const s = i/segs*(len + deep), u = Math.max(0, (s - deep)/len), th = b1*u + b2*u*u*u; P.push({x, y, th, u, r:Math.max(.5, r0*(1 - .9*Math.pow(u, .8)))});
+    x += Math.sin(th)*(len + deep)/segs; y += Math.cos(th)*(len + deep)/segs; }
+  P.forEach((q, i) => { const nx = Math.cos(q.th), ny = -Math.sin(q.th); // (nx, ny) points to the inside of the curl
+    for (let j=0;j<rad;j++){ const ph = j/rad*Math.PI*2, cp = Math.cos(ph), sp = Math.sin(ph), f = cp > 0 ? .78 : 1; // flatter on the sucker side
+      acc.pos.push(q.x + nx*cp*q.r*f, q.y + ny*cp*q.r*f, sp*q.r);
+      const mott = Math.sin(i*1.9 + j*2.3)*Math.sin(i*.7 - j*1.1) > .45 ? .55 : 0; c.copy(KR.back).lerp(KR.spot, mott).lerp(KR.inner, whStep(.1, .55, cp)); acc.col.push(c.r, c.g, c.b); }
+    if (i) for (let j=0;j<rad;j++){ const a0 = (i - 1)*rad + j, a1 = (i - 1)*rad + (j + 1) % rad, b0 = i*rad + j, b1 = i*rad + (j + 1) % rad; acc.idx.push(a0, a1, b0, a1, b1, b0); } });
+  // two rows of suckers down the inside, smaller toward the tip
+  const cup = new T.SphereGeometry(1, 8, 6), M = new T.Matrix4(), Q = new T.Quaternion(), Z = new T.Vector3(0, 0, 1);
+  for (let n=1;n<=11;n++){ const q = P[Math.round((deep/(len + deep) + n/12*.9*len/(len + deep))*segs)], r = q.r*.3; if (r < .35) continue;
+    for (const sd of [-1, 1]){ Q.setFromAxisAngle(Z, -q.th); M.compose(new T.Vector3(q.x + Math.cos(q.th)*q.r*.76, q.y - Math.sin(q.th)*q.r*.76, sd*q.r*.4), Q, new T.Vector3(r*.5, r, r)); krAdd(acc, cup, M, KR.cup); } }
+  return krMesh(acc);
+}
+function krakenHead(){
+  const R = 38, geo = new T.SphereGeometry(1, 44, 30), p = geo.attributes.position, col = new Float32Array(p.count*3), c = new T.Color();
+  for (let i=0;i<p.count;i++){ let x = p.getX(i), y = p.getY(i), z = p.getZ(i); const back = Math.max(0, -x), front = Math.max(0, x);
+    const mott = Math.sin(x*9 + z*7)*Math.sin(y*8 - z*5 + x*3) > .5 ? .6 : 0; c.copy(KR.back).lerp(KR.spot, mott).lerp(KR.inner, whStep(-.1, -.5, y)*.8); col.set([c.r, c.g, c.b], i*3);
+    y = y*(1.05 + .45*back) + .18*back - .12*front*front; x = x*(1 + .35*back); z = z*(.95 + .12*back); // a tall soft dome swelling to the back, a lower brow in front
+    p.setXYZ(i, x*R, y*R, z*R); }
+  geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.computeVertexNormals();
+  const h = new T.Group(), m = new T.Mesh(geo, softMat('#ffffff', true)); m.castShadow = m.receiveShadow = true; h.add(m);
+  for (const sd of [-1, 1]){ const e = new T.Group(); e.position.set(R*.72, R*.3, sd*R*.55); e.rotation.y = -sd*.62; h.add(e);
+    const ball = new T.Mesh(new T.SphereGeometry(R*.24, 18, 14), new T.MeshBasicMaterial({color:'#ffc93d'})); e.add(ball); // amber, and it glows at night
+    const pup = new T.Mesh(new T.SphereGeometry(R*.2, 14, 10), new T.MeshBasicMaterial({color:'#1a0c16'})); pup.scale.set(.4, .3, .9); pup.position.set(R*.185, R*.01, 0); e.add(pup); // the flat bar of an octopus's eye
+    const lid = soft(new T.SphereGeometry(R*.3, 16, 12), '#5a1e45'); lid.scale.set(1, .4, 1.15); lid.position.set(-R*.05, R*.23, 0); lid.rotation.z = -.12; lid.rotation.x = -sd*.42; e.add(lid); } // a heavy brow
+  return h;
 }
 export function krakenModel(){
-  // only its tentacles break the surface, far apart from each other, so you can only guess how big the beast below must be.
-  // Each rises from its own ring of foam; the body stays hidden in the deep.
   const g = new T.Group(), body = new T.Group(); g.add(body);
   g.userData.tents = [];
-  const spots = [[20, 0], [110, 150], [-120, 140], [200, -30], [-190, -20], [10, -170]]; // six, far apart
-  spots.forEach(([x, z], i) => { const piv = new T.Group(), len = 82 + (i*37 % 4)*12, a = Math.atan2(-z, -x) + (i % 2 ? .6 : -.6);
+  const spots = [[95, 55], [110, 150], [-120, 140], [200, -30], [-190, -20], [30, -170]]; // six, far apart, round the head
+  const SHAPES = [[1.5, 1.3], [.5, 4.6], [2.0, .4], [-1.1, 3.6], [1.2, 2.6], [.7, -3.4]]; // hook, coiled tip, hook, S-bend, curl, S-bend
+  spots.forEach(([x, z], i) => { const piv = new T.Group(), len = 92 + (i*37 % 4)*13, a = Math.atan2(-z, -x) + (i % 2 ? .6 : -.6);
     piv.position.set(x, -4, z); piv.rotation.y = a; body.add(piv);
-    const t = soft(tentacleGeo(len, 9 + (i % 3)*1.5), i % 2 ? '#8e3a63' : '#7d3157'); piv.add(t);
-    // pale suckers along the inside of the curl
-    for (let k=1;k<6;k++){ const u = k/7, sk = soft(new T.SphereGeometry(1.6*(1 - u*.6), 10, 8), '#d891b0'); sk.scale.set(1, .45, 1);
-      sk.position.set(len*.32*Math.sin(u*Math.PI*1.15) + 6.5*(1 - u*.8), len*.9*Math.sin(u*Math.PI*.5), 0); t.add(sk); }
-    const ring = new T.Mesh(new T.RingGeometry(11, 20, 28), new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.7, depthWrite:false}));
+    piv.add(tentacle(len, 10 + (i % 3)*1.6, SHAPES[i][0], SHAPES[i][1]));
+    const ring = new T.Mesh(new T.RingGeometry(11, 21, 28), new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.7, depthWrite:false}));
     ring.rotation.x = -Math.PI/2; ring.position.set(x, 4, z); body.add(ring);
-    g.userData.tents.push({piv, ph:i*1.7, ring, delay:(i*.37) % 1}); });
-  // the beast's dark shape just under the surface, much bigger than the ring of tentacles
+    g.userData.tents.push({piv, ph:i*1.7, ring, delay:(i*.37) % 1, x, z}); });
+  const head = krakenHead(); head.position.set(-6, 2, 0); body.add(head); g.userData.head = head;
+  const hring = new T.Mesh(new T.RingGeometry(40, 58, 40), new T.MeshBasicMaterial({color:'#f4fbff', transparent:true, opacity:.55, depthWrite:false})); hring.rotation.x = -Math.PI/2; hring.position.set(-14, 4, 0); hring.scale.set(1.3, 1, 1); body.add(hring); g.userData.hring = hring;
+  // the beast's dark shape just under the surface, much bigger than the ring of tentacles (a grid, so wildlife.js can lay it on the swell)
   const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 6, 64, 64, 64);
-  gr.addColorStop(0, 'rgba(8,10,24,.75)'); gr.addColorStop(.55, 'rgba(8,10,24,.5)'); gr.addColorStop(1, 'rgba(8,10,24,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
-  const shadow = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({map:new T.CanvasTexture(c), transparent:true, depthWrite:false, opacity:0}));
+  gr.addColorStop(0, 'rgba(22,6,26,.78)'); gr.addColorStop(.55, 'rgba(14,8,26,.5)'); gr.addColorStop(1, 'rgba(8,10,24,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  const shadow = new T.Mesh(new T.PlaneGeometry(1, 1, 44, 44), new T.MeshBasicMaterial({map:new T.CanvasTexture(c), transparent:true, depthWrite:false, opacity:0}));
   shadow.rotation.x = -Math.PI/2; shadow.scale.set(520, 440, 1); shadow.position.y = 1.5; shadow.renderOrder = 1; body.add(shadow); g.userData.shadow = shadow;
   g.userData.body = body; return g;
 }
