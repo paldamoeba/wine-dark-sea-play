@@ -2,9 +2,9 @@
 // basin around ARENA = {x, y, gate} (gate = the angle out through the gate) and leaves out pieces that would stand on land
 // (landD(x, y) < 0 on land). It sets ARENA.fort and returns the group (placed at ARENA.x, 0, ARENA.y, not added to a scene)
 // with what arena.js needs to run the games: the wall pieces and posts ships bump into, the crowd, the torches, the Colossus.
-import {mat, torch} from './ships.js?v=eb85677';
-import {figure} from './town.js?v=eb85677';
-import {buildGladiator, marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=eb85677';
+import {mat, torch} from './ships.js?v=93135fa';
+import {figure} from './town.js?v=93135fa';
+import {buildGladiator, marbleColossus, COLOSSUS_BOWL} from './monuments.js?v=93135fa';
 
 const T = window.THREE;
 export const BACK = 2300; // how far behind the middle a side wall may run to reach the shore

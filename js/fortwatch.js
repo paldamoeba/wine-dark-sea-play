@@ -1,12 +1,12 @@
 // Fortress waters: when you come near a hostile fortress (a pirate one, or a city's that is after you), a warning shows once
 // as you cross into its waters, and a mission bar at the top of the screen counts what's left: its walls and its guard ships.
-import {G} from './state.js?v=eb85677';
-import {FORTS} from './config.js?v=eb85677';
-import {CITIES} from './world.js?v=eb85677';
-import {enemies, hostile, planReward, towersUp, campLeft} from './combat.js?v=eb85677';
-import {SHIPS, PLANS} from './config.js?v=eb85677';
-import {sfx} from './audio.js?v=eb85677';
-import {siteLevel, myLevel, standing} from './levels.js?v=eb85677';
+import {G} from './state.js?v=93135fa';
+import {FORTS} from './config.js?v=93135fa';
+import {CITIES} from './world.js?v=93135fa';
+import {enemies, hostile, planReward, towersUp, campLeft} from './combat.js?v=93135fa';
+import {SHIPS, PLANS} from './config.js?v=93135fa';
+import {sfx} from './audio.js?v=93135fa';
+import {siteLevel, myLevel, standing} from './levels.js?v=93135fa';
 
 const WARN = FORTS.stoneRange + 450; // the warning comes a little before the catapults can reach you
 const $ = id => document.getElementById(id);
