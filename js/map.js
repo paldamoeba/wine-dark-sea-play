@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=f93f7d2';
-import {OMENS} from './config.js?v=f93f7d2';
-import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut, PORTS} from './world.js?v=f93f7d2';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=f93f7d2';
-import {GOODS} from './config.js?v=f93f7d2';
-import {sfx} from './audio.js?v=f93f7d2';
-import {playVideo, toast} from './ui.js?v=f93f7d2';
-import {ARENA} from './arena.js?v=f93f7d2';
-import {enemies, planReward, planSources, combatState, noGoZones, wanted} from './combat.js?v=f93f7d2';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=f93f7d2';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=f93f7d2';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=f93f7d2';
+import {omen} from './omens.js?v=60ccb6c';
+import {OMENS} from './config.js?v=60ccb6c';
+import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut, PORTS} from './world.js?v=60ccb6c';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=60ccb6c';
+import {GOODS} from './config.js?v=60ccb6c';
+import {sfx} from './audio.js?v=60ccb6c';
+import {playVideo, toast} from './ui.js?v=60ccb6c';
+import {ARENA} from './arena.js?v=60ccb6c';
+import {enemies, planReward, planSources, combatState, noGoZones, wanted} from './combat.js?v=60ccb6c';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=60ccb6c';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=60ccb6c';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=60ccb6c';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), main = cv.getContext('2d');
@@ -393,7 +393,7 @@ $('mapFilterBtn').addEventListener('click', () => filterPanel($('mapFilters').hi
 // frame what the filter found, with your ship, so you never have to hunt for it
 function frame(pts){ if (!pts.length) return; const all = [...pts, {x:G.S.x, y:G.S.y}], xs = all.map(p => p.x), ys = all.map(p => p.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   view.cx = (x0 + x1)/2; view.cy = (y0 + y1)/2 + 700; view.z = Math.min(W*.72/Math.max(x1 - x0, 1500), H*.5/Math.max(y1 - y0, 1500)); clampView(); }
-$('mapFilter').addEventListener('change', e => { const F = G.mapFilter = e.target.value; document.querySelector('.legend').hidden = F !== 'all';
+$('mapFilter').addEventListener('change', e => { const F = G.mapFilter = e.target.value; /* P133: a line here tried to hide the checkboxes while a price is picked; it never worked, and Nicholas chose to keep them showing */
   const known = HARBORS.filter(h => h.is.port || isExplored(h.dock.x, h.dock.y));
   if (F.includes(':')) frame(known.filter(h => filterPrice(h, F) != null).map(h => h.dock));
   else if (F === 'harbors') frame(known.map(h => h.dock));

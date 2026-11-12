@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=f93f7d2';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=f93f7d2';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=f93f7d2';
-import {scene, screenToSea, setLair} from './scene.js?v=f93f7d2';
-import {wreckModel} from './models.js?v=f93f7d2';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=f93f7d2';
-import {mergeStatic, freeModel} from './merge.js?v=f93f7d2';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=f93f7d2';
-import {award} from './trophies.js?v=f93f7d2';
-import {makeFire, updateFire, burn} from './fire.js?v=f93f7d2';
-import {blessing, fighters, hasSail} from './crew.js?v=f93f7d2';
-import {progress, goal} from './quests.js?v=f93f7d2';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=f93f7d2';
-import {rollColor, unlockColor, colorName} from './colors.js?v=f93f7d2';
-import {toast, popLater} from './ui.js?v=f93f7d2';
-import {sink, rowNow, ROW} from './player.js?v=f93f7d2';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=f93f7d2';
-import {TOD} from './daynight.js?v=f93f7d2';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=f93f7d2';
-import {sfx} from './audio.js?v=f93f7d2';
-import {myLevel} from './levels.js?v=f93f7d2';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=60ccb6c';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=60ccb6c';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=60ccb6c';
+import {scene, screenToSea, setLair} from './scene.js?v=60ccb6c';
+import {wreckModel} from './models.js?v=60ccb6c';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=60ccb6c';
+import {mergeStatic, freeModel} from './merge.js?v=60ccb6c';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=60ccb6c';
+import {award} from './trophies.js?v=60ccb6c';
+import {makeFire, updateFire, burn} from './fire.js?v=60ccb6c';
+import {blessing, fighters, hasSail} from './crew.js?v=60ccb6c';
+import {progress, goal} from './quests.js?v=60ccb6c';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=60ccb6c';
+import {rollColor, unlockColor, colorName} from './colors.js?v=60ccb6c';
+import {toast, popLater} from './ui.js?v=60ccb6c';
+import {sink, rowNow, ROW} from './player.js?v=60ccb6c';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=60ccb6c';
+import {TOD} from './daynight.js?v=60ccb6c';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=60ccb6c';
+import {sfx} from './audio.js?v=60ccb6c';
+import {myLevel} from './levels.js?v=60ccb6c';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -358,7 +358,7 @@ function steer(e, tx, ty, speed, dt){
     if (side(e) === 'merchant' || e.bandit || e.ally || smallRaider(e) || zoneAt(nx, ny) !== 0){ e.x = nx; e.y = ny; if (turn) e.a += Math.sign(turn)*Math.min(Math.abs(turn), e.spec.turn*1.2*dt); moved = true; break; }
   }
   if (!moved) e.v *= .9;
-  if (e.shx || e.shy){ const k = Math.exp(-dt*1.6); e.x += e.shx*dt; e.y += e.shy*dt; e.a += (e.spin || 0)*dt; e.shx *= k; e.shy *= k; e.spin = (e.spin || 0)*k; pushOut(e, e.spec.beam*.6);
+  if (e.shx || e.shy){ const k = Math.exp(-dt*1.6); e.x += e.shx*dt; e.y += e.shy*dt; e.a += (e.spin || 0)*dt; e.shx *= k; e.shy *= k; e.spin = (e.spin || 0)*k; pushOut(e, e.spec.beam*.6, true);
     if (Math.abs(e.shx) + Math.abs(e.shy) < 2){ e.shx = e.shy = 0; e.spin = 0; } }
   // Keep raiders from piling onto the same spot.
   for (const o of enemies){ if (o === e || o.dead || o.fort) continue; const dx = e.x - o.x, dy = e.y - o.y; if (Math.abs(dx) > 400 || Math.abs(dy) > 400) continue;
@@ -789,7 +789,7 @@ function collide(){
     if (!hit) continue;
     // push apart; the bigger ship moves less
     const d = hit.d || 1, nx = (hit.bx - hit.ax)/d, ny = (hit.by - hit.ay)/d, over = pr + er - d, mE = e.spec.len*e.spec.beam, kP = mE/(mP + mE);
-    S.x -= nx*over*kP; S.y -= ny*over*kP; e.x += nx*over*(1 - kP); e.y += ny*over*(1 - kP); pushOut(S, sh.beam*.6); pushOut(e, e.spec.beam*.6);
+    S.x -= nx*over*kP; S.y -= ny*over*kP; e.x += nx*over*(1 - kP); e.y += ny*over*(1 - kP); pushOut(S, sh.beam*.6, true); pushOut(e, e.spec.beam*.6, true);
     const into = Math.cos(S.a)*nx + Math.sin(S.a)*ny, fast = G.v/sh.speed;
     const mass = Math.max(.6, Math.min(1.8, Math.sqrt(mP/mE)));
     if (hit.i >= 3 && into > .6 && fast > RAM.minSpeed && !e.ramT){ e.ramT = RAM.cooldown; shove(e, nx, ny, G.v*.9*mass); ramHit(e, ramSpeedK(fast)*into*mass); G.v *= .45 + .35*(1 - kP); e.v *= .25; }

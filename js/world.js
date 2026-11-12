@@ -1,7 +1,7 @@
 // The world: which map, islands (real outlines), zones, fishing spots, wrecks, raiders, land collision, and the wave math.
 // Pure data and math, no 3D here.
-import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=f93f7d2';
-import {MAPDATA} from './mapdata.js?v=f93f7d2';
+import {TUNING, SETTINGS_KEY, WRECK_SIZES, NEUTRAL_R, FORTS, CAMPS} from './config.js?v=60ccb6c';
+import {MAPDATA} from './mapdata.js?v=60ccb6c';
 
 export function hash(a, b){ const s = Math.sin(a*127.1 + b*311.7)*43758.5453; return s - Math.floor(s); }
 export function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -141,19 +141,51 @@ function gridDist(x, y){
   const x0 = fx|0, y0 = fy|0, tx = fx - x0, ty = fy - y0, i = y0*GN + x0;
   return (SDF[i]*(1-tx) + SDF[i+1]*tx)*(1-ty) + (SDF[i+GN]*(1-tx) + SDF[i+GN+1]*tx)*ty;
 }
+// P133 (Nicholas: the invisible wall at Paros, and ships riding up the sand): the grid above is in steps of about 67 (the sea grew
+// 3.6 times in P92, the grid did not), so close to a beach it could be half a step out either way: a ship stopped in open water in
+// one place and slid onto the sand in another, on every island. A ship's hull is now held off the real outline of the island, the
+// same line the sand is drawn from. Everything else (where towns, piers, fish and enemies are placed) still reads the grid.
+const SEG_B = 256, SEG_REACH = 300, EX_NEAR = 200, SEGS = new Map();
+for (const is of ISLANDS){ const P = is.tiers[0], n = P.length;
+  for (let i=0;i<n;i++){ const ax = is.x + P[i][0], ay = is.y + P[i][1], bx = is.x + P[(i+1) % n][0], by = is.y + P[(i+1) % n][1], g = [ax, ay, bx, by];
+    const c0 = Math.floor((Math.min(ax, bx) - SEG_REACH)/SEG_B), c1 = Math.floor((Math.max(ax, bx) + SEG_REACH)/SEG_B), r0 = Math.floor((Math.min(ay, by) - SEG_REACH)/SEG_B), r1 = Math.floor((Math.max(ay, by) + SEG_REACH)/SEG_B);
+    for (let r=r0;r<=r1;r++) for (let c=c0;c<=c1;c++){ const k = r*4096 + c; let b = SEGS.get(k); if (!b) SEGS.set(k, b = {segs:[], isles:[]}); b.segs.push(g); if (!b.isles.includes(is)) b.isles.push(is); } } }
+let EXN_X = 0, EXN_Y = 0, EX_OK = false; // the way to the water from the last point asked about
+// how far (x, y) is from the real shoreline (negative on land); falls back to the grid far from any shore
+function shoreExact(x, y){ EX_OK = false; const g = gridDist(x, y); if (g > EX_NEAR || g < -EX_NEAR) return g;
+  const b = SEGS.get(Math.floor(y/SEG_B)*4096 + Math.floor(x/SEG_B)); if (!b) return g;
+  let best = Infinity, qx = 0, qy = 0;
+  for (const s of b.segs){ const ex = s[2] - s[0], ey = s[3] - s[1], t = Math.max(0, Math.min(1, ((x - s[0])*ex + (y - s[1])*ey)/(ex*ex + ey*ey || 1))), px = s[0] + ex*t, py = s[1] + ey*t, d = (x - px)*(x - px) + (y - py)*(y - py);
+    if (d < best){ best = d; qx = px; qy = py; } }
+  best = Math.sqrt(best); if (best > SEG_REACH) return g;
+  let inside = false; for (const is of b.isles) if (Math.hypot(x - is.x, y - is.y) <= is.r && inPoly(is.tiers[0], x - is.x, y - is.y)){ inside = true; break; }
+  if (best > .01){ const k = (inside ? -1 : 1)/best; EXN_X = (x - qx)*k; EXN_Y = (y - qy)*k; EX_OK = true; }
+  return inside ? -best : best; }
+function solidDist(x, y){ let d = Infinity;
+  for (let i = 0; i < PORT_SOLIDS.length; i++){ const p = PORT_SOLIDS[i]; if (x < p.x0 || x > p.x1 || y < p.y0 || y > p.y1) continue;
+    for (const g of p.segs){ const ex = g[2] - g[0], ey = g[3] - g[1], t = Math.max(0, Math.min(1, ((x - g[0])*ex + (y - g[1])*ey)/(ex*ex + ey*ey || 1))), q = Math.hypot(x - g[0] - ex*t, y - g[1] - ey*t) - g[4]; if (q < d) d = q; } }
+  return d; }
+const hullDist = (x, y) => Math.min(shoreExact(x, y), solidDist(x, y));
 // Push a ship at {x, y} out of the land until it is `min` from the shore. Returns true if it touched land.
-export function pushOut(p, min){
+// A hull (hull = true) is measured against the real shoreline; placing things out at sea reads the grid as before.
+export function pushOut(p, min, hull){
+  if (hull){ const d0 = shoreExact(p.x, p.y), ok = EX_OK, nx = EXN_X, ny = EXN_Y, sd = solidDist(p.x, p.y);
+    if (ok && d0 <= sd){ if (d0 >= min) return false; p.x += nx*(min - d0); p.y += ny*(min - d0); return true; }
+    const d = Math.min(d0, sd); if (d >= min) return false;
+    const e = CELL*.5, gx = hullDist(p.x + e, p.y) - hullDist(p.x - e, p.y), gy = hullDist(p.x, p.y + e) - hullDist(p.x, p.y - e), L = Math.hypot(gx, gy) || 1;
+    p.x += gx/L*(min - d); p.y += gy/L*(min - d); return true; }
   const d = landDist(p.x, p.y); if (d >= min) return false;
   const e = CELL*.5, gx = landDist(p.x + e, p.y) - landDist(p.x - e, p.y), gy = landDist(p.x, p.y + e) - landDist(p.x, p.y - e), L = Math.hypot(gx, gy) || 1;
   p.x += gx/L*(min - d); p.y += gy/L*(min - d); return true;
 }
+export const __shoreExact = (x, y) => shoreExact(x, y); // for the tests
 // P90/P99: a ship's hull against the land: five points along it (bow to stern), each keeping its share of the beam from the beach
 // line (less at the pointed ends); the ship slides along the shore by however much the worst point went in. o has x, y, a.
 const HULL_PTS = [[.46, .3], [.25, .5], [0, .5], [-.25, .5], [-.46, .35]];
 export function hullAground(o, len, beam, passes = 2){ let hit = false;
   for (let pass = 0; pass < passes; pass++){ const ca = Math.cos(o.a), sa = Math.sin(o.a);
     for (const [k, w] of HULL_PTS){ const p = {x:o.x + ca*len*k, y:o.y + sa*len*k}, x0 = p.x, y0 = p.y;
-      if (pushOut(p, beam*w + 4)){ o.x += p.x - x0; o.y += p.y - y0; hit = true; } } }
+      if (pushOut(p, beam*w + 4, true)){ o.x += p.x - x0; o.y += p.y - y0; hit = true; } } }
   return hit;
 }
 // Distance from (x, y) to one island's shore, for chopping wood.
