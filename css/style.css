@@ -1233,3 +1233,7 @@ body .sheet.menu .stvol input[type=range]{-webkit-appearance:none;appearance:non
 
 /* P131: bug hunt. A long ship name wraps inside its Fleet card instead of running off it. */
 .fhead .fname{min-width:0}.fcard h3{overflow-wrap:anywhere}
+/* P134: the main menu sits on layer 30, so its own messages (Voyage erased) were hidden behind it */
+body.menuon .toast{z-index:31}
+/* P134: a pressed button by the boat (Raid, War council, the Arena games) lost its centering and jumped half its width to the right while the finger was down, so a tap on its left half fell on the sea */
+body .raid.near:active{transform:translate(-50%,2px)!important}

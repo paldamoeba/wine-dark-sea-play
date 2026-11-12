@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=60ccb6c';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=60ccb6c';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=60ccb6c';
-import {scene, screenToSea, setLair} from './scene.js?v=60ccb6c';
-import {wreckModel} from './models.js?v=60ccb6c';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=60ccb6c';
-import {mergeStatic, freeModel} from './merge.js?v=60ccb6c';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=60ccb6c';
-import {award} from './trophies.js?v=60ccb6c';
-import {makeFire, updateFire, burn} from './fire.js?v=60ccb6c';
-import {blessing, fighters, hasSail} from './crew.js?v=60ccb6c';
-import {progress, goal} from './quests.js?v=60ccb6c';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=60ccb6c';
-import {rollColor, unlockColor, colorName} from './colors.js?v=60ccb6c';
-import {toast, popLater} from './ui.js?v=60ccb6c';
-import {sink, rowNow, ROW} from './player.js?v=60ccb6c';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=60ccb6c';
-import {TOD} from './daynight.js?v=60ccb6c';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=60ccb6c';
-import {sfx} from './audio.js?v=60ccb6c';
-import {myLevel} from './levels.js?v=60ccb6c';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=eb85677';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=eb85677';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=eb85677';
+import {scene, screenToSea, setLair} from './scene.js?v=eb85677';
+import {wreckModel} from './models.js?v=eb85677';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=eb85677';
+import {mergeStatic, freeModel} from './merge.js?v=eb85677';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=eb85677';
+import {award} from './trophies.js?v=eb85677';
+import {makeFire, updateFire, burn} from './fire.js?v=eb85677';
+import {blessing, fighters, hasSail} from './crew.js?v=eb85677';
+import {progress, goal} from './quests.js?v=eb85677';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=eb85677';
+import {rollColor, unlockColor, colorName} from './colors.js?v=eb85677';
+import {toast, popLater} from './ui.js?v=eb85677';
+import {sink, rowNow, ROW} from './player.js?v=eb85677';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=eb85677';
+import {TOD} from './daynight.js?v=eb85677';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=eb85677';
+import {sfx} from './audio.js?v=eb85677';
+import {myLevel} from './levels.js?v=eb85677';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -207,6 +207,10 @@ function growPirate(e){
 // P84: every 20 s the pirates out of sight catch up with your level, so a strong player meets bigger ships without waiting for them to sink and come back
 let growT = 20;
 function growFar(dt){ if ((growT -= dt) > 0) return; growT = 20; for (const e of enemies) if (!e.real && !e.dead && side(e) === 'pirate' && !e.guard && !e.night && dist(e, G.S) > 2600) growPirate(e); }
+/* P134 (Nicholas: Paros could not be taken, the first guard was back before the last one sank): an island's own ships (its patrol
+   and its fortress's guards) do not come back while that fortress lies in ruins. Their clock stands still until it is rebuilt or
+   the island changes hands. Camps and named pirates keep their own rules. */
+const heldAway = e => { const f = e.isle && e.isle.fort; return !!(f && f.dead && !f.camp && !e.named && !e.mother && (e.guard ? f.guards.includes(e) : e.isle.patrol === e)); };
 function respawn(e){
   growPirate(e);
   const wantK = e.isle && e.isle.city ? e.isle.city + (/[QH]$/.test(e.kind) ? e.kind.slice(-1) : '') : null; // a quinquereme guard stays a quinquereme for the new owner
@@ -1053,7 +1057,7 @@ export function updateCombat(dt){
     // P84: and it thinks five times a second instead of every frame (the same moves, in bigger steps): less work for the phone
     if (!e.dead && !e.ally && !e.boss && !e.arena && dist(e, G.S) > 5200){ e.farDt = (e.farDt || 0) + dt; if (e.farDt >= .2){ think(e, Math.min(.25, e.farDt)); e.farDt = 0; } e.obj.visible = false; continue; } else if (!e.dead) e.obj.visible = true;
     if (e.dead){ e.sinkT = (e.sinkT || 0) + dt; const p = sinkPose(e.sinkT, e.sinkSide || 1, e.spec.len); e.sinkY = p.depth; roll = p.roll; pitch = p.pitch;
-      e.obj.visible = !p.done; e.respawn -= dt; if (e.respawn <= 0) respawn(e); if ((e.arena || e.temp) && p.done){ scene.remove(e.obj); enemies.splice(enemies.indexOf(e), 1); continue; } }
+      e.obj.visible = !p.done; if (!heldAway(e)) e.respawn -= dt; if (e.respawn <= 0) respawn(e); if ((e.arena || e.temp) && p.done){ scene.remove(e.obj); enemies.splice(enemies.indexOf(e), 1); continue; } }
     else think(e, dt);
     e.hitT = Math.max(0, (e.hitT || 0) - dt);
     e.kick = Math.max(0, (e.kick || 0) - dt*.4); roll += Math.sin((e.kick || 0)*60)*e.kick + (e.dead ? 0 : e.heel || 0);

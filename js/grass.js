@@ -1,6 +1,6 @@
 // Grass: little tufts in soft patches on the green islands, swaying in the wind. Each island's grass is one instanced mesh
 // (a few hundred tufts drawn in one go), and islands off screen are skipped. Only on High graphics; Low leaves it out.
-import {inPoly} from './world.js?v=60ccb6c';
+import {inPoly} from './world.js?v=eb85677';
 const T = window.THREE;
 
 // one tuft: three soft blades leaning out a little, dark at the root and sunny at the tip
