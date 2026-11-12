@@ -1,8 +1,8 @@
 // Townspeople: little hopping figures (no arms or legs) who wander the harbor towns.
 // They pop up one after another when you sail close, and pop away again before the town leaves the screen.
-import {rng} from './world.js?v=93135fa';
-import {G} from './state.js?v=93135fa';
-import {mat, beanGeo, cuteHead} from './ships.js?v=93135fa';
+import {rng} from './world.js?v=a4cd203';
+import {G} from './state.js?v=a4cd203';
+import {mat, beanGeo, cuteHead} from './ships.js?v=a4cd203';
 
 const T = window.THREE;
 const COLORS = ['#cf9035', '#3f6c94', '#ece2cb', '#c64a3c', '#71873f', '#5c3470'];

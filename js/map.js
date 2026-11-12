@@ -1,17 +1,17 @@
 // The full chart: opens from the minimap. Drag to look around, pinch or scroll to zoom, tap to set a course.
 // Turned 45 degrees like the camera, so "up" on the chart is "up" on the screen.
-import {omen} from './omens.js?v=93135fa';
-import {OMENS} from './config.js?v=93135fa';
-import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut, PORTS} from './world.js?v=93135fa';
-import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=93135fa';
-import {GOODS} from './config.js?v=93135fa';
-import {sfx} from './audio.js?v=93135fa';
-import {playVideo, toast} from './ui.js?v=93135fa';
-import {ARENA} from './arena.js?v=93135fa';
-import {enemies, planReward, planSources, combatState, noGoZones, wanted} from './combat.js?v=93135fa';
-import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=93135fa';
-import {TREASURE_ISLES, chestReady} from './quests.js?v=93135fa';
-import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=93135fa';
+import {omen} from './omens.js?v=a4cd203';
+import {OMENS} from './config.js?v=a4cd203';
+import {WORLD, MAP, ISLANDS, WRECKS, HARBORS, EXP_N, STADION, CITIES, PIER_LEN, zoneAt, landDist, pushOut, PORTS} from './world.js?v=a4cd203';
+import {IC, matPrice, goodPrice, goodSell, canBuyGood, GOOD_IC} from './menus.js?v=a4cd203';
+import {GOODS} from './config.js?v=a4cd203';
+import {sfx} from './audio.js?v=a4cd203';
+import {playVideo, toast} from './ui.js?v=a4cd203';
+import {ARENA} from './arena.js?v=a4cd203';
+import {enemies, planReward, planSources, combatState, noGoZones, wanted} from './combat.js?v=a4cd203';
+import {siteLevel, standing, LEVEL_COLOR} from './levels.js?v=a4cd203';
+import {TREASURE_ISLES, chestReady} from './quests.js?v=a4cd203';
+import {G, ship, isExplored, reveal, save, saveSettings} from './state.js?v=a4cd203';
 
 const $ = id => document.getElementById(id);
 const el = $('mapView'), cv = $('mapCv'), main = cv.getContext('2d');
@@ -310,7 +310,7 @@ export function openMap(){
 }
 // Test hook: the whole map at once.
 export function chartAll(){ openMap(); view.cx = WORLD/2; view.cy = WORLD/2; view.z = Math.min(W, H)/WORLD; draw(); }
-export function closeMap(){ G.mapOpen = false; el.hidden = true; }
+export function closeMap(){ G.mapOpen = false; el.hidden = true; G.mapClosedAt = performance.now(); } // P136: native.js reads it
 // P67: while the chart is open the game keeps running: your ship moves on it, and a banner warns you if you're attacked.
 let tickT = 0;
 export function mapTick(dt){
@@ -338,7 +338,10 @@ const pts = new Map(); let gesture = null;
 cv.addEventListener('pointerdown', e => {
   pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
   try { cv.setPointerCapture(e.pointerId); } catch(_){}
-  if (pts.size === 1) gesture = {type:'tap', sx:e.clientX, sy:e.clientY};
+  // P136 (Nicholas: swiping Back on the chart closed the game): the Back swipe starts at the left or right edge of the screen and
+  // Android then cancels the touch. The chart took that as a tap: course set, chart closed, and Back found you at sea and closed the
+  // game. Now a touch that starts at the very edge is never a tap, and a cancelled touch never sets a course (up() below).
+  if (pts.size === 1) gesture = {type:e.clientX < 28 || e.clientX > innerWidth - 28 ? 'pan' : 'tap', sx:e.clientX, sy:e.clientY};
   else if (pts.size === 2){ const [a, b] = [...pts.values()]; gesture = {type:'pinch', d:Math.hypot(a.x-b.x, a.y-b.y), z:view.z}; }
 });
 cv.addEventListener('pointermove', e => {
@@ -356,7 +359,7 @@ cv.addEventListener('pointermove', e => {
 function up(e){
   if (!pts.has(e.pointerId)) return;
   pts.delete(e.pointerId);
-  if (gesture && gesture.type === 'tap' && pts.size === 0){
+  if (gesture && gesture.type === 'tap' && pts.size === 0 && e.type !== 'pointercancel'){
     const [x, y] = toWorld(e.clientX, e.clientY), st = setCourse(x, y);
     if (st) document.dispatchEvent(new CustomEvent('course', {detail:st}));
   }

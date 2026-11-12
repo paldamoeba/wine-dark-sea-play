@@ -1,10 +1,10 @@
 // P122 crew moments: a short line from your crew the first time something happens. Words only: each line is said once per
 // voyage (S.said), never over another message, never in a menu, and never in the rowboat (you are alone in it).
-import {G, ship, holdUsed} from './state.js?v=93135fa';
-import {toast, toastBusy} from './ui.js?v=93135fa';
-import {W} from './weather.js?v=93135fa';
-import {sfx} from './audio.js?v=93135fa';
-import {zoneAt} from './world.js?v=93135fa';
+import {G, ship, holdUsed} from './state.js?v=a4cd203';
+import {toast, toastBusy} from './ui.js?v=a4cd203';
+import {W} from './weather.js?v=a4cd203';
+import {sfx} from './audio.js?v=a4cd203';
+import {zoneAt} from './world.js?v=a4cd203';
 
 const LINES = [
   ['hurt',  S => S.hull > 0 && S.hull < ship().hull*.3, 'She is taking water, captain! Make for a harbor.'],

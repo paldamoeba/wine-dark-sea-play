@@ -1,6 +1,6 @@
 // P78: what only the phone app needs: the Android back button, and saving the moment the app is put away.
-import {G, save} from './state.js?v=93135fa';
-import {note} from './ads.js?v=93135fa';
+import {G, save} from './state.js?v=a4cd203';
+import {note} from './ads.js?v=a4cd203';
 const N = window.Capacitor, App = N && N.isNativePlatform && N.isNativePlatform() && N.Plugins && N.Plugins.App;
 export const isApp = !!App;
 if (App){
@@ -16,6 +16,7 @@ if (App){
     { const nb = document.querySelector('.namebox'); if (nb){ const no = nb.querySelector('#nameNo, #sailLater'); if (no) no.click(); return; } }
     if (G.sheetOpen){ const x = document.querySelector('#sheet [data-act=close], #sheet [data-act=tutback]'); if (x) x.click(); return; }
     if (G.mapOpen || (mv && !mv.hidden)){ if ($('homePop') && !$('homePop').hidden) $('homeCancel').click(); else $('mapClose').click(); return; }
+    if (now - (G.mapClosedAt || 0) < 800){ note('back: chart had just closed'); return; } // P136: the chart closed itself a moment ago: this Back is spent
     save(); App.minimizeApp(); });
   App.addListener('appStateChange', s => { if (!s.isActive) save(); });
   App.addListener('pause', () => save());
