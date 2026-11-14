@@ -98,9 +98,9 @@ export function mat(color, o = {}){
   return mats[key] = new T.MeshToonMaterial({color:c, gradientMap:GRAD, flatShading:true, ...opts});
 }
 export function mesh(geo, color, o){ const m = new T.Mesh(geo, mat(color, o)); m.castShadow = m.receiveShadow = true; return m; }
-function tube(points, radius, color, radial = 5, closed = false){
+function tube(points, radius, color, radial = 5, closed = false, per = closed ? 4 : 2){ // per: pieces of tube for each point given
   const curve = new T.CatmullRomCurve3(points.map(p => new T.Vector3(...p)), closed, 'centripetal');
-  return mesh(new T.TubeGeometry(curve, Math.max(8, points.length*(closed ? 4 : 2)), radius, radial, closed), color);
+  return mesh(new T.TubeGeometry(curve, Math.max(8, Math.round(points.length*per)), radius, radial, closed), color);
 }
 // one closed ring around the whole hull: down the left side bow to stern, back up the right, so the two sides meet at the ends with no seam
 const loop = (st, f) => [...st.map(p => f(p, -1)), ...st.slice(1, -1).reverse().map(p => f(p, 1))];
@@ -229,9 +229,11 @@ function hull(s, paint, trim = {}){ // trim.rail / trim.wale: P96 the Hull upgra
   const m = new T.Mesh(buildGeo(tris), mat('#ffffff', {vertexColors:true, side:T.DoubleSide})); m.castShadow = m.receiveShadow = true; g.add(m);
   const railR = Math.max(.9, B*.045), waleR = Math.max(.7, B*.035);
   const at = (p, sgn, f) => { const th = f*Math.PI; return [p.x, p.dy - (p.dy - p.ky)*Math.sin(th), sgn*p.w*Math.pow(Math.cos(th), .7)*1.04]; }; // a line along the side, f down from the rail
-  g.add(tube(loop(st, (p, sgn) => [p.x, p.dy + railR*.3, sgn*p.w]), railR, trim.rail ? GOLD_RAIL : C.wale, 8, true));
-  g.add(tube(loop(st, (p, sgn) => at(p, sgn, 2/K)), waleR, trim.wale ? GOLD_RAIL : C.wale, 8, true));
-  g.add(tube(st.map(p => [p.x, p.ky - .6, 0]), Math.max(1, B*.04), C.bottom, 8));
+  // P137 (the phone ran hot): the rail, the wale and the keel were 27,700 of a ship's 35,000 to 50,000 triangles (four pieces of tube for
+  // each of the hull's 96 stations a side, eight faces round). One piece a station and six faces look the same and come to 5,800.
+  g.add(tube(loop(st, (p, sgn) => [p.x, p.dy + railR*.3, sgn*p.w]), railR, trim.rail ? GOLD_RAIL : C.wale, 6, true, 1));
+  g.add(tube(loop(st, (p, sgn) => at(p, sgn, 2/K)), waleR, trim.wale ? GOLD_RAIL : C.wale, 6, true, 1));
+  g.add(tube(st.map(p => [p.x, p.ky - .6, 0]), Math.max(1, B*.04), C.bottom, 6, false, 1));
   for (let k=-2;k<=2;k++){ const p = mesh(new T.BoxGeometry(L*.6, .35, .5), C.inner); p.position.set(0, deckLevel + .2, k*B*.12); g.add(p); }
   for (let k=0;k<6;k++){ const x = (-.3 + k*.12)*L, w = W(Math.abs(x/(L/2)))*1.7; const bm = mesh(new T.BoxGeometry(1.6, 1.2, w), C.wale); bm.position.set(x, deckLevel + .6, 0); g.add(bm); }
   g.userData = {W, deckY, deckLevel, st, at, railR, waleR, K};

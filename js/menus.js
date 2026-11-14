@@ -1,19 +1,19 @@
 // The harbor and bag screens: tabs with drawn icons, picture cards, costs shown as coins and logs.
 // ui.js owns opening, closing and the button actions; this file only draws.
-import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=a4cd203';
-import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=a4cd203';
-import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=a4cd203';
-import {fleetBody, pinCard} from './fleetpage.js?v=a4cd203';
-import {myLevel} from './levels.js?v=a4cd203';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=a4cd203';
-import {founded, blessing, fighters, men, layout} from './crew.js?v=a4cd203';
-import {planClues, wanted} from './combat.js?v=a4cd203';
-import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=a4cd203';
-import {board, active, canDeliver, goal, claims} from './quests.js?v=a4cd203';
-import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=a4cd203';
-import {colorHeld, colorInfo} from './colors.js?v=a4cd203';
-import {shipPortrait} from './portrait.js?v=a4cd203';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=a4cd203';
+import {SHIPS, FISH, TUNING, CREW, GOD_BLESSINGS, TIMBER, LINEN, BRONZE, REQUESTS, GOALS, STARTER_GOALS, UPGRADES, CAPTAIN, GOODS, TRADE, WAR, FREEPORT, CAMPS, PIRATE_PLANS, PLANS, WAREHOUSE, RAM, IRON, COLORS, POWER} from './config.js?v=0500111';
+import {ISLANDS, CITIES, HARBORS, rival} from './world.js?v=0500111';
+import {G, ship, holdUsed, lvl, rank, have, canPay, wareCap, room as roomFor, used as usedOf, capOf, shipName, RELEASE} from './state.js?v=0500111';
+import {fleetBody, pinCard} from './fleetpage.js?v=0500111';
+import {myLevel} from './levels.js?v=0500111';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=0500111';
+import {founded, blessing, fighters, men, layout} from './crew.js?v=0500111';
+import {planClues, wanted} from './combat.js?v=0500111';
+import {piecesOf, studied, allPieces, timeLeft, mmss, span} from './shipyard.js?v=0500111';
+import {board, active, canDeliver, goal, claims} from './quests.js?v=0500111';
+import {costOf, effectText, maxOf, ramMat, ramDmg, upKeys, powerKeys, powerCd, powerR, powerSeek} from './upgrades.js?v=0500111';
+import {colorHeld, colorInfo} from './colors.js?v=0500111';
+import {shipPortrait} from './portrait.js?v=0500111';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost} from './fleet.js?v=0500111';
 
 // P71: the flags of the two cities, on a pole: Athens' owl on cream, Sparta's lambda on red (the same flags their ships fly)
 export const cityFlag = c => { const A = c === 'athens', id = 'fl' + c, top = A ? '#fbf7ea' : '#c33a2e', low = A ? '#e4dcc4' : '#7f1d17', edge = A ? '#b8322a' : '#e6c27a';
@@ -277,10 +277,10 @@ export const woodPrice = h => h.free ? FREEPORT.wood : TIMBER.at[h.is.name] || T
 export const matPrice = (h, k) => k === 'wood' ? woodPrice(h) : k === 'linen' ? LINEN.at[h.is.name] || LINEN.price : k === 'iron' ? (h.free ? IRON.free : IRON.at[h.is.name] || null) : h.free ? BRONZE.free : BRONZE.at[h.is.name] || null;
 export const matStep = k => k === 'wood' ? 10 : 1; // wood is sold in bundles of 10
 export function harborHTML(h){
-  const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['ware', 'Warehouse', IC.hold], ['crew', 'Crew', IC.crew], ['fleet', 'Fleet', IC.ship]] // P63: Kallisto opens on the shipyard; P65: the warehouse has its own page
+  const home = h.is.port, list = home ? [['yard', 'Shipyard', IC.yard], ['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['ware', 'Warehouse', IC.hold], ['fleet', 'Fleet', IC.ship]] /* P137 (Nicholas): the Crew page is part of the Fleet page now */ // P63: Kallisto opens on the shipyard; P65: the warehouse has its own page
     : h.free ? [['market', 'Market', IC.market], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]] : [['market', 'Market', IC.market], ['jobs', 'Jobs', IC.jobs], ['fleet', 'Fleet', IC.ship], ['dock', 'Dock', IC.dock]];
   if (!list.some(([k]) => k === tabs.port)) tabs.port = list[0][0];
-  const t = tabs.port, body = t === 'jobs' ? jobsTab(h) : t === 'fleet' ? fleetBody() : t === 'yard' ? yardTab() : t === 'ware' ? wareTab() : t === 'crew' ? crewTab() : t === 'dock' ? dockTab() : marketTab(h);
+  const t = tabs.port, body = t === 'jobs' ? jobsTab(h) : t === 'fleet' ? fleetBody() : t === 'yard' ? yardTab() : t === 'ware' ? wareTab() : t === 'dock' ? dockTab() : marketTab(h);
   const sub = home ? 'Your home harbor' : h.free ? 'Your free port: cheaper goods, cheap timber, purple dye' : h.is.city ? `Flies the flag of ${CITIES[h.is.city].name}` : 'A free harbor: no city rules it';
   return `<div class="mtop">${top(`${h.is.name}<small>${sub}</small>`, '<button class="btn gold" data-act="sail">Set sail</button>')}${res()}${tabBar(list, t, 'port')}</div><div class="mbody">${body}</div>`;
 }
@@ -440,16 +440,17 @@ function looksCard(){
   return card('Paint and flag', `${shipImg(ship().model, {...G.S.look, ram:lvl('ram'), sailLv:lvl('sail'), men:men()})}
     <h4 class="swh">Hull</h4>${pick('paint', PAINTS, lk.paint, paintSw)}
     <h4 class="swh">Sail</h4>${spec.mast || lvl('sail') ? pick('sail', SAILS, lk.sail, sailSw) : '<p class="note">Your boat needs a sail first (Sail upgrade).</p>'}
-    <h4 class="swh">Flag</h4>${founded() ? pick('flag', GODS, lk.flag, flagSw) + flagBuy() : '<p class="note">Found a crew first (Crew tab).</p>'}`);
+    <h4 class="swh">Flag</h4>${founded() ? pick('flag', GODS, lk.flag, flagSw) + flagBuy() : '<p class="note">Found a crew first (Fleet tab).</p>'}`);
 }
 
-// ---- crew ----
-function crewTab(){
+// ---- crew: shown at the top of the Fleet page's "Your ships" (P137; it was a page of its own at Kallisto) ----
+export function crewCards(home){
   const S = G.S, c = layout(), sh = ship();
   const crewCard = card(`Crew of ${shipName()} · ${men()} of ${sh.men[1]}`, `<div class="stats big">${IC.archer} ${fighters()} ${c.archers ? 'archers' : 'with bows'} ${IC.rower} ${c.rowers} rowers ${IC.crew} ${men()} men</div>
     <p class="note">Each ship has its own crew. Hire more with the Crew upgrade at the Kallisto shipyard: rowers make it faster, archers hit harder, and everyone helps when you fish.</p>`);
   if (!founded() && owned().length < 2) return crewCard + card('Name your crew', `<div class="line">${IC.crew}<div><b>Not yet</b><small>Build your second ship at the shipyard. Then you can name your crew and fly a god's flag.</small></div></div>`);
   const gods = Object.entries(GOD_BLESSINGS).map(([k, b]) => `<option value="${k}">${GODS[k].name}: ${b.desc}</option>`).join('');
+  if (!founded() && !home) return crewCard + card('Found your crew', `<div class="line">${IC.crew}<div><b>At Kallisto</b><small>Back in your home harbor you can name your crew and choose a god's flag.</small></div></div>`);
   if (!founded()) return crewCard + card('Found your crew', `<p class="note">Name your crew and choose a god. Their flag flies on your ships and brings a blessing.</p>
     <div class="looks one"><label><span>Crew name</span><input id="crewName" maxlength="24" placeholder="The Sea Swallows"></label><label><span>God</span><select id="crewGod">${gods}</select></label></div>
     <div class="btnrow"><div class="cost">${chip(IC.coin, CREW.foundCost, S.gold >= CREW.foundCost)}</div><button class="btn gold" data-act="found" ${S.gold >= CREW.foundCost ? '' : 'disabled'}>Found the crew</button></div>`);

@@ -1,17 +1,17 @@
 // Renderer, camera, lights, water and weather.
-import {QUALITY, SHIPS} from './config.js?v=a4cd203';
-import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=a4cd203';
-import {G} from './state.js?v=a4cd203';
-import {TOD, updateDayNight} from './daynight.js?v=a4cd203';
-import {showGrass} from './grass.js?v=a4cd203';
-import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=a4cd203';
+import {QUALITY, SHIPS} from './config.js?v=0500111';
+import {seaInfo, sstep, landDist, shoreK, WEATHER_WAVES, WORLD} from './world.js?v=0500111';
+import {G} from './state.js?v=0500111';
+import {TOD, updateDayNight} from './daynight.js?v=0500111';
+import {showGrass} from './grass.js?v=0500111';
+import {SEA_LOOKS, seaUniforms, waterMaterial, bedMaterial} from './water.js?v=0500111';
 
 const T = window.THREE;
 export const canvas = document.getElementById('cv');
 // P84: with the tiny world look on (the default), the sea is drawn into its own smoothed picture first, so the screen itself
 // doesn't need smoothing too: that was a second full-size smoothed buffer filled every frame, for nothing.
 export const renderer = new T.WebGLRenderer({canvas, antialias:G.settings.tiny === false});
-renderer.shadowMap.type = T.PCFShadowMap; // PCF with a radius: soft edges (PCFSoft ignores the radius in this three.js)
+renderer.shadowMap.type = T.PCFShadowMap; renderer.shadowMap.autoUpdate = false; /* P137: see updateCamera */ // PCF with a radius: soft edges (PCFSoft ignores the radius in this three.js)
 export const scene = new T.Scene();
 const SKY = new T.Color('#a9c9cf'), STORMSKY = new T.Color('#46525c'), MIST = new T.Color('#f1ede2');
 scene.background = SKY.clone();
@@ -140,8 +140,12 @@ export function updateCamera(){
   // a short jolt when you're hit or fire a volley
   G.shake = Math.max(0, (G.shake || 0) - (G.dt || 1/60)*2.2); const j = G.shake*G.shake*dist*.012, jx = Math.sin(G.t*71)*j, jz = Math.cos(G.t*57)*j;
   camera.position.set(G.cam.x + V.x + jx, V.y, G.cam.y + V.z + jz); camera.lookAt(G.cam.x + jx, 0, G.cam.y + jz);
-  sun.position.set(G.cam.x + TOD.dir.x, TOD.dir.y, G.cam.y + TOD.dir.z); sun.target.position.set(G.cam.x, 0, G.cam.y);
+  // P137 (the phone ran hot): the shadow drawing was 44% of every frame's triangles and half its draw calls. Shadows are drawn again
+  // every second frame; the sun moves with the camera only on those frames, so the kept shadows stay exactly where they belong.
+  if (shadowSkip = !shadowSkip) return;
+  sun.position.set(G.cam.x + TOD.dir.x, TOD.dir.y, G.cam.y + TOD.dir.z); sun.target.position.set(G.cam.x, 0, G.cam.y); renderer.shadowMap.needsUpdate = true;
 }
+let shadowSkip = false;
 // The light: time of day first (daynight.js), then the weather on top. Storms are darker still at night.
 // P118 (the visual pass: each part of the sea has its own mood): the Shallows are warm and turquoise, the Open Sea a deeper blue,
 // the far north cold and steel grey. Only colors already worked out every frame are nudged, so it costs nothing. It eases over a
@@ -179,7 +183,7 @@ export function screenToSea(sx, sy){
 
 // ---- the "tiny world" look (a setting): tilt-shift blur at the top and bottom of the screen, a little more color and warmth,
 // and a soft vignette, so the sea looks like a miniature model, like Tiny Glade. The middle band, where your ship is, stays sharp.
-let rt = null;
+let rt = null; const PHONE = matchMedia('(pointer: coarse)').matches;
 const post = new T.ShaderMaterial({uniforms:{tex:{value:null}, res:{value:new T.Vector2(1, 1)}, focus:{value:.5}, bloom:{value:0}, far:{value:0}, vig:{value:0}}, depthTest:false, depthWrite:false,
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
   fragmentShader:`uniform sampler2D tex; uniform vec2 res; uniform float focus, bloom, far, vig; varying vec2 vUv;
@@ -227,7 +231,7 @@ function drawFrame(on){
   if (!on){ renderer.render(scene, camera); return; }
   const w = Math.round(view.W*view.DPR), h = Math.round(view.H*view.DPR);
   if (!rt || rt.width !== w || rt.height !== h){ if (rt) rt.dispose();
-    rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); if (rt.samples) rt.samples = saverOn() ? 2 : 4; } // P84: Battery saver smooths edges with 2 samples, not 4
+    rt = renderer.capabilities.isWebGL2 && T.WebGLMultisampleRenderTarget ? new T.WebGLMultisampleRenderTarget(w, h) : new T.WebGLRenderTarget(w, h); if (rt.samples) rt.samples = saverOn() || PHONE ? 2 : 4; } /* P137 (the phone ran hot): a phone's pixels are so small that 2 samples smooth the edges as well as 4, for half the memory traffic */ // P84: Battery saver smooths edges with 2 samples, not 4
   renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
   post.uniforms.far.value = Math.max(0, Math.min(1, (viewZoom() - 1)/1.2)); post.uniforms.tex.value = rt.texture; post.uniforms.res.value.set(w, h); post.uniforms.bloom.value = TOD.night*.85; // P74: only at night, around flames and windows (the old faint daytime glow couldn't be seen and cost a lot)
   renderer.render(postScene, postCam);

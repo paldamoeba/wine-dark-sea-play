@@ -1,27 +1,27 @@
 // Ships at sea (raiders, merchants, navy patrols), arrows, the volley and raid buttons, and loot from sunk ships.
 // Crews shoot by themselves when in range. P65: the Shallows are safer, not safe: only small raiders sail there, and there are no big waves.
 // The witness rule: shooting a merchant or navy ship is a crime only if a navy ship sees it. Witnesses chase you until they lose you. No wanted level.
-import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=a4cd203';
-import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=a4cd203';
-import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=a4cd203';
-import {scene, screenToSea, setLair} from './scene.js?v=a4cd203';
-import {wreckModel} from './models.js?v=a4cd203';
-import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=a4cd203';
-import {mergeStatic, freeModel} from './merge.js?v=a4cd203';
-import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=a4cd203';
-import {award} from './trophies.js?v=a4cd203';
-import {makeFire, updateFire, burn} from './fire.js?v=a4cd203';
-import {blessing, fighters, hasSail} from './crew.js?v=a4cd203';
-import {progress, goal} from './quests.js?v=a4cd203';
-import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=a4cd203';
-import {rollColor, unlockColor, colorName} from './colors.js?v=a4cd203';
-import {toast, popLater} from './ui.js?v=a4cd203';
-import {sink, rowNow, ROW} from './player.js?v=a4cd203';
-import {sinkPose, startSink, updateSinking} from './sinking.js?v=a4cd203';
-import {TOD} from './daynight.js?v=a4cd203';
-import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=a4cd203';
-import {sfx} from './audio.js?v=a4cd203';
-import {myLevel} from './levels.js?v=a4cd203';
+import {COMBAT, ENEMIES, WITNESS, ISLES, RAM, FORTS, FREEPORT, TUNING, BOSS, FIRE_ARROWS, CAMPS, PIRATE_PLANS, SHIPS, ABILITIES, CAPTAIN, PLANS, FORT_LV, SHIP_LV, REVEAL, NAMED, FILL, LAIR_NEED} from './config.js?v=0500111';
+import {WORLD, RAIDERS, TRAFFIC, ISLANDS, CITIES, HOME, HARBORS, TOWN_PIERS, PIER_LEN, rival, zoneAt, waveAt, seaPose, pushOut, landDist, siteFor, hullAground} from './world.js?v=0500111';
+import {G, ship, holdUsed, save, gain, lvl, putAboard, room, rank, isExplored, reveal, stat, shipDeed} from './state.js?v=0500111';
+import {scene, screenToSea, setLair} from './scene.js?v=0500111';
+import {wreckModel} from './models.js?v=0500111';
+import {buildShip, animateShip, mesh, SPECS} from './ships.js?v=0500111';
+import {mergeStatic, freeModel} from './merge.js?v=0500111';
+import {LAIR, LAIR_ROCKS, updateLair} from './lair.js?v=0500111';
+import {award} from './trophies.js?v=0500111';
+import {makeFire, updateFire, burn} from './fire.js?v=0500111';
+import {blessing, fighters, hasSail} from './crew.js?v=0500111';
+import {progress, goal} from './quests.js?v=0500111';
+import {arrowK, ramDmg, powerCd, powerFlight, powerR, powerSeek, showerK, fireSecs} from './upgrades.js?v=0500111';
+import {rollColor, unlockColor, colorName} from './colors.js?v=0500111';
+import {toast, popLater} from './ui.js?v=0500111';
+import {sink, rowNow, ROW} from './player.js?v=0500111';
+import {sinkPose, startSink, updateSinking} from './sinking.js?v=0500111';
+import {TOD} from './daynight.js?v=0500111';
+import {buildFortress, buildCamp, FORT_GUNS} from './monuments.js?v=0500111';
+import {sfx} from './audio.js?v=0500111';
+import {myLevel} from './levels.js?v=0500111';
 
 const T = window.THREE;
 const $ = id => document.getElementById(id);
@@ -500,6 +500,9 @@ function navy(e, dt){
 function fortThink(e, dt){
   e.cool -= dt; e.quiet = (e.quiet || 0) + dt;
   if (e.quiet > FORTS.healAfter && e.hull < e.spec.hull) e.hull = Math.min(e.spec.hull, e.hull + FORTS.heal*dt);
+  // P137 (Nicholas: Sparta's and Athens's harbors stayed shut): a city fortress you shot and left standing stayed angry for good, so its
+  // city turned you away at every harbor until you sank or restarted. Now it forgets like a navy ship does, only slower.
+  if (e.angry && e.city && !e.trespass){ e.lost = dist(e, G.S) - (e.reach || 0) > e.spec.sight*1.6 || playerSafe(e) ? (e.lost || 0) + dt : 0; if (e.lost > WITNESS.fortForget){ e.angry = false; e.lost = 0; } }
   if (!hostile(e) || playerSafe(e) || G.sinking) return;
   const d = dist(e, G.S) - (e.reach || 0), K = e.farK || 1;
   if (!e.camp && d < FORTS.stoneRange*K + 250) G.fortCam = {k:e.isle && e.isle.name === 'Thasos' ? FORTS.thasos.cam : FORTS.cam(K), t:G.t, x:e.x, y:e.y, lean:Math.min(1, (e.reach || 0)/300)}; /* lean: only forts that stand well inland need it */ /* P114: the camera pulls back for the fight (scene.js) */
@@ -1126,7 +1129,7 @@ document.addEventListener('revived', () => { G.graceT = 12; combatState.target =
 // The water around each city fortress (its stone range) and around the two capitals is closed to you unless you hold a war contract
 // from that city. Sail in and you get a few seconds' warning; stay and that city's fortress and nearby warships attack. Leave and
 // the fortress calms down after a while; warships forget you as usual. Not in the Shallows, the Arena of Rhodes, or while docked.
-export const NOGO = {fort:950, capital:600, warn:8, cool:20, reach:2600, harbor:80};
+export const NOGO = {fort:950, capital:600, warn:8, cool:20, reach:2600, harbor:80, harborFree:260};
 export function noGoZones(){ const z = [];
   // P112: a city's own trading harbor is never inside its no-go waters: the zone stops NOGO.harbor short of the harbor's dock (Milos's harbor moved to its north shore, 960 from the fortress)
   for (const e of enemies) if (e.fort && !e.camp && e.city && !e.dead){ let r = (e.reach || 0) + NOGO.fort*(e.farK || 1); const h = e.isle && e.isle.harbor; if (h) r = Math.min(r, Math.max((e.reach || 0) + 770, Math.hypot(h.dock.x - e.x, h.dock.y - e.y) - NOGO.harbor)); /* never smaller than the war council's reach (520) plus 250, or the warning could never start */ z.push({x:e.x, y:e.y, r, city:e.city, fort:e}); }
@@ -1135,7 +1138,12 @@ export function noGoZones(){ const z = [];
 let trespass = null;
 const welcome = c => G.S.war && G.S.war.city === c;
 export function noGoAt(x, y){ if (zoneAt(x, y) === 0) return null; const A = G.arenaZone; if (A && Math.hypot(x - A.x, y - A.y) < A.r) return null;
-  for (const z of noGoZones()) if (Math.hypot(x - z.x, y - z.y) < z.r && !welcome(z.city)) return z; return null; }
+  for (const z of noGoZones()) if (Math.hypot(x - z.x, y - z.y) < z.r && !welcome(z.city) && !harborWater(z, x, y)) return z; return null; }
+// P137: the water beside a city's own pier is never closed. Milos's pier starts 853 from its fortress and the zone can't shrink below 880
+// (the war council's reach), so sailing up to dock counted as trespassing: warning, attack, then "won't let you dock", whoever held Milos.
+function harborWater(z, x, y){ const h = z.fort && z.fort.isle && z.fort.isle.harbor; if (!h) return false;
+  const p = h.pier, ax = h.dock.x - p.x, ay = h.dock.y - p.y, t = Math.max(0, Math.min(1, ((x - p.x)*ax + (y - p.y)*ay)/(ax*ax + ay*ay || 1)));
+  return Math.hypot(x - p.x - ax*t, y - p.y - ay*t) < NOGO.harborFree; }
 function waters(dt){
   const S = G.S, z = !G.dock && !G.sinking && G.voyageOn !== false ? noGoAt(S.x, S.y) : null, adjC = c => c === 'athens' ? 'Athenian' : 'Spartan';
   if (z){

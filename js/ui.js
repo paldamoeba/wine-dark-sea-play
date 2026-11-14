@@ -1,36 +1,36 @@
 // Screen UI: top bar, messages, zone banner, harbor and settings sheets.
-import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=a4cd203';
-import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=a4cd203';
-import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=a4cd203';
-import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=a4cd203';
-import {showRewarded, ads, adPrivacy, CONSENT_TEST, consentTest} from './ads.js?v=a4cd203';
-import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat, gain} from './state.js?v=a4cd203';
-import {colorHeld, unlockColor, colorName} from './colors.js?v=a4cd203';
-import {CYCLE} from './daynight.js?v=a4cd203';
-import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=a4cd203';
-import {swapBoat, refreshAllTrees} from './entities.js?v=a4cd203';
-import {setZoom} from './input.js?v=a4cd203';
-import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=a4cd203';
-import {tutHTML} from './tutorial.js?v=a4cd203';
-import {founded, blessing} from './crew.js?v=a4cd203';
-import {WHALE} from './wildlife.js?v=a4cd203';
-import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=a4cd203';
-import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=a4cd203';
-import {REQUESTS, GOALS, UPGRADES} from './config.js?v=a4cd203';
-import {effectText, buy} from './upgrades.js?v=a4cd203';
-import {fleetHTML} from './fleetpage.js?v=a4cd203';
-import {myLevel} from './levels.js?v=a4cd203';
-import {askName} from './naming.js?v=a4cd203';
-import {FLAG_COST, RENAME_COST, flagHeld, stockLeft, takeStock, restock} from './menus.js?v=a4cd203';
-import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=a4cd203';
-import {GOODS, WAR} from './config.js?v=a4cd203';
-import {fly} from './fly.js?v=a4cd203';
-import {combatState} from './combat.js?v=a4cd203';
-import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=a4cd203';
-import {RANKS} from './records.js?v=a4cd203';
-import {W, KINDS} from './weather.js?v=a4cd203';
-import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=a4cd203';
-import {setTimeOfDay} from './daynight.js?v=a4cd203';
+import {TROPHIES, has as hasTrophy, cupSVG, trophyCount} from './trophies.js?v=0500111';
+import {comeBack, leave, load as netLoad, state as netState} from './online.js?v=0500111';
+import {SHIPS, FISH, TUNING, QUALITY, CREW, GOD_BLESSINGS, TIMBER, WAREHOUSE, OMENS} from './config.js?v=0500111';
+import {ZONES, MAP, ISLANDS, WORLD, CITIES, HARBORS, home, rival} from './world.js?v=0500111';
+import {showRewarded, ads, adPrivacy, CONSENT_TEST, consentTest} from './ads.js?v=0500111';
+import {APP, RELEASE, PUBLIC, G, shipName, ship, holdUsed, have, rank, save, saveSettings, resetSave, revealAll, lvl, pay, addMat, room, unload, used, capOf, LOADS, wareRoom, stat, gain} from './state.js?v=0500111';
+import {colorHeld, unlockColor, colorName} from './colors.js?v=0500111';
+import {CYCLE} from './daynight.js?v=0500111';
+import {applyQuality, project, view, CAM_ANGLES, saverOn} from './scene.js?v=0500111';
+import {swapBoat, refreshAllTrees} from './entities.js?v=0500111';
+import {setZoom} from './input.js?v=0500111';
+import {PAINTS, SAILS, GODS, SPECS} from './ships.js?v=0500111';
+import {tutHTML} from './tutorial.js?v=0500111';
+import {founded, blessing} from './crew.js?v=0500111';
+import {WHALE} from './wildlife.js?v=0500111';
+import {startStudy, startBuild, watchedVideo, checkYard, timeLeft, mmss} from './shipyard.js?v=0500111';
+import {board, active, accept, decline, drop, deliver, canDeliver, progress, pillText, goal, collect} from './quests.js?v=0500111';
+import {REQUESTS, GOALS, UPGRADES} from './config.js?v=0500111';
+import {effectText, buy} from './upgrades.js?v=0500111';
+import {fleetHTML} from './fleetpage.js?v=0500111';
+import {myLevel} from './levels.js?v=0500111';
+import {askName} from './naming.js?v=0500111';
+import {FLAG_COST, RENAME_COST, flagHeld, stockLeft, takeStock, restock} from './menus.js?v=0500111';
+import {GOOD_IC, WX_IC, harborHTML, bagHTML, councilHTML, repairCost, canBuyGood, tabs, tabBar, card, top, IC, sel, priceAt, catchValue, matPrice, matStep, goodPrice, goodSell} from './menus.js?v=0500111';
+import {GOODS, WAR} from './config.js?v=0500111';
+import {fly} from './fly.js?v=0500111';
+import {combatState} from './combat.js?v=0500111';
+import {launch, switchTo, hireCaptain, assignCaptain} from './fleet.js?v=0500111';
+import {RANKS} from './records.js?v=0500111';
+import {W, KINDS} from './weather.js?v=0500111';
+import {sfx, SND, STYLES, BATTLE, MIX, applyVolumes, playNow} from './audio.js?v=0500111';
+import {setTimeOfDay} from './daynight.js?v=0500111';
 
 const $ = id => document.getElementById(id);
 
@@ -151,8 +151,11 @@ function placeNearBoat(){
   const z = G.uik || 1;
   // P82 (Nicholas): messages no longer float over the boat in the middle of the screen; they stay low (.toast in the CSS)
   const below = Math.min(view.H - 150*z, by + 62*z);
-  for (const id of ['dockbar', 'raidBtn', 'councilBtn', 'arenaBtn']){ const el = id === 'dockbar' ? document.querySelector('.dockbar') : $(id); if (!el) continue;
-    el.classList.add('near'); el.style.left = x/z + 'px'; el.style.top = (below + (id === 'councilBtn' || id === 'arenaBtn' ? 54*z : 0))/z + 'px'; }
+  // P137 (Nicholas: "Enter harbor" and "Raid the merchant" sat on top of each other): the buttons under the boat stack, each one that
+  // is showing takes the next row down, so two can never share a spot. When the stack would run off the bottom it moves up as a whole.
+  const rows = []; for (const id of ['dockbar', 'raidBtn', 'councilBtn', 'arenaBtn']){ const el = id === 'dockbar' ? document.querySelector('.dockbar') : $(id); if (!el) continue;
+    const on = id === 'dockbar' ? [...el.children].some(c => !c.hidden) : !el.hidden; el.classList.add('near'); el.style.left = x/z + 'px'; if (on) rows.push(el); else el.style.top = below/z + 'px'; }
+  const top = Math.min(below, view.H - (96 + 54*rows.length)*z); rows.forEach((el, i) => { el.style.top = (top + i*54*z)/z + 'px'; });
 }
 // ---- sheets (harbor, settings) ----
 const sheetEl = $('sheet'); let sheet = null, resetArmed = false, fromPause = false;
@@ -278,7 +281,7 @@ function settingsHTML(){
       ${CONSENT_TEST ? swRow('Consent form test', '<button class="stbtn" data-act="devpage">Builder page</button>') : ''}
     </div>
     <nav class="stlinks"><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy</a><button data-act="credits">Credits</button><a href="mailto:${CONTACT}">Contact</a>${s.builder || s.showBuilder ? '<button data-act="devpage">Builder</button>' : ''}</nav>
-    <p class="stver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 136'}</p></div>`;
+    <p class="stver" ${RELEASE ? '' : 'data-act="ver"'}>Wine-Dark Sea · ${RELEASE ? 'Palda Games' : 'Prototype 137'}</p></div>`;
 }
 // the builder's page (and the test app's consent tools): the old full page, back to the card with the X
 function devHTML(){

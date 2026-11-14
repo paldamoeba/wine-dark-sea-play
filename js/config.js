@@ -355,6 +355,7 @@ export const SHIP_LV = {near:9000, far:16000, hull:[1, 1.3, 1.7], dmg:[1, 1.15, 
 export const WITNESS = {
   crimeSeconds: 6,  // after you shoot a merchant or navy ship, any navy ship that sees you or the victim in this time joins in
   forget: 8,        // seconds out of sight (or in the Shallows) before an angry navy ship gives up
+  fortForget: 20,   // P137: the same for a city fortress you shot and left standing
   calm: 12,         // seconds a merchant keeps fleeing once you are far away
 };
 // Taking islands: when an island's navy guard is sunk, the island is open. Stay near it to raise the other city's flag.

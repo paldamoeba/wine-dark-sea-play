@@ -1,16 +1,16 @@
 // P70: the Fleet page: every ship you own and every ship you could own, with all there is to know about each.
 // Open it from the toolbar anywhere; changing ship, captains and the shipwrights' work still happen at Kallisto. Also: pinning a ship.
-import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=a4cd203';
-import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=a4cd203';
-import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST} from './menus.js?v=a4cd203';
-import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=a4cd203';
-import {men} from './crew.js?v=a4cd203';
-import {SPECS, crewLayout} from './ships.js?v=a4cd203';
-import {piecesOf, studied, allPieces} from './shipyard.js?v=a4cd203';
-import {HARBORS} from './world.js?v=a4cd203';
-import {planSources} from './combat.js?v=a4cd203';
-import {ranksBody} from './records.js?v=a4cd203';
-import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=a4cd203';
+import {SHIPS, PLANS, CAPTAIN, UPGRADES} from './config.js?v=0500111';
+import {G, ship, lvl, shipName, capOf, CARRY} from './state.js?v=0500111';
+import {IC, card, top, tabBar, tabs, shipImg, bar, chip, peg, yardAct, RENAME_COST, crewCards} from './menus.js?v=0500111';
+import {owned, cantSwitch, captainOf, clock, tripPay, captainCost, allCaptains} from './fleet.js?v=0500111';
+import {men} from './crew.js?v=0500111';
+import {SPECS, crewLayout} from './ships.js?v=0500111';
+import {piecesOf, studied, allPieces} from './shipyard.js?v=0500111';
+import {HARBORS} from './world.js?v=0500111';
+import {planSources} from './combat.js?v=0500111';
+import {ranksBody} from './records.js?v=0500111';
+import {myLevel, shipLevel, siteLevel, standing, LEVEL_WORD} from './levels.js?v=0500111';
 
 const PIN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 L14.2 9.5 L18 13.5 V15 H13 L12 22 L11 15 H6 V13.5 L9.8 9.5Z" fill="#c4473b" stroke="#5a1e14" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 export const atHome = () => !!(G.dock && G.dock.mode === 'moored' && G.dock.h === HARBORS[0]);
@@ -75,7 +75,7 @@ export function fleetBody(){
     return `<div class="line capline">${peg('#2f5f8a', true)}<b>${c.n}</b>${atHome() ? `<select class="jobsel" data-set="captain" data-n="${c.n}" aria-label="Ship for ${c.n}">${opts.map(([t, l]) => `<option value="${t}" ${t === c.t ? 'selected' : ''}>${l}</option>`).join('')}</select>` : `<small>${c.t < 0 ? 'Resting at Kallisto' : `Sails ${shipName(c.t)}`}</small>`}</div>`; }).join('')
     + `<p class="note">${atHome() ? 'Choose the ship each captain takes out. A captain on the ship you sail yourself rests.' : 'Back at Kallisto you can choose which ship each captain takes out.'}</p>`) : '';
   const body = tabs.fleet === 'get' ? (rest.length ? rest.sort((a, b) => need(a) - need(b)).map(getCard).join('') : card('', '<p class="note">You own every ship there is.</p>')) : [...mine].sort((a, b) => (b === S.tier) - (a === S.tier)).map(mineCard).join('');
-  return `${tabBar(list, tabs.fleet, 'fleet')}${head}${purse}${capCard}${body}`;
+  return `${tabBar(list, tabs.fleet, 'fleet')}${head}${tabs.fleet === 'mine' ? crewCards(atHome()) : ''}${purse}${capCard}${body}`;
 }
 export const fleetHTML = () => `<div class="mtop">${top('Your fleet')}</div><div class="mbody">${fleetBody()}</div>`;
 // The pinned ship, on the quest board
